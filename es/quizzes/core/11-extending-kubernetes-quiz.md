@@ -1,27 +1,27 @@
-# Cuestionario sobre extensiones de Kubernetes
+# Cuestionario sobre la extensión de Kubernetes
 
-Este cuestionario evalúa tus conocimientos conceptuales y prácticos sobre los mecanismos de extensión de Kubernetes. Abarca temas como las definiciones de recursos personalizados (CRD), los controladores personalizados, las extensiones de API, los webhooks y el patrón Operator.
+Este cuestionario evalúa tus conocimientos conceptuales y prácticos sobre los mecanismos de extensión de Kubernetes. Cubre temas como Custom Resource Definitions (CRD), custom controllers, extensiones de API, webhooks y el operator pattern.
 
 ## Preguntas de opción múltiple
 
-1. ¿Cuál es la forma más común de definir recursos personalizados en Kubernetes?
-   - A) Definir el esquema del recurso mediante ConfigMap
-   - B) Crear una definición de recurso personalizado (CRD)
-   - C) Modificar directamente el código del servidor de API
-   - D) Usar la capa de agregación
+1. ¿Cuál es la forma más común de definir custom resources en Kubernetes?
+   - A) Definir el esquema del recurso usando ConfigMap
+   - B) Crear una CustomResourceDefinition (CRD)
+   - C) Modificar directamente el código del API server
+   - D) Usar la Aggregation Layer
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Crear una definición de recurso personalizado (CRD)**
+**Respuesta: B) Crear una CustomResourceDefinition (CRD)**
 
 **Explicación:**
-La forma más común de definir recursos personalizados en Kubernetes es crear una definición de recurso personalizado (CRD). Una CRD es un mecanismo que permite extender la API de Kubernetes mediante la definición de nuevos tipos de recursos.
+La forma más común de definir custom resources en Kubernetes es crear una CustomResourceDefinition (CRD). Una CRD es un mecanismo que permite extender la Kubernetes API definiendo nuevos tipos de recursos.
 
-El uso de CRD ofrece las siguientes ventajas:
-- Puedes agregar nuevos tipos de recursos sin modificar el servidor de API de Kubernetes existente.
-- Puedes administrar recursos personalizados con herramientas estándar de Kubernetes como `kubectl`.
-- Puedes aprovechar funciones como la validación de recursos, el versionado y los subrecursos de estado.
+Usar CRDs proporciona los siguientes beneficios:
+- Puedes agregar nuevos tipos de recursos sin modificar el Kubernetes API server existente.
+- Puedes administrar custom resources usando herramientas estándar de Kubernetes como `kubectl`.
+- Puedes aprovechar características como validación de recursos, versionado y subresources de estado.
 
 Ejemplo de CRD:
 ```yaml
@@ -58,38 +58,38 @@ spec:
 ```
 
 Problemas con las otras opciones:
-- Los ConfigMap se usan para almacenar datos de configuración y no son adecuados para extender la API.
-- Modificar directamente el código del servidor de API es complejo, difícil de mantener y puede causar problemas durante las actualizaciones.
-- La capa de agregación es otra forma de definir recursos personalizados, pero es más compleja que las CRD porque requiere implementar un servidor de API independiente.
+- ConfigMaps se usan para almacenar datos de configuración y no son adecuados para extensiones de API.
+- Modificar directamente el código del API server es complejo, difícil de mantener y puede causar problemas durante las actualizaciones.
+- La Aggregation Layer es otra forma de definir custom resources, pero es más compleja que las CRDs porque requiere implementar un API server separado.
 </details>
 
 2. ¿Cuál es el propósito principal de un Kubernetes Operator?
-   - A) Optimizar el uso de recursos de los nodos del clúster
-   - B) Codificar en software automatizado los conocimientos operativos de aplicaciones complejas
-   - C) Mejorar el rendimiento del servidor de API de Kubernetes
-   - D) Ampliar las funciones de red del clúster
+   - A) Optimizar el uso de recursos de los nodos del cluster
+   - B) Codificar el conocimiento operativo de aplicaciones complejas en software automatizado
+   - C) Mejorar el rendimiento del Kubernetes API server
+   - D) Extender la funcionalidad de red del cluster
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Codificar en software automatizado los conocimientos operativos de aplicaciones complejas**
+**Respuesta: B) Codificar el conocimiento operativo de aplicaciones complejas en software automatizado**
 
 **Explicación:**
-El propósito principal de un Kubernetes Operator es codificar en software automatizado los conocimientos operativos de aplicaciones complejas. El patrón Operator es una implementación de software de la manera en que una persona encargada de las operaciones administra aplicaciones complejas.
+El propósito principal de un Kubernetes Operator es codificar el conocimiento operativo de aplicaciones complejas en software automatizado. El operator pattern es una implementación de software de la forma en que un operador humano administra aplicaciones complejas.
 
-Características principales de los Operator:
-- Combinan recursos personalizados con controladores personalizados para implementar lógica específica de la aplicación.
-- Automatizan tareas operativas como el despliegue, las actualizaciones, las copias de seguridad, la recuperación y el escalado de aplicaciones.
-- Supervisan continuamente el estado de la aplicación y lo ajustan al estado deseado.
-- Codifican conocimientos del dominio para permitir la administración declarativa de aplicaciones complejas.
+Características clave de los operators:
+- Combina custom resources con custom controllers para implementar lógica específica de la aplicación.
+- Automatiza tareas operativas como despliegue de aplicaciones, actualizaciones, backup, recuperación y escalado.
+- Monitorea continuamente el estado de la aplicación y lo ajusta al estado deseado.
+- Codifica conocimiento del dominio para habilitar la administración declarativa de aplicaciones complejas.
 
-Casos de uso comunes de los Operator:
-- Administración automatizada de bases de datos (p. ej., PostgreSQL, MySQL, MongoDB)
-- Despliegue y configuración de sistemas de mensajería (p. ej., Kafka, RabbitMQ)
-- Instalación y mantenimiento de sistemas de supervisión (p. ej., Prometheus)
-- Administración de mallas de servicios (p. ej., Istio)
+Casos de uso comunes para operators:
+- Administración automatizada de bases de datos (por ejemplo, PostgreSQL, MySQL, MongoDB)
+- Despliegue y configuración de sistemas de mensajería (por ejemplo, Kafka, RabbitMQ)
+- Configuración y mantenimiento de sistemas de monitoreo (por ejemplo, Prometheus)
+- Administración de service meshes (por ejemplo, Istio)
 
-Ejemplo de Operator: Prometheus Operator
+Ejemplo de Operator - Prometheus Operator:
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
@@ -106,47 +106,47 @@ spec:
       memory: 400Mi
 ```
 
-Con esta sencilla configuración declarativa, Prometheus Operator se encarga automáticamente de tareas complejas como:
+Con esta configuración declarativa simple, el Prometheus Operator gestiona automáticamente tareas complejas como:
 - Desplegar servidores Prometheus
 - Crear y administrar archivos de configuración
-- Detectar automáticamente los destinos de supervisión de servicios
-- Configurar alta disponibilidad
-- Administrar el almacenamiento cuando se configura un storage/volumeClaimTemplate
-- Coordinar las actualizaciones
+- Descubrimiento automático de objetivos de monitoreo de servicios
+- Configuración de alta disponibilidad
+- Administración del almacenamiento cuando se configura storage/volumeClaimTemplate
+- Coordinación de actualizaciones
 
-Las otras opciones no son el propósito principal de los Operator:
-- La optimización del uso de recursos corresponde a HPA (Horizontal Pod Autoscaler), VPA (Vertical Pod Autoscaler), etc.
-- Mejorar el rendimiento del servidor de API no es el propósito principal de los Operator.
-- Ampliar las funciones de red corresponde a los complementos CNI o a las mallas de servicios.
+Las otras opciones no son el propósito principal de los operators:
+- La optimización del uso de recursos es el rol de HPA (Horizontal Pod Autoscaler), VPA (Vertical Pod Autoscaler), etc.
+- Mejorar el rendimiento del API server no es el propósito principal de los operators.
+- Extender la funcionalidad de red es el rol de los plugins CNI o de los service meshes.
 </details>
 
-3. ¿Cuál es la función principal de los webhooks de admisión en Kubernetes?
-   - A) Gestionar la autenticación del servidor de API
-   - B) Interceptar las solicitudes de creación o modificación de recursos para validarlas o modificarlas
-   - C) Supervisar eventos del clúster y enviar alertas
-   - D) Proporcionar API para integrarse con sistemas externos
+3. ¿Cuál es la función principal de los Admission Webhooks en Kubernetes?
+   - A) Gestionar la autenticación para el API server
+   - B) Interceptar solicitudes de creación o modificación de recursos para validarlas o modificarlas
+   - C) Monitorear eventos del cluster y enviar alertas
+   - D) Proporcionar APIs para la integración con sistemas externos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Interceptar las solicitudes de creación o modificación de recursos para validarlas o modificarlas**
+**Respuesta: B) Interceptar solicitudes de creación o modificación de recursos para validarlas o modificarlas**
 
 **Explicación:**
-La función principal de los webhooks de admisión en Kubernetes es interceptar las solicitudes de creación o modificación de recursos para validarlas o modificarlas. Los webhooks de admisión proporcionan un mecanismo para interceptar solicitudes antes de que el servidor de API de Kubernetes las almacene en el almacenamiento persistente (etcd).
+La función principal de los Admission Webhooks en Kubernetes es interceptar solicitudes de creación o modificación de recursos para validarlas o modificarlas. Los admission webhooks proporcionan un mecanismo para interceptar solicitudes antes de que el Kubernetes API server las almacene en almacenamiento persistente (etcd).
 
-Hay dos tipos de webhooks de admisión:
+Dos tipos de admission webhooks:
 
-1. **Webhook de validación**:
-   - Valida las solicitudes de creación, actualización y eliminación de recursos.
+1. **Validating Webhook**:
+   - Valida solicitudes de creación, actualización y eliminación de recursos.
    - Puede permitir o denegar solicitudes, pero no puede modificarlas.
-   - Se usa para aplicar políticas, realizar comprobaciones de seguridad, validar configuraciones, etc.
+   - Se usa para aplicación de políticas, comprobaciones de seguridad, validación de configuración, etc.
 
-2. **Webhook de mutación**:
-   - Puede validar y modificar las solicitudes de creación y actualización de recursos.
-   - Se usa para establecer valores predeterminados, inyectar contenedores sidecar, agregar etiquetas, etc.
-   - Se ejecuta antes que los webhooks de validación.
+2. **Mutating Webhook**:
+   - Puede validar y modificar solicitudes de creación y actualización de recursos.
+   - Se usa para establecer valores predeterminados, inyectar sidecar containers, agregar etiquetas, etc.
+   - Se ejecuta antes de los validating webhooks.
 
-Ejemplo de configuración de un webhook de admisión:
+Ejemplo de configuración de admission webhook:
 ```yaml
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
@@ -171,45 +171,45 @@ webhooks:
   timeoutSeconds: 5
 ```
 
-Casos de uso comunes de los webhooks de admisión:
-- Aplicar políticas de seguridad (p. ej., prohibir contenedores con privilegios)
-- Aplicar solicitudes y límites de recursos
-- Inyectar automáticamente contenedores sidecar (p. ej., Istio)
-- Agregar automáticamente etiquetas y anotaciones
-- Restringir los registros de imágenes permitidos
-- Aplicar políticas basadas en espacios de nombres
+Casos de uso comunes para admission webhooks:
+- Aplicar políticas de seguridad (por ejemplo, prohibir containers privilegiados)
+- Exigir resource requests y limits
+- Inyección automática de sidecar containers (por ejemplo, Istio)
+- Adición automática de etiquetas y anotaciones
+- Restringir image registries
+- Aplicar políticas basadas en namespace
 
 Problemas con las otras opciones:
-- La gestión de la autenticación del servidor de API corresponde a los complementos de autenticación.
-- La supervisión de eventos del clúster y el envío de alertas corresponden a los detectores de eventos o a las herramientas de supervisión.
-- Proporcionar API para integrarse con sistemas externos es un propósito general de las extensiones de API, pero no la función principal de los webhooks de admisión.
+- Gestionar la autenticación para el API server es el rol de los Authentication Plugins.
+- Monitorear eventos del cluster y enviar alertas es el rol de event listeners o herramientas de monitoreo.
+- Proporcionar APIs para la integración con sistemas externos es un propósito general de las extensiones de API, pero no la función principal de los admission webhooks.
 </details>
 
-4. ¿Cuál es el propósito principal de la capa de agregación en el servidor de API de Kubernetes?
-   - A) Optimizar el rendimiento del servidor de API
-   - B) Consolidar varios servidores de API en un único servidor de API
-   - C) Integrar servidores de API personalizados en el servidor de API principal para ampliar la API
-   - D) Proporcionar detección de servicios dentro del clúster
+4. ¿Cuál es el propósito principal de la Aggregation Layer en el Kubernetes API server?
+   - A) Optimizar el rendimiento del API server
+   - B) Consolidar múltiples API servers en un único API server
+   - C) Integrar custom API servers en el API server principal para extender la API
+   - D) Proporcionar service discovery dentro del cluster
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Integrar servidores de API personalizados en el servidor de API principal para ampliar la API**
+**Respuesta: C) Integrar custom API servers en el API server principal para extender la API**
 
 **Explicación:**
-El propósito principal de la capa de agregación en el servidor de API de Kubernetes es integrar servidores de API personalizados en el servidor de API principal para ampliar la API. Esto proporciona otra forma de extender la API de Kubernetes y ofrece funciones más potentes que las CRD, aunque es más compleja.
+El propósito principal de la Aggregation Layer en el Kubernetes API server es integrar custom API servers en el API server principal para extender la API. Esto proporciona otra forma de extender la Kubernetes API, ofreciendo características más potentes que las CRDs, aunque con mayor complejidad.
 
-Características principales de la capa de agregación:
-- Integra servidores de API personalizados en el espacio de URL del servidor de API de Kubernetes.
-- Los servidores de API personalizados pueden tener su propio almacenamiento, lógica de negocio, versiones de API, etc.
-- El servidor de API principal envía las solicitudes mediante proxy al servidor de API personalizado correspondiente.
-- El servidor de API principal autentica al usuario; la extensión debe verificar el proxy autenticador y realizar la autorización delegada (SubjectAccessReview).
+Características clave de la Aggregation Layer:
+- Integra custom API servers en el espacio de URL del Kubernetes API server.
+- Los custom API servers pueden tener su propio almacenamiento, lógica de negocio, versiones de API, etc.
+- El API server principal actúa como proxy de las solicitudes hacia el custom API server adecuado.
+- El API server principal autentica al usuario; la extensión debe verificar el proxy autenticador y realizar autorización delegada (SubjectAccessReview).
 
-Casos en los que se usa la capa de agregación:
-- Cuando se necesita una lógica de validación compleja
+Casos en los que se usa la Aggregation Layer:
+- Cuando se necesita lógica de validación compleja
 - Cuando se requiere un backend de almacenamiento personalizado
-- Cuando se necesita un comportamiento distinto al de las API existentes
-- Cuando se requiere transformar recursos o calcular estados especiales
+- Cuando se necesita un comportamiento diferente al de las APIs existentes
+- Cuando se requiere transformación de recursos o cálculo de estado especial
 
 Ejemplo de recurso APIService:
 ```yaml
@@ -228,46 +228,46 @@ spec:
   versionPriority: 100
 ```
 
-Esta configuración dirige las solicitudes del grupo de API `metrics.k8s.io/v1beta1` al servicio `metrics-server` en el espacio de nombres `kube-system`.
+Esta configuración enruta las solicitudes para el grupo de API `metrics.k8s.io/v1beta1` al service `metrics-server` en el namespace `kube-system`.
 
-Ejemplos reales que usan la capa de agregación:
-- metrics-server: proporciona métricas de uso de recursos de nodos y Pod
-- service-catalog (archivado): integración histórica con intermediarios de servicios
-- custom-metrics-apiserver: proporciona métricas personalizadas para HPA
+Ejemplos reales que usan la Aggregation Layer:
+- metrics-server: Proporciona métricas de uso de recursos de node y pod
+- service-catalog (archivado): integración histórica con brokers de servicios
+- custom-metrics-apiserver: Proporciona métricas personalizadas para HPA
 
 Problemas con las otras opciones:
-- La capa de agregación no sirve para optimizar el rendimiento del servidor de API.
-- Consolidar varios servidores de API en uno no es una descripción precisa. La capa de agregación integra varios servidores de API en un único espacio de URL, pero los servidores se ejecutan por separado.
-- La capa de agregación no proporciona detección de servicios. Esa es la función de los Service de Kubernetes.
+- La Aggregation Layer no está destinada a optimizar el rendimiento del API server.
+- Consolidar múltiples API servers en uno no es una descripción precisa. La Aggregation Layer integra múltiples API servers en un único espacio de URL, pero los servers se ejecutan por separado.
+- La Aggregation Layer no proporciona service discovery. Ese es el rol de Kubernetes Services.
 </details>
 
-5. ¿Cuál es la función principal de un controlador personalizado en Kubernetes?
-   - A) Supervisar el uso de recursos de los nodos del clúster
-   - B) Observar el estado de los recursos personalizados y reconciliarlo con el estado deseado
-   - C) Gestionar la autenticación y autorización de las solicitudes al servidor de API
-   - D) Administrar la red del clúster
+5. ¿Cuál es el rol principal de un Custom Controller en Kubernetes?
+   - A) Monitorear el uso de recursos de los nodos del cluster
+   - B) Observar el estado de los custom resources y reconciliarlo con el estado deseado
+   - C) Gestionar la autenticación y autorización para solicitudes del API server
+   - D) Administrar la red del cluster
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Observar el estado de los recursos personalizados y reconciliarlo con el estado deseado**
+**Respuesta: B) Observar el estado de los custom resources y reconciliarlo con el estado deseado**
 
 **Explicación:**
-La función principal de un controlador personalizado en Kubernetes es observar el estado de los recursos personalizados y reconciliarlo con el estado deseado. Los controladores implementan el «bucle de reconciliación», un patrón operativo fundamental de Kubernetes, para ajustar continuamente el estado real del sistema al estado deseado.
+El rol principal de un Custom Controller en Kubernetes es observar el estado de los custom resources y reconciliarlo con el estado deseado. Los controllers implementan el "reconciliation loop", un patrón operativo central en Kubernetes, para ajustar continuamente el estado real del sistema al estado deseado.
 
-Características principales de los controladores personalizados:
-- Observan tipos de recursos específicos (normalmente, recursos personalizados definidos mediante CRD).
-- Responden a eventos de cambio de recursos y ejecutan lógica de negocio.
+Características clave de los custom controllers:
+- Observan tipos de recursos específicos (normalmente custom resources definidos mediante CRDs).
+- Reaccionan a eventos de cambio de recursos y ejecutan lógica de negocio.
 - Realizan tareas para ajustar el estado real de los recursos al estado deseado.
-- Actualizan el campo de estado de los recursos para reflejar su estado actual.
+- Actualizan el campo de estado de los recursos para reflejar el estado actual.
 
-Componentes comunes de los controladores personalizados:
-1. **Informer**: observa el servidor de API de Kubernetes y recibe eventos de cambio de recursos.
-2. **Cola de trabajo**: almacena y administra los eventos que se deben procesar.
-3. **Reconciliador**: compara el estado deseado con el estado real de los recursos y realiza las tareas necesarias.
-4. **Cliente**: interactúa con la API de Kubernetes para crear, actualizar y eliminar recursos.
+Componentes comunes de los custom controllers:
+1. **Informer**: Observa el Kubernetes API server y recibe eventos de cambio de recursos.
+2. **Work Queue**: Almacena y administra eventos que deben procesarse.
+3. **Reconciler**: Compara el estado deseado y el estado real de los recursos y realiza las tareas necesarias.
+4. **Client**: Interactúa con la Kubernetes API para crear, actualizar y eliminar recursos.
 
-Ejemplo de controlador personalizado: función de reconciliación sencilla
+Ejemplo de custom controller - función reconcile simple:
 ```go
 func (c *Controller) reconcile(key string) error {
     // Split key into namespace and name
@@ -297,19 +297,19 @@ func (c *Controller) reconcile(key string) error {
 }
 ```
 
-Casos de uso comunes de los controladores personalizados:
+Casos de uso comunes para custom controllers:
 - Automatizar el despliegue y la administración de aplicaciones complejas
-- Integrarse con sistemas externos (p. ej., aprovisionamiento de recursos en la nube)
-- Automatizar procesos de copia de seguridad y recuperación
-- Implementar estrategias avanzadas de despliegue (p. ej., despliegues canary y blue-green)
+- Integración con sistemas externos (por ejemplo, aprovisionamiento de recursos cloud)
+- Automatizar procesos de backup y recuperación
+- Implementar estrategias de despliegue avanzadas (por ejemplo, canary deployments, blue-green deployments)
 
 Problemas con las otras opciones:
-- La supervisión del uso de recursos de los nodos del clúster corresponde a metrics-server o a herramientas de supervisión como Prometheus.
-- La gestión de la autenticación y autorización de las solicitudes al servidor de API corresponde a los complementos de autenticación y autorización.
-- La administración de la red del clúster corresponde a los complementos CNI o a los controladores de red.
+- Monitorear el uso de recursos de los nodos del cluster es el rol de metrics-server o herramientas de monitoreo como Prometheus.
+- Gestionar la autenticación y autorización para solicitudes del API server es el rol de los plugins de autenticación y autorización.
+- Administrar la red del cluster es el rol de los plugins CNI o network controllers.
 </details>
 
-6. ¿Qué formato se usa para definir los esquemas de validación de CRD (CustomResourceDefinitions) en Kubernetes?
+6. ¿Qué formato se usa para definir esquemas de validación para CRDs (CustomResourceDefinitions) en Kubernetes?
    - A) JSON Schema
    - B) XML Schema
    - C) OpenAPI v3 Schema
@@ -321,7 +321,7 @@ Problemas con las otras opciones:
 **Respuesta: C) OpenAPI v3 Schema**
 
 **Explicación:**
-El formato que se usa para definir los esquemas de validación de CRD (CustomResourceDefinitions) en Kubernetes es OpenAPI v3 Schema. Este esquema define la estructura y los tipos de campos de los recursos personalizados, y el servidor de API lo usa para validar las solicitudes de creación y actualización de recursos.
+El formato usado para definir esquemas de validación para CRDs (CustomResourceDefinitions) en Kubernetes es OpenAPI v3 Schema. Este esquema define la estructura y los tipos de campos de los custom resources y lo usa el API server para validar solicitudes de creación y actualización de recursos.
 
 Ejemplo de esquema de validación de CRD:
 ```yaml
@@ -369,55 +369,55 @@ En este ejemplo, el campo `openAPIV3Schema` define las siguientes reglas de vali
 - `image` es una cadena.
 - `replicas` es un entero y debe estar entre 1 y 10.
 
-OpenAPI v3 Schema ofrece diversas funciones de validación:
+OpenAPI v3 Schema proporciona varias características de validación:
 - Especificar campos obligatorios
-- Validar tipos de datos (cadena, número, booleano, objeto, matriz, etc.)
-- Validar patrones de cadenas (expresiones regulares)
-- Validar rangos numéricos (mínimo, máximo)
-- Validar la longitud de matrices
-- Validar valores de enumeración
-- Definir estructuras de objetos anidados
+- Validación de tipos de datos (string, number, boolean, object, array, etc.)
+- Validación de patrones de cadenas (expresiones regulares)
+- Validación de rangos numéricos (minimum, maximum)
+- Validación de longitud de arrays
+- Validación de valores enum
+- Definición de estructura de objetos anidados
 
 Problemas con las otras opciones:
 - JSON Schema es la base de OpenAPI, pero Kubernetes usa específicamente OpenAPI v3 Schema.
-- XML Schema no se usa en la API de Kubernetes.
-- GraphQL Schema se usa para las API GraphQL, pero no para la API de Kubernetes.
+- XML Schema no se usa en la Kubernetes API.
+- GraphQL Schema se usa para APIs GraphQL, pero no para la Kubernetes API.
 </details>
 
-7. ¿Cuál es la principal ventaja de habilitar el subrecurso de estado para recursos personalizados en Kubernetes?
+7. ¿Cuál es el principal beneficio de habilitar el subresource de estado para custom resources en Kubernetes?
    - A) Creación de recursos más rápida
-   - B) Separación de las actualizaciones de spec y status, y control RBAC
-   - C) Funciones automáticas de copia de seguridad y recuperación
+   - B) Separación de actualizaciones de spec y estado, y control RBAC
+   - C) Características automáticas de backup y recuperación
    - D) Administración simplificada de versiones de recursos
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Separación de las actualizaciones de spec y status, y control RBAC**
+**Respuesta: B) Separación de actualizaciones de spec y estado, y control RBAC**
 
 **Explicación:**
-La principal ventaja de habilitar el subrecurso de estado para recursos personalizados en Kubernetes es separar las actualizaciones de spec y status, así como poder controlar el acceso mediante RBAC (control de acceso basado en roles).
+El principal beneficio de habilitar el subresource de estado para custom resources en Kubernetes es la separación de las actualizaciones de spec y estado, y la capacidad de controlar el acceso mediante RBAC (Role-Based Access Control).
 
-Ventajas de habilitar el subrecurso de estado:
+Beneficios de habilitar el subresource de estado:
 
 1. **Separación de responsabilidades**:
    - El campo `spec` define el estado deseado especificado por los usuarios.
-   - El campo `status` informa del estado real observado por los controladores.
-   - Esta separación aclara las responsabilidades de los usuarios y los controladores.
+   - El campo `status` informa el estado real observado por los controllers.
+   - Esta separación aclara las responsabilidades de usuarios y controllers.
 
 2. **Control RBAC**:
-   - Los permisos para actualizar el estado se pueden conceder solo a los controladores, mientras que los usuarios habituales reciben permisos de solo lectura.
-   - Esto impide la modificación no autorizada de la información de estado.
+   - Los permisos de actualización de estado pueden concederse solo a los controllers mientras se otorgan permisos de solo lectura a los usuarios normales.
+   - Esto evita modificaciones no autorizadas de la información de estado.
 
 3. **Prevención de conflictos**:
-   - Spec y status están separados, pero ambos comparten resourceVersion, por lo que las escrituras simultáneas aún pueden devolver 409 Conflict.
-   - Lee el objeto más reciente y vuelve a intentarlo o reconcilia ante conflictos.
+   - spec y status están separados, pero comparten resourceVersion; las escrituras simultáneas aún pueden devolver un error 409 Conflict.
+   - Vuelve a leer el objeto más reciente y reintenta o reconcilia ante un conflicto.
 
-4. **Compatibilidad con el subrecurso scale**:
-   - El subrecurso scale se configura de forma independiente, con specReplicasPath, statusReplicasPath y un labelSelectorPath opcional.
-   - Esto permite usar herramientas estándar de escalado de Kubernetes como HPA (Horizontal Pod Autoscaler).
+4. **Compatibilidad con el subresource scale**:
+   - El subresource scale se configura de forma independiente con specReplicasPath, statusReplicasPath y, de manera opcional, labelSelectorPath.
+   - Esto permite usar herramientas estándar de escalado de Kubernetes, como HPA (Horizontal Pod Autoscaler).
 
-Ejemplo de habilitación del subrecurso de estado en una CRD:
+Ejemplo de habilitación del subresource de estado en CRD:
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -456,7 +456,7 @@ spec:
     kind: CronTab
 ```
 
-Ejemplo de actualización del estado desde un controlador:
+Ejemplo de actualización de estado desde el controller:
 ```go
 // Update status only
 statusUpdate := instance.DeepCopy() // Preserve resourceVersion from a current read.
@@ -467,40 +467,40 @@ _, err = c.clientset.MyGroup().MyResources(namespace).UpdateStatus(ctx, statusUp
 ```
 
 Problemas con las otras opciones:
-- El subrecurso de estado no aumenta la velocidad de creación de recursos.
-- No proporciona funciones automáticas de copia de seguridad y recuperación.
-- La administración de versiones de recursos se realiza mediante el campo `versions` de la CRD y no está directamente relacionada con el subrecurso de estado.
+- El subresource de estado no mejora la velocidad de creación de recursos.
+- No proporciona características automáticas de backup y recuperación.
+- La administración de versiones de recursos se gestiona mediante el campo `versions` de la CRD y no está directamente relacionada con el subresource de estado.
 </details>
 
-8. ¿Cuál es el propósito principal de la conversión mediante webhook en Kubernetes?
+8. ¿Cuál es el propósito principal de Webhook Conversion en Kubernetes?
    - A) Enrutar solicitudes de API a servicios externos
-   - B) Gestionar la conversión entre distintas versiones de recursos personalizados
-   - C) Convertir tokens de autenticación a distintos formatos
-   - D) Convertir datos de registro a formatos estructurados
+   - B) Gestionar la conversión entre diferentes versiones de custom resources
+   - C) Convertir tokens de autenticación a diferentes formatos
+   - D) Convertir datos de logs a formatos estructurados
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Gestionar la conversión entre distintas versiones de recursos personalizados**
+**Respuesta: B) Gestionar la conversión entre diferentes versiones de custom resources**
 
 **Explicación:**
-El propósito principal de la conversión mediante webhook en Kubernetes es gestionar la conversión entre distintas versiones de recursos personalizados. Esta función admite varias versiones de CRD y permite migrar de una versión a otra sin inconvenientes.
+El propósito principal de Webhook Conversion en Kubernetes es gestionar la conversión entre diferentes versiones de custom resources. Esta característica admite múltiples versiones de CRDs y habilita una migración fluida entre versiones.
 
-Características principales de la conversión mediante webhook:
+Características clave de webhook conversion:
 
-1. **Compatibilidad con varias versiones**:
-   - Las CRD pueden admitir simultáneamente varias versiones de API (p. ej., v1alpha1, v1beta1, v1).
-   - Cada versión puede tener distintos esquemas y campos.
+1. **Soporte multiversión**:
+   - Las CRDs pueden admitir múltiples versiones de API simultáneamente (por ejemplo, v1alpha1, v1beta1, v1).
+   - Cada versión puede tener esquemas y campos diferentes.
 
 2. **Conversión automática**:
-   - El servidor de API gestiona automáticamente la conversión entre la versión solicitada por el cliente y la versión de almacenamiento.
-   - El webhook de conversión proporciona lógica de conversión personalizada durante este proceso.
+   - El API server gestiona automáticamente la conversión entre la versión solicitada por el cliente y la versión de almacenamiento.
+   - El conversion webhook proporciona lógica de conversión personalizada en este proceso.
 
 3. **Independencia de la versión de almacenamiento**:
-   - Aunque cambie la versión de almacenamiento, los clientes que usan versiones anteriores pueden seguir funcionando.
-   - El webhook gestiona la conversión bidireccional entre las versiones disponibles; cambiar storage:true no reescribe los datos existentes. Migra los objetos almacenados antes de eliminar las entradas antiguas de status.storedVersions.
+   - Incluso si cambia la versión de almacenamiento, los clientes que usan versiones anteriores pueden seguir funcionando.
+   - El webhook gestiona la conversión entre las versiones servidas; cambiar storage:true no reescribe los datos existentes. Migra los objetos almacenados antes de eliminar las entradas antiguas de status.storedVersions.
 
-Ejemplo de configuración de un webhook de conversión en una CRD:
+Ejemplo de configuración de conversion webhook en CRD:
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -579,7 +579,7 @@ spec:
     kind: CronTab
 ```
 
-Ejemplo de implementación de un servidor de webhook de conversión:
+Ejemplo de implementación de un conversion webhook server:
 ```go
 // Include encoding/json, net/http, fmt and the Kubernetes types below in the server.
 // apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -641,12 +641,12 @@ func serveConvert(w http.ResponseWriter, r *http.Request) {
 ```
 
 Problemas con las otras opciones:
-- El enrutamiento de solicitudes de API a servicios externos corresponde a la agregación de API.
-- La conversión de tokens de autenticación corresponde a los complementos de autenticación.
-- La conversión de datos de registro corresponde a los sistemas de registro.
+- Enrutar solicitudes de API a servicios externos es el rol de API aggregation.
+- Convertir tokens de autenticación es el rol de los plugins de autenticación.
+- Convertir datos de logs es el rol de los sistemas de logging.
 </details>
 
-9. ¿Cuál de las siguientes opciones NO es un framework que ayude a desarrollar Operator de Kubernetes?
+9. ¿Cuál de los siguientes NO es un framework que ayuda a desarrollar Kubernetes operators?
    - A) Operator Framework
    - B) Kubebuilder
    - C) Metacontroller
@@ -658,39 +658,39 @@ Problemas con las otras opciones:
 **Respuesta: D) Kubespray**
 
 **Explicación:**
-Kubespray no es un framework que ayude a desarrollar Operator de Kubernetes. Kubespray es una herramienta para desplegar y administrar clústeres de Kubernetes mediante playbooks de Ansible. Se centra en la instalación y configuración del clúster y no está relacionada con el desarrollo de Operator.
+Kubespray no es un framework que ayude a desarrollar Kubernetes operators. Kubespray es una herramienta para desplegar y administrar clusters de Kubernetes usando playbooks de Ansible. Se centra en la instalación y configuración del cluster y no está relacionado con el desarrollo de operators.
 
-Los frameworks reales para desarrollar Operator de Kubernetes son:
+Los frameworks reales para el desarrollo de Kubernetes operators son:
 
 1. **Operator Framework**:
-   - Kit de herramientas para desarrollar Operator, creado por Red Hat
-   - Componentes principales:
-     - Operator SDK: herramientas de desarrollo y generación de estructura inicial de Operator
-     - Operator Lifecycle Manager (OLM): administración de la instalación y actualización de Operator
-     - Operator Metering: generación de informes sobre el uso de Operator
-   - Admite el desarrollo de Operator con Go, Ansible y Helm
+   - Toolkit de desarrollo de operators desarrollado por Red Hat
+   - Componentes clave:
+     - Operator SDK: Herramientas de scaffolding y desarrollo de Operator
+     - Operator Lifecycle Manager (OLM): Administración de instalación y actualización de Operator
+     - Operator Metering: Informes de uso de Operator
+   - Admite desarrollo de operators basado en Go, Ansible y Helm
 
 2. **Kubebuilder**:
-   - Framework desarrollado por un SIG (grupo de interés especial) de Kubernetes
-   - SDK para desarrollar controladores en Go
-   - Proporciona herramientas para generar código, administrar CRD y realizar pruebas
-   - Se basa en la biblioteca controller-runtime
+   - Framework desarrollado por Kubernetes SIG (Special Interest Group)
+   - SDK para desarrollar controllers en Go
+   - Proporciona generación de código, administración de CRD y herramientas de prueba
+   - Basado en la biblioteca controller-runtime
 
 3. **Metacontroller**:
-   - Framework ligero de Operator basado en webhooks
-   - Permite implementar la lógica de los controladores en varios lenguajes
-   - Definición declarativa de controladores
-   - Adecuado para desarrollar rápidamente controladores sencillos
+   - Framework de operators ligero basado en webhooks
+   - Puede implementar lógica de controller en varios lenguajes
+   - Definición declarativa de controller
+   - Adecuado para desarrollar rápidamente controllers simples
 
-Comparación de funciones de cada framework:
+Comparación de características de cada framework:
 
-| Framework | Lenguaje principal | Complejidad | Funciones |
+| Framework | Lenguaje principal | Complejidad | Características |
 |-----------|------------------|------------|----------|
-| Operator Framework | Go, Ansible, Helm | Media-alta | Kit de herramientas integral, diversas opciones de desarrollo |
+| Operator Framework | Go, Ansible, Helm | Media-alta | Toolkit integral, varias opciones de desarrollo |
 | Kubebuilder | Go | Media | Patrones estandarizados, herramientas de generación de código |
-| Metacontroller | Independiente del lenguaje | Baja | Basado en webhooks, implementación sencilla |
+| Metacontroller | Independiente del lenguaje | Baja | Basado en webhooks, implementación simple |
 
-Ejemplo de desarrollo de Operator (con Kubebuilder):
+Ejemplo de desarrollo de Operator (usando Kubebuilder):
 ```bash
 # Initialize project
 kubebuilder init --domain example.com --repo github.com/example/my-operator
@@ -706,90 +706,90 @@ make deploy
 ```
 
 Explicaciones de las otras opciones:
-- Operator Framework es el kit integral de Red Hat para desarrollar Operator.
-- Kubebuilder es un framework de desarrollo de controladores basado en Go, creado por un SIG de Kubernetes.
-- Metacontroller es un framework ligero de Operator basado en webhooks.
+- Operator Framework es el toolkit integral de desarrollo de operators de Red Hat.
+- Kubebuilder es un framework de desarrollo de controllers basado en Go desarrollado por Kubernetes SIG.
+- Metacontroller es un framework de operators ligero basado en webhooks.
 </details>
 
-10. ¿Cuál es la principal diferencia entre las definiciones de recursos personalizados (CRD) y las API agregadas en Kubernetes?
-    - A) Las CRD no admiten el versionado, pero las API agregadas sí
-    - B) Las CRD no admiten esquemas de validación, pero las API agregadas sí
-    - C) Las CRD son sencillas de implementar, pero tienen flexibilidad limitada; las API agregadas son complejas de implementar, pero ofrecen más flexibilidad
-    - D) Las CRD solo admiten recursos de ámbito de clúster, y las API agregadas solo admiten recursos de ámbito de espacio de nombres
+10. ¿Cuál es la principal diferencia entre Custom Resource Definitions (CRD) y Aggregated APIs en Kubernetes?
+    - A) Las CRDs no admiten versionado, pero las Aggregated APIs sí
+    - B) Las CRDs no admiten esquemas de validación, pero las Aggregated APIs sí
+    - C) Las CRDs son simples de implementar, pero tienen flexibilidad limitada, mientras que las Aggregated APIs son complejas de implementar, pero proporcionan más flexibilidad
+    - D) Las CRDs solo admiten recursos de alcance cluster, y las Aggregated APIs solo admiten recursos de alcance namespace
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Las CRD son sencillas de implementar, pero tienen flexibilidad limitada; las API agregadas son complejas de implementar, pero ofrecen más flexibilidad**
+**Respuesta: C) Las CRDs son simples de implementar, pero tienen flexibilidad limitada, mientras que las Aggregated APIs son complejas de implementar, pero proporcionan más flexibilidad**
 
 **Explicación:**
-La principal diferencia entre las definiciones de recursos personalizados (CRD) y las API agregadas en Kubernetes radica en el equilibrio entre la complejidad de implementación y la flexibilidad. Las CRD son sencillas de implementar, pero tienen flexibilidad limitada; las API agregadas son complejas de implementar, pero ofrecen más flexibilidad.
+La principal diferencia entre Custom Resource Definitions (CRD) y Aggregated APIs en Kubernetes es el equilibrio entre complejidad de implementación y flexibilidad. Las CRDs son simples de implementar, pero tienen flexibilidad limitada, mientras que las Aggregated APIs son complejas de implementar, pero proporcionan más flexibilidad.
 
-**Características de las CRD (CustomResourceDefinitions):**
-- **Implementación sencilla**: puedes definir nuevos recursos de API con un solo archivo YAML.
-- **Usan el servidor de API existente**: no es necesario implementar un servidor de API independiente.
+**Características de las CRDs (CustomResourceDefinitions):**
+- **Implementación simple**: Puedes definir nuevos recursos de API con un único archivo YAML.
+- **Usa el API server existente**: No es necesario implementar un API server separado.
 - **Flexibilidad limitada**:
-  - El almacenamiento se limita a etcd.
-  - Heredan el comportamiento del servidor de API predeterminado.
-  - Admiten la validación CEL y los webhooks de admisión y conversión; el almacenamiento personalizado y el comportamiento de API no estándar siguen siendo factores diferenciadores.
-- **Extensión mediante webhooks**: algunas funciones se pueden ampliar mediante webhooks de validación, webhooks de conversión, etc.
+  - El almacenamiento está limitado a etcd.
+  - Hereda el comportamiento del API server predeterminado.
+  - Admite validación CEL y webhooks de admisión y conversión; el almacenamiento personalizado y el comportamiento de API no estándar siguen siendo diferenciadores.
+- **Extensión mediante webhooks**: Algunas funcionalidades pueden extenderse mediante validating webhooks, conversion webhooks, etc.
 
-**Características de las API agregadas:**
-- **Implementación compleja**: hay que desarrollar y desplegar un servidor de API independiente.
+**Características de las Aggregated APIs:**
+- **Implementación compleja**: Se debe desarrollar y desplegar un API server separado.
 - **Alta flexibilidad**:
-  - Pueden usar backends de almacenamiento personalizados.
-  - Pueden implementar lógica de negocio compleja.
-  - Pueden implementar lógica personalizada de autenticación y autorización.
-  - Pueden implementar lógica especial para calcular y convertir estados.
-- **Funcionalidad completa de servidor de API**: pueden aprovechar todas las funciones de un servidor de API estándar de Kubernetes.
+  - Puede usar backends de almacenamiento personalizados
+  - Puede implementar lógica de negocio compleja
+  - Puede implementar lógica personalizada de autenticación y autorización
+  - Puede implementar cálculo de estado especial y lógica de conversión
+- **Funcionalidad completa de API server**: Puede aprovechar todas las características de un Kubernetes API server estándar.
 
 **Criterios de selección:**
 
-| Criterio | Elegir CRD | Elegir API agregada |
+| Criterio | Elegir CRD | Elegir Aggregated API |
 |----------|------------|----------------------|
-| Complejidad de implementación | Baja: definición YAML sencilla | Alta: requiere desarrollar un servidor de API independiente |
-| Tiempo de desarrollo | Corto: se puede implementar en minutos | Largo: requiere desarrollar un servidor de API completo |
-| Mantenimiento | Fácil: lo administra el servidor de API existente | Difícil: requiere mantener un servicio independiente |
-| Opciones de almacenamiento | Solo etcd | Se pueden usar backends de almacenamiento personalizados |
-| Lógica de negocio | Limitada: se implementa mediante controladores | Flexible: se puede implementar directamente en el servidor de API |
-| Rendimiento | Por lo general, bueno | Se puede optimizar de forma personalizada |
-| Casos de uso | Operaciones CRUD sencillas, patrones estándar | Comportamiento complejo de API, validación y conversión especiales |
+| Complejidad de implementación | Baja - Definición YAML simple | Alta - Requiere desarrollo de API server separado |
+| Tiempo de desarrollo | Corto - Puede implementarse en minutos | Largo - Requiere desarrollo completo de API server |
+| Mantenimiento | Fácil - Administrado por el API server existente | Difícil - Requiere mantener un service separado |
+| Opciones de almacenamiento | Solo etcd | Posibles backends de almacenamiento personalizados |
+| Lógica de negocio | Limitada - Implementar mediante controllers | Flexible - Puede implementarse directamente en el API server |
+| Rendimiento | Generalmente bueno | Posible optimización personalizada |
+| Casos de uso | Operaciones CRUD simples, patrones estándar | Comportamiento de API complejo, validación/conversión especial |
 
-**Ejemplos de situaciones:**
+**Escenarios de ejemplo:**
 
-Casos adecuados para CRD:
-- Administración sencilla de la configuración de aplicaciones
-- Los requisitos principales son operaciones CRUD básicas
-- Creación rápida de prototipos y desarrollo
+Casos adecuados para CRDs:
+- Administración simple de configuración de aplicaciones
+- Operaciones CRUD básicas como requisitos principales
+- Prototipado y desarrollo rápidos
 
-Casos adecuados para API agregadas:
+Casos adecuados para Aggregated APIs:
 - Integración con bases de datos externas
 - Transformación y validación de datos complejas
-- Se necesitan mecanismos de autenticación especiales
-- API de alto rendimiento o de propósito especial
+- Necesidad de mecanismos especiales de autenticación
+- APIs de alto rendimiento o de propósito especial
 
 Problemas con las otras opciones:
-- Las CRD sí admiten el versionado (A es incorrecta).
-- Las CRD sí admiten esquemas de validación mediante OpenAPI v3 Schema (B es incorrecta).
-- Tanto las CRD como las API agregadas admiten recursos de ámbito de clúster y de ámbito de espacio de nombres (D es incorrecta).
+- Las CRDs sí admiten versionado (A es incorrecta).
+- Las CRDs sí admiten esquemas de validación mediante OpenAPI v3 Schema (B es incorrecta).
+- Tanto las CRDs como las Aggregated APIs admiten recursos de alcance cluster y de alcance namespace (D es incorrecta).
 </details>
 
-> La expresión regular cronSpec solo comprueba una estructura restringida de cinco campos que usa números, asteriscos y pasos. No valida rangos, listas, nombres ni todos los valores de tiempo válidos. Agrega un analizador cron real en el controlador o webhook. Una CRD por sí sola no ejecuta tareas programadas.
+> La expresión regular de cronSpec solo comprueba una forma restringida de cinco campos con números, asteriscos y pasos. No valida rangos, listas, nombres ni todos los valores horarios legales. Añade un analizador cron real en el controller o webhook. Una CRD por sí sola no ejecuta tareas programadas.
 
 ## Preguntas de respuesta corta
 
-1. Explica cómo definir recursos personalizados mediante una definición de recurso personalizado (CRD) y cómo establecer reglas de validación para esos recursos.
+1. Explica cómo definir custom resources usando CustomResourceDefinition (CRD) y cómo establecer reglas de validación para esos recursos.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-**Cómo definir una definición de recurso personalizado (CRD):**
+**Cómo definir CustomResourceDefinition (CRD):**
 
-Una CRD es un mecanismo que amplía la API de Kubernetes para definir nuevos tipos de recursos. Al crear una CRD, se crea un nuevo endpoint de API RESTful y puedes administrar ese recurso con herramientas estándar como `kubectl`.
+Una CRD es un mecanismo que extiende la Kubernetes API para definir nuevos tipos de recursos. Cuando creas una CRD, se crea un nuevo endpoint de API RESTful, y puedes administrar ese recurso usando herramientas estándar como `kubectl`.
 
-**1. Estructura básica de una CRD:**
+**1. Estructura básica de CRD:**
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -834,9 +834,9 @@ spec:
                 type: string
 ```
 
-**2. Establecimiento de reglas de validación:**
+**2. Establecer reglas de validación:**
 
-Las reglas de validación de las CRD se establecen mediante el campo `openAPIV3Schema`. Este esquema sigue el formato OpenAPI v3 y define la estructura y los tipos de campos de los recursos.
+Las reglas de validación para CRDs se establecen mediante el campo `openAPIV3Schema`. Este esquema sigue el formato OpenAPI v3 y define la estructura y los tipos de campos de los recursos.
 
 **Ejemplo de reglas básicas de validación:**
 
@@ -862,35 +862,35 @@ schema:
             default: 1
 ```
 
-**3. Funciones avanzadas de validación:**
+**3. Características avanzadas de validación:**
 
-OpenAPI v3 Schema ofrece diversas funciones de validación:
+OpenAPI v3 Schema proporciona varias características de validación:
 
-- **Campos obligatorios**: agrega los nombres de los campos a la matriz `required`.
+- **Campos obligatorios**: Agrega nombres de campos al array `required`
   ```yaml
   required: ["fieldName1", "fieldName2"]
   ```
 
-- **Tipos de datos**: especifica los tipos de datos mediante el campo `type`.
+- **Tipos de datos**: Especifica tipos de datos usando el campo `type`
   ```yaml
   type: string  # Choose one supported type, not a pipe-separated union.
   ```
 
-- **Restricciones de cadenas**: valida la longitud y los patrones de las cadenas.
+- **Restricciones de cadenas**: Valida longitud y patrones de cadenas
   ```yaml
   minLength: 3
   maxLength: 64
   pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
   ```
 
-- **Restricciones numéricas**: valida rangos numéricos.
+- **Restricciones numéricas**: Valida rangos numéricos
   ```yaml
   minimum: 0
   maximum: 100
   multipleOf: 5
   ```
 
-- **Restricciones de matrices**: valida la longitud de las matrices y sus elementos.
+- **Restricciones de arrays**: Valida longitud e ítems de arrays
   ```yaml
   minItems: 1
   maxItems: 10
@@ -899,17 +899,17 @@ OpenAPI v3 Schema ofrece diversas funciones de validación:
     type: string
   ```
 
-- **Valores de enumeración**: especifica la lista de valores permitidos.
+- **Valores enum**: Especifica la lista de valores permitidos
   ```yaml
   enum: ["value1", "value2", "value3"]
   ```
 
-- **Valores predeterminados**: especifica los valores predeterminados de los campos.
+- **Valores predeterminados**: Especifica valores predeterminados para campos
   ```yaml
   default: "default-value"
   ```
 
-- **Valores de mapas**: define entradas de mapa tipadas; additionalProperties: false está prohibido en las CRD. Normalmente, los campos desconocidos se eliminan.
+- **Valores de mapas**: Define entradas de mapa tipadas; en las CRD no se permite additionalProperties: false. Normalmente se eliminan los campos desconocidos.
   ```yaml
   additionalProperties:
     type: string
@@ -978,7 +978,7 @@ spec:
     - ct
 ```
 
-**5. Aplicación y uso de la CRD:**
+**5. Aplicar y usar CRD:**
 
 ```bash
 # Apply CRD
@@ -1001,9 +1001,9 @@ kubectl get crontabs
 kubectl get ct  # Using short name
 ```
 
-**6. Prueba de las reglas de validación:**
+**6. Probar reglas de validación:**
 
-Si creas un recurso con valores no válidos, se producirán errores de validación:
+Crear un recurso con valores no válidos producirá errores de validación:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -1018,53 +1018,53 @@ spec:
 EOF
 ```
 
-Este comando devolverá errores como los siguientes:
-El servidor de API rechaza cronSpec/replicas no válidos mediante la validación del esquema de la CRD. En este ejemplo no se instala ningún webhook de admisión independiente; el texto exacto del error varía según la versión.
+Este comando devolverá errores como:
+El API server rechaza cronSpec y replicas no válidos mediante la validación del esquema de la CRD. En este ejemplo no se instala un admission webhook independiente; el texto exacto del error varía según la versión.
 
-**7. Prácticas recomendadas:**
+**7. Buenas prácticas:**
 
-- Definir esquemas claros y detallados
+- Definiciones de esquema claras y detalladas
 - Especificar explícitamente los campos obligatorios
 - Proporcionar valores predeterminados adecuados
-- Limitar los patrones de cadenas y los rangos numéricos
-- Habilitar el subrecurso de estado
-- Configurar columnas adicionales de impresión
+- Limitar patrones de cadenas y rangos numéricos
+- Habilitar el subresource de estado
+- Configurar columnas de impresión adicionales
 - Establecer una estrategia de versionado
 </details>
 
-2. Explica los conceptos centrales del patrón Operator de Kubernetes y los métodos comunes para implementar Operator.
+2. Explica los conceptos centrales del Kubernetes Operator Pattern y los métodos comunes para implementar operators.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-**Conceptos centrales del patrón Operator de Kubernetes:**
+**Conceptos centrales del Kubernetes Operator Pattern:**
 
-El patrón Operator es un mecanismo de extensión de Kubernetes que codifica en software conocimientos operativos específicos de una aplicación para administrar automáticamente aplicaciones complejas. Este patrón imita la manera en que una persona encargada de las operaciones administra sistemas complejos.
+El operator pattern es un mecanismo de extensión de Kubernetes que codifica conocimiento operativo específico de la aplicación en software para administrar automáticamente aplicaciones complejas. Este patrón imita cómo un operador humano administra sistemas complejos.
 
 **1. Conceptos centrales:**
 
-- **Administración declarativa**: los usuarios declaran el estado deseado y el Operator ajusta el estado actual para que coincida con él.
-- **Codificación de conocimientos del dominio**: codifica los conocimientos operativos y las prácticas recomendadas de aplicaciones específicas.
-- **Bucle de reconciliación**: observa continuamente el estado real y lo ajusta al estado deseado.
-- **Recursos personalizados**: se usan para almacenar la configuración y el estado específicos de la aplicación.
-- **Controladores**: observan los cambios en los recursos personalizados y realizan las tareas necesarias.
+- **Administración declarativa**: Los usuarios declaran el estado deseado, y el operator ajusta el estado actual al estado deseado.
+- **Codificación de conocimiento de dominio**: Codifica conocimiento operativo y mejores prácticas para aplicaciones específicas.
+- **Reconciliation Loop**: Observa continuamente el estado real y lo ajusta al estado deseado.
+- **Custom Resources**: Se usan para almacenar configuración y estado específicos de la aplicación.
+- **Controllers**: Observan cambios en custom resources y realizan las tareas necesarias.
 
-**2. Funciones comunes de los Operator:**
+**2. Funciones comunes de los Operators:**
 
-- **Instalación y actualizaciones**: despliegan componentes de la aplicación y actualizan versiones.
-- **Recuperación automática**: detectan fallos y realizan tareas de recuperación.
-- **Copia de seguridad y restauración**: automatizan los procesos de copia de seguridad y restauración de datos.
-- **Escalado**: expansión y reducción automáticas según los requisitos de carga de trabajo.
-- **Administración de la configuración**: gestionan cambios de configuración específicos de la aplicación.
-- **Automatización de operaciones**: automatizan tareas operativas rutinarias (p. ej., compactación de bases de datos y reconstrucción de índices).
+- **Instalación y actualizaciones**: Desplegar componentes de aplicación y actualizar versiones
+- **Recuperación automática**: Detectar fallas y realizar tareas de recuperación
+- **Backup y restauración**: Automatizar procesos de backup y restauración de datos
+- **Escalado**: Expansión y contracción automáticas según los requisitos de carga de trabajo
+- **Administración de configuración**: Gestionar cambios de configuración específicos de la aplicación
+- **Automatización de operaciones**: Automatizar tareas operativas rutinarias (por ejemplo, compactación de bases de datos, reconstrucción de índices)
 
-**Métodos para implementar Operator:**
+**Métodos para implementar Operators:**
 
-**1. Uso de Operator SDK:**
+**1. Usar Operator SDK:**
 
-[Operator SDK](https://sdk.operatorframework.io/) forma parte de Operator Framework de Red Hat y es una herramienta que simplifica el desarrollo de Operator.
+[Operator SDK](https://sdk.operatorframework.io/) es parte del Operator Framework de Red Hat y es una herramienta que simplifica el desarrollo de operators.
 
 ```bash
 : "${OPERATOR_IMAGE:?Set a registry image tag or digest you control}"
@@ -1084,9 +1084,9 @@ make docker-build docker-push IMG="$OPERATOR_IMAGE"
 make deploy IMG="$OPERATOR_IMAGE"
 ```
 
-**2. Uso de Kubebuilder:**
+**2. Usar Kubebuilder:**
 
-[Kubebuilder](https://book.kubebuilder.io/) es un framework desarrollado por un SIG de Kubernetes que proporciona herramientas para desarrollar controladores.
+[Kubebuilder](https://book.kubebuilder.io/) es un framework desarrollado por Kubernetes SIG que proporciona herramientas para el desarrollo de controllers.
 
 ```bash
 : "${OPERATOR_IMAGE:?Set a registry image tag or digest you control}"
@@ -1103,9 +1103,9 @@ make install
 make deploy IMG="$OPERATOR_IMAGE"
 ```
 
-**3. Implementación de controladores:**
+**3. Implementación de Controller:**
 
-El núcleo de un Operator es la función de reconciliación. Esta función observa el estado actual de los recursos personalizados y realiza las tareas necesarias.
+El núcleo de un operator es la función de reconciliación. Esta función observa el estado actual de los custom resources y realiza las tareas necesarias.
 
 ```go
 // Uses the scaffold's client.Client and Scheme. Import controllerutil and sort.
@@ -1156,9 +1156,9 @@ func (r *MyAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 ```
 
-**4. Definición de recurso personalizado:**
+**4. Custom Resource Definition:**
 
-Define la API para los recursos personalizados que administra el Operator.
+Define la API para custom resources administrados por el operator.
 
 ```go
 // MyApp API
@@ -1199,9 +1199,9 @@ type MyApp struct {
 }
 ```
 
-**5. Operator basados en Ansible o Helm:**
+**5. Operators basados en Ansible o Helm:**
 
-Además de Go, Operator SDK también admite el desarrollo de Operator con Ansible o Helm.
+Operator SDK también admite el desarrollo de operators usando Ansible o Helm además de Go.
 
 **Operator basado en Ansible:**
 ```bash
@@ -1218,7 +1218,7 @@ operator-sdk create api --group apps --version v1alpha1 --kind MyApp --generate-
 operator-sdk init --plugins=helm --domain example.com --helm-chart=<chart-name>
 ```
 
-**6. Despliegue y prueba de Operator:**
+**6. Desplegar y probar Operators:**
 
 ```bash
 # Deploy operator
@@ -1237,44 +1237,44 @@ kubectl describe myapp my-app
 
 **7. Niveles de madurez de Operator:**
 
-El modelo de madurez de Operator define los niveles de capacidad de estos:
+El modelo de madurez de operator define los niveles de capacidad de los operators:
 
-1. **Instalación básica**: instalación y configuración de aplicaciones
-2. **Actualizaciones fluidas**: actualizaciones automáticas entre versiones
-3. **Ciclo de vida completo**: copia de seguridad, restauración, recuperación ante fallos, etc.
-4. **Información detallada**: escalado automático, ajustes, etc.
-5. **Piloto automático**: optimización automática basada en la supervisión
+1. **Instalación básica**: Instalación y configuración de aplicaciones
+2. **Actualizaciones sin interrupciones**: Actualizaciones automáticas entre versiones
+3. **Ciclo de vida completo**: Backup, restauración, recuperación ante fallas, etc.
+4. **Información profunda**: Auto-scaling, tuning, etc.
+5. **Auto Pilot**: Optimización automática basada en monitoreo
 
-**8. Prácticas recomendadas:**
+**8. Buenas prácticas:**
 
-- Implementar funciones de forma gradual (empezar por lo sencillo)
-- Gestionar errores y registros de forma exhaustiva
-- Garantizar la idempotencia (el mismo resultado para la misma entrada)
-- Establecer referencias de propietario (jerarquía de recursos y recolección de elementos no utilizados)
-- Informar del progreso mediante actualizaciones de estado
-- Escribir pruebas unitarias y de integración
-- Proporcionar documentación clara
+- Implementar características de forma incremental (empezar con cosas simples)
+- Manejo de errores y logging exhaustivos
+- Garantizar idempotencia (mismo resultado para la misma entrada)
+- Establecer owner references (jerarquía de recursos y garbage collection)
+- Informar el progreso mediante actualizaciones de estado
+- Escribir unit tests e integration tests
+- Documentación clara
 </details>
 
-3. Explica los tipos de webhooks de admisión en Kubernetes y los casos de uso de cada uno.
+3. Explica los tipos de Admission Webhooks en Kubernetes y los casos de uso de cada uno.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
 **Respuesta:**
 
-**Tipos y casos de uso de los webhooks de admisión de Kubernetes:**
+**Tipos y casos de uso de Kubernetes Admission Webhooks:**
 
-Los webhooks de admisión son mecanismos que pueden interceptar y modificar o validar solicitudes antes de que el servidor de API de Kubernetes las almacene en el almacenamiento persistente (etcd). En general, se dividen en dos tipos: webhooks de mutación y webhooks de validación.
+Los admission webhooks son mecanismos que pueden interceptar y modificar o validar solicitudes antes de que el Kubernetes API server las almacene en almacenamiento persistente (etcd). Los admission webhooks se dividen principalmente en dos tipos: Mutating webhooks y Validating webhooks.
 
-**1. Webhook de mutación:**
+**1. Mutating Webhook:**
 
-Los webhooks de mutación pueden modificar los objetos de las solicitudes que llegan al servidor de API. Se ejecutan antes que los webhooks de validación.
+Los mutating webhooks pueden modificar objetos de solicitud que entran al API server. Estos webhooks se ejecutan antes de los validating webhooks.
 
-**Características principales:**
-- Pueden modificar los objetos de las solicitudes.
-- Varios webhooks de mutación se ejecutan en cadena.
-- Cada webhook recibe el objeto que modificó el webhook anterior.
+**Características clave:**
+- Pueden modificar objetos de solicitud
+- Múltiples mutating webhooks se ejecutan en cadena
+- Cada webhook recibe el objeto modificado por el webhook anterior
 
 **Ejemplo de configuración:**
 ```yaml
@@ -1303,41 +1303,41 @@ webhooks:
 
 **Casos de uso comunes:**
 
-1. **Inyección de contenedores sidecar:**
-   - Inyección automática de un proxy sidecar en mallas de servicios como Istio y Linkerd
-   - Agregar sidecar de registro y supervisión
-   - Ejemplo: el inyector sidecar de Istio agrega automáticamente contenedores proxy Envoy cuando se crean Pod.
+1. **Inyección de Sidecar Container:**
+   - Inyección automática de proxy sidecar en service meshes como Istio y Linkerd
+   - Agregar sidecars de logging y monitoreo
+   - Ejemplo: el sidecar injector de Istio agrega automáticamente Envoy proxy containers cuando se crean pods
 
 2. **Establecimiento de valores predeterminados:**
-   - Establecimiento automático de solicitudes y límites de recursos
-   - Aplicación de valores predeterminados de contextos de seguridad
+   - Configuración automática de resource requests y limits
+   - Aplicación de valores predeterminados de security context
    - Adición automática de etiquetas y anotaciones
-   - Ejemplo: establecer solicitudes predeterminadas de CPU y memoria para todos los Pod.
+   - Ejemplo: establecer requests predeterminados de CPU y memoria para todos los pods
 
 3. **Aplicación de políticas de imágenes:**
-   - Modificar las URL de los registros de imágenes
-   - Convertir etiquetas de imagen en digest
-   - Ejemplo: cambiar `nginx:latest` a `internal-registry.example.com/nginx:1.30.6`.
+   - Modificar URLs de image registry
+   - Convertir image tags a digests
+   - Ejemplo: cambiar `nginx:latest` a `internal-registry.example.com/nginx:1.30.6`
 
 4. **Modificaciones de volúmenes:**
-   - Agregar montajes de volumen predeterminados
-   - Montar ConfigMap o Secret automáticamente
-   - Ejemplo: la admisión de ServiceAccount ya inyecta tokens proyectados, a menos que automountServiceAccountToken sea false; no anules esa exclusión voluntaria.
+   - Agregar volume mounts predeterminados
+   - Montaje automático de ConfigMap o Secret
+   - Ejemplo: la admisión de ServiceAccount ya inyecta tokens proyectados, salvo que automountServiceAccountToken sea false; no anules esa exclusión
 
-5. **Configuración de red de Pod:**
+5. **Aplicación de Network Policies:**
    - Agregar configuraciones de red predeterminadas
-   - Modificar la configuración de DNS
-   - Ejemplo: aplicar configuraciones específicas de DNS a todos los Pod de un espacio de nombres determinado.
+   - Modificar configuración de DNS
+   - Ejemplo: aplicar configuraciones DNS específicas a todos los pods en un namespace específico
 
-**2. Webhook de validación:**
+**2. Validating Webhook:**
 
-Los webhooks de validación pueden validar las solicitudes que llegan al servidor de API y permitirlas o denegarlas. Se ejecutan después que los webhooks de mutación.
+Los validating webhooks pueden validar solicitudes que entran al API server y permitirlas o denegarlas. Estos webhooks se ejecutan después de los mutating webhooks.
 
-**Características principales:**
-- No pueden modificar los objetos de las solicitudes.
-- Solo pueden permitir o denegar solicitudes.
-- Varios webhooks de validación se ejecutan en paralelo.
-- Todas las decisiones de los webhooks coincidentes deben permitir la solicitud; los errores de llamada y los tiempos de espera se rigen por failurePolicy, por lo que Ignore puede permitir una solicitud sin recibir respuesta.
+**Características clave:**
+- No pueden modificar objetos de solicitud
+- Solo pueden permitir o denegar solicitudes
+- Múltiples validating webhooks se ejecutan en paralelo
+- Cada webhook que coincida debe permitir la solicitud; los errores de llamada y los tiempos de espera se rigen por failurePolicy, por lo que Ignore puede permitirla sin recibir una respuesta
 
 **Ejemplo de configuración:**
 ```yaml
@@ -1367,38 +1367,38 @@ webhooks:
 **Casos de uso comunes:**
 
 1. **Aplicación de políticas de seguridad:**
-   - Prohibir contenedores con privilegios
+   - Prohibir containers privilegiados
    - Prohibir la ejecución como usuario root
-   - Restringir el uso de la red, el PID o el IPC del host
-   - Ejemplo: denegar Pod que se ejecuten en modo privilegiado.
+   - Restringir el uso de host network/PID/IPC
+   - Ejemplo: denegar pods que se ejecutan en modo privilegiado
 
 2. **Validación de restricciones de recursos:**
-   - Hacer obligatorias las solicitudes y los límites de recursos
+   - Hacer obligatorios resource requests y limits
    - Aplicar límites máximos de recursos
-   - Aplicar clases de QoS
-   - Ejemplo: denegar Pod sin límites de memoria.
+   - Exigir clases QoS
+   - Ejemplo: denegar pods sin memory limits
 
 3. **Validación de políticas de imágenes:**
-   - Permitir solo registros aprobados
+   - Permitir solo registries aprobados
    - Prohibir el uso de la etiqueta latest
-   - Verificar los resultados del análisis de vulnerabilidades
-   - Ejemplo: permitir solo imágenes de registros oficiales.
+   - Verificar resultados de escaneo de vulnerabilidades
+   - Ejemplo: permitir solo imágenes de registries oficiales
 
 4. **Validación de etiquetas y anotaciones:**
-   - Comprobar las etiquetas obligatorias
-   - Validar los formatos de las etiquetas
-   - Ejemplo: hacer obligatorias las etiquetas `app` y `environment` para todos los Pod.
+   - Comprobar etiquetas obligatorias
+   - Validar formatos de etiquetas
+   - Ejemplo: hacer obligatorias las etiquetas `app` y `environment` para todos los pods
 
-5. **Políticas basadas en espacios de nombres:**
-   - Límites de recursos por espacio de nombres
-   - Restricciones de funciones por espacio de nombres
-   - Ejemplo: aplicar políticas más estrictas en los espacios de nombres de producción.
+5. **Políticas basadas en namespace:**
+   - Límites de recursos por namespace
+   - Restricciones de características por namespace
+   - Ejemplo: aplicar políticas más estrictas en namespaces de producción
 
-**3. Métodos de implementación de webhooks:**
+**3. Métodos de implementación de Webhook:**
 
-Los webhooks de admisión se implementan como servicios que proporcionan endpoints HTTPS. Estos servicios reciben solicitudes `AdmissionReview`, las procesan y devuelven un `AdmissionResponse`.
+Los admission webhooks se implementan como services que proporcionan endpoints HTTPS. Estos services reciben solicitudes `AdmissionReview`, las procesan y devuelven `AdmissionResponse`.
 
-**Ejemplo básico de implementación de servidor de webhook (Go):**
+**Ejemplo básico de implementación de Webhook Server (Go):**
 
 ```go
 package main
@@ -1577,9 +1577,9 @@ func main() {
 }
 ```
 
-**4. Despliegue y configuración del webhook:**
+**4. Despliegue y configuración de Webhook:**
 
-Compila el servidor completo anterior, sustituye los marcadores de posición de la imagen del servidor y del sidecar, y crea webhook-system y webhook-server-tls. El certificado del servidor debe incluir webhook-server.webhook-system.svc (y cualquier nombre alternativo de Service que se use), y caBundle debe contener la CA que lo firma. La imagen del sidecar debe admitir los permisos del sistema de archivos de la aplicación. Este ejemplo muestra un sidecar normal; configura por separado el comportamiento de apagado o de native sidecar para los Job.
+Compila el servidor completo anterior, reemplaza los marcadores de posición de las imágenes del servidor y del sidecar, y crea webhook-system y webhook-server-tls. El certificado de servicio debe incluir webhook-server.webhook-system.svc (y cualquier nombre de Service alternativo que se use), y caBundle debe contener la CA que lo firma. La imagen del sidecar debe ser compatible con los permisos del sistema de archivos de la aplicación. Este ejemplo muestra un sidecar normal; el comportamiento de apagado/native sidecar para Jobs se configura por separado.
 
 ```yaml
 # Webhook server deployment
@@ -1630,26 +1630,26 @@ spec:
     targetPort: 8443
 ```
 
-**5. Prácticas recomendadas:**
+**5. Buenas prácticas:**
 
-- **Optimización del rendimiento**: los webhooks forman parte de la ruta de solicitudes del servidor de API, por lo que deben responder rápidamente.
-- **Gestión de errores**: considera qué debe ocurrir si falla el servidor del webhook y establece `failurePolicy` según corresponda.
-- **Limitación del ámbito**: aplica los webhooks solo a los recursos y las operaciones necesarios.
-- **Pruebas**: prueba exhaustivamente el comportamiento del webhook en distintas situaciones.
-- **Supervisión**: supervisa el rendimiento y los errores del servidor del webhook.
-- **Administración de versiones**: anuncia únicamente las versiones de AdmissionReview que realmente se implementen y devuelve la misma versión que la solicitud.
+- **Optimización de rendimiento**: Los webhooks están en la ruta de solicitudes del API server, por lo que deben responder rápidamente.
+- **Manejo de errores**: Considera el comportamiento cuando falla el webhook server y configura `failurePolicy` adecuadamente.
+- **Limitación de alcance**: Aplica webhooks solo a los recursos y operaciones necesarios.
+- **Pruebas**: Prueba exhaustivamente el comportamiento del webhook en varios escenarios.
+- **Monitoreo**: Monitorea el rendimiento y los errores del webhook server.
+- **Gestión de versiones**: Anuncia solo las versiones de AdmissionReview que implementa realmente y devuelve la misma versión que recibió en la solicitud.
 </details>
 
 ## Preguntas prácticas
 
-1. Escribe una definición de recurso personalizado (CRD) que cumpla los siguientes requisitos:
-   - Grupo de API: webapp.example.com
-   - Versión: v1
+1. Escribe una CustomResourceDefinition (CRD) que cumpla los siguientes requisitos:
+   - API Group: webapp.example.com
+   - Version: v1
    - Kind: WebApp
-   - Ámbito: Namespaced
+   - Scope: Namespaced
    - Campos obligatorios: spec.image, spec.replicas
    - Reglas de validación: replicas debe ser un entero entre 1 y 10
-   - Habilitar el subrecurso de estado
+   - Habilitar el subresource de estado
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -1726,23 +1726,23 @@ spec:
 Esta CRD tiene las siguientes características:
 
 1. **Información básica**:
-   - Grupo de API: `webapp.example.com`
-   - Versión: `v1`
+   - API Group: `webapp.example.com`
+   - Version: `v1`
    - Kind: `WebApp`
-   - Ámbito: `Namespaced`
+   - Scope: `Namespaced`
 
-2. **Validación del esquema**:
+2. **Validación de esquema**:
    - El campo `spec` es obligatorio.
    - `spec.image` y `spec.replicas` son campos obligatorios.
    - `spec.replicas` debe ser un entero entre 1 y 10.
-   - `spec.port` es un campo opcional cuyo valor predeterminado es 80.
-   - `spec.env` es un campo opcional que define una matriz de variables de entorno.
+   - `spec.port` es un campo opcional con un valor predeterminado de 80.
+   - `spec.env` es un campo opcional que define un array de variables de entorno.
 
-3. **Subrecurso de estado**:
-   - El subrecurso `status` está habilitado para que los controladores puedan actualizar el estado.
+3. **Status Subresource**:
+   - El subresource `status` está habilitado para que los controllers puedan actualizar el estado.
    - Se definen los campos `status.availableReplicas` y `status.phase`.
 
-4. **Columnas adicionales de impresión**:
+4. **Additional Printer Columns**:
    - Al ejecutar `kubectl get webapps`, se muestran las columnas Replicas, Image y Age.
 
 5. **Configuración de nombres**:
@@ -1751,7 +1751,7 @@ Esta CRD tiene las siguientes características:
    - Kind: `WebApp`
    - Nombre corto: `wa`
 
-Con esta CRD puedes crear recursos personalizados como el siguiente:
+Puedes crear custom resources como este usando esta CRD:
 
 ```yaml
 apiVersion: webapp.example.com/v1
@@ -1770,7 +1770,7 @@ spec:
       value: "value2"
 ```
 
-Los controladores pueden observar este recurso y actualizar su estado:
+Los controllers pueden observar este recurso y actualizar el estado:
 
 ```yaml
 status:
@@ -1779,11 +1779,11 @@ status:
 ```
 </details>
 
-2. Escribe una configuración de webhook de admisión de mutación que cumpla los siguientes requisitos:
-   - Agregar un sidecar a las solicitudes CREATE de Pod que declaren explícitamente spec.os.name: linux
-   - Aplicarse solo a un espacio de nombres específico (monitoring)
-   - Servicio del webhook: webhook-service.webhook-system.svc
-   - Ruta: /mutate
+2. Escribe una configuración de Mutating Admission Webhook que cumpla los siguientes requisitos:
+   - Agregar un sidecar solo a las solicitudes CREATE de Pods que declaren explícitamente spec.os.name: linux
+   - Aplicar solo a un namespace específico (monitoring)
+   - Webhook service: webhook-service.webhook-system.svc
+   - Path: /mutate
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -1831,36 +1831,34 @@ metadata:
 
 Esta configuración tiene las siguientes características:
 
-1. **Configuración del webhook**:
+1. **Configuración de Webhook**:
    - Nombre: `sidecar-injector`
-   - Servicio del webhook: `webhook-service.webhook-system.svc`
-   - Ruta: `/mutate`
+   - Webhook service: `webhook-service.webhook-system.svc`
+   - Path: `/mutate`
 
-2. **Ámbito**:
-   - Grupo de API: `""` (grupo de API principal)
-   - Versión de API: `v1`
-   - Operación: `CREATE` (solo se aplica al crear Pod)
+2. **Alcance**:
+   - API Group: `""` (core API group)
+   - API Version: `v1`
+   - Operación: `CREATE` (aplicar solo en la creación de pod)
    - Recurso: `pods`
-   - Ámbito: `Namespaced`
+   - Scope: `Namespaced`
 
-3. **Selector de espacio de nombres**:
-   - Se aplica solo a espacios de nombres con la etiqueta `kubernetes.io/metadata.name: monitoring`.
-   - El servidor de API proporciona esa etiqueta inmutable con el nombre del espacio de nombres monitoring.
+3. **Namespace Selector**:
+   - Aplicar solo a namespaces con la etiqueta `kubernetes.io/metadata.name: monitoring`
+   - El API server proporciona esta etiqueta de nombre inmutable en el namespace monitoring
 
-4. **Configuración adicional**:
-   - `admissionReviewVersions`: versiones de API de AdmissionReview admitidas
-   - `sideEffects`: el webhook no tiene efectos secundarios
-   - `timeoutSeconds`: tiempo de espera de la respuesta del webhook
-   - `failurePolicy`: denegar las solicitudes si falla el webhook
+4. **Configuraciones adicionales**:
+   - `admissionReviewVersions`: Versiones de API AdmissionReview admitidas
+   - `sideEffects`: Sin efectos secundarios del webhook
+   - `timeoutSeconds`: Tiempo de espera para la respuesta del webhook
+   - `failurePolicy`: Denegar solicitudes ante falla del webhook
 
-El servidor del webhook debe implementar una lógica como esta:
+Usa `mutateHandler` y las funciones auxiliares comunes de solicitud/respuesta del servidor completo anterior. Crea el arreglo volumes si falta, conserva las entradas existentes, evita la inyección duplicada y monta shared-data tanto en el contenedor de la aplicación como en el sidecar. Se deniegan los conflictos con nombres o rutas reservados.
 
-Usa `mutateHandler` y los auxiliares comunes de solicitud y respuesta del servidor completo anterior. Crea la matriz volumes si falta, conserva las entradas existentes, evita la inyección duplicada y monta shared-data tanto en los contenedores de la aplicación como en los sidecar. Los conflictos de nombres o rutas reservados se deniegan.
-
-Este webhook agrega automáticamente un contenedor sidecar de supervisión a los Pod que declaren `spec.os.name: linux` y se creen en el espacio de nombres `monitoring`. El contenedor sidecar usa una imagen de agente de supervisión y monta un volumen compartido para compartir datos con el contenedor principal.
+Este webhook agrega automáticamente un sidecar de monitorización a los Pods creados en el namespace `monitoring` que declaren `spec.os.name: linux`. El sidecar utiliza una imagen de agente de monitorización y monta un volumen compartido para intercambiar datos con el contenedor principal.
 </details>
 
-> Los fragmentos de código de los controladores requieren los tipos, el cliente y RBAC del proyecto generado. Comprueban la propiedad del Deployment, reconcilian la configuración de imagen, réplicas y entorno, y usan una observación Owns para los cambios de estado. Limpia los recursos externos con finalizers antes de eliminarlos. Durante esta revisión no se ejecutó ningún despliegue en Kubernetes ni en AWS.
+> Los fragmentos del controller requieren los tipos de proyecto generados, el cliente y RBAC. Comprueban la propiedad del Deployment, reconcilian la imagen, las réplicas y la configuración del entorno, y usan un watch de Owns para detectar cambios de estado. Limpia los recursos externos con finalizers antes de eliminarlos. Durante esta revisión no se ejecutó ningún despliegue en Kubernetes ni en AWS.
 
 ## Referencias de verificación
 

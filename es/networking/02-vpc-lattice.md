@@ -1,96 +1,96 @@
 # VPC Lattice
 
-Amazon VPC Lattice conecta aplicaciones entre VPC y cuentas de AWS. Este capítulo explica el modelo de recursos, una integración con EKS, el enrutamiento, la autorización de IAM, la supervisión y la resolución de problemas.
+Amazon VPC Lattice conecta aplicaciones entre VPC y cuentas de AWS. Este capítulo explica el modelo de recursos, una integración con EKS, el enrutamiento, la autorización IAM, la monitorización y la solución de problemas.
 
-> **Última actualización**: 11 de septiembre de 2026, con AWS Gateway API Controller **v2.1.3** y Gateway API **v1.5.0**. Los ejemplos describen pasos de configuración y validación; no se han implementado en una cuenta de AWS como parte de esta revisión.
+> **Última actualización**: 11 de septiembre de 2026, con AWS Gateway API Controller **v2.1.3** y Gateway API **v1.5.0**. Los ejemplos describen pasos de configuración y validación; no se han desplegado en una cuenta de AWS como parte de esta revisión.
 
-## Tabla de contenido
+## Tabla de contenidos
 
 - [Descripción general](#overview)
 - [Arquitectura](#architecture)
 - [Integración de EKS y VPC Lattice](#eks-and-vpc-lattice-integration)
 - [Instalación y configuración](#installation-and-configuration)
-- [Administración de servicios](#service-management)
-- [Enrutamiento y administración del tráfico](#routing-and-traffic-management)
+- [Gestión de servicios](#service-management)
+- [Enrutamiento y gestión del tráfico](#routing-and-traffic-management)
 - [Seguridad y autenticación](#security-and-authentication)
-- [Supervisión y registro](#monitoring-and-logging)
+- [Monitorización y registro](#monitoring-and-logging)
 - [Prácticas recomendadas](#best-practices)
-- [Resolución de problemas](#troubleshooting)
+- [Solución de problemas](#troubleshooting)
 - [Referencias](#references)
 
 ## Descripción general {#overview}
 
 ### ¿Qué es VPC Lattice?
 
-VPC Lattice proporciona redes de aplicaciones sin que sea necesario colocar un proxy junto a cada aplicación. Una **red de servicios** agrupa servicios y configuraciones de recursos, y los conecta con consumidores autorizados. Los servicios proporcionan listeners, reglas de enrutamiento, grupos de destino y nombres DNS de servicio.
+VPC Lattice proporciona conectividad para aplicaciones sin exigir un proxy junto a cada una. Una **red de servicios (service network)** agrupa servicios y configuraciones de recursos, y permite que los consumidores autorizados accedan a ellos. Cada servicio ofrece listeners, reglas de enrutamiento, grupos de destinos (target groups) y un nombre DNS propio.
 
-El producto actual también conecta **configuraciones de recursos** mediante puertas de enlace de recursos, incluidos recursos como bases de datos RDS que usan TCP. Este modelo de acceso a recursos es distinto de un servicio HTTP respaldado por un grupo de destino; las políticas de autenticación de IAM de la red de servicios/servicio no autorizan el tráfico de configuraciones de recursos. Un **endpoint de VPC de la red de servicios**, basado en PrivateLink, puede proporcionar acceso desde clientes a los que se llega a través de peering, Transit Gateway, Direct Connect o VPN. Una asociación directa de VPC, por sí sola, no extiende el acceso a clientes detrás de una puerta de enlace de tránsito o una conexión de peering.
+La versión actual de VPC Lattice también permite acceder a **configuraciones de recursos** mediante puertas de enlace de recursos, incluidas bases de datos RDS que usan TCP. Este modelo es distinto del de un servicio HTTP con un grupo de destinos: las políticas de autenticación IAM de la red de servicios o del servicio no autorizan el tráfico hacia configuraciones de recursos. Un **endpoint de VPC de la red de servicios**, basado en PrivateLink, puede dar acceso a clientes que llegan mediante emparejamiento de VPC, Transit Gateway, Direct Connect o VPN. Una asociación directa de VPC, por sí sola, no extiende el acceso a clientes que están detrás de una puerta de enlace de tránsito o una conexión de emparejamiento.
 
-Entre los usos habituales se incluyen las API de aplicaciones entre cuentas, la comunicación entre EKS y otros servicios de cómputo, y el acceso compartido a recursos de datos. La asociación, el enrutamiento, los grupos de seguridad, la autenticación y la autorización de aplicaciones siguen requiriendo configuración.
+Los usos habituales incluyen API de aplicaciones entre cuentas, comunicación entre EKS y otros servicios de computación, y acceso compartido a recursos de datos. La asociación, el enrutamiento, los security groups, la autenticación y la autorización de la aplicación aún requieren configuración.
 
 ### Comparación con otros servicios
 
-| Servicio | Responsabilidad principal | Diferencia importante |
+| Servicio | Responsabilidad principal | Distinción importante |
 |---|---|---|
-| VPC Lattice | Conectividad privada de aplicaciones y recursos | Enrutamiento de servicios HTTP/HTTPS/gRPC y capacidades independientes de recursos TLS/TCP; no es una puerta de entrada de API a Internet |
-| API Gateway | Endpoints de API administrados y administración de API | Las API REST, HTTP o WebSocket tienen distintas funciones; GraphQL no es un tipo de API independiente de API Gateway |
-| AWS App Mesh | Malla de servicios basada en Envoy | El soporte de AWS finalizó el **2026-09-30**; la consola y los recursos ya no están accesibles. Migra las implementaciones existentes; no lo uses para instalaciones nuevas |
-| Transit Gateway | Conectividad de red mediante enrutamiento IP | Conecta redes; no reemplaza el enrutamiento HTTP ni la autorización por servicio |
-| Istio / Linkerd / Cilium | Capacidades de malla implementadas con sus respectivos planos de datos | Las funciones y los costos operativos varían. Los sidecars no son obligatorios en todas las arquitecturas de malla |
+| VPC Lattice | Conectividad privada de aplicaciones y recursos | Enrutamiento de servicios HTTP/HTTPS/gRPC y capacidades separadas de recursos TLS/TCP; no es una puerta de entrada de API de Internet |
+| API Gateway | Endpoints de API administrados y gestión de API | Las API REST, HTTP o WebSocket tienen características diferentes; GraphQL no es un tipo de API de API Gateway independiente |
+| AWS App Mesh | Service mesh basado en Envoy | El soporte de AWS finalizó el **2026-09-30**; la consola y los recursos ya no son accesibles. Migre los despliegues existentes; no es para instalaciones nuevas |
+| Transit Gateway | Conectividad de red mediante enrutamiento IP | Conecta redes; no sustituye el enrutamiento y la autorización HTTP por servicio |
+| Istio / Linkerd / Cilium | Capacidades de mesh implementadas con sus respectivos planos de datos | Las características y los costes operativos difieren. Los sidecars no son obligatorios en todas las arquitecturas de mesh |
 
-VPC Lattice elimina la necesidad de operar su plano de datos administrado, pero no garantiza un menor costo total ni una funcionalidad de malla idéntica. Compara los cargos por solicitudes/datos/recursos, las operaciones del controlador, los requisitos de identidad, los reintentos, las funciones de enrutamiento y la observabilidad para la carga de trabajo real. Consulta la [comparación entre Istio y Lattice](../service-mesh/istio/comparison/02-istio-vs-lattice.md).
+VPC Lattice elimina la necesidad de operar su plano de datos gestionado, pero no garantiza un coste total menor ni ofrece las mismas funciones que una malla de servicios. Compare los cargos por solicitudes, datos y recursos, las operaciones del controlador, los requisitos de identidad, los reintentos, las funciones de enrutamiento y la observabilidad para la carga de trabajo real. Consulte la [comparación de Istio y Lattice](../service-mesh/istio/comparison/02-istio-vs-lattice.md).
 
 ## Arquitectura {#architecture}
 
-### Componentes y flujo del tráfico
+### Componentes y flujo de tráfico
 
 | Componente | Responsabilidad |
 |---|---|
-| Red de servicios | Agrupación lógica y asociaciones; límite opcional de autorización de IAM |
-| Servicio | Endpoint de aplicación con su propio nombre DNS |
-| Listener y reglas | Pertenecen a un **servicio**; seleccionan acciones y grupos de destino |
-| Grupo de destino | Destinos registrados de tipo instancia, IP, Lambda o ALB, con comportamiento específico según el tipo de destino |
-| Asociación de VPC | Permite que los clientes de una VPC asociada accedan a la red, sujeto a los controles de seguridad |
-| Endpoint de VPC de la red de servicios | Acceso basado en PrivateLink, incluidas las rutas de tránsito o locales compatibles |
-| Configuración de recursos / puerta de enlace de recursos | Modelo independiente de acceso a recursos, incluidos recursos TCP/bases de datos |
+| Red de servicios (service network) | Agrupación lógica y asociaciones; límite opcional de autorización IAM |
+| Servicio | Punto de acceso de la aplicación con su propio nombre DNS |
+| Listener y reglas | Pertenecen a un **servicio**; seleccionan acciones y grupos de destinos |
+| Grupo de destinos (target group) | Instancias, direcciones IP, funciones Lambda o destinos ALB registrados, con comportamiento propio de cada tipo |
+| Asociación de VPC | Permite que los clientes de una VPC asociada accedan a la red, sujetos a los controles de seguridad |
+| Endpoint de VPC de la red de servicios | Acceso basado en PrivateLink, incluidas las rutas compatibles desde redes de tránsito o locales |
+| Configuración de recursos / puerta de enlace de recursos | Modelo de acceso independiente, incluidos recursos TCP y bases de datos |
 
-![Tres VPC de dos cuentas de AWS se asocian a una red de servicios, cuyos servicios usan grupos de destino para cargas de trabajo de EC2, EKS y Lambda.](../.gitbook/assets/en-networking-02-vpc-lattice-1.png)
+![Tres VPC de dos cuentas de AWS se asocian con una red de servicios, cuyos servicios usan grupos de destinos para cargas de trabajo de EC2, EKS y Lambda.](../.gitbook/assets/en-networking-02-vpc-lattice-1.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-02-vpc-lattice-1.html)
 
-La figura muestra asociaciones lógicas, no un único proceso de enrutador. El acceso también depende de la conectividad de red y de las políticas aplicables. Una solicitud resuelve el nombre DNS del **servicio**, llega a su listener, supera las comprobaciones de autorización aplicables y se enruta a un destino según las reglas del listener. Un grupo de destino describe destinos; no es otro salto de aplicación.
+La figura muestra asociaciones lógicas, no un único proceso de enrutamiento. El acceso también depende de la conectividad de red y de las políticas aplicables. Una solicitud resuelve el nombre DNS **del servicio**, llega a su listener, supera las comprobaciones de autorización aplicables y se enruta a un destino según las reglas del listener. Un grupo de destinos describe los destinos finales; no representa otro salto de aplicación.
 
-Usa `get-service --query dnsEntry` o la anotación de ruta del controlador para descubrir el dominio real. No lo construyas a partir del nombre del servicio y del ID de la red de servicios. El nombre asignado contiene identificadores específicos del servicio; si se vuelve a crear un servicio, su nombre puede cambiar.
+Use `get-service --query dnsEntry` o la anotación de ruta del controlador para descubrir el dominio real. No lo construya a partir del nombre del servicio y del ID de la red de servicios. El nombre asignado contiene identificadores propios del servicio y puede cambiar si se vuelve a crear el servicio.
 
 ### Modelo de seguridad
 
-El acceso a la red, la autorización de IAM y el cifrado son controles independientes. `AWS_IAM` requiere una solicitud firmada compatible y las políticas correspondientes. `NONE` desactiva la autenticación de IAM en esa capa en particular; no omite las políticas de IAM de otras capas, los grupos de seguridad ni la autorización de la aplicación. HTTPS protege el tráfico entre el cliente y Lattice. El HTTP del backend permanece sin cifrar, salvo que se configure explícitamente TLS en el backend.
+El acceso de red, la autorización IAM y el cifrado son controles independientes. `AWS_IAM` requiere una solicitud firmada compatible y políticas apropiadas. `NONE` deshabilita la autenticación IAM en esa capa concreta; no omite la política IAM de otra capa, los grupos de seguridad ni la autorización de la aplicación. HTTPS protege el tráfico del cliente a Lattice. El HTTP del backend sigue en texto sin cifrar salvo que TLS del backend se configure explícitamente.
 
 ## Integración de EKS y VPC Lattice {#eks-and-vpc-lattice-integration}
 
-AWS Gateway API Controller reconcilia los recursos de Kubernetes con los recursos de VPC Lattice:
+AWS Gateway API Controller reconcilia recursos de Kubernetes en recursos de VPC Lattice:
 
-| Recurso de Kubernetes | Interpretación en Lattice |
+| Recurso de Kubernetes | Interpretación de Lattice |
 |---|---|
 | GatewayClass | Selecciona `application-networking.k8s.aws/gateway-api-controller` |
-| Gateway | Hace referencia a una red de servicios por el **nombre del Gateway**, sin su espacio de nombres |
+| Gateway | Hace referencia a una red de servicios mediante el **nombre del recurso Gateway**, sin incluir su espacio de nombres |
 | HTTPRoute / GRPCRoute | Crea un servicio con su propio dominio y configuración de listener/enrutamiento |
-| Service de backend y sus endpoints | Definen grupos de destino y endpoints de Pod registrados |
-| TargetGroupPolicy | Configura el protocolo y las comprobaciones de estado del grupo de destino |
-| IAMAuthPolicy | Asocia una política de autenticación a la red de un Gateway o al servicio de una Route |
-| AccessLogPolicy | Configura el destino del registro de acceso de un recurso de destino |
+| Servicio backend y sus endpoints | Definen grupos de destinos y los endpoints de Pod registrados |
+| TargetGroupPolicy | Configura el protocolo y las comprobaciones de estado del grupo de destinos |
+| IAMAuthPolicy | Adjunta una política de autenticación a la red de un Gateway o al servicio de una Route |
+| AccessLogPolicy | Configura el destino de los registros de acceso de un recurso de destino |
 
-Dos Gateways con el mismo nombre pueden hacer referencia a la misma red de servicios, aunque sus espacios de nombres de Kubernetes sean distintos. Un Gateway por sí solo **no** crea la red ni una IP de entrada compartida. La red puede administrarse externamente, con la opción `defaultServiceNetwork` del controlador para casos sencillos, o con el CRD ServiceNetwork del controlador. Elige un único responsable para cada recurso de la nube.
+Dos Gateways con el mismo nombre pueden hacer referencia a la misma red de servicios aunque estén en espacios de nombres de Kubernetes distintos. Un Gateway por sí solo **no** crea la red ni una IP de entrada compartida. La red puede gestionarse externamente, mediante la opción `defaultServiceNetwork` del controlador para casos sencillos o mediante el CRD ServiceNetwork del controlador. Elija un único responsable para cada recurso en la nube.
 
-Los ejemplos siguientes usan una red y una asociación de VPC administradas externamente. Dejan `defaultServiceNetwork` sin configurar y no asocian una VpcAssociationPolicy a esa asociación. Si adoptas el modelo basado en CRD, administra la red, la asociación de VPC y la autorización como recursos independientes; no administres también los mismos recursos con CloudFormation.
+Los ejemplos siguientes usan una red y una asociación de VPC gestionadas externamente. Dejan `defaultServiceNetwork` sin configurar y no adjuntan una VpcAssociationPolicy a esa asociación. Si adopta el modelo basado en CRD, gestione la red, la asociación de VPC y la autorización como recursos independientes; no gestione esos mismos recursos también con CloudFormation.
 
 ## Instalación y configuración {#installation-and-configuration}
 
 ### Requisitos previos
 
-La guía de actualización a v2.1 del controlador requiere **Kubernetes 1.31 o posterior** y Gateway API **1.5 o posterior**. Este ejemplo fija la versión con la que se creó v2.1: **1.5.0**. Este mínimo no es una matriz de compatibilidad de EKS ni una prueba de compatibilidad con todas las versiones posteriores de Gateway API. Comprueba el ciclo de vida de las versiones de EKS y todos los controladores que comparten los CRD de Gateway API antes de cambiarlos. En particular, un controlador v2.0 puede fallar tras la transición de almacenamiento/API de TLSRoute introducida con Gateway API 1.5.
+La guía de actualización v2.1 del controlador requiere **Kubernetes 1.31 o posterior** y Gateway API **1.5 o posterior**. Este ejemplo fija la versión con la que se compiló v2.1: **1.5.0**. Este mínimo no constituye una matriz de versiones compatibles de EKS ni demuestra compatibilidad con todas las versiones posteriores de Gateway API. Antes de cambiar los CRD de Gateway API, compruebe el ciclo de vida de las versiones de EKS y de todos los controladores que los comparten. En particular, un controlador v2.0 puede fallar tras el cambio de almacenamiento/API de TLSRoute introducido en Gateway API 1.5.
 
-Usa un clúster de EKS compatible, versiones coincidentes de `kubectl`, Helm y AWS CLI v2, y un rol de operador con permisos para configurar los recursos previstos. El backend de ejemplo presupone Pods Linux con IP a las que VPC Lattice pueda acceder. Confirma la configuración de CNI del clúster, la capacidad de las subredes, la disponibilidad de los endpoints, DNS y las políticas de red.
+Use un clúster de EKS compatible, las versiones correspondientes de `kubectl`, Helm y AWS CLI v2, y un rol de operador autorizado para configurar los recursos previstos. El backend de ejemplo presupone Pods Linux con direcciones IP accesibles desde VPC Lattice. Compruebe la CNI del clúster, la capacidad de las subredes, la disponibilidad de los endpoints, el DNS y la configuración de las políticas de red.
 
 ```bash
 export AWS_REGION=us-west-2
@@ -104,15 +104,15 @@ kubectl config current-context
 kubectl version
 ```
 
-Sustituye el ID del grupo de seguridad de ejemplo. El grupo de seguridad de la asociación de VPC debe permitir el acceso de **clientes aprobados** por TCP 443. Los grupos de seguridad de los Pods/nodos del backend deben permitir la lista de prefijos administrada de Lattice aplicable en el puerto real del backend/de comprobación de estado, que aquí es TCP 8080. Inspecciona los grupos asociados a la ENI real del Pod o del nodo en vez de dar por hecho que todos los nodos usan el grupo de seguridad del clúster de EKS. Permite también que el plano de control de EKS acceda al webhook del controlador en el puerto requerido. No abras todos los puertos a toda Internet.
+Sustituya el ID de ejemplo del grupo de seguridad. El grupo de seguridad de la asociación de VPC debe permitir el acceso de **clientes autorizados** por TCP 443. Los grupos de seguridad de los Pods o nodos de backend deben permitir la lista de prefijos administrada por Lattice que corresponda, en el puerto real del backend y de la comprobación de estado (TCP 8080 en este ejemplo). Inspeccione los grupos asociados a la ENI real del Pod o del nodo; no suponga que todos los nodos usan el grupo de seguridad del clúster de EKS. Permita también que el plano de control de EKS alcance el webhook del controlador por el puerto requerido. No abra todos los puertos a todo Internet.
 
-### Configuración del rol de IAM
+### Configuración del rol IAM
 
-El **rol del controlador** administra los recursos de la nube. El **rol del llamador** firma las solicitudes de la aplicación y necesita `vpc-lattice-svcs:Invoke`; son roles distintos.
+El **rol del controlador** administra los recursos en la nube. El **rol del llamador** firma las solicitudes de la aplicación y necesita `vpc-lattice-svcs:Invoke`; son roles distintos.
 
-Usa EKS Pod Identity en los nodos compatibles o IRSA. El ejemplo de IRSA siguiente presupone que el proveedor de OIDC de IAM del clúster ya existe y crea una cuenta de servicio dedicada. Para Pod Identity, usa el complemento actual de EKS y una asociación para este mismo espacio de nombres/cuenta de servicio, con la política de confianza correspondiente; no dependas también de una anotación de IRSA para el mismo ejemplo.
+Use EKS Pod Identity en los nodos compatibles o IRSA. El ejemplo de IRSA presupone que ya existe el proveedor IAM OIDC del clúster y crea una cuenta de servicio dedicada. Para Pod Identity, use el complemento actual de EKS y una asociación para ese mismo espacio de nombres y cuenta de servicio, con la política de confianza adecuada. No combine ambos métodos ni dependa de una anotación IRSA en este ejemplo.
 
-La política recomendada para el controlador en esta versión incluye permisos amplios `vpc-lattice:*` y permisos de registro/etiquetado. Considérala un punto de partida del proyecto upstream, **no una política de privilegio mínimo**. Revisa su ámbito de recursos y las funciones habilitadas, conserva las condiciones restringidas del rol vinculado al servicio y guarda la política revisada antes de crearla. En ejecuciones posteriores, reutiliza el ARN de una política existente y revisada en vez de crear políticas duplicadas.
+La política recomendada para el controlador en esta versión incluye permisos amplios de `vpc-lattice:*` y de registro y etiquetado. Tómela como punto de partida del proyecto, **no como una política de mínimo privilegio**. Revise el alcance de los recursos y las funciones habilitadas, conserve las condiciones restrictivas del rol vinculado al servicio y guarde la política revisada antes de crearla. En ejecuciones posteriores, reutilice el ARN de una política ya revisada en vez de crear duplicados.
 
 ```bash
 curl --fail --location --output controller-policy-upstream.json \
@@ -135,7 +135,7 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
-Una cuenta de servicio existente requiere una migración intencional de propiedad/rol; el ejemplo no la sobrescribe automáticamente.
+Una cuenta de servicio existente requiere una migración deliberada de propiedad o de rol; el ejemplo no la sobrescribe automáticamente.
 
 ### Instalar el controlador publicado
 
@@ -165,15 +165,15 @@ kubectl -n aws-application-networking-system logs \
   -l control-plane=gateway-api-controller -c manager --tail=100
 ```
 
-Para una versión existente de Helm, usa un plan revisado de `helm upgrade` con los valores guardados. Helm no actualiza automáticamente los CRD de `crds/`; revisa sus cambios por separado. No elimines CRD de Gateway API compartidos ni políticas de admisión para conseguir que se complete una actualización.
+Si ya existe una instalación de Helm, prepare un plan revisado de `helm upgrade` con los valores guardados. Helm no actualiza automáticamente los CRD de `crds/`; revise esos cambios por separado. No elimine CRD compartidos de Gateway API ni políticas de admisión para que la actualización funcione.
 
-Para implementar mediante manifiestos, renderiza este **mismo chart** con `helm template --include-crds`, usando los mismos valores y la misma elección de cuenta de servicio; luego revisa y aplica el manifiesto resultante. Así se conservan los permisos RBAC publicados, las observaciones de EndpointSlice, los permisos de elección de líder y la configuración del webhook. No uses la implementación manual obsoleta de v1.0. El chart genera certificados del webhook, salvo que se proporcionen explícitamente o se administren mediante su opción cert-manager; durante las actualizaciones, mantén coherentes el Secret del webhook y el paquete de CA en lugar de volver a generar uno por separado.
+Para entregar la instalación mediante manifiestos, genere **este mismo chart** con `helm template --include-crds`, los mismos valores y la misma elección de cuenta de servicio; después revise y aplique el manifiesto resultante. Así se conservan el RBAC publicado, la observación de EndpointSlice, los permisos de elección de líder y la configuración del webhook. No use el obsoleto despliegue v1.0 escrito a mano. El chart genera certificados para el webhook, salvo que se proporcionen explícitamente o se administren con la opción cert-manager; durante las actualizaciones, mantenga coherentes el Secret del webhook y el paquete de certificados CA en vez de regenerarlos por separado.
 
 ### Crear la red de servicios
 
-Elige **CLI o CloudFormation**, no ambas, para la misma red. El ejemplo de CLI crea una red `AWS_IAM`. Hasta que se instale y propague una política Allow aplicable, las solicitudes se deniegan.
+Elija **CLI o CloudFormation**, no ambas opciones para la misma red. El ejemplo de CLI crea una red con `AWS_IAM`. Las solicitudes se deniegan hasta que se instale y propague una política aplicable con efecto `Allow`.
 
-Guarda lo siguiente como `api-auth-policy.json` y sustituye la cuenta y el rol del llamador. La política de red permite deliberadamente solo el endpoint `/api` de esta demostración y sus subrutas. Una red de producción necesita una política revisada que incluya los servicios y llamadores previstos.
+Guarde lo siguiente como `api-auth-policy.json` y sustituya la cuenta y el rol del llamador. Para esta demostración, la política de red permite deliberadamente solo el endpoint `/api` y sus subrutas. Una red de producción requiere una política revisada que cubra los servicios y llamadores previstos.
 
 ```json
 {
@@ -222,9 +222,9 @@ aws vpc-lattice list-service-network-vpc-associations \
   --service-network-identifier "$SERVICE_NETWORK_ID"
 ```
 
-Comprueba que la asociación esté `ACTIVE`, que la red siga teniendo `authType: AWS_IAM` y que `get-auth-policy` devuelva la política prevista antes de exponer una ruta. La propagación de políticas puede tardar unos minutos.
+Verifique que la asociación esté `ACTIVE`, que la red aún tenga `authType: AWS_IAM` y que `get-auth-policy` devuelva la política prevista antes de exponer una ruta. La propagación de políticas puede tardar unos minutos.
 
-La plantilla equivalente de CloudFormation para la **red y la asociación** es:
+La plantilla de CloudFormation equivalente de **red y asociación** es:
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09'
@@ -264,11 +264,11 @@ Outputs:
     Value: {Fn::GetAtt: [ServiceNetwork, Id]}
 ```
 
-Esta plantilla no asocia una política de autenticación. Añade un recurso de política de autenticación dentro del mismo modelo de propiedad o aplica explícitamente la política de red revisada antes de probar las solicitudes. Obtén el ID/ARN de la red de las salidas de la pila. Valida la plantilla y revisa un conjunto de cambios antes de implementarla; el ejemplo no crea la VPC ni sus grupos de seguridad.
+Esta plantilla no adjunta una política de autenticación. Añada un recurso de política de autenticación bajo el mismo modelo de propiedad o aplique explícitamente la política de red revisada antes de probar las solicitudes. Obtenga el ID o ARN de la red en las salidas de la pila. Valide la plantilla e inspeccione un conjunto de cambios antes del despliegue; el ejemplo no crea la VPC ni sus grupos de seguridad.
 
 ### Gateway y aplicación
 
-Guarda y aplica esto como `gateway.yaml`. El nombre del Gateway debe coincidir con `my-network`, creado anteriormente.
+Guarde esto como `gateway.yaml` y aplíquelo. El nombre del recurso Gateway debe coincidir con `my-network`, creado anteriormente.
 
 ```yaml
 apiVersion: v1
@@ -300,9 +300,9 @@ spec:
       - name: unused
 ```
 
-`certificateRefs: [{name: unused}]` sigue la configuración documentada de este controlador: cumple la configuración TLS de Gateway API, pero este controlador no lee ningún Secret TLS de Kubernetes allí. Si no hay un nombre de host personalizado, Lattice proporciona un certificado para su dominio generado. Esto es **específico del controlador**, no una receta portátil para administrar certificados.
+`certificateRefs: [{name: unused}]` sigue la configuración documentada de este controlador: satisface la configuración TLS de Gateway API, pero este controlador no lee allí ningún Secret TLS de Kubernetes. Si no se configura un nombre de host personalizado, Lattice proporciona un certificado para el dominio generado. Este comportamiento es **específico del controlador** y no constituye una receta de gestión de certificados portable a otros controladores.
 
-Guarda lo siguiente como `stable.yaml`. Configura NGINX para que realmente escuche en 8080 y sirva `/health`; declarar solo `containerPort` no haría ninguna de las dos cosas.
+Guarde lo siguiente como `stable.yaml`. Configura NGINX para que escuche en el puerto 8080 y sirva `/health`; declarar solo `containerPort` no consigue ninguna de esas dos cosas.
 
 ```yaml
 apiVersion: v1
@@ -415,9 +415,9 @@ spec:
     targetPort: http
 ```
 
-Crea `canary.yaml` a partir de los mismos tres objetos; cambia todos los nombres `service-stable` por `service-canary`, cambia las etiquetas `version: stable` de los selectores y las plantillas por `version: canary`, y cambia el valor de respuesta JSON `"stable"` por `"canary"`. Mantén sin cambios `app: lattice-demo`, el puerto y el endpoint de comprobación de estado. Aplica ambos archivos en `lattice-demo`. La imagen fijada tiene variantes Linux AMD64 y ARM64. Las solicitudes de recursos y el número de réplicas son valores de demostración, no un dimensionamiento de producción medido.
+Cree `canary.yaml` a partir de los mismos tres objetos. Cambie cada nombre `service-stable` a `service-canary`, las etiquetas `version: stable` tanto del selector como de la plantilla por `version: canary`, y el valor JSON de respuesta `"stable"` por `"canary"`. Mantenga sin cambios `app: lattice-demo`, el puerto y el endpoint de comprobación de estado. Aplique ambos archivos en `lattice-demo`. La imagen fijada tiene variantes para Linux AMD64 y ARM64. Las solicitudes de recursos y el número de réplicas son valores de demostración, no un dimensionamiento de producción medido.
 
-Guarda y aplica la siguiente `TargetGroupPolicy`; crea una política `canary-health` equivalente para `service-canary`.
+Guarde y aplique la siguiente `TargetGroupPolicy`; cree una política `canary-health` equivalente destinada a `service-canary`.
 
 ```yaml
 apiVersion: application-networking.k8s.aws/v1alpha1
@@ -445,13 +445,13 @@ spec:
     statusMatch: '200'
 ```
 
-El CRD usa `intervalSeconds`, `timeoutSeconds` y `statusMatch`. AWS CLI usa nombres de campos distintos, que se muestran más adelante. Cambiar el protocolo/la versión puede sustituir un grupo de destino; eliminar la política revierte su configuración, incluido el comportamiento HTTP/HTTP1 predeterminado.
+El CRD usa `intervalSeconds`, `timeoutSeconds` y `statusMatch`. La CLI de AWS usa otros nombres de campo, que se muestran más adelante. Cambiar el protocolo o la versión puede sustituir un grupo de destinos; al eliminar la política se revierten sus ajustes, incluido el comportamiento HTTP/HTTP1 predeterminado.
 
-## Administración de servicios {#service-management}
+## Gestión de servicios {#service-management}
 
 ### Crear un servicio mediante HTTPRoute
 
-Guarda esto como `api-route.yaml`. Guarda también la IAMAuthPolicy siguiente como `api-iam.yaml`. Aplica la aplicación y las políticas de comprobación de estado, y luego la ruta y la política de autenticación. Mantén activa la política de nivel de red `AWS_IAM` mientras la reconciliación crea y protege el servicio de la ruta.
+Guarde esto como `api-route.yaml` y la IAMAuthPolicy siguiente como `api-iam.yaml`. Aplique las políticas de la aplicación y de comprobación de estado; después, aplique la ruta y la política de autenticación. Mantenga activa la política de red `AWS_IAM` mientras la reconciliación crea y protege el servicio de la ruta.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -491,9 +491,9 @@ spec:
   policy: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::123456789012:role/MyAppRole"},"Action":"vpc-lattice-svcs:Invoke","Resource":"*","Condition":{"StringLike":{"vpc-lattice-svcs:RequestPath":["/api","/api/*"]}}}]}'
 ```
 
-`spec.policy` es una **cadena** JSON. Este CRD habilita `AWS_IAM` en el servicio de destino; una anotación de tipo de autenticación o un ConfigMap que contenga una política no lo sustituye. Una política que tenga como destino `Gateway` administraría en cambio la política de la red, por lo que no debe competir con la política de red administrada externamente en este ejemplo.
+`spec.policy` es una **cadena** JSON. Este CRD habilita `AWS_IAM` en el servicio de destino; una anotación de tipo de autenticación o un ConfigMap que contiene una política no lo sustituye. Una política destinada a `Gateway` gestionaría en cambio la política de la red, por lo que no debe competir con la política de red gestionada externamente en este ejemplo.
 
-Inspecciona los estados `Accepted` / `ResolvedRefs` y el estado de las políticas, el estado del recurso de AWS correspondiente y la disponibilidad del backend. Un `kubectl apply` correcto no demuestra que la reconciliación de la nube o la entrega de registros se hayan realizado correctamente.
+Inspeccione `Accepted` / `ResolvedRefs`, el estado de la política y del recurso de AWS correspondiente, y la disponibilidad del backend. Que `kubectl apply` termine correctamente no demuestra que la reconciliación en la nube ni la entrega de registros hayan funcionado.
 
 ```bash
 kubectl -n lattice-demo get gateway my-network -o yaml
@@ -511,11 +511,11 @@ test -n "$SERVICE_DNS"
 lattice-client/bin/python lattice_get.py --region "$AWS_REGION" "https://${SERVICE_DNS}/api"
 ```
 
-Configura el cliente firmado de la sección siguiente antes de ejecutar el último comando. Ejecútalo desde una ubicación de red autorizada con credenciales del **rol del llamador**. Tu estación de trabajo necesita una ruta de red adecuada además de credenciales de AWS.
+Configure el cliente firmado de la sección siguiente antes de ejecutar el último comando. Ejecútelo desde una ubicación con acceso de red autorizado y credenciales del **rol del llamador**. La estación de trabajo necesita una ruta de red adecuada y credenciales de AWS.
 
 ### Cliente HTTPS firmado
 
-Guarda esto como `lattice_get.py`. Usa la cadena de proveedores de credenciales predeterminada de AWS, fija las credenciales para cada solicitud, firma para **`vpc-lattice-svcs`** y establece **`UNSIGNED-PAYLOAD`**, tal como requiere VPC Lattice. Valida TLS, no sigue redirecciones con una firma obsoleta y no vuelve a intentar las solicitudes automáticamente.
+Guarde este archivo como `lattice_get.py`. Usa la cadena predeterminada de proveedores de credenciales de AWS, obtiene una copia fija de las credenciales para cada solicitud y firma para **`vpc-lattice-svcs`** con **`UNSIGNED-PAYLOAD`**, tal como requiere VPC Lattice. Valida TLS, no sigue redirecciones que dejarían una firma obsoleta y no reintenta las solicitudes automáticamente.
 
 ```python
 import argparse
@@ -581,11 +581,11 @@ lattice-client/bin/python -m pip install 'botocore==1.43.93'
 lattice-client/bin/python lattice_get.py --region "$AWS_REGION" "https://${SERVICE_DNS}/api"
 ```
 
-Este ejemplo, que solo admite GET, se comprobó con Python 3.12 y botocore 1.43.93. Las cargas de trabajo deben usar las credenciales de Pod Identity o IRSA que tengan configuradas. No copies credenciales estáticas ni encabezados firmados en manifiestos, registros ni solicitudes de soporte. VPC Lattice también admite SigV4A; este ejemplo usa SigV4 regional.
+Este ejemplo, que solo realiza solicitudes GET, se verificó con Python 3.12 y botocore 1.43.93. Las cargas de trabajo deben usar las credenciales configuradas de Pod Identity o IRSA. No copie credenciales estáticas ni encabezados firmados en manifiestos, registros o tickets de soporte. VPC Lattice también admite SigV4A; este ejemplo usa SigV4 regional.
 
-### Administración directa de la API de AWS
+### Gestión directa mediante AWS API
 
-Lo siguiente es una **alternativa** para recursos administrados de forma independiente. Usa una IP de backend estable y accesible que sirva HTTP en 8080 y `/health`; una IP temporal de Pod requiere un controlador que siga sus reemplazos. No cambies manualmente un servicio propiedad de HTTPRoute esperando que el controlador conserve el cambio.
+Lo siguiente es una **alternativa** para administrar recursos por separado. Use una dirección IP estable y accesible para el backend, que atienda HTTP en el puerto 8080 y `/health`; si usa la IP temporal de un Pod, un controlador debe seguir sus reemplazos. No modifique manualmente un servicio gestionado por HTTPRoute y espere que el controlador conserve el cambio.
 
 ```bash
 # Separate API-managed example; do not use for controller-managed resources.
@@ -610,21 +610,21 @@ aws vpc-lattice list-targets --target-group-identifier "$TARGET_GROUP_ID"
 aws vpc-lattice get-service --service-identifier "$SERVICE_ID" --query dnsEntry
 ```
 
-Espera a que haya destinos en buen estado y asociaciones activas antes de llamar al dominio HTTPS detectado. Este ejemplo usa un certificado administrado por AWS para el dominio generado, no un dominio personalizado.
+Antes de llamar al dominio HTTPS descubierto, espere a que los destinos estén en buen estado y las asociaciones, activas. Este ejemplo usa un certificado gestionado por AWS para el dominio generado, no para un dominio personalizado.
 
-### Actualización y eliminación de servicios
+### Actualizar y eliminar servicios
 
-Para recursos propiedad de Kubernetes, cambia la Route, la carga de trabajo del backend o el manifiesto de la política y verifica la reconciliación. Para recursos propiedad de la API, usa la API de actualización correspondiente y comprueba el estado resultante. Captura los ID de los recursos de las respuestas en lugar de seleccionar el primer servicio de la cuenta.
+Para recursos gestionados por Kubernetes, cambie el manifiesto de Route, la carga de trabajo del backend o la política, y compruebe la reconciliación. Para recursos gestionados mediante la API, use la operación de actualización correspondiente y compruebe el estado resultante. Anote los ID de recursos devueltos en las respuestas; no seleccione el primer servicio de la cuenta.
 
-Antes de eliminar recursos, identifica a todos los consumidores, las asociaciones de red, los listeners/reglas, las referencias a grupos de destino y la propiedad. Elimina las asociaciones de Route/servicio específicas y los recursos de servicio en el orden de sus dependencias; después, elimina los grupos de destino que ya no se usen. Un Gateway/red compartido puede afectar a otros espacios de nombres o cuentas. Conserva el controlador hasta que se completen los finalizadores y la limpieza de la nube; no uses eliminaciones masivas.
+Antes de eliminar recursos, identifique todos los consumidores, las asociaciones de red, los listeners y sus reglas, las referencias a grupos de destinos y quién es responsable de cada recurso. Elimine las asociaciones específicas de ruta y servicio, y después los recursos de servicio según sus dependencias; por último, elimine los grupos de destinos que ya no se usen. Un Gateway o una red compartidos pueden afectar a otros espacios de nombres o cuentas. Mantenga el controlador hasta que terminen los finalizers y la limpieza en la nube; no use eliminaciones indiscriminadas.
 
-**Al eliminar IAMAuthPolicy, se desactiva la autenticación de IAM en su destino (`NONE`) antes de separar la política.** No sirve para denegar el acceso ni para revertir la autorización de forma segura. Mantén una política restrictiva mientras eliminas un servicio y verifica los controles restantes de red/servicio.
+**Al eliminar IAMAuthPolicy, se deshabilita la autenticación IAM (`NONE`) en el recurso al que se aplica antes de desvincular la política.** No sirve para denegar el acceso ni para revertir la autorización de forma segura. Mantenga una política restrictiva mientras elimina el servicio y compruebe los controles restantes de red y servicio.
 
-## Enrutamiento y administración del tráfico {#routing-and-traffic-management}
+## Enrutamiento y gestión del tráfico {#routing-and-traffic-management}
 
-### Coincidencia de rutas y encabezados
+### Coincidencia de ruta y encabezado
 
-La ruta anterior coincide con `/api` y su subárbol. Para añadir una regla canary explícita basada en encabezados, sustituye la misma HTTPRoute por esta:
+La ruta anterior coincide con `/api` y con las rutas incluidas en su subárbol. Para añadir una regla explícita de canario basada en encabezados, sustituya la **misma** HTTPRoute por:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -661,13 +661,13 @@ spec:
       weight: 10
 ```
 
-El controlador documenta la coincidencia de rutas sin distinguir mayúsculas de minúsculas, una coincidencia de método por regla, hasta cinco coincidencias de encabezado y ninguna coincidencia de parámetros de consulta. No des por hecho que se implementan todos los filtros o coincidencias de Gateway API. Una HTTPRoute independiente crea otro servicio/dominio de Lattice, en lugar de añadir automáticamente una regla al primer servicio.
+El controlador admite, según su documentación, coincidencias de ruta que no distinguen mayúsculas de minúsculas, una coincidencia de método por regla y hasta cinco coincidencias de encabezado; no admite coincidencias de parámetros de consulta. No dé por hecho que implementa todos los filtros y tipos de coincidencia de Gateway API. Una HTTPRoute independiente crea otro servicio y dominio de Lattice; no añade automáticamente una regla al primer servicio.
 
 ### Enrutamiento ponderado
 
-`backendRefs.weight: 90` y `10` son configuración nativa de Gateway API; no se necesita ninguna anotación de enrutamiento ponderado. Expresan una distribución relativa, no un resultado exacto para diez solicitudes. Comprueba los endpoints, el estado, los errores y la latencia de ambas versiones en una muestra adecuada antes de aumentar el peso de canary.
+`backendRefs.weight: 90` y `10` son parámetros nativos de Gateway API; no hace falta una anotación de enrutamiento ponderado. Indican una proporción relativa, no un resultado exacto para cada grupo de diez solicitudes. Antes de aumentar el peso del canario, compruebe los endpoints, el estado, los errores y la latencia de ambas versiones con una muestra adecuada.
 
-Para recursos de AWS administrados de forma independiente:
+Para recursos AWS administrados independientemente:
 
 ```bash
 # TG_STABLE and TG_CANARY are existing target groups managed by this API workflow.
@@ -677,7 +677,7 @@ aws vpc-lattice create-rule --service-identifier "$SERVICE_ID" \
   --action "{\"forward\":{\"targetGroups\":[{\"targetGroupIdentifier\":\"${TG_STABLE}\",\"weight\":90},{\"targetGroupIdentifier\":\"${TG_CANARY}\",\"weight\":10}]}}"
 ```
 
-La coincidencia de prefijo de CLI es un prefijo léxico; revisa por separado el comportamiento en los límites y la semántica de `PathPrefix` de Kubernetes. Las coincidencias de enrutamiento no son un límite de autorización. No uses una prueba de enrutamiento de rutas como demostración de que una política de IAM cubre todas las variantes de rutas normalizadas o codificadas.
+La coincidencia de prefijo de la CLI comprueba el inicio literal de la ruta; analice por separado sus límites y la semántica `PathPrefix` de Kubernetes. Las reglas de enrutamiento no son un límite de autorización. Una prueba de enrutamiento por ruta no demuestra que la política IAM cubra todas las variantes normalizadas o codificadas de esa ruta.
 
 ### Comprobaciones de estado
 
@@ -688,21 +688,21 @@ aws vpc-lattice update-target-group --target-group-identifier "$TARGET_GROUP_ID"
   --health-check '{"enabled":true,"protocol":"HTTP","protocolVersion":"HTTP1","port":8080,"path":"/health","healthCheckIntervalSeconds":30,"healthCheckTimeoutSeconds":5,"healthyThresholdCount":2,"unhealthyThresholdCount":2,"matcher":{"httpCode":"200"}}'
 ```
 
-Las comprobaciones de estado evalúan si los destinos están listos para atender tráfico según los umbrales; no garantizan disponibilidad ni cero tiempo de inactividad. Los grupos de destino HTTP1 las habilitan de forma predeterminada, mientras que HTTP2 requiere una consideración explícita. Los destinos gRPC usan comprobaciones de estado HTTP1/HTTP2, y los tipos de destino Lambda/ALB tienen un comportamiento de comprobación de estado distinto. Consulta la documentación actual del tipo de destino en lugar de aplicar el ejemplo de Pod a todos los destinos.
+Las comprobaciones de estado evalúan la disponibilidad según umbrales, pero no garantizan disponibilidad ni tiempo de inactividad cero. Los grupos de destinos HTTP/1 las habilitan de forma predeterminada; en HTTP/2 hay que evaluarlas expresamente. Los destinos gRPC usan comprobaciones HTTP/1 o HTTP/2, mientras que los destinos Lambda y ALB tienen otros comportamientos. Consulte la documentación vigente para cada tipo de destino; no aplique el ejemplo de Pod a todos ellos.
 
 ## Seguridad y autenticación {#security-and-authentication}
 
-### Políticas de autenticación y permisos del llamador
+### Políticas de autenticación y permisos de llamador
 
-`put-auth-policy` / `get-auth-policy` administran la autorización de invocación. `put-resource-policy` es una API distinta de administración/uso compartido. Usa la acción **`vpc-lattice-svcs:Invoke`** para los llamadores.
+`put-auth-policy` y `get-auth-policy` gestionan la autorización de invocación. `put-resource-policy` pertenece a otra API, destinada a la gestión y el uso compartido de recursos. Para autorizar a los llamadores, use la acción **`vpc-lattice-svcs:Invoke`**.
 
-Cuando tanto la red como el servicio usan `AWS_IAM`, la política de identidad del llamador y **ambas** políticas de autenticación aplicables deben permitir el acceso. Un Deny explícito prevalece. `NONE` en un recurso no cancela el requisito de IAM de otro recurso. El tráfico directo a un ClusterIP/Pod IP de Kubernetes omite la autenticación de Lattice; protege esas rutas con controles de red y de aplicación adecuados.
+Cuando tanto la red como el servicio usan `AWS_IAM`, la política de identidad del llamador y **ambas** políticas de autenticación aplicables deben permitir el acceso. Un Deny explícito prevalece. `NONE` en un recurso no cancela el requisito IAM de otro recurso. El tráfico directo a una ClusterIP/IP de Pod de Kubernetes omite la autenticación de Lattice; proteja esas rutas con controles de red y aplicación apropiados.
 
-`StringEquals` no interpreta `/api/*` como comodín. El ejemplo usa `StringLike` e incluye tanto `/api` como `/api/*`. La coincidencia de condiciones de IAM y la normalización de rutas de la aplicación pueden diferir del enrutamiento del controlador. Para las funciones administrativas, prefiere un servicio dedicado y restringido a roles administrativos, y conserva la autorización de la aplicación; no añadas un Allow general amplio suponiendo que un comodín de ruta protege todos los alias.
+`StringEquals` no interpreta `/api/*` como un comodín. El ejemplo usa `StringLike` e incluye `/api` además de `/api/*`. La coincidencia de condiciones IAM y la normalización de rutas de la aplicación pueden diferir del enrutamiento del controlador. Para funciones administrativas, prefiera un servicio dedicado, restringido a roles administrativos, y mantenga la autorización de la aplicación; no añada un permiso general `Allow` de gran alcance suponiendo que un comodín de ruta protege todas las variantes.
 
 ### Acceso entre cuentas
 
-El uso compartido mediante RAM permite asociarse a la entidad compartida; por sí solo, no concede la invocación de la aplicación. Las políticas de autenticación de red/servicio, los permisos del llamador, los grupos de seguridad de la asociación y la ruta de red también deben permitir la solicitud.
+El uso compartido mediante RAM permite asociarse a la entidad compartida, pero no autoriza por sí mismo las llamadas a la aplicación. La solicitud también debe estar permitida por las políticas de autenticación de red y servicio, los permisos del llamador, los grupos de seguridad de la asociación y la ruta de red.
 
 ```bash
 # Owner account: choose a verified account ID or the actual Organizations ARN.
@@ -723,15 +723,15 @@ aws vpc-lattice create-service-network-vpc-association \
   --security-group-ids "$CONSUMER_ASSOCIATION_SG_ID"
 ```
 
-Si el uso compartido con Organizations está habilitado, los consumidores que pertenecen a la organización obtienen acceso sin invitación. Otros acuerdos de uso compartido compatibles requieren aceptar una invitación. Para compartir con una organización o unidad organizativa (OU), usa su **ARN real de Organizations**, incluido el identificador de la cuenta de administración, en lugar de construir uno a partir del ID de una cuenta miembro.
+Cuando se habilita el uso compartido mediante Organizations, los consumidores de la organización obtienen acceso sin invitación. Otros mecanismos de uso compartido admitidos requieren aceptar una invitación. Para compartir con una organización o una unidad organizativa (OU), use el **ARN real de Organizations**, incluido el ID de la cuenta de administración; no lo construya a partir del ID de una cuenta miembro.
 
-Los propietarios pueden compartir servicios, redes y configuraciones de recursos, pero no roles de IAM individuales como consumidores de RAM. Dejar de compartir impide nuevas asociaciones, pero **no elimina las asociaciones existentes**. Revísalas explícitamente al revocar el acceso.
+Los propietarios pueden compartir servicios, redes y configuraciones de recursos, pero no añadir roles IAM individuales como consumidores de RAM. Detener el uso compartido impide nuevas asociaciones, pero **no elimina las asociaciones existentes**. Al revocar el acceso, revíselas y elimínelas expresamente.
 
 ### TLS y dominios personalizados
 
-El Gateway de ejemplo solo expone HTTPS. Para usar un nombre de host personalizado, crea el servicio con ese nombre, obtén un certificado de ACM coincidente y configura DNS para que apunte al dominio asignado real. Solo se admite un dominio personalizado por servicio y no se puede cambiar después de crear el servicio.
+El Gateway de ejemplo solo expone HTTPS. Para usar un nombre de host personalizado, cree el servicio con ese nombre, obtenga un certificado ACM que coincida y configure DNS para resolverlo al dominio asignado por Lattice. Cada servicio admite un solo dominio personalizado, que no puede cambiarse después de crear el servicio.
 
-Para el controlador, configura `spec.hostnames` de HTTPRoute y `tls.options["application-networking.k8s.aws/certificate-arn"]` del listener de Gateway, o usa la detección de ACM documentada. No pongas claves privadas en una anotación. La automatización de ExternalDNS requiere además su controlador, permisos y el CRD DNSEndpoint; configurar un nombre de host no demuestra por sí solo que existan registros DNS.
+En el controlador, configure `spec.hostnames` de HTTPRoute y `tls.options["application-networking.k8s.aws/certificate-arn"]` del listener de Gateway, o use el mecanismo documentado de descubrimiento de ACM. No incluya claves privadas en una anotación. ExternalDNS requiere además su propio controlador, permisos y el CRD DNSEndpoint; configurar un nombre de host no demuestra que ya existan registros DNS.
 
 ```bash
 # For an API-managed service created with the required custom domain name:
@@ -741,22 +741,22 @@ aws vpc-lattice update-service --service-identifier "$SERVICE_ID" \
 # create-listener uses --protocol HTTPS; there is no --tls mode=STRICT option.
 ```
 
-HTTPS hacia el cliente y TLS del backend son independientes. Una `TargetGroupPolicy` de backend con `protocol: HTTPS` también requiere un backend que realmente use TLS y una comprobación de estado HTTPS compatible. VPC Lattice **no valida los certificados del backend**; esto cifra la conexión sin autenticar la identidad del certificado del backend. Usa el modelo independiente de paso transparente TLSRoute cuando ese sea el diseño previsto y revisa sus limitaciones funcionales.
+El HTTPS del cliente y el TLS del backend son independientes. Una `TargetGroupPolicy` con `protocol: HTTPS` requiere que el backend realmente use TLS y que la comprobación de estado también sea compatible con HTTPS. VPC Lattice **no valida los certificados del backend**: cifra la conexión, pero no autentica la identidad del certificado. Si ese es el diseño previsto, use el modelo independiente de TLSRoute con paso directo de TLS y revise sus limitaciones.
 
-## Supervisión y registro {#monitoring-and-logging}
+## Monitorización y registro {#monitoring-and-logging}
 
 ### Métricas de CloudWatch, panel y alarma
 
-Las métricas de servicio usan el espacio de nombres **`AWS/VpcLattice`**:
+Las métricas del servicio usan el espacio de nombres **`AWS/VpcLattice`**:
 
-| Métrica | Significado / estadística |
+| Métrica | Significado / estadístico |
 |---|---|
 | `TotalRequestCount` | Recuento de solicitudes; `Sum` |
 | `HTTPCode_4XX_Count` | Respuestas 4xx; `Sum` |
 | `HTTPCode_5XX_Count` | Respuestas 5xx; `Sum` |
-| `RequestTime` | Duración de la solicitud en **milisegundos**; promedio o un percentil adecuado |
+| `RequestTime` | Duración de solicitud en **milisegundos**; promedio o un percentil adecuado |
 
-Las métricas de servicio usan la dimensión `Service`, opcionalmente con `AvailabilityZone`; las métricas de grupos de destino usan `TargetGroup`. Un nombre como `ServiceName=my-service` no identifica estas métricas. Descubre los valores/conjuntos de dimensiones reales:
+Las métricas del servicio usan la dimensión `Service`, opcionalmente junto con `AvailabilityZone`; las de los grupos de destinos usan `TargetGroup`. Un nombre como `ServiceName=my-service` no identifica estas métricas. Consulte los valores y las combinaciones de dimensiones reales:
 
 ```bash
 aws cloudwatch list-metrics --namespace AWS/VpcLattice \
@@ -768,7 +768,7 @@ for metric in json.load(open("metrics.json"))["Metrics"]:
 PY
 ```
 
-Después de que el tráfico haya generado métricas, selecciona la matriz de dimensiones **de todo el servicio** previsto y guárdala como `service-dimensions.json`. No selecciones arbitrariamente el primer resultado ni mezcles una métrica de zona de disponibilidad con un agregado. Verifica el identificador con el servicio que se está observando. Crea `dashboard.json` con lo siguiente:
+Cuando ya haya tráfico y se hayan publicado métricas, seleccione el conjunto de dimensiones **de ámbito de servicio** que corresponda y guárdelo como `service-dimensions.json`. No elija el primer resultado sin comprobarlo ni mezcle una métrica de zona de disponibilidad con una agregada. Confirme que el identificador corresponde al servicio observado. Cree `dashboard.json` con:
 
 ```python
 import json
@@ -802,11 +802,11 @@ aws cloudwatch put-metric-alarm --alarm-name LatticeApi5xx \
   --treat-missing-data missing
 ```
 
-La alarma significa **más de cinco respuestas 5xx por minuto en dos de tres períodos**, no una tasa de error del 5 %. Configura por separado las acciones de alarma revisadas si se necesitan notificaciones. La opción de datos faltantes es explícita: las métricas se publican después de que empieza el tráfico y NoData no debe tratarse silenciosamente como prueba de buen estado. La configuración del panel y de la alarma son ejemplos, no SLO específicos de una carga de trabajo.
+La alarma indica **más de cinco respuestas 5xx por minuto en dos de tres períodos**; no representa una tasa de error del 5 %. Si necesita notificaciones, configure y revise por separado las acciones de alarma. La política para cuando faltan datos se especifica expresamente: las métricas se publican cuando comienza el tráfico, y `NoData` no debe interpretarse como prueba de buen estado. El panel y la alarma son ejemplos, no SLO definidos para una carga de trabajo concreta.
 
-### Registro de acceso
+### Registros de acceso
 
-Para CloudWatch Logs, usa un destino existente o crea un grupo de registros dedicado con una política de retención:
+Para CloudWatch Logs, use un destino existente o cree un grupo de registros dedicado con una política de retención:
 
 ```bash
 export LOG_GROUP=/aws/vendedlogs/vpc-lattice/api
@@ -819,9 +819,9 @@ aws vpc-lattice create-access-log-subscription \
   --resource-identifier "$SERVICE_ID" --destination-arn "$LOG_DESTINATION_ARN"
 ```
 
-La entidad principal de configuración también necesita los permisos de entrega de registros documentados. AWS puede crear/actualizar la política de recursos de registro si la entidad principal de configuración tiene los permisos necesarios; de lo contrario, configúrala previamente. Verifica los permisos de `delivery.logs.amazonaws.com` y las condiciones de cuenta de origen/ARN de origen.
+La identidad que realiza la configuración también necesita los permisos documentados para entregar registros. AWS puede crear o actualizar la política de recursos de CloudWatch Logs si esa identidad tiene los permisos necesarios; de lo contrario, configúrela de antemano. Compruebe los permisos de `delivery.logs.amazonaws.com` y las condiciones de cuenta y ARN de origen.
 
-Para la ruta administrada por Kubernetes, usa esto **en lugar de** una suscripción creada por CLI que compita con ella:
+Para la ruta gestionada por Kubernetes, use esta opción **en lugar de** crear con la CLI una suscripción de registros que compita con ella:
 
 ```yaml
 apiVersion: application-networking.k8s.aws/v1alpha1
@@ -837,9 +837,9 @@ spec:
   destinationArn: arn:aws:logs:us-west-2:123456789012:log-group:/aws/vendedlogs/vpc-lattice/api:*
 ```
 
-Sustituye el ARN y confirma el estado de la política y la entrega real de eventos. Una política puede tener como destino un Gateway para los registros de red o una Route para los registros del servicio. Puede haber un destino de registros de cada tipo compatible por recurso de destino.
+Sustituya el ARN y compruebe tanto el estado de la política como la entrega efectiva de eventos. La política puede aplicarse a un Gateway para los registros de red o a una Route para los registros del servicio. Cada recurso de destino admite un destino por cada tipo compatible.
 
-Para S3, usa un bucket de destino revisado con bloqueo de acceso público, cifrado, reglas de retención/ciclo de vida y permisos de entrega adecuados:
+Para S3, use un bucket de destino cuya configuración se haya revisado: Block Public Access, cifrado, reglas de retención y ciclo de vida, y permisos de entrega adecuados:
 
 ```bash
 # Existing reviewed destination bucket; no policy is overwritten by this snippet.
@@ -847,11 +847,11 @@ aws vpc-lattice create-access-log-subscription \
   --resource-identifier "$SERVICE_ID" --destination-arn "$LOG_BUCKET_ARN"
 ```
 
-La entrega a S3 requiere los permisos documentados `s3:GetBucketAcl` y `s3:PutObject` para `delivery.logs.amazonaws.com`, el prefijo de entrega y las condiciones `aws:SourceAccount` y `aws:SourceArn`. Las políticas existentes deben combinarse, no sobrescribirse. SSE-KMS requiere una clave administrada por el cliente compatible y su política de clave de entrega. `--destination-name` no es un parámetro de suscripción al registro de acceso.
+La entrega a S3 requiere los permisos documentados `s3:GetBucketAcl` y `s3:PutObject` para `delivery.logs.amazonaws.com`, el prefijo de entrega y las condiciones `aws:SourceAccount` y `aws:SourceArn`. Las políticas existentes deben combinarse, no sobrescribirse. SSE-KMS requiere una clave administrada por el cliente compatible y su política de clave de entrega. `--destination-name` no es un parámetro de access-log-subscription.
 
-### Análisis de registros y rastreo
+### Análisis de logs y trazas
 
-Los registros de acceso de servicios HTTP contienen campos como `sourceIpPort`, `requestMethod`, `requestPath`, `responseCode`, `durationMS`, `callerPrincipal` y `authDeniedReason`. Los registros de recursos/TCP tienen un esquema distinto.
+Los registros de acceso de los servicios HTTP incluyen campos como `sourceIpPort`, `requestMethod`, `requestPath`, `responseCode`, `durationMS`, `callerPrincipal` y `authDeniedReason`. Los registros de recursos y de TCP usan otro esquema.
 
 ```bash
 END_TIME="$(python3 -c 'import time; print(int(time.time()))')"
@@ -864,20 +864,20 @@ aws logs get-query-results --query-id "$QUERY_ID"
 # Repeat get-query-results until Complete; Failed/Cancelled/Timeout are errors.
 ```
 
-VPC Lattice no tiene una opción `update-service --tracing-config` ni una anotación del controlador que instrumente automáticamente las aplicaciones para X-Ray. Instrumenta las aplicaciones con OpenTelemetry/ADOT o el SDK de rastreo adecuado, propaga el contexto de rastreo y configura la exportación/el muestreo. Correlaciona los seguimientos de la aplicación con los registros de acceso y los ID de solicitud; un ID de solicitud proporcionado por el cliente no es una identidad autenticada.
+VPC Lattice no ofrece la opción `update-service --tracing-config` ni una anotación del controlador que instrumente automáticamente las aplicaciones para X-Ray. Instrumente las aplicaciones con OpenTelemetry/ADOT o con el SDK de trazas apropiado; propague el contexto de traza y configure la exportación y el muestreo. Correlacione las trazas de la aplicación con los registros de acceso y los ID de solicitud. Un ID de solicitud proporcionado por el cliente no constituye una identidad autenticada.
 
 ## Prácticas recomendadas {#best-practices}
 
-- **Diseño y propiedad:** Usa nombres claros para redes/servicios y límites de entorno. Ten en cuenta los Gateways con el mismo nombre en distintos espacios de nombres, los consumidores de redes compartidas, las cuotas y la propiedad de cada política y asociación.
-- **Implementación:** Mantén los backends estable y canary seleccionables de forma independiente. Comprueba los endpoints, el estado de los destinos y la autorización antes de cambiar los pesos. Define criterios de reversión y conserva la última configuración conocida.
-- **Rendimiento:** Usa tiempos de espera acotados y reutilización de conexiones adecuada. Mantén los endpoints de comprobación de estado ligeros y significativos. Usa caché o procesamiento por lotes solo cuando la semántica de la aplicación lo permita. Los servicios privados de Lattice no se convierten en orígenes de CDN simplemente por habilitar el almacenamiento en caché.
-- **Seguridad:** Separa los roles de administración y de llamador; mantén las credenciales fuera de los manifiestos. Prueba los roles permitidos y denegados, las rutas raíz y subrutas, el acceso directo al backend y el comportamiento de TLS. No elimines un CRD de política de IAM para denegar el tráfico.
-- **Observabilidad:** Supervisa por separado el recuento de solicitudes, el recuento/la tasa de errores, la latencia, el estado de los destinos y la telemetría faltante. Conserva los registros de acceso durante el período requerido e instrumenta explícitamente los seguimientos de la aplicación.
-- **Costo:** Revisa los cargos regionales actuales por servicio/recurso, solicitudes, procesamiento de datos, endpoints y registro para el modelo elegido. Usa etiquetas, elimina solo los recursos cuya falta de uso se haya confirmado y dimensiona el escalado automático del backend por separado del plano de datos administrado de Lattice.
+- **Diseño y propiedad:** Use nombres claros de red y servicio, y defina límites entre entornos. Tenga en cuenta que puede haber Gateways con el mismo nombre en distintos espacios de nombres, además de consumidores de una red compartida, cuotas y responsables de cada política y asociación.
+- **Despliegue:** Mantenga los backends estable y de canario seleccionables por separado. Compruebe los endpoints, el estado de los destinos y la autorización antes de cambiar los pesos. Registre los criterios de reversión y conserve la última configuración conocida.
+- **Rendimiento:** Use tiempos de espera acotados y reutilice las conexiones cuando corresponda. Mantenga ligeros y útiles los endpoints de comprobación de estado. Use caché o procesamiento por lotes solo cuando la semántica de la aplicación lo permita. Habilitar la caché no convierte los servicios privados de Lattice en orígenes de CDN.
+- **Seguridad:** Separe los roles de administración y de llamador; no incluya credenciales en los manifiestos. Pruebe los roles autorizados y denegados, las rutas raíz y sus subrutas, el acceso directo al backend y el comportamiento de TLS. No elimine un CRD de política IAM para denegar el tráfico.
+- **Observabilidad:** Supervise por separado el número de solicitudes, el número y la tasa de errores, la latencia, el estado de los destinos y la falta de telemetría. Conserve los registros de acceso durante el período requerido e instrumente expresamente las trazas de la aplicación.
+- **Coste:** Revise los cargos regionales vigentes por servicios y recursos, solicitudes, procesamiento de datos, endpoints y registros para el modelo elegido. Use etiquetas, elimine únicamente recursos que haya confirmado que no se usan y dimensione el autoescalado del backend por separado del plano de datos gestionado por Lattice.
 
-## Resolución de problemas {#troubleshooting}
+## Solución de problemas {#troubleshooting}
 
-Usa los identificadores de las anotaciones/estados del controlador y del inventario de AWS. No des por hecho que el `$SERVICE_ID` del ejemplo de API directa es el servicio de la ruta de Kubernetes.
+Use los identificadores de las anotaciones y del estado del controlador, junto con el inventario de AWS. No suponga que `$SERVICE_ID` del ejemplo de API directa identifica el servicio de la ruta de Kubernetes.
 
 ```bash
 aws vpc-lattice list-service-network-vpc-associations \
@@ -894,16 +894,16 @@ aws vpc-lattice get-target-group --target-group-identifier "$TARGET_GROUP_ID"
 aws vpc-lattice list-targets --target-group-identifier "$TARGET_GROUP_ID"
 ```
 
-| Síntoma | Comprobación |
+| Síntoma | Comprobar |
 |---|---|
-| Error de DNS/conectividad | DNS asignado real, asociación de VPC del cliente o ruta del endpoint, estado de asociación, grupos de seguridad, NACL, conectividad de los Pods |
-| Error 403/de autenticación | Rol del llamador, caducidad de credenciales y región/servicio de firma, `UNSIGNED-PAYLOAD`, ambas capas de autenticación, propagación, campos de registro del motivo de denegación |
-| Ruta o versión incorrecta | Condiciones de Route, prioridad y coincidencias del listener/regla, miembros del grupo de destino, pesos, dominios distintos de Route |
-| Destinos en mal estado | Puerto de escucha real, `/health`, HTTP frente a HTTPS, preparación para atender tráfico, grupos de seguridad, tipo de destino y umbrales de comprobación de estado |
-| Sin registros/métricas | Permisos de destino y estado de entrega, dimensiones de métrica correctas, tráfico inicial, retención, estado de consulta |
-| Error de reconciliación del controlador | Registros de `manager`, rol de IAM, EndpointSlices, compatibilidad de versiones de CRD, estado del webhook y de la elección de líder |
+| Error de DNS o conectividad | Nombre DNS realmente asignado, asociación de VPC del cliente o ruta del endpoint, estado de la asociación, grupos de seguridad, NACL y conectividad con los Pods |
+| Error 403 o de autenticación | Rol del llamador, expiración de las credenciales, región y servicio de firma, `UNSIGNED-PAYLOAD`, ambas capas de autenticación, propagación y campos de registro con el motivo de denegación |
+| Ruta o versión incorrecta | Condiciones de la ruta, prioridad y coincidencias del listener y sus reglas, pertenencia al grupo de destinos, pesos y dominios distintos de cada Route |
+| Destinos no saludables | Puerto en el que realmente escucha el servicio, `/health`, HTTP o HTTPS, disponibilidad, grupos de seguridad, tipo de destino y umbrales de comprobación de estado |
+| No aparecen registros o métricas | Permisos del destino y estado de entrega, dimensiones correctas de las métricas, tráfico inicial, retención y estado de la consulta |
+| Error de reconciliación del controlador | Registros de `manager`, rol IAM, EndpointSlices, compatibilidad de las versiones de CRD, estado del webhook y elección de líder |
 
-Usa un intervalo acotado de métricas sin depender de `date -d`, que solo está disponible en GNU:
+Use un intervalo de métricas acotado sin depender de `date -d` exclusivo de GNU:
 
 ```bash
 export METRIC_END="$(python3 -c 'from datetime import datetime,timezone; print(datetime.now(timezone.utc).isoformat())')"
@@ -914,24 +914,24 @@ aws cloudwatch get-metric-statistics --namespace AWS/VpcLattice \
   --period 60 --statistics Sum
 ```
 
-Si se produce un incidente de servicio de AWS, consulta AWS Health y los eventos pertinentes de la cuenta. El acceso a la API y las operaciones de soporte específicas de la cuenta dependen del plan y los endpoints aplicables. Un caso de soporte debe incluir los ID de recursos revisados, el intervalo de tiempo, los síntomas del fallo y registros con datos sensibles enmascarados. Selecciona las opciones actuales de servicio/categoría/severidad para la cuenta; no pegues un comando codificado de creación de caso con `urgent`.
+Ante un incidente de un servicio de AWS, consulte AWS Health y los eventos pertinentes de la cuenta. El acceso a la API de la cuenta y las operaciones de soporte dependen del plan y de los endpoints aplicables. Incluya en el caso de soporte los ID de los recursos revisados, el intervalo de tiempo, los síntomas del fallo y registros con los datos sensibles ocultos. Seleccione las opciones vigentes de servicio, categoría y gravedad para la cuenta; no pegue un comando con la gravedad `urgent` fijada de antemano.
 
 ## Referencias {#references}
 
 - [Descripción general de VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
 - [Asociaciones de redes de servicios](https://docs.aws.amazon.com/vpc-lattice/latest/ug/service-network-associations.html)
-- [Instalación de Controller v2.1.3](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/deploy.md)
-- [Requisitos de actualización de Controller v2.1](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/upgrading-v2-0-x-to-v2-1-y.md)
-- [Referencia de la API de Controller](https://github.com/aws/aws-application-networking-k8s/tree/v2.1.3/docs/api-types)
-- [HTTPS y TLS del backend de Controller](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/https.md)
+- [Instalación de AWS Gateway API Controller v2.1.3](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/deploy.md)
+- [Requisitos de actualización del controlador v2.1](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/upgrading-v2-0-x-to-v2-1-y.md)
+- [Referencia de la API del controlador](https://github.com/aws/aws-application-networking-k8s/tree/v2.1.3/docs/api-types)
+- [HTTPS del controlador y TLS de backend](https://github.com/aws/aws-application-networking-k8s/blob/v2.1.3/docs/guides/https.md)
 - [Políticas de autenticación de VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html)
-- [Firma de solicitudes](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html)
-- [Uso compartido de entidades](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sharing.html)
+- [Firmar solicitudes](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html)
+- [Compartir entidades](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sharing.html)
 - [Métricas de CloudWatch](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-cloudwatch.html)
-- [Registros de acceso](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html)
+- [Logs de acceso](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html)
 - [Permisos de entrega de CloudWatch Logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-infrastructure-CWL.html)
 - [Permisos de entrega de S3](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AWS-logs-infrastructure-S3.html)
 
 ## Cuestionario
 
-Comprueba lo que sabes con el [cuestionario de VPC Lattice](../quizzes/networking/02-vpc-lattice-quiz.md).
+Compruebe sus conocimientos con el [cuestionario de VPC Lattice](../quizzes/networking/02-vpc-lattice-quiz.md).

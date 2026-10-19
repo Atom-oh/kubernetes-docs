@@ -1,44 +1,40 @@
 # Prometheus Alertmanager
 
-> **レビュー基準**: Alertmanager 0.34.0; kube-prometheus-stack 90.0.0 / Operator 0.93.1; standalone chart 1.43.1
-> **最終更新**: September 13, 2026
+> **レビュー基準**: Alertmanager 0.34.0、kube-prometheus-stack 90.0.0 / Operator 0.93.1、standalone chart 1.43.1
+> **最終更新**: 2026年9月13日
 
 ## 目次
 
-- [Alertmanager の概要](#alertmanager-overview)
+- [Alertmanagerの概要](#alertmanager-overview)
 - [アーキテクチャ](#architecture)
 - [インストールと設定](#installation-and-configuration)
-- [Alert Rule の定義](#defining-alert-rules)
+- [Alert Ruleの定義](#defining-alert-rules)
 - [ルーティング設定](#routing-configuration)
-- [Receiver の設定](#receiver-configuration)
+- [Receiverの設定](#receiver-configuration)
 - [Inhibition Rule](#inhibition-rules)
 - [Silence](#silencing)
-- [Template のカスタマイズ](#template-customization)
-- [高可用性設定](#high-availability-configuration)
+- [Templateのカスタマイズ](#template-customization)
+- [高可用性の設定](#high-availability-configuration)
 - [AlertmanagerConfig CRD](#alertmanagerconfig-crd)
-- [本番用 Alert Rule の例](#production-alert-rule-examples)
+- [本番用Alert Ruleの例](#production-alert-rule-examples)
 - [トラブルシューティング](#troubleshooting)
 
 ---
 
-<span id="alertmanager-overview"></span>
+## Alertmanagerの概要 {#alertmanager-overview}
 
-## Alertmanager の概要
-
-Prometheus Alertmanager は、Prometheus server から送信された Alert を処理するコンポーネントです。Alert の重複排除、グループ化、ルーティング、inhibition、silencing などの機能を提供します。
+Prometheus Alertmanagerは、Prometheus serverから送られたAlertを処理するコンポーネントです。Alertの重複排除、グループ化、ルーティング、inhibition、silenceなどの機能を提供します。
 
 ### 主な機能
 
-1. **Grouping** は、route/group の Alert を通知としてまとめます。
-2. **Inhibition と silence** は、基になる Prometheus rule 条件を変更せずに通知を抑制します。
-3. **Routing** は Receiver を選択します。1 つの Receiver に複数の integration を含めることができます。
-4. **HA** は、最終的整合性を伴って silence と notification-log state を共有します。partition 時には通知抑制より重複配信を優先します。これは exactly-once 配信ではありません。
+1. **グループ化**: route/groupごとにAlertをまとめて通知します。
+2. **Inhibitionとsilence**: 根本にあるPrometheus ruleの条件は変更せず、通知を抑制します。
+3. **ルーティング**: Receiverを選択します。1つのReceiverに複数のintegrationを含められます。
+4. **高可用性**: silenceとnotification logの状態を最終的整合性で共有します。network partition時には通知を抑制するより重複配信を優先します。exactly-once配信を保証するものではありません。
 
-<span id="prometheus-のアラートフロー"></span>
+### PrometheusのAlertフロー
 
-### Prometheus の Alert フロー
-
-Prometheus が rule を評価し、Alertmanager が通知を処理します。このシーケンスは責務を要約したものであり、配信レイテンシーを保証するものではありません。
+Prometheusはruleを評価し、Alertmanagerは通知を処理します。次のシーケンスはそれぞれの責務を要約したものであり、配信時間を保証するものではありません。
 
 ```mermaid
 sequenceDiagram
@@ -54,13 +50,11 @@ sequenceDiagram
   Note over A,R: Failures and partitions can cause<br/>retries or duplicates
 ```
 
-<span id="architecture"></span>
+## アーキテクチャ {#architecture}
 
-## アーキテクチャ
+### Alertmanagerの内部構造
 
-### Alertmanager の内部構造
-
-Dispatcher は **route 選択後** に group を作成します。Inhibition、silence/time チェック、notification-log の重複排除は通知パイプラインで動作します。これらは固定された pre-group chain ではありません。Gossip は、Prometheus が各 replica に Alert を送ることの代わりにはなりません。Alert 自体は silence/nflog のように永続化されません。
+Dispatcherは**route選択後**にgroupを作成します。Inhibition、silence/timeの判定、notification logによる重複排除は通知pipeline内で動作し、固定されたpre-group処理の連鎖ではありません。GossipはPrometheusがすべてのreplicaにAlertを送る代わりにはなりません。Alert自体はsilenceやnflogのように永続化されません。
 
 ```mermaid
 flowchart TB
@@ -79,28 +73,24 @@ flowchart TB
 
 | コンポーネント | 役割 |
 |-----------|------|
-| **Dispatcher** | ルーティング tree に基づき適切な Receiver へ Alert をルーティングする |
-| **Inhibitor** | inhibition rule に従って関連する Alert を抑制する |
-| **Silencer** | silence rule に一致する Alert をフィルタリングする |
-| **Aggregation Group** | 同一 group の Alert をまとめて処理する |
-| **Notification Pipeline** | 実際の Alert 送信を処理する |
-| **nflog** | 送信済み Alert を記録する（重複排除用） |
+| **Dispatcher** | routing treeに基づいてAlertを適切なReceiverへ送る |
+| **Inhibitor** | inhibition ruleに従って関連するAlertを抑制する |
+| **Silencer** | silence ruleに一致するAlertを除外する |
+| **Aggregation Group** | 同じgroupのAlertをまとめて処理する |
+| **Notification Pipeline** | Alertの実際の送信を処理する |
+| **nflog** | 送信したAlertを記録する（重複排除用） |
 
 ---
 
-<span id="installation-and-configuration"></span>
+## インストールと設定 {#installation-and-configuration}
 
-## インストールと設定
+以下はKubernetes 1.35のLinux worker環境を前提とした代替例です。2種類のHelm chartと手動StatefulSetは、**それぞれ異なるインストール管理者が所有する方法**です。どれか1つを選んでください。chartのrender、設定/template、synthetic ruleのローカル実行は確認しましたが、Kubernetesへのインストール、実環境でのCNI適用、SaaSへの配信、本番容量のテストは実施していません。既存環境では、このチュートリアルで無条件に置き換えず、所有者が確認したvaluesのマージとupgrade計画を用意してください。
 
-これらは Kubernetes 1.35 Linux worker のベースラインに対する代替例です。2 つの Helm chart と手動 StatefulSet は**異なるインストール所有者**です。いずれか 1 つを選択してください。Chart の render、設定/template、synthetic rule のローカル実行は行いましたが、Kubernetes インストール、実環境 CNI の適用、SaaS 配信、本番容量テストは実施していません。既存インストールには、所有者が確認した values のマージと upgrade 計画が必要であり、このチュートリアルによる無条件の置換は行わないでください。
+`monitoring` namespace、hard anti-affinity用にスケジュール可能な3ノード、適切なdefault RWO StorageClass、通知credential、承認済みnetwork pathを準備します。EKS Fargate/Auto Modeとmanaged control-plane metricsには、それぞれ異なる収集／storage上の制約があります。特に、EKSが管理するetcdは利用者がscrapeできるendpointではありません。このprofileは例の焦点を絞るためGrafanaとetcd ServiceMonitorを無効にしています。既存stackのコンポーネントを無効にする指示ではありません。
 
-`monitoring` namespace、hard anti-affinity 用のスケジュール可能な 3 node、適切なデフォルト RWO StorageClass、通知 credential、承認済み network path を準備します。EKS Fargate/Auto Mode と managed control-plane metrics には異なる collection/storage 制約があります。特に、EKS-managed etcd は顧客が scrape する endpoint ではありません。この profile は例に集中するため Grafana と etcd ServiceMonitor を無効にしています。既存 stack のコンポーネントを無効にする指示ではありません。
+### Helmによるインストール（kube-prometheus-stack）
 
-<span id="helm-kube-prometheus-stack-によるインストール"></span>
-
-### Helm によるインストール（kube-prometheus-stack）
-
-**新規 release** には以下の pin 済み stack profile を使用します。Version 90.0.0 には Operator 0.93.1 と Alertmanager 0.34.0 が含まれます。これは確認済みのベースラインであり、新しい chart が存在しないという主張ではありません。インストール前に cluster RBAC、CRD、PVC、namespace、owner 設定を確認してください。
+**新規release**には、以下の固定済みstack profileを使います。Version 90.0.0にはOperator 0.93.1とAlertmanager 0.34.0が含まれます。これは確認済みのbaselineであり、より新しいchartが存在しないという意味ではありません。インストール前にcluster RBAC、CRD、PVC、namespace、owner設定を確認してください。
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -110,22 +100,22 @@ helm template prometheus prometheus-community/kube-prometheus-stack   --version 
 helm install prometheus prometheus-community/kube-prometheus-stack   --version 90.0.0 --namespace monitoring --create-namespace   -f kube-prometheus-stack-values.yaml --wait --timeout 10m
 ```
 
-### Alertmanager 専用 Helm Chart
+### Alertmanager専用Helm Chart
 
-これは stack の追加インストール手順ではなく、**standalone の代替手段**です。これはトップレベルの `replicaCount`、`resources`、`persistence`、`config` を使用します。stack では replica/resources/storage に `alertmanager.alertmanagerSpec` を使用します。以前の混在した values は、どちらの chart も記述どおりに設定していませんでした。
+これはstackに追加してインストールする手順ではなく、**standaloneを使う代替手段**です。standalone chartではトップレベルの`replicaCount`、`resources`、`persistence`、`config`を使います。stackではreplica/resources/storageに`alertmanager.alertmanagerSpec`を使います。従来の混在したvaluesは、どちらのchartも説明どおりには設定していませんでした。
 
 ```bash
 helm template alertmanager prometheus-community/alertmanager   --version 1.43.1 --namespace monitoring --kube-version 1.35.0   -f alertmanager-values.yaml > alertmanager-rendered.yaml
 helm install alertmanager prometheus-community/alertmanager   --version 1.43.1 --namespace monitoring --create-namespace   -f alertmanager-values.yaml --wait --timeout 10m
 ```
 
-### values.yaml の例
+### values.yamlの例
 
-主設定は以下の `alertmanager.yaml` です。その Receiver credential は token 値ではなく file reference です。選択した workload を起動する前に `notification-credentials` と `alertmanager-templates` を作成してください。file の欠落、channel の誤り、無効な provider credential は Helm render の成功では解決されません。
+主な設定は、以下の`alertmanager.yaml`です。Receiverのcredentialはtoken値ではなくfile referenceです。選択したworkloadの起動前に`notification-credentials`と`alertmanager-templates`を作成してください。fileの欠落、誤ったchannel、無効なprovider credentialは、Helm renderが成功しても解決しません。
 
-意図する Slack channel 用に Slack で設定済みの**異なる 2 つの Slack incoming-webhook URL**を作成します。`#alerts` 用は `slack-normal-webhook-url`、`#critical-alerts` 用は `slack-critical-webhook-url` です。incoming webhook は `channel` field によって設定済みの channel を上書きできません。両 file は `notification-credentials` の key であり、stack、standalone、manual profile により mount されます。URL-to-channel の設定は provider の前提条件です。ローカル parsing は Slack 配信を検証しません。
+意図したchannel用に、Slackで設定済みの**異なる2つのSlack incoming webhook URL**を用意します。`#alerts`用は`slack-normal-webhook-url`、`#critical-alerts`用は`slack-critical-webhook-url`です。incoming webhookの`channel` fieldを使って、設定済みchannelを上書きすることはできません。どちらのURLも`notification-credentials`内のkeyにし、stack、standalone、manualの各profileでmountします。URLとchannelの対応はprovider側の前提条件です。ローカルでのparseはSlackへの配信を検証しません。
 
-**Stack profile — `kube-prometheus-stack-values.yaml`:**
+**Stack profile（`kube-prometheus-stack-values.yaml`）:**
 
 ```yaml
 grafana:
@@ -235,7 +225,7 @@ kubeEtcd:
   enabled: false
 ```
 
-**Standalone profile — `alertmanager-values.yaml`:**
+**Standalone profile（`alertmanager-values.yaml`）:**
 
 ```yaml
 replicaCount: 3
@@ -329,11 +319,11 @@ extraVolumeMounts:
 hostUsers: true
 ```
 
-`hostUsers: true` は standalone baseline を従来の user namespace に維持します。Pod user namespace を有効化するには、別途 runtime/platform の確認が必要です。Resource request/limit と 10Gi PVC は例示的な sizing であり、テスト済みの容量主張ではありません。Hard anti-affinity には対象となる 3 node が必要です。PDB は voluntary disruption を制約しますが、すべての障害を防ぐものではありません。
+`hostUsers: true`により、standalone baselineは従来のuser namespaceを使います。Pod user namespaceを有効にする場合は、別途runtime/platformを確認してください。resource request/limitと10Gi PVCは容量設定の例であり、容量試験の結果ではありません。hard anti-affinityには条件を満たす3ノードが必要です。PDBは任意のvoluntary disruptionを制限しますが、すべての障害を防ぐものではありません。
 
-### ConfigMap による直接設定
+### ConfigMapによる直接設定
 
-以下の完全な core 設定は chart profile にも埋め込まれています。manual deployment では `alertmanager.yaml` として保存し、その内容を ConfigMap key `alertmanager.yml` に格納してください。ConfigMap には path と routing metadata が含まれ、**credential は含まれません**。この manual owner を Operator が生成する Secret と混在させないでください。
+以下の完全なcore設定は、chart profileにも埋め込まれています。manual deploymentでは`alertmanager.yaml`として保存し、その内容をConfigMapの`alertmanager.yml` keyに格納してください。ConfigMapにはpathとrouting metadataが含まれ、**credentialは含まれません**。このmanual ownerと、Operatorが生成するSecretを混在させないでください。
 
 ```yaml
 global:
@@ -412,16 +402,13 @@ kubectl -n monitoring create secret generic notification-credentials \
 kubectl -n monitoring create configmap alertmanager-config   --from-file=alertmanager.yml=alertmanager.yaml
 ```
 
-Secret の read/exec permission と通知内容自体を保護してください。有効な integration が必要とする credential file だけを追加します。ConfigMap projection は自動 Alertmanager reload ではありません。選択した owner で確認済みの reload/rollout 機構を使用してください。無効な reload では、最後に正常だった設定が実行中のままになる必要があります。
+Secretのread/exec権限と通知内容そのものを保護してください。有効にするintegrationが必要とするcredential fileだけを追加します。ConfigMap projectionだけではAlertmanagerは自動reloadしません。選んだownerが確認したreload/rollout手段を使ってください。新しい設定のreloadが無効なら、最後に正常だった設定を動かし続けます。
 
-<span id="アラートルールの定義"></span>
-<span id="defining-alert-rules"></span>
-
-## Alert Rule の定義
+## Alert Ruleの定義 {#defining-alert-rules}
 
 ### PrometheusRule CRD
 
-PrometheusRule は Prometheus instance の**rule label および namespace selector**に一致する必要があります。これらの例では、明示的な stack values に一致する `monitoring` 内の `release: prometheus` を使用します。CR をインストールしただけでは、それが選択または正常に load されたことは証明されません。deployment 後に active rule と scrape label を比較してください。stack の既存 rule set との重複 Alert を避けます。
+PrometheusRuleは、Prometheus instanceの**rule labelとnamespace selector**に一致する必要があります。この例では、明示したstack valuesに一致するよう`monitoring`内で`release: prometheus`を使います。CRを作っただけでは、選択され正常にloadされたことの証明にはなりません。deployment後にactive ruleとscrape labelを照合してください。stackに既にあるruleとの重複Alertを避けてください。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -449,31 +436,23 @@ spec:
         runbook_url: https://runbooks.example.com/node-not-ready
 ```
 
-<span id="アラートルールの構成要素"></span>
+### Alert Ruleの構成要素
 
-### Alert Rule の構成要素
+`alert`と`expr`でruleとそのexpressionを定義します。sample値が0でも、空でないresult vectorはactiveなAlert instanceを示します。`for`は複数回のrule evaluationをまたいで判定され、scrape intervalでも通知deadlineでもありません。`labels`はAlertのidentityとroutingに影響します。変化し得る値はlabelではなく`annotations`に入れてください。任意の`keep_firing_for`を設定すると、条件が解消しても一定時間Firingを維持します。実際にdeployするPrometheus/Operator versionで対応状況を確認してください。
 
-`alert` と `expr` は rule とその expression を識別します。sample 値が zero でも、空でない result vector は active Alert instance を識別します。`for` は rule evaluation をまたいで確認され、scrape interval や通知 deadline ではありません。`labels` は Alert identity/routing に影響します。変化する値は label ではなく `annotations` に保持してください。任意の `keep_firing_for` は、条件が解除された後も一定期間 Firing を維持します。デプロイ済み Prometheus/Operator version でのサポートを確認してください。
+### Alertの状態
 
-<span id="アラートの状態"></span>
+`keep_firing_for`を設定せず、正のfor durationを設定した場合のPrometheus state図です。zero-for ruleは、条件に一致したevaluationですぐfireする場合があります。
 
-### Alert 状態
-
-keep_firing_for 未設定で正の for duration を持つ場合の Prometheus 状態図です。zero-for rule は一致した evaluation 時に即時に fire できます。
-
-![keep_firing_for 未設定で正の for duration を持つ場合の Prometheus 状態図です。zero-for rule は一致した evaluation 時に即時に fire できます。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-2.png)
+![keep_firing_forを設定せず、正のfor durationを設定した場合のPrometheus state図です。zero-for ruleは、条件に一致したevaluationですぐfireする場合があります。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-2.png)
 
 [インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-2.html)
 
-<span id="routing-configuration"></span>
+## ルーティング設定 {#routing-configuration}
 
-## ルーティング設定
+### Routing Treeの構造
 
-<span id="ルーティングツリーの構造"></span>
-
-### Routing Tree の構造
-
-以下の**routing-test 設定**はすべての Receiver 名を宣言しますが、integration は空のままです。承認済み integration を接続するまで通知は配信されません。通常、最初に一致する sibling は sibling traversal を停止します。child がより具体的な Receiver を選択できます。
+以下の**routing-test設定**ではすべてのReceiver名を宣言していますが、integrationは空です。承認済みintegrationを接続するまで通知は配信されません。通常、最初に一致したsiblingでsibling traversalが止まります。child routeでより具体的なReceiverを選べます。
 
 ```yaml
 route:
@@ -504,19 +483,17 @@ receivers:
 - name: team-a
 ```
 
-<span id="ルーティングフロー"></span>
+### Routingの流れ
 
-### Routing フロー
+continue=falseでlabelだけを使うroutingです。図は旧形式のmatch/match_re表記ですが、確認済み設定では同等のmatchersを使用しています。time windowの適用可否は別に判定されます。
 
-continue=false を使用した label のみの routing です。図では legacy の match/match_re 表記を使用しています。検証済みの同等設定では matchers を使用します。Time-window eligibility は別です。
-
-![continue=false を使用した label のみの routing です。図では legacy の match/match_re 表記を使用しています。検証済みの同等設定では matchers を使用します。Time-window eligibility は別です。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-3.png)
+![continue=falseでlabelだけを使うroutingです。図は旧形式のmatch/match_re表記ですが、確認済み設定では同等のmatchersを使用しています。time windowの適用可否は別に判定されます。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-3.png)
 
 [インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-3.html)
 
 ### Matcher
 
-`=`、`!=`、`=~`、`!~` を含む quoted matcher string を使用してください。1 route 内の matcher は AND で結合され、regex semantics は完全に anchor されます。空の/missing label は重要です。旧 `match`/`match_re` field はこの release でも受け入れられますが deprecated です。Group timer は parent route から継承されますが、active/mute time interval は継承されません。
+`=`、`!=`、`=~`、`!~`を使ったquoted matcher stringを使います。1つのroute内にあるmatcherはAND条件になり、regexは完全一致するようanchorされます。labelが空または存在しない場合の動作も重要です。このreleaseでは旧`match`/`match_re` fieldも受け入れますが、deprecatedです。group timerはparent routeから継承しますが、active/mute time intervalは継承しません。
 
 ```yaml
 # Alternative child-route fragments; attach to a complete configuration.
@@ -527,11 +504,9 @@ routes:
     receiver: prod-team
 ```
 
-<span id="高度なルーティングの例"></span>
+### 高度なRoutingの例
 
-### 高度な Routing の例
-
-夜間 interval を午前 0 時で分割し、**各** interval entry に timezone を指定します。旧 `18:00→09:00` range は native validation に失敗します。この flat 例では、実際の Receiver route に time constraint を設定します。時間外 critical route は `continue: true` を使用します。inactive route も label には一致し、それ以外の場合は後続 sibling を停止するため、business-hours route を飲み込んではなりません。ここでの空の Receiver integration は意図的な test stub です。
+夜間intervalは午前0時で分割し、**各**interval entryでtimezoneを指定します。従来の`18:00→09:00`という範囲はnative validationに失敗します。このflatな例では、実際にReceiverを選択するrouteにtime constraintを設定しています。時間外のcritical routeでは`continue: true`を使います。inactiveなrouteもlabelには一致し、それが後続siblingを止める場合があるため、business-hours routeをそのまま通過不能にしてはいけません。ここにある空のReceiver integrationは、意図的なtest stubです。
 
 ```yaml
 route:
@@ -594,15 +569,13 @@ time_intervals:
     location: Asia/Seoul
 ```
 
-Native label-route test は calendar を評価しません。calendar は release 済み time-interval implementation で、開始/終了 boundary、weekend、UTC/KST offset において別途確認しました。Mute または inactive の通知は parent の fallback に自動転送されません。
+native label-route testではcalendarは評価されません。calendarはrelease済みtime-interval実装を使って、開始／終了境界、週末、UTC/KST offsetを別途確認しました。mutedまたはinactiveな通知がparentのfallbackへ自動的にredirectされるわけではありません。
 
-<span id="receiver-configuration"></span>
-
-## Receiver の設定
+## Receiverの設定 {#receiver-configuration}
 
 ### Slack Receiver
 
-目的の Slack channel にすでに紐付いた、保護された incoming-webhook URL には `api_url_file` を使用します。以下の通常例は `slack-normal-webhook-url` を使用します。critical route は異なる critical file を使用します。[Slack は incoming-webhook の channel override が非サポートであると文書化しています](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/)。確認済み custom template は承認済みの field subset を出力します。すべての label/annotation を dump しないでください。これらには user data や secret が含まれる場合があり、truncation は redaction ではありません。これらは完全な設定用の Receiver fragment です。
+目的のSlack channelに既に紐付けられている保護済みincoming webhook URLには`api_url_file`を使います。通常用の例では`slack-normal-webhook-url`、critical routeでは別のcritical用fileを使います。[Slackはincoming webhookでのchannel overrideは非対応と説明しています](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/)。確認済みのcustom templateは承認されたfieldだけを出力します。すべてのlabel/annotationをdumpしないでください。user dataやsecretが含まれる場合があり、出力のtruncationはredactionではありません。以下は完全な設定に組み込むReceiver fragmentです。
 
 ```yaml
 receivers:
@@ -617,7 +590,7 @@ receivers:
 
 ### PagerDuty Receiver
 
-Events API v2 の `routing_key_file` を使用してください。legacy Prometheus integration は異なる service-key mode を使用し、同じ credential ではありません。両方を設定しないでください。severity はサポートされる PagerDuty 値に map します。任意の Alertmanager severity string が自動的に有効になるわけではありません。これらは完全な設定用の Receiver fragment です。
+Events API v2では`routing_key_file`を使います。旧Prometheus integrationは異なるservice-key方式を使うもので、同じcredentialではありません。両方を設定しないでください。severityはPagerDutyがサポートする値に対応させます。Alertmanagerの任意のseverity stringが自動的に有効になるわけではありません。以下は完全な設定に組み込むReceiver fragmentです。
 
 ```yaml
 receivers:
@@ -637,7 +610,7 @@ receivers:
 
 ### Email Receiver
 
-`auth_password_file` を使用し、有効な SMTP trust configuration とともに TLS を必須にします。address は placeholder です。relay policy、sender identity、delivery/bounce monitoring を確認してください。これらは完全な設定用の Receiver fragment です。
+`auth_password_file`を使い、有効なSMTP trust configurationによるTLSを必須にします。addressはplaceholderです。relay policy、送信者identity、delivery/bounce monitoringを確認してください。以下は完全な設定に組み込むReceiver fragmentです。
 
 ```yaml
 receivers:
@@ -657,7 +630,7 @@ receivers:
 
 ### OpsGenie Receiver
 
-これは**既存顧客の移行参照**です。Opsgenie の販売は 2025 年 6 月 4 日に終了し、[Atlassian](https://www.atlassian.com/licensing/opsgenie) によれば support/access は 2027 年 4 月 5 日に終了します。これを新しい長期依存関係として設計しないでください。現在の `responders` 形式と保護された key file を使用します。これらは完全な設定用の Receiver fragment です。
+これは**既存利用者の移行参照**です。Opsgenieは2025年6月4日に販売終了しており、[Atlassianによれば](https://www.atlassian.com/licensing/opsgenie)、support/accessは2027年4月5日に終了します。新たな長期依存関係を設計する際に採用しないでください。現在の`responders`形式と保護されたkey fileを使います。以下は完全な設定に組み込むReceiver fragmentです。
 
 ```yaml
 receivers:
@@ -676,7 +649,7 @@ receivers:
 
 ### Webhook Receiver
 
-Basic authentication には HTTPS が必要です。`insecure_skip_verify: false` は `http://` URL を暗号化しません。所有する Receiver、一致する TLS certificate/trust、mount 済み credential file を提供してください。`max_alerts: 10` の場合、payload は Alert を省略して `truncatedAlerts` を報告することがあります。consumer はこれを処理する必要があります。Receiver は単に generic health response を返すのではなく、Alertmanager webhook contract を実装する必要があります。これらは完全な設定用の Receiver fragment です。
+Basic authenticationにはHTTPSが必要です。`insecure_skip_verify: false`でも`http://` URLは暗号化されません。所有するReceiver、一致するTLS certificate/trust、mountしたcredential fileを用意してください。`max_alerts: 10`ではpayloadがAlertを省略して`truncatedAlerts`を返す場合があり、consumer側で処理する必要があります。Receiverには単なる汎用health responseではなく、Alertmanager webhook contractの実装が必要です。以下は完全な設定に組み込むReceiver fragmentです。
 
 ```yaml
 receivers:
@@ -694,9 +667,9 @@ receivers:
         insecure_skip_verify: false
 ```
 
-### 複数 Receiver の設定
+### 複数Receiverの設定
 
-Receiver は `continue` なしで複数 integration に通知できます。provider failure と retry は独立しています。1 provider の成功は、すべての provider での成功を意味しません。この例には、列挙したすべての provider の file と SMTP/TLS 設定が必要です。これらは完全な設定用の Receiver fragment です。
+`continue`を使わなくても、1つのReceiverから複数のintegrationへ通知できます。providerごとにfailureとretryは独立します。1つのproviderの成功は、すべてのproviderへの配信成功を意味しません。この例では列挙したすべてのprovider用fileとSMTP/TLS設定が必要です。以下は完全な設定に組み込むReceiver fragmentです。
 
 ```yaml
 receivers:
@@ -731,14 +704,11 @@ receivers:
       namespace: '{{ .CommonLabels.namespace }}'
 ```
 
-<span id="inhibition-ルール"></span>
-<span id="inhibition-rules"></span>
+## Inhibition Rule {#inhibition-rules}
 
-## Inhibition Rule
+### Inhibitionの概念
 
-### Inhibition の概念
-
-Inhibition は rule evaluation や保存済み Alert ではなく、一致する**通知**を抑制します。空でない label で関係の scope を限定します。Node condition を理由に cluster 内のすべての Service Alert を抑制することはできません。
+Inhibitionは一致する**通知**を抑制しますが、ruleの評価や保存済みAlertは変更しません。関係の適用範囲を空でないlabelで限定してください。nodeのconditionだけを根拠に、クラスター内のすべてのService Alertを抑制してはいけません。
 
 ```mermaid
 flowchart LR
@@ -749,13 +719,11 @@ flowchart LR
   M["PodNotReady: missing node or cluster"] --> N
 ```
 
-<span id="inhibition-ルールの設定"></span>
+### Inhibition Ruleの設定
 
-### Inhibition Rule の設定
+最初のruleでは、kube-state-metricsの`node` labelを持つ`NodeNotReady`を使います。以下のPod ruleでは`kube_pod_info`を使ってnode情報を追加し、そのmetricがない場合も情報を付加しないAlertとして維持します。存在しないlabelは空値と同じように比較されます。等値比較の前に`cluster`/`node`が空でないことを必須にしてください。ローカルtestで、旧設定が無関係なAlertまで抑制することを再現し、guardがそれを防ぐことを確認しました。
 
-最初の rule は kube-state-metrics の `node` label を持つ `NodeNotReady` を使用します。下の Pod rule は `kube_pod_info` で node 情報を追加し、その metric がない場合も enrichment なしの Alert を維持します。missing label は空の値と同様に比較されます。equality matching の前に空でない `cluster`/`node` を必須にしてください。ローカル test では、以前の無関係 Alert の抑制を再現し、guard を検証しました。
-
-`ClusterDown` では、監視対象 cluster が送信できない場合に独立して配信される source Alert が必要です。Database rule には無関係な scrape `instance` label ではなく、安定した共有 `database_id` が必要です。rule を有効化する前にこれらの input を定義してください。
+`ClusterDown`には、監視対象のclusterから送信できなくなった場合でも独立して届くsource Alertが必要です。Database ruleには、関係のないscrape `instance` labelではなく、安定した共通の`database_id`が必要です。これらの入力を定義してからruleを有効にしてください。
 
 ```yaml
 route:
@@ -809,24 +777,17 @@ inhibit_rules:
   - database_id
 ```
 
-<span id="inhibition-の優先順位"></span>
+### Inhibitionの優先順位
 
-### Inhibition の優先度
+listの順番は**優先順位の仕組みではありません**。適用可能なinhibition ruleはいずれもtargetを抑制できます。重複しないsource/target matcherと空でないcorrelation labelを使ってinfrastructure→node→serviceの依存関係をモデル化し、その後、無関係なnode/clusterやlabel欠落をtestしてください。広範な`alertname=~".*"`と`datacenter` labelの欠落が組み合わさると、無関係なincidentをmuteする場合があります。severityだけから因果関係を推測しないでください。
 
-list の順序は**優先度システムではありません**。適用可能な inhibition rule は target を抑制できます。非重複の source/target matcher と空でない correlation label により infrastructure→node→service の依存関係を model 化し、その後、無関係な node/cluster と missing label を test してください。広範な `alertname=~".*"` と missing `datacenter` は無関係な incident を mute することがあります。severity だけから因果関係を推論しないでください。
+## Silence {#silencing}
 
-<span id="サイレンス"></span>
-<span id="silencing"></span>
+### Silenceの作成
 
-## Silence
+Silenceの作成／expiryは通知の動作を変更します。endpoint、正確なmatcher、作成者、理由、有限の期間を確認してください。`--end`には意図して選んだ将来時刻をRFC3339形式で指定します。以前の固定された2025年の期間では、現在のAlertをsilenceできません。サポートされるTLS/authentication設定でHTTP accessを保護してください。`amtool --http.config.file`には保護されたclient設定fileを指定できます。
 
-<span id="サイレンスの作成"></span>
-
-### Silence の作成
-
-Silence の作成/expiry は通知動作を変更します。endpoint、正確な matcher、author、reason、有限の window を確認してください。`--end` には意図して選んだ将来の RFC3339 時刻が必要です。以前の固定された 2025 window では現在の Alert を silence できません。サポートされる TLS/authentication 設定で HTTP access を保護してください。`amtool --http.config.file` は保護された client configuration file を受け付けます。
-
-#### amtool CLI の使用
+#### amtool CLIの使用
 
 ```bash
 # Use an approved authenticated endpoint, or an authorized local port-forward.
@@ -838,11 +799,9 @@ amtool --alertmanager.url="$ALERTMANAGER_URL" silence query
 amtool --alertmanager.url="$ALERTMANAGER_URL" silence expire "$SILENCE_ID"
 ```
 
-<span id="api-によるサイレンスの作成"></span>
+#### APIを使ったSilenceの作成
 
-#### API による Silence の作成
-
-この helper の output を `silence.json` として保存して確認し、設定済み authentication を使用して承認済みの `/api/v2/silences` endpoint に POST してください。credential 値を command argument に入れたり、operational data を含む raw API payload を共有したりしないでください。
+このhelperの出力を`silence.json`として保存して確認し、設定済みauthenticationを使って承認済みの`/api/v2/silences` endpointにPOSTします。credential値をcommand argumentに含めたり、運用データを含むraw API payloadを共有したりしないでください。
 
 ```python
 # Generates a payload only; it makes no API call.
@@ -861,11 +820,9 @@ print(json.dumps({
 }, indent=2))
 ```
 
-<span id="サイレンス管理のベストプラクティス"></span>
+### Silence管理のベストプラクティス
 
-### Silence 管理のベストプラクティス
-
-最短の承認済み maintenance/deployment window と、範囲を限定した investigation period を使用してください。「修正されるまで」でも有限の終了時刻と owner review が必要です。4 時間は Alertmanager の制限ではなく、team policy の例です。expiry により抑制は停止しますが、期限切れ record は retention/GC まで残ります。ローカル API test でこの区別を確認しました。Expiry reminder には別途設定した workflow が必要です。
+承認済みのmaintenance/deployment期間と、範囲を限定した調査期間をできるだけ短く設定します。「修正まで」でも有限の終了時刻とownerによる確認が必要です。4時間はteam policyの一例であり、Alertmanagerの制限ではありません。expiry後は抑制が止まりますが、期限切れrecordはretention/GCまで残ります。ローカルAPI testでこの動作を確認しました。Expiry reminderには別途設定したworkflowが必要です。
 
 ```mermaid
 stateDiagram-v2
@@ -877,18 +834,15 @@ stateDiagram-v2
   Expired --> Removed: retention and garbage collection
 ```
 
-<span id="テンプレートのカスタマイズ"></span>
-<span id="template-customization"></span>
+## Templateのカスタマイズ {#template-customization}
 
-## Template のカスタマイズ
+### Go Templateの基本
 
-### Go Template の基本
+通知templateは`Data`を受け取ります。rootでは`.CommonLabels`、`.CommonAnnotations`、`.GroupLabels`、`.Alerts`を使います。`range .Alerts`内ではdotが個々のAlertになり、`.Labels`、`.Annotations`、`.StartsAt`などを参照できます。Prometheus rule annotation template（`$labels`、`$value`）とは異なります。信頼できないdataのescapingを迂回するために`safeHtml`/`safeUrl`を使わないでください。templateはmountし、設定に記載する必要があります。
 
-通知 template は `Data` を受け取ります。root で `.CommonLabels`、`.CommonAnnotations`、`.GroupLabels`、`.Alerts` を使用します。`range .Alerts` 内では、dot は `.Labels`、`.Annotations`、`.StartsAt` を持つ個別の Alert です。これは Prometheus rule annotation template（`$labels`、`$value`）とは異なります。信頼できない data に `safeHtml`/`safeUrl` を使用して escaping を回避しないでください。Template は mount し、設定に列挙する必要があります。
+### Slack Templateの例
 
-### Slack Template の例
-
-`slack.tmpl` として保存します。Whitespace trimming により color result は単一の有効な color string になります。承認済み field だけが出力されます。この template は任意の機密 annotation 値を sanitize しません。
+`slack.tmpl`として保存します。Whitespace trimmingにより、colorの結果は有効な単一のcolor stringになります。承認済みfieldだけを出力します。このtemplateは任意の機密annotation値をsanitizeしません。
 
 ```text
 {{ define "slack.custom.title" -}}
@@ -917,15 +871,13 @@ stateDiagram-v2
 {{- end }}
 ```
 
-<span id="template-関数"></span>
-
 ### Template Function
 
-`if`、`range`、pipe、および `toUpper`、`title`、`printf`、`date` などの function を使用します。Go template には JavaScript 形式の ternary expression はありません。`printf "%.100s"` は string を rune で制限します。byte `slice` は Korean UTF-8 を分割できます。上記 template は root と alert ごとの context、および numeric formatting を示します。
+`if`、`range`、pipe、`toUpper`、`title`、`printf`、`date`などのfunctionを使います。Go templateにはJavaScript風のternary expressionはありません。`printf "%.100s"`は文字列をrune単位で制限します。byte `slice`は韓国語のUTF-8を分割する可能性があります。上記templateはroot contextとAlertごとのcontext、数値formatを示します。
 
-本番 payload ではなく synthetic notification Data で test してください。
+本番payloadではなく、synthetic notification Dataでtestしてください。
 
-この synthetic template-only input を `synthetic-notification.json` として保存します。その timestamp は Alert を作成または送信しません。
+このsynthetic template専用inputを`synthetic-notification.json`として保存します。timestampはAlertを作成または送信するものではありません。
 
 ```json
 {
@@ -966,11 +918,9 @@ stateDiagram-v2
 amtool template render --template.glob=slack.tmpl   --template.data=synthetic-notification.json   --template.text='{{ template "slack.custom.title" . }}'
 ```
 
-<span id="configmap-による-template-の管理"></span>
+### ConfigMapによるTemplate管理
 
-### ConfigMap による Template 管理
-
-stack profile は `alertmanagerSpec.configMaps` を通じてこの ConfigMap を mount します。standalone profile は明示的な volume を使用します。どちらも `/etc/alertmanager/configmaps/alertmanager-templates/*.tmpl` を設定します。一致する mount/path なしに ConfigMap を作成しても何も起きません。選択した installation owner を通じて reload してください。
+stack profileは`alertmanagerSpec.configMaps`を通じてこのConfigMapをmountします。standalone profileでは明示的なvolumeを使います。どちらも`/etc/alertmanager/configmaps/alertmanager-templates/*.tmpl`を設定します。対応するmount/pathなしでConfigMapを作成しても何も起きません。選択したインストールownerを通じてreloadしてください。
 
 ```yaml
 apiVersion: v1
@@ -1033,26 +983,21 @@ data:
     '
 ```
 
-<span id="高可用性の設定"></span>
-<span id="high-availability-configuration"></span>
+## 高可用性の設定 {#high-availability-configuration}
 
-## 高可用性設定
+### Clusteringのアーキテクチャ
 
-<span id="クラスタリングアーキテクチャ"></span>
+正常に収束したHA環境の例であり、すべてのreplicaがAlertを受け取ります。図の単一配信は常に保証されるものではありません。partitionやretryによって重複が発生する場合があります。
 
-### Clustering アーキテクチャ
-
-正常で収束した HA の例です。すべての replica が Alert を受信します。図示した単一配信は普遍的な保証ではありません。partition または retry により重複が発生する可能性があります。
-
-![正常で収束した HA の例です。すべての replica が Alert を受信します。図示した単一配信は普遍的な保証ではありません。partition または retry により重複が発生する可能性があります。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-6.png)
+![正常に収束したHA環境の例であり、すべてのreplicaがAlertを受け取ります。図の単一配信は常に保証されるものではありません。partitionやretryによって重複が発生する場合があります。](../../.gitbook/assets/en-observability-alerting-01-alertmanager-6.png)
 
 [インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-6.html)
 
-### StatefulSet の設定
+### StatefulSetの設定
 
-これは、前述の ConfigMap、template、credential Secret を使用する**manual の代替手段**です。API/UI と gossip port は internal Service ですが、ClusterIP であるだけでは認証されません。本番前に適切な network access を適用し、[サポートされる TLS/authentication configuration](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/https.md) を確認してください。Gossip はデフォルトで暗号化されません。その experimental mutual-TLS transport は異なる TCP-only 動作をします。以下の baseline は通常の TCP/UDP gossip を示しており、検証済みの安全な本番 topology ではありません。
+これは、前述のConfigMap、template、credential Secretを使う**manual deploymentの代替手段**です。API/UIとgossip portは内部Serviceですが、ClusterIPだからといって認証されるわけではありません。本番環境では適切なnetwork accessを適用し、[サポート対象のTLS/authentication設定](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/https.md)を確認してください。Gossipはデフォルトで暗号化されません。experimentalなmutual-TLS transportはTCPのみの異なる動作です。以下のbaselineは通常のTCP/UDP gossipであり、安全な本番topologyとして検証済みではありません。
 
-Parallel Pod startup、not-yet-ready peer 用の headless DNS、両方の gossip protocol、persistent state を明示しています。`publishNotReadyAddresses` は peer discovery を支援しますが、unready member を healthy にするわけではありません。Alert 自体は永続化されず、Prometheus が再送信する必要があります。StorageClass/AZ binding、disruption、resource sizing を確認してください。
+Podの並列起動、まだReadyでないpeerを見つけるためのheadless DNS、2つのgossip protocol、永続状態を明示しています。`publishNotReadyAddresses`はpeer discoveryを助けますが、NotReadyのmemberをhealthyにするわけではありません。Alert自体は永続化されないため、Prometheusによる再送信が必要です。StorageClass/AZ binding、disruption、resource sizingを確認してください。
 
 ```yaml
 apiVersion: apps/v1
@@ -1198,13 +1143,11 @@ spec:
       app: alertmanager-demo
 ```
 
-<span id="prometheus-統合設定"></span>
+### Prometheusとの統合設定
 
-### Prometheus Integration 設定
+このfragmentは**manual Prometheus owner**の完全な設定にマージしてください。DNS discoveryまたはすべてのreplicaの明示的なlistのどちらかを選び、重複する両方のlistを使わないでください。通知をreplica間でload-balanceしないでください。Operator stackは独自のalerting discoveryを管理します。
 
-この fragment を**manual Prometheus owner**の完全な設定にマージします。DNS discovery または全 replica の明示 list のいずれかを選択し、重複した list の両方を使用しないでください。通知を replica 間で load-balance しないでください。Operator stack は独自の alerting discovery を管理します。
-
-`prometheus_replica` は、それ以外は同等な HA Prometheus server を区別するために設定された label である場合のみ削除します。cluster/tenant label は維持してください。無差別な label 削除は無関係な Alert をマージする場合があります。この例は IPv4 DNS A record を使用します。IPv6 ではデプロイ済みの address-family 設定を使用してください。
+`prometheus_replica`は、同等なHA Prometheus serverを区別する設定済みlabelである場合に限って削除します。cluster/tenant labelは残してください。無差別にlabelを削除すると、無関係なAlertが統合される場合があります。この例はIPv4 DNS A recordを使います。IPv6では、デプロイ済みのaddress family設定を使ってください。
 
 ```yaml
 global:
@@ -1224,9 +1167,9 @@ alerting:
 
 ## AlertmanagerConfig CRD
 
-### Namespace スコープの設定
+### Namespaceスコープの設定
 
-package 化された Operator 0.93.1 CRD は引き続き **v1alpha1** を serve/store します。object label を以下の selection overlay に合わせ、承認済み namespace を明示的に選択してください。Default/on-namespace matching は、import した route/inhibition を object の namespace に制限します。これは client が提供した alert label の authentication ではありません。CRD/Secret write access と信頼された Alert ingestion を保護してください。Global `alertmanagerConfiguration` は別 mode であり、ここでは示しません。
+同梱されるOperator 0.93.1 CRDは**v1alpha1**を引き続きserve/storeします。object labelを以下の選択用overlayに合わせ、承認されたnamespaceを明示して選択してください。Default/on-namespace matchingは、取り込んだroute/inhibitionをobjectのnamespace内に制限します。clientが指定したAlert labelの認証を行うものではありません。CRD/Secretへの書き込み権限と、信頼できるAlert取り込み経路を保護してください。Global `alertmanagerConfiguration`は別のmodeであり、ここでは扱いません。
 
 ```yaml
 apiVersion: v1
@@ -1304,13 +1247,11 @@ spec:
     - alertname
 ```
 
-<span id="secret-の参照"></span>
+### Secretの参照
 
-### Secret Reference
+team-aの例では、`#team-a-alerts`と`#team-a-critical`向けに異なるURLを作成します。それぞれを`slack-webhook-secret`の`normal-webhook-url`と`critical-webhook-url` keyに保存します。AlertmanagerConfigは異なるkeyを選択します。channel fieldを変えて1つのwebhookの送信先を切り替えるわけではありません。
 
-team-a の例では、`#team-a-alerts` と `#team-a-critical` 用に異なる URL を作成します。これらをそれぞれ `normal-webhook-url` と `critical-webhook-url` として `slack-webhook-secret` に格納します。AlertmanagerConfig はこれらの異なる key を選択します。channel field を変更して 1 webhook の送信先を変更するわけではありません。
-
-これらの Secret より先に namespace を作成し、選択された設定が reconcile されるより前に Secret を作成してください。名前/key は AlertmanagerConfig と一致し、その namespace に存在する必要があります。ローカル credential file は非公開にし、既存 Secret は別途 rotate してください。
+namespaceを先に作成し、その後、選択された設定がreconcileされる前にSecretを作成します。Secretの名前/keyはAlertmanagerConfigと一致させ、同じnamespaceに置いてください。ローカルのcredential fileは非公開にし、既存Secretのrotationは別途行います。
 
 ```bash
 # team-a namespace is declared in team-a-alertmanagerconfig.yaml.
@@ -1321,11 +1262,9 @@ kubectl -n team-a create secret generic slack-webhook-secret \
 kubectl -n team-a create secret generic pagerduty-secret   --from-file=routing-key=private-team-a/pagerduty-routing-key
 ```
 
-<span id="alertmanager-による-alertmanagerconfig-の選択"></span>
+### AlertmanagerによるAlertmanagerConfigの選択
 
-### Alertmanager AlertmanagerConfig の選択
-
-これは Alertmanager API object ではなく、**kube-prometheus-stack values overlay**です。選択した stack profile とマージしてください。以前の `team-a` と `enabled` の label 不一致では設定が選択されませんでした。明示的な namespace label により、すべての namespace を誤って選択することを避けます。
+これはAlertmanager API objectではなく、**kube-prometheus-stack用values overlay**です。選択したstack profileにマージしてください。以前の`team-a`と`enabled`のlabel不一致では、設定は選択されませんでした。明示的なnamespace labelにより、誤って全namespaceを選ぶことを避けます。
 
 ```yaml
 alertmanager:
@@ -1340,16 +1279,11 @@ alertmanager:
       type: OnNamespace
 ```
 
-<span id="本番環境向けアラートルールの例"></span>
-<span id="production-alert-rule-examples"></span>
-
-## 本番用 Alert Rule の例
-
-<span id="node-アラート"></span>
+## 本番用Alert Ruleの例 {#production-alert-rule-examples}
 
 ### Node Alert
 
-Node-exporter scrape failure は node が物理的に down している証拠ではありません。`NodeExporterUnavailable` はこの区別を表します。Filesystem space は Kubernetes DiskPressure condition ではないため、rule は `NodeFilesystemSpaceLow` と命名されています。実際の job/instance/device label と read-only filesystem を確認してください。threshold は policy の例であり、普遍的な本番 limit ではありません。
+node-exporterのscrape failureは、nodeが物理的に停止した証拠ではありません。`NodeExporterUnavailable`はこの違いを表します。filesystemの空き容量はKubernetesのDiskPressure conditionとは異なるため、rule名を`NodeFilesystemSpaceLow`としています。実際のjob/instance/device labelとread-only filesystemを確認してください。thresholdはpolicyの例であり、すべてに適用できる本番limitではありません。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1421,13 +1355,11 @@ spec:
     interval: 30s
 ```
 
-<span id="pod-と-container-のアラート"></span>
+### PodとContainerのAlert
 
-### Pod と Container の Alert
+`PodCrashLooping`では、UID/nodeのenrichmentを行う**前**に、各metric seriesへ`max_over_time(waiting_reason[5m])`を適用し、その結果のobservation conditionが`10m`続くことを求めます。retry gapで瞬間的なwaiting reasonが消える場合があります。bounded windowは5分未満のgapを補います。1回だけのwaiting sampleは10分のholdが満たされる前に期限切れになります。これはwaitingが連続して10分間続いたことではなく、観測が繰り返されていることを検出します。最後の観測から最大5分にscrape/evaluationの遅延を加えた時間だけ、解除が遅れる場合があります。
 
-`PodCrashLooping` では、UID/node enrichment の**前に**各 metric series に `max_over_time(waiting_reason[5m])` を適用し、その結果の observation condition を `10m` 必須にします。Retry gap により instantaneous waiting reason が消える場合があります。bounded window は 5 分より短い gap を橋渡しします。単発の waiting sample は 10 分の hold を満たす前に期限切れになります。これは継続して 10 分 waiting したことではなく、繰り返される observation を検出します。解除は、最後の observation から最大 5 分に scrape/evaluation delay を加えた分だけ遅れる場合があります。
-
-Readiness は Pod phase だけではありません。rule は完了中/削除中の Pod を除外し、CrashLoopBackOff と通常の restart を区別し、最近の restart と最後の OOM reason を組み合わせます。last-termination/deletion metric は kube-state-metrics 2.20.0 で experimental です。利用可否を確認してください。Node enrichment は Pod UID により join し、info がない場合も Alert を維持します。Memory limit は正でなければなりません。CFS-period throttling percentage は CPU-time percentage ではありません。
+ReadinessはPod phaseだけではありません。ruleは完了済み／削除中のPodを除外し、CrashLoopBackOffと通常のrestartを区別して、最近のrestartと最後のOOM reasonを組み合わせます。last-termination/deletion metricはkube-state-metrics 2.20.0でexperimentalです。利用可能か確認してください。Node enrichmentはPod UIDでjoinし、infoがない場合もAlertを維持します。memory limitは正の値である必要があります。CFS periodのthrottling percentageはCPU timeの割合ではありません。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1528,11 +1460,9 @@ spec:
     interval: 30s
 ```
 
-<span id="api-server-アラート"></span>
-
 ### API Server Alert
 
-確認済み stack ServiceMonitor は `job="apiserver"` を使用します。実際の target label を確認してください。scrape 成功がない場合は discovery/RBAC/TLS/network failure の可能性があり、必ずしも API server failure ではありません。error ratio は total request が存在する場合のみ存在しない 5xx numerator を埋め、zero traffic を除外します。Percent 値には 100 を掛けます。client-certificate histogram は Kubernetes1.35 source では ALPHA であり、request certificate を観測します。最近の quantile は完全な certificate inventory や AWS IAM credential expiry monitor ではありません。
+確認済みのstack ServiceMonitorでは`job="apiserver"`を使います。実際のtarget labelを確認してください。scrapeが成功しない理由には、discovery/RBAC/TLS/network failureもあり、必ずしもAPI serverの障害を示すわけではありません。error ratioはtotal requestがある場合だけ、存在しない5xx numeratorを補い、trafficが0の場合は除外します。割合の値には100を掛けます。client-certificate histogramはKubernetes 1.35 sourceではALPHAで、request certificateを観測します。直近のquantileはcertificateの完全な一覧でも、AWS IAM credentialの期限切れを監視するものでもありません。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1599,11 +1529,9 @@ spec:
     interval: 30s
 ```
 
-<span id="etcd-アラート"></span>
-
 ### etcd Alert
 
-これらの任意 rule は、3 つの expected member と `job="etcd"` を持つ、明示的に scrape された**self-managed etcd** deployment 用です。EKS-managed-etcd check としてデプロイしないでください。`etcd_server_id` は確認した 3.6.5 source に実在します。scrape count が Raft quorum を証明するとは主張せず、観測した ID を distinct count し、no data を処理してください。Database pressure は固定 6GB threshold ではなく、正の設定済み quota を使用します。Physical allocation と logical in-use size は異なります。
+これらの任意ruleは、期待する3 memberと`job="etcd"`を持つ、明示的にscrapeされた**self-managed etcd** deployment向けです。EKS-managed etcdの確認用としてdeployしないでください。確認した3.6.5 sourceには`etcd_server_id`があります。観測済みのIDを個別に数え、dataがない場合も処理してください。scrape数がRaft quorumを証明するとは主張しません。database pressureは固定の6GB thresholdではなく、設定された正のquotaに基づきます。物理割り当て量と論理的な使用量は異なります。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1673,17 +1601,13 @@ spec:
     interval: 30s
 ```
 
-<span id="troubleshooting"></span>
-
-## トラブルシューティング
+## トラブルシューティング {#troubleshooting}
 
 ### よくある問題と解決策
 
-<span id="アラートが送信されない"></span>
+#### Alertが送信されない
 
-#### Alert が送信されない
-
-選択/loaded rule、firing state、Alertmanager discovery、Receiver/file 設定、suppression、delivery failure を確認してください。生成された Alertmanager 設定や Secret を log に dump しないでください。provider credential が含まれる可能性があります。共有する前に、範囲を限定した component log を確認し、機密情報をマスキングしてください。状態の確認には設定済みの authenticated API を使用してください。
+選択・loadされたrule、firing state、Alertmanager discovery、Receiver/file設定、suppression、delivery failureを確認します。生成されたAlertmanager設定やSecretをlogにdumpしないでください。provider credentialが含まれる可能性があります。共有前に範囲を限定したcomponent logを確認し、機密情報を伏せてください。状態の確認には設定済みの認証付きAPIを使います。
 
 ```bash
 # Read-only checks against explicitly selected existing workloads.
@@ -1696,23 +1620,17 @@ amtool check-config alertmanager.yaml
 amtool config routes test --config.file=routing-tree.yaml   --verify.receivers=critical-receiver severity=critical service=foo owner=team-a
 ```
 
-<span id="重複するアラート"></span>
+#### Alertが重複する
 
-#### 重複 Alert
+同等なPrometheus replicaが意図したreplica labelだけで異なることを確認し、そのlabelはnotification path上でのみdropします。cluster membership/nflog、partition、retry、group変更、repeat/retention timingを調べてください。`group_by`に`pod`を追加するとgroup数が増えるため、万能な重複対策ではありません。
 
-同等な Prometheus replica が意図した replica label でのみ異なることを確認し、その label は notification path 上でのみ drop してください。cluster membership/nflog、partition、retry、group change、repeat/retention timing を確認します。`group_by` に `pod` を追加すると group は増えますが、普遍的な duplicate 修正ではありません。
+#### Alertが誤ったReceiverに送られる
 
-<span id="アラートが誤った-receiver-に送信される"></span>
+まず正確なlabel setと期待するReceiverをローカルでtestし、time windowと実際の配信は個別に確認します。first-match/continueの動作、継承されるgroup parameter、継承されないactive/mute intervalを確認してください。
 
-#### 誤った Receiver に送られる Alert
+### amtoolコマンドリファレンス
 
-まず正確な label set と期待する Receiver をローカルで test し、次に time window と実際の delivery を別々に test します。first-match/continue の動作、継承された group parameter、継承されない active/mute interval を確認してください。
-
-<span id="amtool-コマンドリファレンス"></span>
-
-### amtool Command Reference
-
-ローカル config/routes/template check は authenticated API read や silence mutation とは異なります。正確な ID を確認せず、広範な query を直接 silence expiry に pipe しないでください。
+ローカルのconfig/routes/template検査は、認証付きAPI readやsilenceの変更とは別です。正確なIDを確認せず、広範なqueryを直接silence expiryにpipeしないでください。
 
 ```bash
 amtool check-config alertmanager.yaml
@@ -1722,40 +1640,36 @@ amtool --alertmanager.url="$ALERTMANAGER_URL" alert query alertname=HighCPU
 amtool --alertmanager.url="$ALERTMANAGER_URL" silence query
 ```
 
-<span id="メトリクスの確認"></span>
+### Metricの検証
 
-### Metric の検証
-
-最初の 6 つの説明は、synthetic local traffic を使用して実際の 0.34.0 `/metrics` HELP output に対して確認しました。counter は累積です。incident analysis では適切な rate/increase window を使用し、reset を考慮してください。試行した notification を成功した delivery と表示しないでください。
+最初の6つの説明は、syntheticなローカルトラフィックを使ってAlertmanager 0.34.0の実際の`/metrics` HELP outputと照合しました。counterは累積値です。incidentの調査には適切なrate/increase期間を使い、resetを考慮してください。通知の試行を配信成功と表示しないでください。
 
 | Metric | 意味 |
 |---|---|
-| `alertmanager_alerts_received_total` | 受信した Alert |
-| `alertmanager_alerts_invalid_total` | 無効な受信 Alert |
-| `alertmanager_notifications_total` | **試行した** notification。success counter ではない |
-| `alertmanager_notifications_failed_total` | 失敗した notification。integration label と retry 動作を確認する |
-| `alertmanager_alerts` | state 別の Alert |
-| `alertmanager_silences` | 該当する場合、期限切れ record を含む state 別の silence |
-| `alertmanager_cluster_members` | gossip 有効時の cluster membership。single-instance gossip-disabled fixture では存在しない |
+| `alertmanager_alerts_received_total` | 受信したAlert数 |
+| `alertmanager_alerts_invalid_total` | 無効な受信Alert数 |
+| `alertmanager_notifications_total` | **試行した**通知数。成功数のcounterではない |
+| `alertmanager_notifications_failed_total` | 失敗した通知数。integration labelとretry動作を確認する |
+| `alertmanager_alerts` | stateごとのAlert数 |
+| `alertmanager_silences` | 該当する場合は期限切れrecordを含む、stateごとのsilence数 |
+| `alertmanager_cluster_members` | gossip有効時のcluster member数。single-instanceでgossipを無効にしたfixtureでは存在しない |
 
-<span id="デバッグのヒント"></span>
+### Debuggingのヒント
 
-### Debugging のヒント
+provider routeを有効にする前にsynthetic Alertと、自分が所有するlocal/test Receiverを使ってください。本番Alert payloadをpublic request-bin serviceへ転送しないでください。`localhost` Receiverが指すのはAlertmanager processのnetwork namespaceであり、自分のPCではありません。debug logは運用情報を漏えいする可能性があります。出力量を制限し、ownerの設定を通じて元に戻してください。
 
-provider route を有効にする前に、synthetic Alert と所有する local/test Receiver を使用してください。本番 Alert payload を public request-bin service に転送しないでください。`localhost` Receiver は laptop ではなく Alertmanager process の network namespace を意味します。Debug logging は operational data を露出する可能性があるため、範囲を限定し owner の設定を通じて戻す必要があります。
-
-shell API request は YAML fence の外に保持してください。test Alert の POST や設定の reload は意図的な mutation です。承認済み test endpoint に対してのみ実行してください。Webhook response は request が fixture に到達したことを示しますが、end-to-end の本番 incident handling を証明するものではありません。
+shellのAPI requestをYAML fence内に書かないでください。test AlertのPOSTや設定reloadは、明示的な変更操作です。承認されたtest endpointに対してのみ実行してください。Webhook responseはfixtureにrequestが到達したことを示しますが、本番のincident対応全体を証明するものではありません。
 
 ## 参考資料
 
-- [Alertmanager0.34 configuration](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)
-- [High availability](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/high_availability.md)
-- [Notification template data](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/notifications.md)
-- [Prometheus Operator alerting](https://prometheus-operator.dev/docs/developer/alerting/)
-- [kube-prometheus-stack90 values](https://github.com/prometheus-community/helm-charts/blob/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/values.yaml)
-- [Standalone Alertmanager1.43.1 values](https://github.com/prometheus-community/helm-charts/blob/alertmanager-1.43.1/charts/alertmanager/values.yaml)
-- [kube-state-metrics2.20 Pod metrics](https://github.com/kubernetes/kube-state-metrics/blob/v2.20.0/docs/metrics/workload/pod-metrics.md)
+- [Alertmanager 0.34の設定](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)
+- [高可用性](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/high_availability.md)
+- [Notification templateのdata](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/notifications.md)
+- [Prometheus Operatorのalerting](https://prometheus-operator.dev/docs/developer/alerting/)
+- [kube-prometheus-stack 90のvalues](https://github.com/prometheus-community/helm-charts/blob/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/values.yaml)
+- [Standalone Alertmanager 1.43.1のvalues](https://github.com/prometheus-community/helm-charts/blob/alertmanager-1.43.1/charts/alertmanager/values.yaml)
+- [kube-state-metrics 2.20のPod metrics](https://github.com/kubernetes/kube-state-metrics/blob/v2.20.0/docs/metrics/workload/pod-metrics.md)
 
 ## クイズ
 
-[Alertmanager Quiz](../../quizzes/observability/alerting/01-alertmanager-quiz.md) で理解度を確認してください。
+[Alertmanagerクイズ](../../quizzes/observability/alerting/01-alertmanager-quiz.md)で理解度を確認してください。

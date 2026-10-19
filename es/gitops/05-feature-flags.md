@@ -1,9 +1,11 @@
 # Feature Flags y OpenFeature
 
-> **Versiones compatibles**: OpenFeature SDK v1.x, flagd v0.11+
-> **Última actualización**: June 2025
+> **Línea base revisada**: flagd 0.16.3, OpenFeature Operator 0.9.3 y Flagger 1.45.0; las versiones de los SDK están fijadas en sus ejemplos
+> **Última actualización**: 11 de septiembre de 2026
 
-Los feature flags son una técnica fundamental para la entrega progresiva moderna en Kubernetes. Permiten a los equipos de ingeniería desacoplar el despliegue del lanzamiento, habilitando implementaciones seguras, experimentos dirigidos y reversiones instantáneas sin volver a desplegar código. Esta guía cubre el estándar OpenFeature, la implementación de referencia flagd, el OpenFeature Operator para Kubernetes y patrones de integración de nivel de producción para flujos de trabajo de GitOps.
+Los feature flags separan el despliegue del código de la exposición de una funcionalidad en tiempo de ejecución. Esta guía cubre OpenFeature, flagd, la configuración del Operator de Kubernetes, la integración de SDK y los flujos de trabajo de GitOps. Los cambios dependen de la sincronización y del estado de los consumidores; no garantizan una reversión instantánea.
+
+Alcance de la validación: los cuatro ejemplos de SDK se compilaron y ejecutaron en modo de archivos locales. La evaluación HTTP nativa de flagd y las métricas de Prometheus se comprobaron en una red de prueba aislada. También se revisaron Helm, Kustomize, los esquemas y los scripts. Esto no valida un despliegue real en EKS, imágenes de aplicaciones, todas las rutas RPC/TLS ni carga de producción. Adapte las URL de despliegue, las imágenes y las políticas al entorno real.
 
 ---
 
@@ -14,186 +16,118 @@ Los feature flags son una técnica fundamental para la entrega progresiva modern
 - [flagd en Kubernetes](#flagd-on-kubernetes)
 - [OpenFeature Operator](#openfeature-operator)
 - [Integración de aplicaciones](#application-integration)
-- [Combinación de lanzamiento canary y feature flags](#canary-release-and-feature-flag-combination)
+- [Combinación de lanzamientos canary y feature flags](#canary-release-and-feature-flag-combination)
 - [Integración de GitOps](#gitops-integration)
 - [Observabilidad](#observability)
-- [Mejores prácticas de producción](#production-best-practices)
+- [Buenas prácticas de producción](#production-best-practices)
 - [Referencias](#references)
 
 ---
 
-<span id="overview-and-learning-objectives"></span>
-
-## Descripción general y objetivos de aprendizaje
+## Descripción general y objetivos de aprendizaje {#overview-and-learning-objectives}
 
 ### Objetivos de aprendizaje
 
-Después de completar esta sección, podrá:
+Al completar esta sección, podrá:
 
-- Explicar el papel de los feature flags en la entrega progresiva y el despliegue continuo
-- Comparar plataformas de feature flags y seleccionar la herramienta adecuada para su entorno
-- Desplegar flagd en Kubernetes mediante el OpenFeature Operator
+- Explicar la función de los feature flags en la entrega progresiva y el despliegue continuo
+- Comparar plataformas de feature flags y elegir la herramienta adecuada para su entorno
+- Desplegar flagd en Kubernetes mediante OpenFeature Operator
 - Integrar SDK de OpenFeature en aplicaciones Go, Java, Python y Node.js
-- Combinar feature flags con lanzamientos canary para estrategias de implementación sofisticadas
-- Gestionar la configuración de feature flags como código mediante flujos de trabajo de GitOps
-- Monitorizar evaluaciones de flags con Prometheus y Grafana
+- Combinar feature flags con lanzamientos canary para aplicar estrategias de despliegue
+- Gestionar la configuración de feature flags como código mediante flujos de GitOps
+- Supervisar las evaluaciones de flags con Prometheus y Grafana
 
 ### ¿Qué son los feature flags?
 
-Un feature flag (también llamado feature toggle o feature switch) es un mecanismo que permite habilitar o deshabilitar funcionalidades en tiempo de ejecución sin desplegar código nuevo. La idea central es simple: encapsule una ruta de código en una condicional que compruebe el valor de un flag y controle ese valor externamente.
+Un feature flag (también llamado *feature toggle* o *feature switch*) permite activar o desactivar una funcionalidad durante la ejecución sin desplegar código nuevo. La idea básica consiste en envolver una ruta de código en una condición que comprueba el valor del flag y controlar ese valor de forma externa.
 
 ```
-if featureEnabled("new-checkout-flow"):
+if featureEnabled("new-checkout"):
     renderNewCheckout()
 else:
     renderLegacyCheckout()
 ```
 
-Los feature flags cumplen varios propósitos distintos en la entrega de software:
+Los feature flags tienen varios fines distintos en la entrega de software:
 
 | Categoría | Propósito | Duración | Ejemplo |
-|----------|---------|----------|---------|
-| **Flags de lanzamiento** | Desacoplar el despliegue del lanzamiento | Días a semanas | Ocultar una funcionalidad sin terminar detrás de un flag durante el desarrollo |
-| **Flags de experimento** | Pruebas A/B y decisiones basadas en datos | Semanas a meses | Mostrar la variante B de una página de precios al 10% de los usuarios |
-| **Flags de operaciones** | Control operativo e interruptores de circuito | Permanente | Interruptor de apagado para una dependencia downstream no crítica |
-| **Flags de permisos** | Derechos y control de acceso | Permanente | Habilitar una funcionalidad premium únicamente para clientes de pago |
+|----------|-----------|----------|---------|
+| **Flags de lanzamiento** | Desacoplar el despliegue del lanzamiento | Días a semanas | Ocultar durante el desarrollo una funcionalidad aún incompleta |
+| **Flags de experimentación** | Pruebas A/B y decisiones basadas en datos | Semanas a meses | Mostrar la variante B de una página de precios al 10 % de los usuarios |
+| **Flags operativos** | Control operativo e interruptores de circuito | Permanente | Desactivar una dependencia posterior no crítica |
+| **Flags de permisos** | Derechos y control de acceso | Permanente | Habilitar una función prémium solo para clientes de pago |
 
-### Feature Flags en la entrega progresiva
+La exposición de una funcionalidad no sustituye la autenticación ni la autorización. El código desactivado puede seguir presente en una imagen; los flags no son un almacén de secretos ni un límite de control de acceso.
 
-La entrega progresiva amplía la entrega continua al añadir un control detallado sobre qué usuarios ven nuevas funcionalidades y cuándo. Los feature flags son un componente crítico de este modelo:
+### Feature flags en la entrega progresiva
 
-```mermaid
-flowchart LR
-    subgraph DEPLOY["Deployment Phase"]
-        CI["CI Pipeline"] --> IMG["Container Image"]
-        IMG --> K8S["Kubernetes Deploy"]
-    end
+La entrega progresiva amplía la entrega continua con un control más preciso sobre quién ve una funcionalidad nueva y cuándo. Los feature flags son un componente importante de este modelo:
 
-    subgraph RELEASE["Release Phase (Feature Flags)"]
-        FLAG["Feature Flag<br/>Evaluation"] --> INTERNAL["Internal Users<br/>0.1%"]
-        INTERNAL --> BETA["Beta Users<br/>5%"]
-        BETA --> CANARY["Canary<br/>25%"]
-        CANARY --> GA["General Availability<br/>100%"]
-    end
+![El despliegue de una carga de trabajo y la exposición de una funcionalidad en tiempo de ejecución son controles distintos.](../.gitbook/assets/en-gitops-05-feature-flags-0.png)
 
-    K8S --> FLAG
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-0.html)
 
-    classDef deploy fill:#326CE5,stroke:#333,color:white
-    classDef release fill:#28a745,stroke:#333,color:white
-    class CI,IMG,K8S deploy
-    class FLAG,INTERNAL,BETA,CANARY,GA release
-```
-
-Con feature flags, despliega el código en todos los pods simultáneamente, pero controla quién ve el nuevo comportamiento en el nivel de aplicación. Esto es fundamentalmente diferente de los enfoques de división de tráfico (como los despliegues canary), que controlan qué versión del pod recibe una solicitud. Ambas técnicas se complementan, como se describe en la sección [Combinación de lanzamiento canary y feature flags](#combinación-de-lanzamiento-canary-y-feature-flags).
+El código sigue la estrategia de despliegue de la carga de trabajo, como una actualización gradual. Por separado, los feature flags controlan qué comportamiento de la aplicación se selecciona. Esto difiere de dividir el tráfico (por ejemplo, con un despliegue canary), que determina a qué versión del Pod llega una solicitud. Ambas técnicas se complementan, como se explica en [Combinación de lanzamientos canary y feature flags](#canary-release-and-feature-flag-combination).
 
 ### Comparación de herramientas de feature flags
 
-La siguiente tabla compara las plataformas de feature flags más utilizadas en el ecosistema de Kubernetes:
+Evalúe conjuntamente las funciones de gestión, la evaluación en tiempo de ejecución y la disponibilidad de providers para cada lenguaje. La disponibilidad de un provider no implica que sus hooks, eventos o semántica de targeting sean iguales en todos los lenguajes. Consulte la documentación actual de cada proveedor para conocer precios y condiciones contractuales; esta comparación se centra en la integración y la responsabilidad operativa.
 
-| Funcionalidad | LaunchDarkly | Flagsmith | flagd | Split.io | Unleash |
-|---------|-------------|-----------|-------|----------|---------|
-| **Modelo de despliegue** | SaaS (Relay Proxy para on-prem) | SaaS o autohospedado | Autohospedado (nativo de K8s) | SaaS (híbrido disponible) | Autohospedado o SaaS |
-| **Compatibilidad con OpenFeature** | Provider oficial | Provider oficial | Implementación de referencia | Provider oficial | Provider oficial |
-| **Kubernetes Operator** | No (usa Relay Proxy) | No | Sí (OpenFeature Operator) | No | No |
-| **Configuración basada en CRD** | No | No | Sí (FeatureFlag CR) | No | No |
-| **Reglas de targeting** | Avanzadas (segmentos, reglas) | Avanzadas (segmentos, reglas) | Reglas basadas en JSON | Avanzadas (atributos) | Basadas en estrategias |
-| **Registro de auditoría** | Integrado | Integrado | Mediante Kubernetes + OTel | Integrado | Integrado |
-| **Actualizaciones en tiempo real** | Streaming (SSE) | Streaming (SSE/WS) | Sincronización gRPC / watch de K8s | Streaming (SSE) | Polling o webhook |
-| **Precios** | Comercial | Nivel gratuito + comercial | Gratuito (OSS, CNCF) | Comercial | Gratuito (OSS) + comercial |
-| **Mejor para** | Empresas a escala | Flexibilidad de autohospedaje | Cargas de trabajo de K8s nativas de la nube | Enfoque en experimentación | Necesidades simples de autohospedaje |
+| Herramienta | Función | Comprobaciones de integración y operación |
+|-------------|---------|--------------------------------------------|
+| flagd | Evaluación autogestionada y sincronización de reglas | Configure fuentes, modo RPC o en proceso, Operator, disponibilidad y observabilidad |
+| [LaunchDarkly](https://launchdarkly.com/docs/sdk/openfeature) | Servicio gestionado de feature flags | Compruebe el provider de cada lenguaje, el mapeo de contexto y eventos, y las funciones del SDK subyacente |
+| [Flagsmith](https://docs.flagsmith.com/integrating-with-flagsmith/openfeature) | Plataforma de flags gestionada o autohospedada | Compruebe las diferencias entre providers de servidor y web, y la cobertura de lenguajes |
+| [Harness FME](https://github.com/harness/developer-hub/tree/main/docs/feature-management-experimentation) | Gestión de funcionalidades y experimentación | Compruebe la migración desde instalaciones de Split, los providers y la integración de datos de experimentos |
+| [Unleash](https://github.com/Unleash/unleash-openfeature-node-provider) | Ecosistema de providers respaldado por los SDK de Unleash | Compruebe la traducción del contexto, la persistencia de asignación y las funciones opcionales; el provider de Node no implementa la API de tracking |
+
+Esta guía valida directamente la ruta de flagd. No prueba conexiones a cuentas comerciales ni la equivalencia de funciones entre todos los providers.
 
 ### El estándar OpenFeature
 
-OpenFeature es un proyecto incubado por CNCF que proporciona una API neutral respecto al proveedor e impulsada por la comunidad para la evaluación de feature flags. Resuelve el problema de la dependencia de un proveedor al definir una interfaz estándar que funciona con cualquier proveedor de backend.
+OpenFeature es un proyecto incubador de CNCF que ofrece una API neutral respecto al proveedor y desarrollada por la comunidad para evaluar feature flags. Reduce la dependencia de un proveedor mediante una interfaz estándar que funciona con distintos providers de backend.
 
-Beneficios principales de OpenFeature:
+Ventajas principales de OpenFeature:
 
-- **API neutral respecto al proveedor**: Cambie de provider sin modificar el código de la aplicación
-- **Modelo de evaluación coherente**: Tipos de flags booleanos, de cadena, numéricos y de objeto con una API de evaluación uniforme
-- **Hooks**: Hooks del ciclo de vida para registro, métricas, validación y tracing
-- **Contexto de evaluación**: Contexto estructurado (atributos de usuario, información del entorno) que se pasa a cada evaluación
-- **Compatibilidad multilenguaje**: SDK oficiales para Go, Java, Python, Node.js, .NET, PHP y más
+- **API neutral respecto al proveedor**: reduce los cambios en las llamadas de evaluación, pero al migrar todavía hay que migrar la configuración y las reglas del provider
+- **Modelo de evaluación coherente**: tipos booleanos, de cadena, numéricos y de objeto con una API uniforme
+- **Hooks**: etapas del ciclo de vida para registro, métricas, validación y trazas
+- **Contexto de evaluación**: contexto estructurado (atributos de usuario e información del entorno) que se transmite a cada evaluación
+- **Compatibilidad con varios lenguajes**: SDK oficiales para Go, Java, Python, Node.js, .NET, PHP y otros
 
 ---
 
-<span id="openfeature-architecture"></span>
-
-## Arquitectura de OpenFeature
+## Arquitectura de OpenFeature {#openfeature-architecture}
 
 ### Estructura del SDK
 
-El SDK de OpenFeature sigue una arquitectura por capas que separa la API de evaluación del backend de gestión de flags:
+El SDK de OpenFeature sigue una arquitectura por capas que separa la API de evaluación del backend que gestiona los flags:
 
-```mermaid
-flowchart TB
-    subgraph APP["Application Code"]
-        CLIENT["OpenFeature Client"]
-    end
+![La evaluación RPC conecta la aplicación, el SDK, el provider y el backend; las claves y reglas requieren una migración aparte.](../.gitbook/assets/en-gitops-05-feature-flags-1.png)
 
-    subgraph SDK["OpenFeature SDK"]
-        API["Evaluation API"]
-        HOOKS["Hook Pipeline"]
-        CTX["Evaluation Context"]
-    end
-
-    subgraph PROVIDER["Provider Layer"]
-        P_FLAGD["flagd Provider"]
-        P_LD["LaunchDarkly Provider"]
-        P_FS["Flagsmith Provider"]
-        P_ENV["Environment Provider"]
-    end
-
-    subgraph BACKEND["Flag Management Backend"]
-        FLAGD["flagd"]
-        LD_SVC["LaunchDarkly Service"]
-        FS_SVC["Flagsmith Service"]
-        ENV_VAR["Environment Variables"]
-    end
-
-    CLIENT --> API
-    API --> HOOKS
-    HOOKS --> CTX
-    CTX --> P_FLAGD
-    CTX --> P_LD
-    CTX --> P_FS
-    CTX --> P_ENV
-
-    P_FLAGD --> FLAGD
-    P_LD --> LD_SVC
-    P_FS --> FS_SVC
-    P_ENV --> ENV_VAR
-
-    classDef app fill:#4A90D9,stroke:#333,color:white
-    classDef sdk fill:#F5A623,stroke:#333,color:white
-    classDef provider fill:#7B68EE,stroke:#333,color:white
-    classDef backend fill:#28a745,stroke:#333,color:white
-
-    class CLIENT app
-    class API,HOOKS,CTX sdk
-    class P_FLAGD,P_LD,P_FS,P_ENV provider
-    class FLAGD,LD_SVC,FS_SVC,ENV_VAR backend
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-1.html)
 
 ### Componentes principales
 
-**API de evaluación**: La interfaz principal con la que interactúa el código de la aplicación. Proporciona métodos de evaluación tipados (`getBooleanValue`, `getStringValue`, `getNumberValue`, `getObjectValue`) y una abstracción `Client` para delimitar evaluaciones.
+**API de evaluación**: interfaz con la que interactúa el código de la aplicación. Proporciona métodos tipados (`getBooleanValue`, `getStringValue`, `getNumberValue`, `getObjectValue`) y una abstracción `Client` para delimitar las evaluaciones.
 
-**Provider**: Un provider es una implementación concreta que conecta el SDK de OpenFeature a un backend específico de gestión de flags. Solo un provider está activo en cualquier momento (por dominio) y el SDK delega en él toda la resolución de flags.
+**Provider**: implementación concreta que conecta el SDK de OpenFeature con un backend de gestión de flags. Solo hay un provider activo a la vez por dominio, y el SDK le delega la resolución de los flags.
 
-**Contexto de evaluación**: Un conjunto de atributos de clave-valor que proporciona contexto para la evaluación de flags. Entre los atributos comunes se incluyen `targetingKey` (ID de usuario), `email`, `region`, `environment` y propiedades personalizadas. El contexto fluye por todo el pipeline de evaluación.
+**Contexto de evaluación**: conjunto de atributos clave-valor que aporta contexto para evaluar un flag. Entre los atributos habituales están `targetingKey` (ID de usuario), `email`, `region`, `environment` y propiedades personalizadas. El contexto recorre todo el flujo de evaluación.
 
-**Hooks**: Los hooks interceptan el ciclo de vida de evaluación de flags en cuatro etapas:
+**Hooks**: interceptan el ciclo de vida de la evaluación en cuatro etapas:
 
-| Etapa | Momento | Casos de uso habituales |
-|-------|--------|-----------------|
-| `before` | Antes de la evaluación | Enriquecer el contexto, validar entradas |
-| `after` | Después de una evaluación correcta | Registrar métricas, decisiones de registro |
-| `error` | Ante un fallo de evaluación | Reporte de errores, lógica de fallback |
-| `finally` | Siempre se ejecuta (como try/finally) | Limpieza, finalización de spans |
+| Etapa | Momento | Usos habituales |
+|-------|---------|-----------------|
+| `before` | Antes de evaluar | Enriquecer el contexto y validar entradas |
+| `after` | Tras una evaluación correcta | Registrar métricas y decisiones |
+| `error` | Si falla la evaluación | Informar del error y aplicar la lógica de reserva |
+| `finally` | Se ejecuta siempre, como try/finally | Limpiar recursos y cerrar spans |
 
 ### Modelo de provider
 
-La abstracción de provider es lo que hace que OpenFeature sea neutral respecto al proveedor. Cada provider implementa una interfaz estándar:
+La abstracción de provider reduce el acoplamiento al backend. La siguiente interfaz es esquemática, no un contrato de implementación para un lenguaje concreto; el soporte de inicialización, eventos y cambios de contexto varía según el SDK:
 
 ```
 Provider Interface:
@@ -203,393 +137,309 @@ Provider Interface:
   - resolveObjectValue(flagKey, defaultValue, context) -> ResolutionDetails
   - initialize(context) -> void
   - shutdown() -> void
-  - onContextChange(oldCtx, newCtx) -> void
 ```
 
-Cambiar de un provider a otro requiere modificar una única línea de código de configuración:
+Cambiar de provider conserva la API de evaluación cuando ambos la admiten, pero también hay que migrar y probar las claves de flags, variantes, targeting, credenciales, semántica del contexto y comportamiento operativo. Compruebe el constructor de cada provider y espere a que esté listo antes de reutilizar un cliente. Consulte el ejemplo completo del [SDK de Go](#go-sdk). El diagrama ilustra la selección de un provider; no establece que flagd solo sirva para desarrollo.
 
-```go
-// Switch from flagd to LaunchDarkly by changing only the provider
-openfeature.SetProvider(flagd.NewProvider())        // Option A: flagd
-openfeature.SetProvider(launchdarkly.NewProvider())  // Option B: LaunchDarkly
-```
+![Ejemplos de selección e inicialización de providers; el registro no migra la configuración ni el comportamiento operativo.](../.gitbook/assets/en-gitops-05-feature-flags-2.png)
+
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-2.html)
 
 ### Flujo de evaluación
 
-Una evaluación completa de un flag sigue esta secuencia:
+La ruta correcta ejecuta, en orden, Before, la resolución del provider, After y Finally. Si hay un error en Before, al resolver el provider o en After, se pasa por Error antes de finalizar. En la interfaz actual de Go, Finally recibe los detalles de la evaluación.
 
-```mermaid
-sequenceDiagram
-    participant App as Application
-    participant Client as OF Client
-    participant Hook as Hook Pipeline
-    participant Provider as Provider
-    participant Backend as Flag Backend
+![Rutas correcta y de error por los hooks Before, provider, After, Error y Finally.](../.gitbook/assets/en-gitops-05-feature-flags-11.png)
 
-    App->>Client: getBooleanValue("new-ui", false, ctx)
-    Client->>Hook: before(ctx)
-    Hook-->>Client: enriched context
-    Client->>Provider: resolveBooleanValue("new-ui", false, ctx)
-    Provider->>Backend: resolve flag
-    Backend-->>Provider: {value: true, variant: "on", reason: "TARGETING_MATCH"}
-    Provider-->>Client: ResolutionDetails
-    Client->>Hook: after(details)
-    Hook-->>Client: (metrics recorded)
-    Client-->>App: true
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-11.html)
 
 ---
 
-<span id="flagd-on-kubernetes"></span>
-
-## flagd en Kubernetes
+## flagd en Kubernetes {#flagd-on-kubernetes}
 
 ### ¿Qué es flagd?
 
-flagd es un daemon de feature flags ligero y de código abierto, y la implementación de referencia de un motor de evaluación de flags compatible con OpenFeature. Está diseñado específicamente para entornos cloud-native y se ejecuta de forma nativa en Kubernetes.
+flagd es un daemon ligero y de código abierto para feature flags, y una implementación de referencia de un motor de evaluación compatible con OpenFeature. Está diseñado para entornos nativos de la nube y se ejecuta directamente en Kubernetes.
 
 Características principales:
 
-- **Ligero**: Un único binario de Go, consumo mínimo de recursos (~20 MB de memoria en inactividad)
-- **Nativo de Kubernetes**: Lee la configuración de flags desde FeatureFlag CRD, ConfigMaps o archivos
-- **gRPC y HTTP**: Expone endpoints de evaluación mediante gRPC (puerto 8013) y HTTP (puerto 8016)
-- **Sincronización en tiempo real**: Observa los recursos de Kubernetes en busca de cambios y actualiza el estado de los flags al instante
-- **Evaluación fraccional**: Compatibilidad integrada para implementaciones basadas en porcentajes mediante hashing consistente
-- **Reglas de targeting**: Targeting basado en JSON Logic para una segmentación compleja de audiencias
+- **Ligero**: servicio Go cuyo consumo de CPU y memoria depende de la cantidad de flags y fuentes, el tráfico y la telemetría habilitada
+- **Nativo de Kubernetes**: lee la configuración de flags desde CRD FeatureFlag, ConfigMaps o archivos
+- **gRPC y HTTP**: el servicio de evaluación utiliza el puerto 8013; el endpoint HTTP OFREP independiente, el 8016. De forma predeterminada, la gestión y las métricas usan el 8014, y la sincronización de definiciones, el 8015
+- **Sincronización**: sincroniza definiciones desde las fuentes configuradas; las actualizaciones son asíncronas y hay que comprobar la vigencia en los consumidores
+- **Evaluación fraccional**: admite despliegues porcentuales mediante hashing consistente
+- **Reglas de targeting**: usa JSON Logic para segmentar audiencias complejas
 
 ### Arquitectura de flagd
 
-```mermaid
-flowchart TB
-    subgraph SOURCES["Flag Configuration Sources"]
-        CRD["FeatureFlag CRD"]
-        CM["ConfigMap"]
-        FILE["File (volume mount)"]
-        HTTP_SRC["HTTP endpoint"]
-    end
+![La sincronización de fuentes es distinta de las llamadas RPC de las aplicaciones en los despliegues de flagd como sidecar y compartido.](../.gitbook/assets/en-gitops-05-feature-flags-3.png)
 
-    subgraph FLAGD["flagd Process"]
-        SYNC["Sync Engine"]
-        STORE["Flag State Store"]
-        EVAL["Evaluation Engine"]
-        GRPC["gRPC Server<br/>:8013"]
-        REST["HTTP Server<br/>:8016"]
-        METRICS_EP["Metrics<br/>:8014"]
-    end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-3.html)
 
-    subgraph APPS["Application Pods"]
-        APP1["App + OF SDK"]
-        APP2["App + OF SDK"]
-    end
+### Instalación con Helm {#helm-installation}
 
-    CRD --> SYNC
-    CM --> SYNC
-    FILE --> SYNC
-    HTTP_SRC --> SYNC
+El repositorio oficial publica el chart `open-feature-operator`. No dé por hecho que existe un chart independiente `openfeature/flagd`. Tras instalar el Operator, configure la inyección en los Pods o un recurso `Flagd` para crear un servicio de evaluación. Antes, prepare [cert-manager](../security/10-cert-manager.md) para los certificados del webhook.
 
-    SYNC --> STORE
-    STORE --> EVAL
-    EVAL --> GRPC
-    EVAL --> REST
-    EVAL --> METRICS_EP
+Guarde el archivo `openfeature-values.yaml`. Con la configuración predeterminada, Operator `v0.9.3` usa la imagen flagd `v0.16.2`; este ejemplo fija en `v0.16.3` las imágenes del sidecar y del despliegue compartido. Estos valores de recursos son un punto de partida para un laboratorio, no un dimensionamiento medido para producción.
 
-    APP1 -->|"gRPC"| GRPC
-    APP2 -->|"HTTP"| REST
-
-    classDef source fill:#F5A623,stroke:#333,color:white
-    classDef flagd fill:#326CE5,stroke:#333,color:white
-    classDef app fill:#28a745,stroke:#333,color:white
-
-    class CRD,CM,FILE,HTTP_SRC source
-    class SYNC,STORE,EVAL,GRPC,REST,METRICS_EP flagd
-    class APP1,APP2 app
+```yaml
+sidecarConfiguration:
+  image:
+    repository: ghcr.io/open-feature/flagd
+    tag: v0.16.3
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+flagdConfiguration:
+  image:
+    repository: ghcr.io/open-feature/flagd
+    tag: v0.16.3
 ```
 
-### Instalación con Helm
 
-Instale flagd como un despliegue independiente mediante Helm:
 
 ```bash
-# Add the OpenFeature Helm repository
 helm repo add openfeature https://open-feature.github.io/open-feature-operator/
 helm repo update
-
-# Install flagd standalone (without the operator)
-helm install flagd openfeature/flagd \
-  --namespace flagd-system \
-  --create-namespace \
-  --set replicas=2 \
-  --set resources.requests.cpu=100m \
-  --set resources.requests.memory=64Mi \
-  --set resources.limits.cpu=500m \
-  --set resources.limits.memory=256Mi \
-  --set metrics.enabled=true
+helm upgrade --install open-feature-operator openfeature/open-feature-operator \
+  --version v0.9.3 \
+  --namespace open-feature-operator-system --create-namespace \
+  -f openfeature-values.yaml --wait --timeout 5m
 ```
 
-Para la mayoría de los entornos de producción, el enfoque recomendado es instalar el OpenFeature Operator (consulte la siguiente sección), que gestiona las instancias de flagd automáticamente.
+`sidecarConfiguration` y `flagdConfiguration` configuran ubicaciones distintas. Los ejemplos antiguos `sidecarConfig`, `flagdProxyConfig` y `controllerManager.manager.env` no corresponden a las rutas de configuración de este chart. El webhook usa `failurePolicy: Ignore` de forma predeterminada, por lo que, si no está disponible, puede admitir Pods sin sidecar. Antes de elegir `Fail`, limite el alcance a las cargas afectadas y valore el impacto de un fallo; defina también el comportamiento de inicialización del provider y la reserva de la aplicación.
 
 ### FeatureFlag CRD
 
-El OpenFeature Operator introduce una Custom Resource Definition `FeatureFlag` que permite declarar feature flags como recursos de Kubernetes. Este es el mecanismo principal para gestionar la configuración de flags de una manera nativa de Kubernetes.
+El Operator de OpenFeature incorpora la definición de recurso personalizado `FeatureFlag`, que permite declarar flags como recursos de Kubernetes. Es el mecanismo principal para administrar la configuración de flags de forma nativa en Kubernetes.
 
-Este es un ejemplo completo de FeatureFlag CR que demuestra todos los tipos principales de flags y reglas de targeting:
+El siguiente ejemplo completo de un recurso `FeatureFlag` muestra los tipos de flags y las reglas de targeting principales:
 
 ```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flag-demo
+---
 apiVersion: core.openfeature.dev/v1beta1
 kind: FeatureFlag
 metadata:
   name: product-flags
-  namespace: default
-  labels:
-    app: product-service
-    environment: production
+  namespace: flag-demo
 spec:
   flagSpec:
-    # --- Boolean flag: simple on/off toggle ---
     flags:
-      new-checkout-flow:
+      new-checkout:
         state: ENABLED
         variants:
-          "on": true
-          "off": false
-        defaultVariant: "off"
-        targeting:
-          # Enable for internal users and 10% of external users
-          if:
-            - or:
-              - in:
-                - "@company.com"
-                - var: email
-              - in:
-                - var: targetingKey
-                - fractional:
-                  - - "on"
-                    - 10
-                  - - "off"
-                    - 90
-            - "on"
-            - "off"
-
-      # --- String flag: multi-variant feature ---
-      checkout-theme:
-        state: ENABLED
-        variants:
-          classic: "classic-v1"
-          modern: "modern-v2"
-          experimental: "modern-v3-beta"
-        defaultVariant: classic
+          'on': true
+          'off': false
+        defaultVariant: 'off'
         targeting:
           if:
-            - in:
-              - var: region
-              - - "us-east-1"
-                - "eu-west-1"
-            - "modern"
-            - "classic"
-
-      # --- Number flag: configuration tuning ---
-      api-rate-limit:
+          - ==:
+            - var: tier
+            - internal
+          - 'on'
+          - fractional:
+            - - 'on'
+              - 10
+            - - 'off'
+              - 90
+      banner-color:
         state: ENABLED
         variants:
-          low: 100
-          standard: 500
-          high: 2000
-          unlimited: 10000
+          blue: '#0055ff'
+          green: '#008855'
+        defaultVariant: blue
+        targeting:
+          if:
+          - ==:
+            - var: tier
+            - enterprise
+          - green
+          - blue
+      rate-limit:
+        state: ENABLED
+        variants:
+          standard: 100
+          premium: 500
         defaultVariant: standard
         targeting:
           if:
-            - "=="
-              - var: tier
-              - "premium"
-            - "high"
-            - "standard"
-
-      # --- Object flag: complex configuration ---
-      recommendation-config:
+          - in:
+            - var: tier
+            - - premium
+              - enterprise
+          - premium
+          - standard
+      feature-config:
         state: ENABLED
         variants:
           default:
-            algorithm: "collaborative-filtering"
-            maxResults: 10
-            includeSponsored: false
+            maxUploadBytes: 10485760
+            enableOCR: false
           enhanced:
-            algorithm: "deep-learning-v2"
-            maxResults: 20
-            includeSponsored: true
-            modelVersion: "2025-06"
+            maxUploadBytes: 52428800
+            enableOCR: true
         defaultVariant: default
         targeting:
           if:
+          - and:
+            - ==:
+              - var: environment
+              - production
             - in:
-              - var: targetingKey
-              - fractional:
-                - - "enhanced"
-                  - 25
-                - - "default"
-                  - 75
-            - "enhanced"
-            - "default"
-
-      # --- Ops flag: emergency kill switch ---
-      enable-external-recommendations:
-        state: ENABLED
-        variants:
-          "on": true
-          "off": false
-        defaultVariant: "on"
-        # No targeting rules: controlled purely by defaultVariant.
-        # Set defaultVariant to "off" to disable the feature globally.
+              - var: tier
+              - - premium
+                - enterprise
+          - enhanced
+          - default
 ```
 
 ### Inyección de sidecar frente a despliegue independiente
 
-flagd puede ejecutarse en dos modos en Kubernetes. La elección depende de sus requisitos de latencia, modelo operativo y presupuesto de recursos.
+flagd puede ejecutarse en Kubernetes de dos modos. La elección depende de los requisitos de latencia, el modelo operativo y el presupuesto de recursos.
 
-**Modo sidecar** (inyectado por el OpenFeature Operator):
+**Modo sidecar** (inyectado por OpenFeature Operator):
 
-```mermaid
-flowchart LR
-    subgraph POD["Application Pod"]
-        APP["App Container"] -->|"localhost:8013"| FLAGD["flagd Sidecar"]
-    end
-    FLAGD -->|"Watch"| CRD["FeatureFlag CRD"]
+![La aplicación llama al sidecar flagd, que lee una fuente de archivos de ConfigMap proyectada.](../.gitbook/assets/en-gitops-05-feature-flags-4.png)
 
-    classDef app fill:#28a745,stroke:#333,color:white
-    classDef flagd fill:#326CE5,stroke:#333,color:white
-    classDef crd fill:#F5A623,stroke:#333,color:white
-
-    class APP app
-    class FLAGD flagd
-    class CRD crd
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-4.html)
 
 **Modo independiente** (despliegue centralizado):
 
-```mermaid
-flowchart LR
-    subgraph FLAGD_NS["flagd-system namespace"]
-        FLAGD["flagd Deployment<br/>(2+ replicas)"]
-        SVC["flagd Service"]
-    end
+![Las aplicaciones usan un Service compartido y un despliegue de Flagd administrado por el Operator que lee archivos proyectados.](../.gitbook/assets/en-gitops-05-feature-flags-5.png)
 
-    subgraph APP_NS["application namespace"]
-        APP1["App Pod 1"] -->|"gRPC"| SVC
-        APP2["App Pod 2"] -->|"gRPC"| SVC
-        APP3["App Pod 3"] -->|"gRPC"| SVC
-    end
-
-    FLAGD --> SVC
-    FLAGD -->|"Watch"| CRD["FeatureFlag CRD"]
-
-    classDef app fill:#28a745,stroke:#333,color:white
-    classDef flagd fill:#326CE5,stroke:#333,color:white
-    class APP1,APP2,APP3 app
-    class FLAGD,SVC flagd
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-5.html)
 
 | Aspecto | Sidecar | Independiente |
-|--------|---------|------------|
-| **Latencia** | La menor (localhost) | Ligeramente mayor (salto de red) |
-| **Uso de recursos** | Un flagd por pod | Compartido entre pods |
-| **Radio de impacto** | Aislamiento por pod | Compartido; una interrupción afecta a todos los consumidores |
-| **Escalado** | Escala con los pods de la aplicación | Escalado independiente |
-| **Configuración** | Automática mediante anotación de Operator | Gestión manual con Helm/YAML |
-| **Mejor para** | Cargas de trabajo críticas y sensibles a la latencia | Sensibles al coste, muchos servicios pequeños |
+|---------|---------|---------------|
+| **Ruta RPC** | Llamada a localhost | Llamada a un Service compartido; mida la latencia real |
+| **Uso de recursos** | Un flagd por Pod | Compartido entre Pods |
+| **Alcance de un fallo** | El fallo del daemon es local a cada Pod; una configuración compartida puede afectar a varios Pods | El fallo del servicio compartido puede afectar a varios consumidores |
+| **Escalado** | Escala con los Pods de la aplicación | Escala de forma independiente |
+| **Configuración** | Admisión del Pod por el Operator y referencia a la fuente | CR Flagd administrado por el Operator o despliegue administrado aparte |
+| **Compensación** | Sobrecarga operativa y de ejecución por Pod | Capacidad compartida y dependencia del servicio |
+
+Antes de aplicar este `Flagd` compartido, cree FeatureFlag y FeatureFlagSource como se describe más adelante. El Operator administra su Deployment y Service ClusterIP. La fuente de archivos no requiere montar un token de API en el Pod de flagd. El servicio es `flagd.flag-demo.svc.cluster.local` y usa el puerto RPC 8013.
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flagd-demo
+  namespace: flag-demo
+automountServiceAccountToken: false
+---
+apiVersion: core.openfeature.dev/v1beta1
+kind: Flagd
+metadata:
+  name: flagd
+  namespace: flag-demo
+spec:
+  replicas: 2
+  serviceType: ClusterIP
+  serviceAccountName: flagd-demo
+  featureFlagSource: product-flags-source
+```
 
 ---
 
 ## OpenFeature Operator
 
-El OpenFeature Operator es un Kubernetes operator que gestiona el ciclo de vida de las instancias de flagd y sincroniza las configuraciones de feature flags. Es la forma recomendada de ejecutar flagd en entornos Kubernetes de producción.
+OpenFeature Operator administra el ciclo de vida de las instancias de flagd y sincroniza las configuraciones de feature flags. Es la opción recomendada para ejecutar flagd en entornos Kubernetes de producción.
 
 ### Instalación
 
-```bash
-# Install the OpenFeature Operator via Helm
-helm repo add openfeature https://open-feature.github.io/open-feature-operator/
-helm repo update
+Use la instalación fijada del Operator y las sustituciones de imagen descritas en [Instalación con Helm](#helm-installation). Instalar el Operator no despliega automáticamente un servicio flagd compartido para cada aplicación.
 
-helm install open-feature-operator openfeature/open-feature-operator \
-  --namespace open-feature-operator-system \
-  --create-namespace \
-  --set sidecarConfiguration.resources.requests.cpu=50m \
-  --set sidecarConfiguration.resources.requests.memory=32Mi \
-  --set sidecarConfiguration.resources.limits.cpu=200m \
-  --set sidecarConfiguration.resources.limits.memory=128Mi
-```
+### CRD incorporadas por el Operator
 
-### CRD introducidas por el Operator
-
-El operator introduce varias CRD para gestionar feature flags:
+El Operator incorpora varias CRD para administrar feature flags:
 
 | CRD | Propósito |
-|-----|---------|
-| `FeatureFlag` | Declara definiciones de feature flags en línea (clave de flag, variantes, reglas de targeting) |
-| `FeatureFlagSource` | Apunta a las fuentes de configuración de flags para una carga de trabajo (CRD, archivo, HTTP) |
+|-----|-----------|
+| `FeatureFlag` | Declara definiciones de flags en línea (clave, variantes y reglas de targeting) |
+| `FeatureFlagSource` | Señala la(s) fuente(s) de configuración de flags para una carga (CRD, archivo o HTTP) |
 
-### FeatureFlagSource CRD
+### CRD FeatureFlagSource
 
-El recurso `FeatureFlagSource` indica al operator desde dónde debe leer flagd su configuración. Un único `FeatureFlagSource` puede hacer referencia a varias fuentes, y el operator las combina.
+`FeatureFlagSource` configura las fuentes y los ajustes de las instancias de flagd inyectadas o compartidas. Esta línea base usa la fuente `file` para referirse a `flag-demo/product-flags`. El Operator proporciona un volumen ConfigMap, por lo que el contenedor flagd no tiene que observar directamente Kubernetes. Cree primero ese FeatureFlag.
 
 ```yaml
 apiVersion: core.openfeature.dev/v1beta1
 kind: FeatureFlagSource
 metadata:
-  name: product-service-flags
-  namespace: default
+  name: product-flags-source
+  namespace: flag-demo
 spec:
   sources:
-    # Source 1: FeatureFlag CR in the same namespace
-    - source: product-flags          # Name of the FeatureFlag CR
-      provider: kubernetes           # Read from Kubernetes CRD
-    # Source 2: Shared flags from another namespace
-    - source: global-flags
-      provider: kubernetes
-    # Source 3: External HTTP source (for third-party flag data)
-    - source: https://flags.internal.company.com/api/v1/flags
-      provider: http
-      httpSyncBearerToken: "flag-sync-token"  # Token for auth
-  # Port configuration for the injected flagd sidecar
+  - source: flag-demo/product-flags
+    provider: file
   port: 8013
-  metricsPort: 8014
-  # flagd management port
-  managementPort: 8015
-  # Evaluation log format
+  managementPort: 8014
   evaluator: json
-  # Default sync provider
-  defaultSyncProvider: kubernetes
+  logFormat: json
+  probesEnabled: true
 ```
+
+| Fuente | Formato de `source` | Requisito previo |
+|--------|---------------------|------------------|
+| `file` | `namespace/FeatureFlag-name` | Volumen ConfigMap suministrado por el Operator |
+| `kubernetes` | `namespace/FeatureFlag-name` | Permisos de la API de Kubernetes y credenciales para flagd |
+| `flagd-proxy` | Configuración de fuente proxy documentada por el Operator | Servicio proxy y límite de acceso |
+| `http` | Endpoint JSON HTTPS real | Conectividad, autenticación y confianza del servidor |
+| `grpc` | `host:port` real | Servidor de sincronización, TLS y autenticación requerida |
+
+Cada fuente configurada debe existir. Estos valores pertenecen a FeatureFlagSource; no son URI de autodetección de la CLI de flagd. Para la autodetección de Kubernetes, la CLI acepta `core.openfeature.dev/flag-demo/product-flags`. No almacene tokens de autenticación en un CR. `evaluator: json` selecciona el motor de evaluación; no habilita caché ni un registro de cada evaluación de flag.
+
+Al añadir otro CR FeatureFlag, refiéralo desde FeatureFlagSource o combine sus definiciones con el mapa existente `product-flags`. Crear un CR por sí solo no hace que todas las instancias de flagd o los SDK lo consuman.
 
 ### Inyección automática de Pods
 
-El operator utiliza una anotación para inyectar un contenedor sidecar de flagd en los pods de aplicación. Cuando el webhook de mutación del operator detecta la anotación, agrega automáticamente el contenedor flagd a la especificación del pod.
+Defina ambas anotaciones en la plantilla de Pod del Deployment; una etiqueta en el namespace no habilita la inyección por sí sola. Esta plantilla requiere una imagen real de aplicación que use el SDK y sirva HTTP en el puerto 8080. Con la fuente de archivos, el sidecar no necesita un token para la API de Kubernetes.
 
 ```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: order-service
+  namespace: flag-demo
+automountServiceAccountToken: false
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: product-service
-  namespace: default
+  name: order-service
+  namespace: flag-demo
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: product-service
+      app: order-service
   template:
     metadata:
       labels:
-        app: product-service
+        app: order-service
       annotations:
         # This annotation triggers flagd sidecar injection
         openfeature.dev/enabled: "true"
         # Reference the FeatureFlagSource to use
-        openfeature.dev/flagsourcename: "product-service-flags"
+        openfeature.dev/featureflagsource: "product-flags-source"
     spec:
+      serviceAccountName: order-service
+      automountServiceAccountToken: false
       containers:
-        - name: product-service
-          image: myregistry/product-service:v1.4.0
+        - name: order-service
+          image: YOUR_REGISTRY/order-service:YOUR_VERSION
           ports:
             - containerPort: 8080
+              name: http
           env:
             # The flagd provider connects to localhost because the sidecar
             # runs in the same pod
@@ -599,445 +449,382 @@ spec:
               value: "8013"
 ```
 
-Después de que el operator procese este Deployment, el pod resultante contendrá dos contenedores: el contenedor de aplicación y el sidecar de flagd, con una configuración de flags obtenida del `FeatureFlagSource` referenciado.
+Inspeccione el Pod admitido para confirmar que la inyección se realizó y que su imagen, argumentos y volúmenes coinciden con FeatureFlagSource. Que el Pod esté en ejecución no demuestra que la inyección haya funcionado si la política de fallo del webhook es Ignore.
 
 ### Sincronización de ConfigMap y CRD
 
-El operator observa los FeatureFlag CR para detectar cambios y genera o actualiza los ConfigMaps correspondientes que lee flagd. Este flujo de sincronización funciona de la siguiente manera:
+Para la fuente de archivos usada aquí, el Operator proporciona las definiciones FeatureFlag mediante volúmenes ConfigMap. Las fuentes directas de Kubernetes y proxy siguen otras rutas. El siguiente diagrama muestra el flujo de la fuente de archivos:
 
-```mermaid
-sequenceDiagram
-    participant Git as Git Repository
-    participant ArgoCD as ArgoCD / Flux
-    participant K8s as Kubernetes API
-    participant Op as OF Operator
-    participant CM as ConfigMap
-    participant flagd as flagd Sidecar
+![Rutas de administración de ConfigMap para la fuente de archivos y de admisión del Pod; una etiqueta de namespace no habilita por sí sola la inyección.](../.gitbook/assets/en-gitops-05-feature-flags-6.png)
 
-    Git->>ArgoCD: FeatureFlag CR updated
-    ArgoCD->>K8s: Apply FeatureFlag CR
-    K8s->>Op: Watch event: FeatureFlag changed
-    Op->>CM: Generate/update ConfigMap
-    CM->>flagd: Volume mount update detected
-    flagd->>flagd: Reload flag configuration
-    Note over flagd: New flag values active<br/>within seconds
-```
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-6.html)
 
-Al actualizar un FeatureFlag CR, el operator detecta el cambio mediante la API watch de Kubernetes, regenera el ConfigMap que contiene la especificación del flag y flagd detecta el cambio mediante su observador de archivos; todo ello sin reiniciar los pods.
+Los cambios de definiciones en la fuente de archivos pueden consumirse sin reiniciar el Pod, pero la proyección de ConfigMap y la lectura del archivo son asíncronas. Si cambia una imagen o la configuración de una fuente, inspeccione por separado la configuración desplegada del Pod y el rollout necesario. La disponibilidad inicial no demuestra que todos los consumidores tengan la definición más reciente.
 
 ---
 
-<span id="application-integration"></span>
+## Integración de aplicaciones {#application-integration}
 
-## Integración de aplicaciones
+### SDK de Go {#go-sdk}
 
-### SDK de Go
+Este ejemplo usa Go 1.25 o posterior, OpenFeature Go SDK `v1.18.0` y flagd Provider `v0.6.0`. `NewProvider` devuelve un provider y un error. Para resolver desde archivos locales, seleccione `WithFileResolver` y `WithOfflineFilePath`; los ejemplos antiguos con `WithResolverType` o `flagd.GRPC` no coinciden con esta API del provider.
+
+Guarde como `flags.json` el objeto JSON contenido en `spec.flagSpec`, no el recurso de Kubernetes completo. Debe incluir las cuatro claves de flag que se leen más abajo. Si exporta un recurso existente, seleccione su namespace real.
+
+```bash
+kubectl get featureflag product-flags -n flag-demo -o json | jq '.spec.flagSpec' > flags.json
+mkdir go-flag-demo
+cp flags.json go-flag-demo/
+cd go-flag-demo
+go mod init example.com/go-flag-demo
+go get github.com/open-feature/go-sdk@v1.18.0
+go get github.com/open-feature/go-sdk-contrib/providers/flagd@v0.6.0
+# Save the code below as main.go, then run it.
+go run . flags.json
+```
+
+El modo de archivos es una ruta de validación local; no llama a Kubernetes ni a un servidor flagd. En producción, obtenga atributos como `tier` del estado autenticado del servidor. Los encabezados de solicitudes no confiables no deben determinar derechos ni autorización.
 
 ```go
 package main
 
 import (
     "context"
-    "fmt"
+    "encoding/json"
+    "errors"
     "log"
+    "os"
+    "time"
 
     "github.com/open-feature/go-sdk/openfeature"
     flagd "github.com/open-feature/go-sdk-contrib/providers/flagd/pkg"
 )
 
-func main() {
-    // Initialize the flagd provider
-    provider := flagd.NewProvider(
-        flagd.WithHost("localhost"),
-        flagd.WithPort(8013),
-        flagd.WithResolverType(flagd.GRPC),
+func run(flagFile string) error {
+    provider, err := flagd.NewProvider(
+        flagd.WithFileResolver(),
+        flagd.WithOfflineFilePath(flagFile),
     )
-    openfeature.SetProvider(provider)
+    if err != nil {
+        return err
+    }
+    if err := openfeature.SetProviderAndWait(provider); err != nil {
+        return err
+    }
+    defer openfeature.Shutdown()
 
-    // Create a client scoped to a domain
-    client := openfeature.NewClient("product-service")
+    client := openfeature.NewClient("docs-demo")
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+    defer cancel()
+    evaluation := openfeature.NewEvaluationContext("synthetic-user", map[string]interface{}{
+        "tier": "internal",
+        "region": "ap-northeast-2",
+        "environment": "development",
+    })
 
-    // Build evaluation context with user and environment attributes
-    ctx := openfeature.NewEvaluationContext(
-        "user-12345",  // targetingKey
-        map[string]interface{}{
-            "email":   "alice@company.com",
-            "region":  "us-east-1",
-            "tier":    "premium",
-            "env":     "production",
-        },
-    )
-
-    // Boolean flag evaluation
-    newCheckout, _ := client.BooleanValue(
-        context.Background(), "new-checkout-flow", false, ctx,
-    )
-    fmt.Printf("New checkout enabled: %v\n", newCheckout)
-
-    // String flag evaluation
-    theme, _ := client.StringValue(
-        context.Background(), "checkout-theme", "classic-v1", ctx,
-    )
-    fmt.Printf("Theme: %s\n", theme)
-
-    // Number flag evaluation
-    rateLimit, _ := client.FloatValue(
-        context.Background(), "api-rate-limit", 500, ctx,
-    )
-    fmt.Printf("Rate limit: %.0f\n", rateLimit)
-
-    // Object flag evaluation (returns interface{})
-    recoConfig, _ := client.ObjectValue(
-        context.Background(), "recommendation-config",
-        map[string]interface{}{"algorithm": "collaborative-filtering", "maxResults": 10},
-        ctx,
-    )
-    fmt.Printf("Recommendation config: %v\n", recoConfig)
-
-    // Detailed evaluation (includes reason, variant, metadata)
-    details, _ := client.BooleanValueDetails(
-        context.Background(), "new-checkout-flow", false, ctx,
-    )
-    fmt.Printf("Value: %v, Variant: %s, Reason: %s\n",
-        details.Value, details.Variant, details.Reason)
+    enabled, errBool := client.BooleanValue(ctx, "new-checkout", false, evaluation)
+    color, errString := client.StringValue(ctx, "banner-color", "#000000", evaluation)
+    limit, errInteger := client.IntValue(ctx, "rate-limit", 10, evaluation)
+    config, errObject := client.ObjectValue(ctx, "feature-config", map[string]interface{}{}, evaluation)
+    if err := errors.Join(errBool, errString, errInteger, errObject); err != nil {
+        return err
+    }
+    return json.NewEncoder(os.Stdout).Encode(map[string]interface{}{
+        "enabled": enabled,
+        "color": color,
+        "limit": limit,
+        "config": config,
+    })
 }
+
+func main() {
+    if len(os.Args) != 2 {
+        log.Fatal("usage: go run . flags.json")
+    }
+    if err := run(os.Args[1]); err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+Para usar RPC con un sidecar flagd, sustituya únicamente el constructor por el siguiente. Mantenga la espera a que el provider esté listo, el tratamiento de errores de evaluación y el cierre. En un despliegue `Flagd` compartido, use el nombre DNS del Service en vez de loopback y ajuste la red y TLS a ese despliegue.
+
+```go
+provider, err := flagd.NewProvider(
+    flagd.WithHost("127.0.0.1"),
+    flagd.WithPort(8013),
+)
 ```
 
 ### SDK de Java
 
+Este ejemplo usa JDK 21, Maven 3.9, OpenFeature Java SDK `1.22.1` y flagd Provider `0.14.1`. Seleccione el resolver mediante `Config.Resolver`, no `FlagdOptions.ResolverType`. `MutableContext.add` tiene sobrecargas para cadenas, enteros, booleanos y otros valores de contexto admitidos.
+
+Guarde este `pom.xml` en un proyecto nuevo.
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>example.docs</groupId><artifactId>flag-demo</artifactId><version>1.0.0</version>
+  <properties><maven.compiler.release>21</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding></properties>
+  <dependencies>
+    <dependency><groupId>dev.openfeature</groupId><artifactId>sdk</artifactId><version>1.22.1</version></dependency>
+    <dependency><groupId>dev.openfeature.contrib.providers</groupId><artifactId>flagd</artifactId><version>0.14.1</version></dependency>
+  </dependencies>
+  <build><plugins><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.1</version></plugin></plugins></build>
+</project>
+```
+
+Guarde lo siguiente como `src/main/java/FlagDemo.java` y coloque el mismo `flags.json` en la raíz del proyecto. El modo de archivos evalúa flags sin conectarse a un servidor.
+
 ```java
-import dev.openfeature.sdk.*;
-import dev.openfeature.contrib.providers.flagd.FlagdProvider;
+import dev.openfeature.contrib.providers.flagd.Config;
 import dev.openfeature.contrib.providers.flagd.FlagdOptions;
+import dev.openfeature.contrib.providers.flagd.FlagdProvider;
+import dev.openfeature.sdk.Client;
+import dev.openfeature.sdk.FlagEvaluationDetails;
+import dev.openfeature.sdk.MutableContext;
+import dev.openfeature.sdk.MutableStructure;
+import dev.openfeature.sdk.OpenFeatureAPI;
+import dev.openfeature.sdk.Value;
+import java.nio.file.Path;
+import java.util.List;
 
-public class ProductService {
-
-    private final Client featureClient;
-
-    public ProductService() {
-        // Configure the flagd provider
-        FlagdOptions options = FlagdOptions.builder()
-            .host("localhost")
-            .port(8013)
-            .resolverType(FlagdOptions.ResolverType.GRPC)
-            .deadline(500)  // evaluation timeout in ms
-            .build();
-
+public class FlagDemo {
+    public static void main(String[] args) {
+        if (args.length != 1) throw new IllegalArgumentException("usage: FlagDemo flags.json");
         OpenFeatureAPI api = OpenFeatureAPI.getInstance();
-        api.setProvider(new FlagdProvider(options));
-        this.featureClient = api.getClient("product-service");
-    }
-
-    public void handleCheckout(User user) {
-        // Build evaluation context
-        MutableContext ctx = new MutableContext(user.getId());
-        ctx.add("email", user.getEmail());
-        ctx.add("region", user.getRegion());
-        ctx.add("tier", user.getTier());
-
-        // Boolean evaluation
-        boolean newCheckout = featureClient.getBooleanValue(
-            "new-checkout-flow", false, ctx
-        );
-
-        if (newCheckout) {
-            processNewCheckout(user);
-        } else {
-            processLegacyCheckout(user);
+        FlagdOptions options = FlagdOptions.builder()
+                .resolverType(Config.Resolver.FILE)
+                .offlineFlagSourcePath(Path.of(args[0]).toAbsolutePath().toString())
+                .build();
+        try {
+            api.setProviderAndWait(new FlagdProvider(options));
+            Client client = api.getClient("docs-demo");
+            MutableContext context = new MutableContext("synthetic-user");
+            context.add("tier", "internal");
+            FlagEvaluationDetails<Boolean> enabled = client.getBooleanDetails("new-checkout", false, context);
+            FlagEvaluationDetails<String> color = client.getStringDetails("banner-color", "#000000", context);
+            FlagEvaluationDetails<Integer> limit = client.getIntegerDetails("rate-limit", 10, context);
+            Value fallback = new Value(new MutableStructure().add("maxUploadBytes", 0).add("enableOCR", false));
+            FlagEvaluationDetails<Value> config = client.getObjectDetails("feature-config", fallback, context);
+            for (FlagEvaluationDetails<?> result : List.of(enabled, color, limit, config)) {
+                if (result.getErrorCode() != null) throw new IllegalStateException(result.getErrorCode().toString());
+            }
+            System.out.printf("enabled=%s color=%s limit=%d config=%s%n", enabled.getValue(), color.getValue(), limit.getValue(), config.getValue().asStructure().asObjectMap());
+        } finally {
+            api.shutdown();
         }
-
-        // String evaluation
-        String theme = featureClient.getStringValue(
-            "checkout-theme", "classic-v1", ctx
-        );
-        renderWithTheme(theme);
-
-        // Number evaluation
-        int rateLimit = featureClient.getIntegerValue(
-            "api-rate-limit", 500, ctx
-        );
-        applyRateLimit(rateLimit);
-
-        // Object evaluation
-        Value recoConfig = featureClient.getObjectValue(
-            "recommendation-config",
-            new Value(Structure.mapToStructure(
-                Map.of("algorithm", new Value("collaborative-filtering"))
-            )),
-            ctx
-        );
-        configureRecommendations(recoConfig.asStructure());
-    }
-
-    // Detailed evaluation with reason and variant
-    public void logFlagDecision(String flagKey, User user) {
-        MutableContext ctx = new MutableContext(user.getId());
-        FlagEvaluationDetails<Boolean> details =
-            featureClient.getBooleanDetails(flagKey, false, ctx);
-
-        logger.info("Flag: {}, Value: {}, Variant: {}, Reason: {}",
-            flagKey, details.getValue(),
-            details.getVariant(), details.getReason());
     }
 }
 ```
+
+
+
+```bash
+mvn compile org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath \
+  -Dmdep.outputFile=classpath.txt
+java -cp "target/classes:$(cat classpath.txt)" FlagDemo flags.json
+```
+
+Para RPC, elija `Config.Resolver.RPC`, configure `host`, `port` y `deadline`, y quite `offlineFlagSourcePath`. Use `setProviderAndWait` con un servidor listo y llame a `shutdown` al cerrar la aplicación. Este ejemplo independiente no añade una implementación de registro, por lo que SLF4J puede mostrar una advertencia de logger NOP. En un servicio real, use la configuración SLF4J que ya tenga la aplicación.
 
 ### SDK de Python
 
+Este ejemplo completo con archivos locales usa Python 3.10 o posterior, `openfeature-sdk==0.10.0` y `openfeature-provider-flagd==0.5.2`. Reutilice el mismo `flags.json`. El parámetro público del constructor es `resolver_type`, con un valor enum como `ResolverType.FILE`; `ResolverType.GRPC` y la cadena simple `"rpc"` no corresponden a esta API de configuración.
+
+```bash
+python -m venv python-flag-demo/.venv
+python-flag-demo/.venv/bin/python -m pip install \
+  openfeature-sdk==0.10.0 openfeature-provider-flagd==0.5.2
+# Save the code below as python-flag-demo/main.py.
+python-flag-demo/.venv/bin/python python-flag-demo/main.py flags.json
+```
+
+
+
 ```python
+import json
+import sys
+from pathlib import Path
+
 from openfeature import api
-from openfeature.evaluation_context import EvaluationContext
 from openfeature.contrib.provider.flagd import FlagdProvider
 from openfeature.contrib.provider.flagd.config import ResolverType
+from openfeature.evaluation_context import EvaluationContext
 
-# Initialize the provider
+if len(sys.argv) != 2:
+    raise SystemExit("usage: python main.py flags.json")
+
 provider = FlagdProvider(
-    host="localhost",
-    port=8013,
-    resolver_type=ResolverType.GRPC,
-    deadline_ms=500,
+    resolver_type=ResolverType.FILE,
+    offline_flag_source_path=str(Path(sys.argv[1]).resolve()),
 )
-api.set_provider(provider)
-
-# Create a client
-client = api.get_client("product-service")
-
-
-def handle_request(user: dict):
-    """Handle an incoming request with feature flag evaluation."""
-
-    # Build evaluation context
-    ctx = EvaluationContext(
-        targeting_key=user["id"],
-        attributes={
-            "email": user["email"],
-            "region": user.get("region", "us-east-1"),
-            "tier": user.get("tier", "free"),
-            "env": "production",
-        },
-    )
-
-    # Boolean flag
-    new_checkout = client.get_boolean_value("new-checkout-flow", False, ctx)
-    if new_checkout:
-        return render_new_checkout(user)
-
-    # String flag
-    theme = client.get_string_value("checkout-theme", "classic-v1", ctx)
-
-    # Number flag
-    rate_limit = client.get_integer_value("api-rate-limit", 500, ctx)
-
-    # Object flag
-    reco_config = client.get_object_value(
-        "recommendation-config",
-        {"algorithm": "collaborative-filtering", "maxResults": 10},
-        ctx,
-    )
-
-    # Detailed evaluation
-    details = client.get_boolean_details("new-checkout-flow", False, ctx)
-    print(
-        f"Flag: new-checkout-flow, Value: {details.value}, "
-        f"Variant: {details.variant}, Reason: {details.reason}"
-    )
-
-    return render_legacy_checkout(user, theme, rate_limit, reco_config)
+try:
+    api.set_provider_and_wait(provider)
+    client = api.get_client("docs-demo")
+    context = EvaluationContext(targeting_key="synthetic-user", attributes={"tier": "internal"})
+    results = {
+        "enabled": client.get_boolean_details("new-checkout", False, context),
+        "color": client.get_string_details("banner-color", "#000000", context),
+        "limit": client.get_integer_details("rate-limit", 10, context),
+        "config": client.get_object_details("feature-config", {"maxUploadBytes": 0, "enableOCR": False}, context),
+    }
+    for name, result in results.items():
+        if result.error_code is not None:
+            raise RuntimeError(f"{name}: {result.error_code}")
+    print(json.dumps({name: result.value for name, result in results.items()}))
+finally:
+    api.shutdown()
 ```
+
+Para RPC, use `FlagdProvider(host="127.0.0.1", port=8013,
+resolver_type=ResolverType.RPC, deadline_ms=500)`. Quite la opción de archivo sin conexión e inicialice el provider con un servidor flagd listo. Mantenga `set_provider_and_wait` y `shutdown`. Para distinguir un valor de reserva de una evaluación correcta, compruebe `error_code` en el resultado detallado, como se muestra arriba.
 
 ### SDK de Node.js
 
+Este ejemplo de TypeScript usa Node.js 22, `@openfeature/server-sdk@1.23.0` y `@openfeature/flagd-provider@0.16.1`. `resolverType` acepta `rpc` o `in-process`, no `grpc`. En este SDK, añadir `offlineFlagSourcePath` al resolver en proceso selecciona archivos locales en lugar de la sincronización de red.
+
+```bash
+mkdir node-flag-demo
+cp flags.json node-flag-demo/
+cd node-flag-demo
+npm init -y
+npm pkg set type=module
+npm install @openfeature/server-sdk@1.23.0 @openfeature/flagd-provider@0.16.1
+npm install --save-dev typescript@5.9.3 @types/node@22.19.0
+# Save the code below as main.ts.
+npx tsc main.ts --target ES2022 --module NodeNext --moduleResolution NodeNext \
+  --strict --skipLibCheck --outDir dist
+node dist/main.js flags.json
+```
+
+
+
 ```typescript
-import { OpenFeature, EvaluationContext } from '@openfeature/server-sdk';
+import { OpenFeature, type EvaluationContext } from '@openfeature/server-sdk';
 import { FlagdProvider } from '@openfeature/flagd-provider';
 
-// Initialize the provider
+const flagFile = process.argv[2];
+if (!flagFile) throw new Error('usage: node dist/main.js flags.json');
 const provider = new FlagdProvider({
-  host: 'localhost',
-  port: 8013,
-  resolverType: 'grpc',
-  deadlineMs: 500,
+  resolverType: 'in-process',
+  offlineFlagSourcePath: flagFile,
 });
-
-OpenFeature.setProvider(provider);
-
-// Create a client
-const client = OpenFeature.getClient('product-service');
-
-interface User {
-  id: string;
-  email: string;
-  region: string;
-  tier: string;
-}
-
-async function handleCheckout(user: User): Promise<void> {
-  // Build evaluation context
-  const ctx: EvaluationContext = {
-    targetingKey: user.id,
-    email: user.email,
-    region: user.region,
-    tier: user.tier,
-    env: 'production',
+try {
+  await OpenFeature.setProviderAndWait(provider);
+  const client = OpenFeature.getClient('docs-demo');
+  const context: EvaluationContext = {targetingKey: 'synthetic-user', tier: 'internal'};
+  const results = {
+    enabled: await client.getBooleanDetails('new-checkout', false, context),
+    color: await client.getStringDetails('banner-color', '#000000', context),
+    limit: await client.getNumberDetails('rate-limit', 10, context),
+    config: await client.getObjectDetails('feature-config', {maxUploadBytes: 0, enableOCR: false}, context),
   };
-
-  // Boolean flag
-  const newCheckout = await client.getBooleanValue(
-    'new-checkout-flow',
-    false,
-    ctx,
-  );
-
-  if (newCheckout) {
-    await processNewCheckout(user);
-  } else {
-    await processLegacyCheckout(user);
+  for (const [name, result] of Object.entries(results)) {
+    if (result.errorCode) throw new Error(`${name}: ${result.errorCode}`);
   }
-
-  // String flag
-  const theme = await client.getStringValue(
-    'checkout-theme',
-    'classic-v1',
-    ctx,
-  );
-
-  // Number flag
-  const rateLimit = await client.getNumberValue(
-    'api-rate-limit',
-    500,
-    ctx,
-  );
-
-  // Object flag
-  const recoConfig = await client.getObjectValue(
-    'recommendation-config',
-    { algorithm: 'collaborative-filtering', maxResults: 10 },
-    ctx,
-  );
-
-  // Detailed evaluation with metadata
-  const details = await client.getBooleanDetails(
-    'new-checkout-flow',
-    false,
-    ctx,
-  );
-  console.log(
-    `Flag: new-checkout-flow, Value: ${details.value}, ` +
-    `Variant: ${details.variant}, Reason: ${details.reason}`,
-  );
+  console.log(JSON.stringify(Object.fromEntries(Object.entries(results).map(([name, result]) => [name, result.value]))));
+} finally {
+  await OpenFeature.clearProviders();
 }
 ```
+
+Para RPC, configure `resolverType: 'rpc'`, el `host` del servidor y `port: 8013`, y quite `offlineFlagSourcePath`. Espere a `setProviderAndWait` antes de aceptar solicitudes y a `clearProviders` al cerrar la aplicación. No cree un provider por solicitud. Esta prueba con archivos locales no valida una conexión RPC real.
 
 ### Análisis detallado de las reglas de targeting
 
-flagd utiliza JSON Logic para las reglas de targeting. Estos son patrones de targeting habituales:
+`targeting` debe devolver finalmente un **nombre de variante** existente en `variants`. `fractional` devuelve un nombre de variante, no una lista de usuarios; por tanto, no compruebe si una clave de usuario está `in` ese resultado. Combine una regla para usuarios internos con un despliegue gradual, como en la línea base: `if: [internal condition, on, fractional rule]`.
 
-**Implementación basada en porcentajes (hashing consistente)**:
-
-El operador `fractional` utiliza `targetingKey` como entrada para una función hash, lo que garantiza que el mismo usuario siempre vea la misma variante:
+Haga referencia a este CR adicional en la fuente o combine sus definiciones con el mapa `flags` de la línea base. Use atributos confiables y normalice `app_version` como SemVer.
 
 ```yaml
-targeting:
-  if:
-    - in:
-      - var: targetingKey
-      - fractional:
-        - - "on"
-          - 20    # 20% of users
-        - - "off"
-          - 80    # 80% of users
-    - "on"
-    - "off"
+apiVersion: core.openfeature.dev/v1beta1
+kind: FeatureFlag
+metadata:
+  name: targeting-examples
+  namespace: flag-demo
+spec:
+  flagSpec:
+    flags:
+      premium-feature:
+        state: ENABLED
+        variants:
+          'on': true
+          'off': false
+        defaultVariant: 'off'
+        targeting:
+          if:
+          - and:
+            - ==:
+              - var: tier
+              - enterprise
+            - '>=':
+              - var: account_age_days
+              - 30
+          - 'on'
+          - 'off'
+      new-search-algo:
+        state: ENABLED
+        variants:
+          'on': true
+          'off': false
+        defaultVariant: 'off'
+        targeting:
+          fractional:
+          - - 'on'
+            - 20
+          - - 'off'
+            - 80
+      api-v2:
+        state: ENABLED
+        variants:
+          'on': true
+          'off': false
+        defaultVariant: 'off'
+        targeting:
+          if:
+          - sem_ver:
+            - var: app_version
+            - '>='
+            - 2.0.0
+          - 'on'
+          - 'off'
 ```
 
-**Targeting basado en atributos (región, nivel, etc.)**:
+Los pesos enteros de fractional son relativos. El ejemplo divide el espacio de hash 20/80; no garantiza exactamente el 20 % de usuarios o solicitudes reales. La clave de asignación predeterminada combina la clave del flag y `targetingKey`. Use una clave estable y no vacía, y no asigne la misma clave a todos los visitantes anónimos. La evaluación repetida con la misma regla y clave es estable; los cambios de pesos, claves o implementaciones del evaluador pueden cambiar las asignaciones.
 
-```yaml
-targeting:
-  if:
-    - and:
-      - "=="
-        - var: region
-        - "us-east-1"
-      - in:
-        - var: tier
-        - - "premium"
-          - "enterprise"
-    - "enhanced"
-    - "default"
-```
-
-**Targeting combinado (usuarios internos O porcentaje)**:
-
-```yaml
-targeting:
-  if:
-    - or:
-      - ends_with:
-        - var: email
-        - "@company.com"
-      - in:
-        - var: targetingKey
-        - fractional:
-          - - "on"
-            - 5
-          - - "off"
-            - 95
-    - "on"
-    - "off"
-```
+El `defaultVariant` del flag cuando el targeting no produce un resultado es distinto del valor predeterminado que pasa quien llama al SDK. En el provider flagd probado para Go, `DISABLED` devuelve el valor predeterminado del llamador sin error e informa la razón `DISABLED`. Desactivar un flag no implica necesariamente que devuelva false. Diseñe el interruptor para seleccionar una variante off explícita mientras permanece `ENABLED`, y compruebe los valores, errores, razones y propagación a los consumidores.
 
 ---
 
-<span id="canary-release-and-feature-flag-combination"></span>
-<span id="combinación-de-lanzamiento-canary-y-feature-flags"></span>
+## Combinación de lanzamientos canary y feature flags {#canary-release-and-feature-flag-combination}
 
-## Combinación de lanzamiento canary y feature flags
+Esta secuencia presupone que existe una versión primaria v1 inicializada y en buen estado. Distinga la inicialización del primer Canary del análisis de una revisión posterior de la carga de trabajo. Confirme el estado OFF inicial mediante una evaluación real, incluido el targeting; un valor predeterminado off por sí solo no basta.
 
-Los feature flags y los lanzamientos canary son estrategias complementarias. Los lanzamientos canary controlan el tráfico en el nivel de infraestructura (qué versión del pod sirve una solicitud), mientras que los feature flags controlan el comportamiento en el nivel de aplicación (qué ruta de código se ejecuta). Combinar ambos proporciona el máximo nivel de seguridad para los lanzamientos.
+Los feature flags y los lanzamientos canary son estrategias complementarias. Los canary controlan el tráfico en la infraestructura (qué versión del Pod sirve una solicitud), mientras que los flags controlan el comportamiento de la aplicación (qué ruta de código se ejecuta). Combinarlos ofrece mayor control sobre la seguridad del lanzamiento.
 
-### Arquitectura: Flagger + Feature Flags
+### Arquitectura: Flagger y feature flags
 
-```mermaid
-flowchart TB
-    subgraph TRAFFIC["Traffic Layer (Flagger/Istio)"]
-        INGRESS["Ingress Gateway"]
-        VS["VirtualService"]
-        PRIMARY["Primary (v1)<br/>90% traffic"]
-        CANARY["Canary (v2)<br/>10% traffic"]
-    end
+![La promoción y recuperación de la carga de trabajo son decisiones distintas de la exposición y restauración del feature flag.](../.gitbook/assets/en-gitops-05-feature-flags-7.png)
 
-    subgraph FLAGS["Feature Layer (OpenFeature)"]
-        FLAGD_P["flagd"]
-        FF_NEW["new-feature: off<br/>(v1 pods)"]
-        FF_ON["new-feature: on<br/>(v2 pods evaluate)"]
-    end
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-7.html)
 
-    INGRESS --> VS
-    VS -->|"90%"| PRIMARY
-    VS -->|"10%"| CANARY
-    PRIMARY --> FF_NEW
-    CANARY --> FF_ON
-    FF_ON --> FLAGD_P
+Esta es una plantilla de integración con Istio para [Flagger](./04-flagger.md) 1.45. El controlador debe observar `flag-demo`, y ya deben existir el Deployment, Istio y las métricas de Prometheus. La imagen de aplicación debe integrar realmente el SDK. `threshold: 5` es el límite acumulado de comprobaciones fallidas de un análisis, no un número de éxitos requeridos. Estas cifras ilustran una política; adáptelas al SLO real.
 
-    classDef traffic fill:#326CE5,stroke:#333,color:white
-    classDef flags fill:#28a745,stroke:#333,color:white
+Un `release_id` proporcionado por la aplicación y de confianza puede limitar la elegibilidad para el nuevo comportamiento. No confunda la función canary de un Pod con el ID de versión de la aplicación. La promoción de la carga no habilita automáticamente el feature flag para el 100 %; ampliar o restaurar el flag requiere una aprobación independiente, cambios en Git o automatización implementada.
 
-    class INGRESS,VS,PRIMARY,CANARY traffic
-    class FLAGD_P,FF_NEW,FF_ON flags
-```
+### Flujo de Flagger y feature flags
 
-### Flujo de trabajo de Flagger + Feature Flag
+Este flujo usa Flagger para gestionar el tráfico y feature flags para controlar con más precisión el comportamiento dentro de los Pods canary:
 
-El siguiente flujo de trabajo utiliza Flagger para la gestión de tráfico y feature flags para el control detallado dentro de los pods canary:
+**Fase 1 -- Desplegar con el flag desactivado**: publique v2 con la nueva funcionalidad detrás de un flag (predeterminado: desactivado). Flagger empieza a dirigir una pequeña parte del tráfico a v2.
 
-**Fase 1 -- Desplegar con el flag desactivado**: Entregue v2 con una nueva funcionalidad detrás de un flag (valor predeterminado: desactivado). Flagger comienza a enrutar un pequeño porcentaje del tráfico a v2.
+**Fase 2 -- Habilitar un grupo limitado**: use atributos confiables, como `tier: internal`, y el ID de versión previsto. Confirme la revisión real del consumidor y su exposición antes de ampliar el grupo.
 
-**Fase 2 -- Habilitar el flag para usuarios internos**: Actualice el FeatureFlag CR para habilitar la funcionalidad para usuarios que coincidan con `@company.com`. Los usuarios internos que llegan a los pods v2 ven la nueva funcionalidad; todos los demás usuarios de v2 ven el comportamiento anterior.
+**Fase 3 -- Ampliar el grupo**: cambie por separado los pesos aprobados del flag y supervise los resultados de la aplicación junto con el análisis de la carga de trabajo.
 
-**Fase 3 -- Implementación porcentual**: Amplíe la regla de targeting al 10% de todos los usuarios. Monitorice las tasas de error y la latencia mediante el análisis de Flagger.
-
-**Fase 4 -- Implementación completa**: Si las métricas son saludables, Flagger promociona v2 a primaria y el feature flag se abre al 100%.
+**Fase 4 -- Separar las decisiones de promoción**: Flagger puede promover la carga tras su análisis. Habilitar el flag para el 100 % es un cambio de configuración aparte, con su propia validación.
 
 Ejemplo de recurso Canary de Flagger:
 
@@ -1045,95 +832,81 @@ Ejemplo de recurso Canary de Flagger:
 apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
-  name: product-service
-  namespace: default
+  name: order-service
+  namespace: flag-demo
 spec:
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: product-service
+    name: order-service
+  progressDeadlineSeconds: 600
   service:
     port: 8080
+    targetPort: 8080
   analysis:
     interval: 1m
     threshold: 5
     maxWeight: 50
     stepWeight: 10
     metrics:
-      - name: request-success-rate
-        thresholdRange:
-          min: 99
-        interval: 1m
-      - name: request-duration
-        thresholdRange:
-          max: 500
-        interval: 1m
-      # Custom metric: feature flag error rate
-      - name: feature-flag-error-rate
-        templateRef:
-          name: feature-flag-errors
-          namespace: flagger-system
-        thresholdRange:
-          max: 1
-        interval: 1m
+    - name: request-success-rate
+      thresholdRange:
+        min: 99
+      interval: 1m
+    - name: request-duration
+      thresholdRange:
+        max: 500
+      interval: 1m
 ```
+
+La integración con webhooks requiere un receptor real, autenticación, reintentos y comprobaciones de revisión. Un hook `rollback` correcto solicita una reversión; no es una notificación posterior a ella. `post-rollout` puede ejecutarse tanto si hay éxito como si hay fallo, así que compruebe el resultado. Las cadenas de metadatos son literales, no expresiones de plantilla Go. Este ejemplo no instala un servicio externo de control de flags.
 
 ### Pruebas A/B con feature flags
 
-Los feature flags permiten pruebas A/B reales en las que la asignación de usuarios es determinista e independiente del enrutamiento de infraestructura:
+Una clave de targeting estable y una regla sin cambios producen una asignación de variante estable. Añada este CR a la fuente o combínelo con el mapa de flags existente. Los pesos 34/33/33 no son cuotas que garanticen cantidades exactas de usuarios.
 
 ```yaml
 apiVersion: core.openfeature.dev/v1beta1
 kind: FeatureFlag
 metadata:
-  name: ab-test-pricing
-  namespace: default
+  name: ab-test-checkout
+  namespace: flag-demo
 spec:
   flagSpec:
     flags:
-      pricing-page-variant:
+      checkout-variant:
         state: ENABLED
         variants:
-          control: "pricing-v1"
-          variant-a: "pricing-v2-annual-first"
-          variant-b: "pricing-v2-monthly-first"
+          control: classic
+          variant-a: streamlined
+          variant-b: one-click
         defaultVariant: control
         targeting:
-          if:
-            - in:
-              - var: targetingKey
-              - fractional:
-                - - "control"
-                  - 34
-                - - "variant-a"
-                  - 33
-                - - "variant-b"
-                  - 33
-            - fractional:
-              - - "control"
-                - 34
-              - - "variant-a"
-                - 33
-              - - "variant-b"
-                - 33
+          fractional:
+          - - control
+            - 34
+          - - variant-a
+            - 33
+          - - variant-b
+            - 33
 ```
 
-Dado que `fractional` usa hashing consistente sobre `targetingKey`, cada usuario siempre ve la misma variante entre sesiones, lo cual es esencial para resultados válidos de pruebas A/B.
+Use los detalles de evaluación de cadenas para inspeccionar el valor, la variante y el error. Registre la exposición cuando se entregue realmente la experiencia seleccionada; evaluar un flag no demuestra exposición ni conversión. Defina por separado los eventos de conversión, el tamaño de muestra, la duración del experimento y las métricas de resultado. El bucketing estable no garantiza la misma experiencia entre versiones antiguas y nuevas de la aplicación ni con conjuntos de reglas desactualizados.
 
-### Patrón de dark launch
+### Patrón de lanzamiento en sombra
 
-Un dark launch despliega nueva funcionalidad en producción, pero solo la expone a usuarios internos o a un pipeline de sombra. Los feature flags lo hacen sencillo:
+Un lanzamiento en sombra despliega funcionalidad nueva en producción, pero solo la expone a usuarios internos o a un flujo de sombra. Los feature flags facilitan este patrón:
 
 ```yaml
 apiVersion: core.openfeature.dev/v1beta1
 kind: FeatureFlag
 metadata:
-  name: dark-launch-payment-v2
-  namespace: default
+  name: dark-launch-quote-v2
+  namespace: flag-demo
 spec:
   flagSpec:
     flags:
-      payment-engine-v2:
+      shadow-quote-v2:
         state: ENABLED
         variants:
           "on": true
@@ -1151,128 +924,201 @@ spec:
             - "off"
 ```
 
-El código de la aplicación procesa las rutas antigua y nueva simultáneamente, pero solo devuelve el resultado de la nueva ruta cuando el flag está activado:
+La ejecución en sombra no debe realizar dos veces la operación de negocio. En particular, no llame a dos procesadores de pago para el mismo pedido. Compare un cálculo de solo lectura o vuelva a reproducir entradas saneadas en un entorno aislado que no pueda cobrar, escribir registros de negocio ni enviar notificaciones. La llamada sigue recibiendo el resultado de la implementación existente.
+
+El siguiente fragmento es un ejemplo de integración: `calculateLegacyQuote`, `calculateCandidateQuote` y `compareQuotes` son funciones de la aplicación. Ambos cálculos deben ser inocuos, sin efectos secundarios, y respetar la cancelación del contexto. Este ejemplo síncrono puede añadir a la solicitud hasta el tiempo de espera del candidato; una implementación asíncrona necesita una cola acotada y su propio timeout.
 
 ```go
-func processPayment(order Order, ctx openfeature.EvaluationContext) Result {
-    // Always run the legacy path
-    legacyResult := legacyPaymentEngine.Process(order)
-
-    // Check if the new engine should be used
-    useV2, _ := client.BooleanValue(context.Background(), "payment-engine-v2", false, ctx)
-
-    if useV2 {
-        newResult := paymentEngineV2.Process(order)
-        // Compare results for validation (optional)
-        compareResults(legacyResult, newResult)
-        return newResult
+func quoteOrder(ctx context.Context, order Order,
+    evalCtx openfeature.EvaluationContext) (Quote, error) {
+    original, err := calculateLegacyQuote(ctx, order)
+    if err != nil {
+        return original, err
     }
 
-    return legacyResult
+    shadowEnabled, flagErr := client.BooleanValue(
+        ctx, "shadow-quote-v2", false, evalCtx,
+    )
+    if flagErr == nil && shadowEnabled {
+        shadowCtx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+        defer cancel()
+        candidate, err := calculateCandidateQuote(shadowCtx, order)
+        if err == nil {
+            compareQuotes(original, candidate)
+        }
+    }
+    return original, nil
 }
 ```
 
-### Implementación automática basada en métricas
+### Rollout automático basado en métricas
 
-Combine el análisis de Flagger con métricas de feature flags para avanzar o abortar implementaciones automáticamente:
+Las siguientes plantillas requieren la instrumentación de la aplicación y el PodMonitor descritos en [Observabilidad](#observability). La etiqueta `app` debe identificar el Deployment de destino y excluir el primario. Sustituya la URL de Prometheus por la dirección real del servicio. Las métricas del servidor flagd compartido no permiten identificar de forma fiable los fallos de evaluación de un Canary concreto.
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: feature-flag-errors
-  namespace: flagger-system
+  name: app-flag-errors
+  namespace: flag-demo
 spec:
   provider:
     type: prometheus
-    address: http://prometheus.monitoring:9090
-  query: |
-    100 - (
-      sum(rate(
-        flagd_impression_total{
-          key="new-checkout-flow",
-          reason!="ERROR"
-        }[1m]
-      )) /
-      sum(rate(
-        flagd_impression_total{
-          key="new-checkout-flow"
-        }[1m]
-      )) * 100
-    )
+    address: http://prometheus.monitoring.svc:9090
+  query: |-
+    100 * (
+      sum(rate(app_feature_flag_evaluations_total{namespace="{{ namespace }}",app="{{ target }}",flag_key="new-checkout",reason="ERROR"}[{{ interval }}]))
+      or vector(0)
+    ) / sum(rate(app_feature_flag_evaluations_total{namespace="{{ namespace }}",app="{{ target }}",flag_key="new-checkout"}[{{ interval }}]))
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: app-flag-samples
+  namespace: flag-demo
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.monitoring.svc:9090
+  query: sum(increase(app_feature_flag_evaluations_total{namespace="{{ namespace }}",app="{{
+    target }}",flag_key="new-checkout"}[{{ interval }}]))
 ```
+
+Añada estos elementos a la lista `spec.analysis.metrics` existente del Canary después de confirmar que existen las series. Estas políticas ilustrativas exigen al menos 100 evaluaciones del SDK por minuto y como máximo un 1 % de errores; no cuentan usuarios únicos ni demuestran que el comportamiento de negocio sea correcto. Supervise por separado los resultados DISABLED y predeterminados.
+
+```yaml
+- name: app-flag-error-rate
+  templateRef:
+    name: app-flag-errors
+  thresholdRange:
+    max: 1
+  interval: 1m
+- name: app-flag-evaluation-count
+  templateRef:
+    name: app-flag-samples
+  thresholdRange:
+    min: 100
+  interval: 1m
+```
+
+Una evaluación satisfactoria de Flagger solo permite promover la carga de trabajo. El cambio del feature flag sigue siendo una decisión separada. La ausencia de observaciones y NaN no deben tratarse como éxito.
 
 ---
 
-<span id="gitops-integration"></span>
-
-## Integración de GitOps
+## Integración de GitOps {#gitops-integration}
 
 ### Feature flags como código
 
-Gestionar feature flags mediante Git aporta los mismos beneficios que GitOps para la infraestructura: historial de versiones, revisiones de pull requests, despliegue automatizado y pistas de auditoría. La FeatureFlag CRD hace que esto sea natural: la configuración de flags es simplemente otro manifiesto de Kubernetes almacenado en Git.
+Use los recursos validados anteriormente: `product-flags.yaml` contiene Namespace y FeatureFlag; `feature-source.yaml` contiene FeatureFlagSource en modo de archivos; y `flagd.yaml` contiene ServiceAccount y Flagd para el servicio compartido. Instale primero el Operator y cert-manager. Sustituya la URL del repositorio y configure la autenticación necesaria.
 
-Diseño de repositorio recomendado:
-
-```
-gitops-repo/
-├── base/
-│   ├── namespaces.yaml
-│   └── ...
-├── apps/
-│   ├── product-service/
-│   │   ├── deployment.yaml
-│   │   ├── service.yaml
-│   │   ├── feature-flags/
-│   │   │   ├── product-flags.yaml       # FeatureFlag CR
-│   │   │   └── flag-source.yaml         # FeatureFlagSource CR
-│   │   └── kustomization.yaml
-│   └── checkout-service/
-│       ├── deployment.yaml
-│       ├── feature-flags/
-│       │   └── checkout-flags.yaml
-│       └── kustomization.yaml
-├── platform/
-│   └── open-feature-operator/
-│       ├── helmrelease.yaml
-│       └── values.yaml
-└── environments/
-    ├── dev/
-    │   └── patches/
-    │       └── feature-flags-dev.yaml    # Dev-specific flag overrides
-    ├── staging/
-    │   └── patches/
-    │       └── feature-flags-staging.yaml
-    └── production/
-        └── patches/
-            └── feature-flags-prod.yaml
+```text
+gitops-config/
+├── base/feature-flags/
+│   ├── kustomization.yaml
+│   ├── product-flags.yaml
+│   ├── feature-source.yaml
+│   └── flagd.yaml
+├── overlays/dev/feature-flags/kustomization.yaml
+├── overlays/production/feature-flags/kustomization.yaml
+├── validate-flags.py
+└── .github/workflows/feature-flags.yml
 ```
 
-### Despliegue de ArgoCD FeatureFlag CR
+`base/feature-flags/kustomization.yaml`:
 
-Defina una Application de ArgoCD que gestione recursos de feature flags:
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- product-flags.yaml
+- feature-source.yaml
+- flagd.yaml
+```
+
+### Sustituciones por entorno con Kustomize
+
+Estos son **parches dentro de una Kustomization**, no recursos FeatureFlag incompletos para aplicar directamente. Para habilitar el flag a todos los usuarios de desarrollo, quite también la regla de targeting existente y cambie la variante predeterminada a on. El targeting puede prevalecer sobre un valor predeterminado cambiado. Los otros tres flags permanecen intactos.
+
+`overlays/dev/feature-flags/kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../../base/feature-flags
+patches:
+- target:
+    group: core.openfeature.dev
+    version: v1beta1
+    kind: FeatureFlag
+    name: product-flags
+  patch: |
+    - op: remove
+      path: /spec/flagSpec/flags/new-checkout/targeting
+    - op: replace
+      path: /spec/flagSpec/flags/new-checkout/defaultVariant
+      value: 'on'
+```
+
+`overlays/production/feature-flags/kustomization.yaml`:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../../base/feature-flags
+patches:
+- target:
+    group: core.openfeature.dev
+    version: v1beta1
+    kind: FeatureFlag
+    name: product-flags
+  patch: |
+    - op: replace
+      path: /spec/flagSpec/flags/new-checkout/targeting
+      value:
+        if:
+        - ==:
+          - var: tier
+          - internal
+        - 'on'
+        - fractional:
+          - - 'on'
+            - 5
+          - - 'off'
+            - 95
+```
+
+Renderice ambas configuraciones con Kustomize 5.8.1 y revise toda la salida antes del despliegue.
+
+```bash
+kustomize build overlays/dev/feature-flags
+kustomize build overlays/production/feature-flags
+```
+
+### Despliegue de CR FeatureFlag con Argo CD
+
+El AppProject `platform` existente debe permitir el repositorio real, el destino `flag-demo` y los tipos de recurso Namespace, ServiceAccount y OpenFeature que usa este flujo. Una sincronización correcta no demuestra que el Deployment creado por el Operator ni todos los SDK hayan consumido las definiciones de flags más recientes.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: product-service-flags
+  name: feature-flags
   namespace: argocd
 spec:
-  project: default
+  project: platform
   source:
-    repoURL: https://github.com/org/gitops-repo.git
+    repoURL: https://github.com/YOUR_ORG/gitops-config.git
     targetRevision: main
-    path: apps/product-service/feature-flags
+    path: overlays/production/feature-flags
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: flag-demo
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
     retry:
       limit: 3
       backoff:
@@ -1281,545 +1127,634 @@ spec:
         maxDuration: 1m
 ```
 
-### Despliegue de Flux FeatureFlag CR
+### Despliegue de CR FeatureFlag con Flux
 
-Para FluxCD, utilice un recurso Kustomization:
+Se presupone que el Operator ya está instalado, por lo que no se declara con `dependsOn` una Kustomization inexistente. Si Flux administra también el Operator, use el nombre real de su dependencia. La comprobación de estado observa la disponibilidad inicial del Deployment `flagd` creado por el Operator; no demuestra continuamente que los flags estén actualizados.
 
 ```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: feature-flags
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/YOUR_ORG/gitops-config.git
+  ref:
+    branch: main
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: product-service-flags
+  name: feature-flags-production
   namespace: flux-system
 spec:
   interval: 5m
   sourceRef:
     kind: GitRepository
-    name: gitops-repo
-  path: ./apps/product-service/feature-flags
+    name: feature-flags
+  path: ./overlays/production/feature-flags
   prune: true
-  targetNamespace: default
+  timeout: 3m
   healthChecks:
-    - apiVersion: core.openfeature.dev/v1beta1
-      kind: FeatureFlag
-      name: product-flags
-      namespace: default
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: flagd
+    namespace: flag-demo
 ```
 
-### Flujo de trabajo de cambio de flags basado en PR
+### Flujo de cambios de flags mediante pull request
 
-El flujo de trabajo de pull requests para los cambios de feature flags proporciona seguridad y trazabilidad:
+![Pull request, comprobaciones de renderizado/esquema/política, revisión, reconciliación y verificación de consumidores; las notificaciones se configuran por separado.](../.gitbook/assets/en-gitops-05-feature-flags-8.png)
 
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant Git as GitHub/GitLab
-    participant CI as CI Pipeline
-    participant Review as Peer Review
-    participant GitOps as ArgoCD/Flux
-    participant K8s as Kubernetes
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-8.html)
 
-    Dev->>Git: Create branch<br/>update feature-flags/product-flags.yaml
-    Git->>CI: Trigger validation
-    CI->>CI: Lint YAML
-    CI->>CI: Validate FeatureFlag schema
-    CI->>CI: Dry-run targeting rules
-    CI-->>Git: Status check: passed
-    Dev->>Git: Open Pull Request
-    Git->>Review: Request review
-    Review-->>Git: Approved
-    Dev->>Git: Merge to main
-    Git->>GitOps: Webhook / poll detects change
-    GitOps->>K8s: Apply updated FeatureFlag CR
-    K8s->>K8s: Operator syncs ConfigMap
-    Note over K8s: Flags active in seconds<br/>No pod restart required
-```
-
-**Ejemplo de validación de CI** (GitHub Actions):
+El siguiente `.github/workflows/feature-flags.yml` valida las definiciones renderizadas. Fija las herramientas y los esquemas, y comprueba sus sumas de verificación. No accede al clúster, no usa secretos ni puede escribir comentarios en pull requests. Configure CODEOWNERS y las revisiones obligatorias por separado mediante la protección del repositorio.
 
 ```yaml
 name: Validate Feature Flags
-on:
+'on':
   pull_request:
     paths:
-      - '**/feature-flags/**'
-
+    - base/feature-flags/**
+    - overlays/**/feature-flags/**
+    - validate-flags.py
+    - .github/workflows/feature-flags.yml
+permissions:
+  contents: read
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Validate YAML syntax
-        run: |
-          find . -path '*/feature-flags/*.yaml' -exec yamllint -d relaxed {} +
-
-      - name: Validate FeatureFlag schema
-        run: |
-          # Use kubeconform with the OpenFeature CRD schema
-          find . -path '*/feature-flags/*.yaml' \
-            -exec kubeconform \
-              -schema-location 'https://raw.githubusercontent.com/open-feature/open-feature-operator/main/config/crd/bases/core.openfeature.dev_featureflags.yaml' \
-              {} +
-
-      - name: Check targeting rules
-        run: |
-          # Custom script to validate JSON Logic targeting rules
-          python scripts/validate-targeting-rules.py \
-            --flags-dir apps/*/feature-flags/
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+      with:
+        python-version: '3.12'
+    - name: Install pinned tools and schemas
+      run: |
+        curl -fsSL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.8.1/kustomize_v5.8.1_linux_amd64.tar.gz -o kustomize.tgz
+        echo '029a7f0f4e1932c52a0476cf02a0fd855c0bb85694b82c338fc648dcb53a819d  kustomize.tgz' | sha256sum --check
+        tar -xzf kustomize.tgz kustomize
+        mkdir -p .flag-schemas rendered
+        curl -fsSL https://raw.githubusercontent.com/open-feature/flagd-schemas/58d732724359b272001ee6a5b8b7a96c549397e4/json/flags.json -o .flag-schemas/flags.json
+        curl -fsSL https://raw.githubusercontent.com/open-feature/flagd-schemas/58d732724359b272001ee6a5b8b7a96c549397e4/json/targeting.json -o .flag-schemas/targeting.json
+        echo 'a9b065cc3e140d10a5e139a3f2bbd2f24d4fe8a728ce824a5f2a1231ed60680b  .flag-schemas/flags.json' | sha256sum --check
+        echo 'fb94d3d24f0edab22b28d1895ee045c698eed0ff8d4c151c791a92a07738a605  .flag-schemas/targeting.json' | sha256sum --check
+        python -m pip install PyYAML==6.0.3 jsonschema==4.26.0
+    - name: Validate rendered definitions
+      run: |
+        for environment in dev production; do
+          ./kustomize build "overlays/${environment}/feature-flags" > "rendered/${environment}.yaml"
+        done
+        python validate-flags.py rendered .flag-schemas
 ```
 
-### Overrides específicos por entorno con Kustomize
+Guarde este archivo completo `validate-flags.py` en la raíz del repositorio. Rechaza claves YAML duplicadas, variantes predeterminadas inexistentes, definiciones mal formadas y conjuntos vacíos de recursos comprobados. Kebab-case es una política de nombres de este ejemplo, no un requisito general de OpenFeature. El script no sustituye la admisión/CEL de Kubernetes, las comprobaciones de referencias ni las pruebas de intención de negocio. Añada evaluaciones del SDK para contextos representativos y verifique los consumidores después del despliegue.
 
-Use parches de Kustomize para mantener diferentes estados de flags por entorno:
+```python
+import json
+import re
+import sys
+from pathlib import Path
+from urllib.parse import urljoin
 
-```yaml
-# environments/production/patches/feature-flags-prod.yaml
-apiVersion: core.openfeature.dev/v1beta1
-kind: FeatureFlag
-metadata:
-  name: product-flags
-spec:
-  flagSpec:
-    flags:
-      new-checkout-flow:
-        # Production: conservative 5% rollout
-        defaultVariant: "off"
-        targeting:
-          if:
-            - in:
-              - var: targetingKey
-              - fractional:
-                - - "on"
-                  - 5
-                - - "off"
-                  - 95
-            - "on"
-            - "off"
-```
+import jsonschema
+import yaml
+from referencing import Registry, Resource
 
-```yaml
-# environments/dev/patches/feature-flags-dev.yaml
-apiVersion: core.openfeature.dev/v1beta1
-kind: FeatureFlag
-metadata:
-  name: product-flags
-spec:
-  flagSpec:
-    flags:
-      new-checkout-flow:
-        # Dev: always on
-        defaultVariant: "on"
+
+class UniqueKeys(yaml.SafeLoader):
+    pass
+
+
+def unique_mapping(loader, node, deep=False):
+    loader.flatten_mapping(node)
+    result = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if key in result:
+            raise ValueError(f"duplicate YAML key: {key}")
+        result[key] = loader.construct_object(value_node, deep=deep)
+    return result
+
+
+UniqueKeys.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, unique_mapping)
+rendered, schema_dir = map(Path, sys.argv[1:3])
+registry, schemas = Registry(), {}
+for name in ("flags.json", "targeting.json"):
+    uri = f"https://flagd.dev/schema/v0/{name}"
+    schema = json.loads((schema_dir / name).read_text())
+    schema["$id"] = uri
+
+    def normalize_refs(value):
+        if isinstance(value, dict):
+            for key, item in list(value.items()):
+                if key == "$ref" and isinstance(item, str) and not item.startswith("#"):
+                    value[key] = urljoin(uri, item)
+                else:
+                    normalize_refs(item)
+        elif isinstance(value, list):
+            for item in value:
+                normalize_refs(item)
+
+    normalize_refs(schema)
+    schemas[name] = schema
+    registry = registry.with_resource(uri, Resource.from_contents(schema))
+validator = jsonschema.Draft7Validator(schemas["flags.json"], registry=registry)
+checked = 0
+for path in sorted(rendered.glob("*.yaml")):
+    for resource in yaml.load_all(path.read_text(), Loader=UniqueKeys):
+        if not isinstance(resource, dict) or resource.get("kind") != "FeatureFlag":
+            continue
+        definition = resource["spec"]["flagSpec"]
+        validator.validate(definition)
+        for key, flag in definition["flags"].items():
+            if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", key):
+                raise ValueError(f"example naming policy failed: {key}")
+            if flag["defaultVariant"] not in flag["variants"]:
+                raise ValueError(f"default variant missing: {key}")
+        checked += 1
+if checked == 0:
+    raise ValueError("no rendered FeatureFlag resources were checked")
+print(f"validated {checked} rendered FeatureFlag resources")
 ```
 
 ---
 
-<span id="observability"></span>
-
-## Observabilidad
+## Observabilidad {#observability}
 
 ### Métricas de evaluación de flags (Prometheus)
 
-flagd expone métricas de Prometheus en su puerto de métricas (predeterminado: 8014). Las métricas clave para monitorizar el comportamiento de los feature flags son:
+Estos nombres se comprobaron con solicitudes sintéticas contra el exporter Prometheus predeterminado de flagd 0.16.3 en el puerto 8014, ruta `/metrics`. No mezcle los nombres de OTLP y Prometheus.
 
-| Métrica | Tipo | Descripción |
-|--------|------|-------------|
-| `flagd_impression_total` | Contador | Número total de evaluaciones de flags, etiquetado por `key`, `variant` y `reason` |
-| `flagd_evaluation_error_total` | Contador | Total de errores de evaluación, etiquetado por `key` y `error_code` |
-| `flagd_evaluation_duration_seconds` | Histograma | Distribución de latencia de las evaluaciones de flags |
-| `flagd_flag_syncs_total` | Contador | Número de sincronizaciones de configuración de flags desde fuentes |
+| Métrica | Significado y límite |
+|---------|----------------------|
+| `feature_flag_flagd_impression_total` | Evaluaciones correctas de flag/variante; no es el denominador de todos los errores |
+| `feature_flag_flagd_result_reason_total` | Razones de evaluación, incluidos errores; las muestras de error pueden omitir `feature_flag_key` |
+| `http_server_request_duration_seconds` | Histograma del procesamiento HTTP, no la latencia de extremo a extremo de todos los transportes y SDK |
 
-Configuración de scraping de Prometheus:
+En la prueba, un flag inexistente devolvió HTTP 404, pero la etiqueta de estado de la duración HTTP registró 200. En esta versión no use esa etiqueta para determinar si la evaluación del flag tuvo éxito. La información de variantes correctas y las razones de error pueden aparecer en contadores distintos.
+
+El Service flagd compartido usa `app: flagd` y un puerto de Service llamado `metrics`. Prometheus Operator debe estar instalado y sus selectores de etiquetas de versión y namespace deben incluir este ServiceMonitor.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: flagd-metrics
-  namespace: monitoring
+  name: flagd
+  namespace: flag-demo
   labels:
     release: prometheus
 spec:
-  namespaceSelector:
-    any: true
   selector:
     matchLabels:
-      app.kubernetes.io/name: flagd
+      app: flagd
+  namespaceSelector:
+    matchNames:
+    - flag-demo
   endpoints:
-    - port: metrics
-      interval: 15s
-      path: /metrics
+  - port: metrics
+    path: /metrics
+    interval: 15s
 ```
 
-Si utiliza el modo sidecar, configure el scraping a nivel de pod:
+Para un PodMonitor del sidecar, inspeccione el Pod admitido y use su puerto con nombre `management`. La cadena `"8014"` puede interpretarse como nombre de puerto, no como número. Las evaluaciones de SDK en proceso no incrementan automáticamente los contadores de evaluación de un servidor flagd remoto.
+
+### Métricas de evaluación de la aplicación
+
+Este código se validó con Go SDK 1.18.0 y `github.com/prometheus/client_golang@v1.24.1`. Llame a las evaluaciones a través de este wrapper y exponga su registry mediante el servidor HTTP de la aplicación. Instalar un SDK o declarar contadores no instrumenta las evaluaciones automáticamente. No etiquete las métricas con ID de usuario ni valor del flag; limite el conjunto de claves de flag que utiliza la aplicación.
+
+```go
+package main
+
+import (
+    "context"
+    "time"
+    "github.com/open-feature/go-sdk/openfeature"
+    "github.com/prometheus/client_golang/prometheus"
+)
+
+type FlagMetrics struct {
+    evaluations *prometheus.CounterVec
+    duration *prometheus.HistogramVec
+}
+
+func NewFlagMetrics(reg prometheus.Registerer) *FlagMetrics {
+    m := &FlagMetrics{
+        evaluations: prometheus.NewCounterVec(prometheus.CounterOpts{
+            Name: "app_feature_flag_evaluations_total",
+            Help: "SDK evaluations, including explicit fallback reasons.",
+        }, []string{"flag_key", "variant", "reason"}),
+        duration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+            Name: "app_feature_flag_evaluation_duration_seconds",
+            Help: "SDK evaluation duration including local or remote resolution.",
+            Buckets: prometheus.DefBuckets,
+        }, []string{"flag_key"}),
+    }
+    reg.MustRegister(m.evaluations, m.duration)
+    return m
+}
+
+func (m *FlagMetrics) Boolean(ctx context.Context, client *openfeature.Client,
+    key string, fallback bool, evaluation openfeature.EvaluationContext) (bool, error) {
+    start := time.Now()
+    result, err := client.BooleanValueDetails(ctx, key, fallback, evaluation)
+    reason, variant := string(result.Reason), result.Variant
+    if err != nil { reason = "ERROR" }
+    if variant == "" { variant = "fallback" }
+    m.evaluations.WithLabelValues(key, variant, reason).Inc()
+    m.duration.WithLabelValues(key).Observe(time.Since(start).Seconds())
+    return result.Value, err
+}
+```
+
+Integre el siguiente fragmento en la inicialización y evaluación de la aplicación. `promhttp` pertenece al mismo módulo cliente de Prometheus. El ciclo de vida del servidor HTTP sigue siendo responsabilidad de la aplicación.
+
+```go
+registry := prometheus.NewRegistry()
+flagMetrics := NewFlagMetrics(registry)
+http.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+value, err := flagMetrics.Boolean(ctx, client, "new-checkout", false, evaluation)
+```
+
+Separe los resultados correctos, ERROR y DISABLED. DISABLED puede usar el valor predeterminado del llamador del SDK sin error. El histograma mide la duración de la llamada al SDK, no la solicitud completa del usuario.
+
+Este PodMonitor presupone que la aplicación expone métricas en un puerto llamado `http`. Copia la etiqueta `app` del Pod para diferenciar el Deployment de destino de Flagger del primario. Antes de usar las consultas, confirme en las series reales de Prometheus las etiquetas `namespace` y `app`.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
-  name: flagd-sidecar-metrics
-  namespace: monitoring
+  name: order-service-flags
+  namespace: flag-demo
+  labels:
+    release: prometheus
 spec:
   namespaceSelector:
-    any: true
+    matchNames:
+    - flag-demo
   selector:
-    matchLabels:
-      openfeature.dev/enabled: "true"
+    matchExpressions:
+    - key: app
+      operator: In
+      values:
+      - order-service
+      - order-service-primary
+  podTargetLabels:
+  - app
   podMetricsEndpoints:
-    - port: "8014"
-      interval: 15s
-      path: /metrics
+  - port: http
+    path: /metrics
+    interval: 15s
 ```
 
 ### Dashboard de Grafana
 
-Paneles clave para un dashboard de Grafana de feature flags:
+Cree paneles con estas consultas y configure el intervalo de tiempo, las unidades y las fuentes de datos. La tasa de error de un servidor flagd compartido no representa la tasa de error de una aplicación canary concreta. Para aprovisionamiento, exporte un dashboard verificado en Grafana; no use como archivo del dashboard el envoltorio `{"dashboard": ...}` de una solicitud API.
 
-**Panel 1 -- Tasa de evaluación de flags por variante**:
-
-```promql
-sum by (key, variant) (
-  rate(flagd_impression_total[5m])
-)
-```
-
-**Panel 2 -- Tasa de errores por flag**:
+Tasa de errores de evaluación del servidor (%):
 
 ```promql
-sum by (key) (rate(flagd_evaluation_error_total[5m]))
-/
-sum by (key) (rate(flagd_impression_total[5m]))
-* 100
+100 * (
+  sum(rate(feature_flag_flagd_result_reason_total{namespace="flag-demo",feature_flag_reason="ERROR"}[5m]))
+  or vector(0)
+) / sum(rate(feature_flag_flagd_result_reason_total{namespace="flag-demo"}[5m]))
 ```
 
-**Panel 3 -- Latencia de evaluación (p99)**:
+Proporción de variantes entre evaluaciones correctas (%); no equivale a exposición ni conversión:
 
 ```promql
-histogram_quantile(0.99,
-  sum by (le) (
-    rate(flagd_evaluation_duration_seconds_bucket[5m])
-  )
-)
+100 * sum by (feature_flag_result_variant) (
+  rate(feature_flag_flagd_impression_total{namespace="flag-demo",feature_flag_key="new-checkout"}[5m])
+) / scalar(sum(rate(feature_flag_flagd_impression_total{namespace="flag-demo",feature_flag_key="new-checkout"}[5m])))
 ```
 
-**Panel 4 -- Progreso de la implementación (porcentaje de evaluaciones "on")**:
+Tasa de error del flag en la aplicación de destino (%):
 
 ```promql
-sum(rate(flagd_impression_total{key="new-checkout-flow", variant="on"}[5m]))
-/
-sum(rate(flagd_impression_total{key="new-checkout-flow"}[5m]))
-* 100
+100 * (
+  sum(rate(app_feature_flag_evaluations_total{namespace="flag-demo",app="order-service",flag_key="new-checkout",reason="ERROR"}[5m]))
+  or vector(0)
+) / sum(rate(app_feature_flag_evaluations_total{namespace="flag-demo",app="order-service",flag_key="new-checkout"}[5m]))
 ```
 
-**Panel 5 -- Estado de sincronización de configuración**:
+P99 de duración de la evaluación SDK de la aplicación (segundos):
 
 ```promql
-sum by (source) (rate(flagd_flag_syncs_total[5m]))
+histogram_quantile(0.99, sum by (le) (
+  rate(app_feature_flag_evaluation_duration_seconds_bucket{namespace="flag-demo",app="order-service",flag_key="new-checkout"}[5m])
+))
 ```
+
+La falta de observaciones o de evaluaciones puede producir ningún resultado o NaN. No lo convierta en una tasa de error saludable del 0 %. Las decisiones de despliegue también requieren una muestra suficiente, exposición real y resultados de negocio.
 
 ### Seguimiento del historial de cambios
 
-Dado que los feature flags se gestionan como recursos de Kubernetes mediante GitOps, cada cambio se rastrea en dos lugares:
+El autor en Git, el actor de la API de Kubernetes y el reconciliador de Argo CD o Flux pueden ser identidades distintas. Correlacione el historial de Git, las revisiones desplegadas y los registros de auditoría de la API. No dé por hecho que siempre se emite un evento `FlagConfigurationUpdated` no documentado.
 
-1. **Historial de Git**: Registro completo de commits con diffs, autor, marca de tiempo y enlaces de PR
-2. **Eventos de Kubernetes**: El OpenFeature Operator emite eventos cuando cambian las configuraciones de flags
-
-Consulte los eventos de Kubernetes para los cambios de flags:
+Consulte los eventos de Kubernetes:
 
 ```bash
-kubectl get events --field-selector reason=FlagConfigurationUpdated \
-  --sort-by='.metadata.creationTimestamp' -n default
+kubectl get events -n flag-demo --sort-by='.metadata.creationTimestamp'
 ```
+
+Los eventos de Kubernetes son señales operativas de corta duración, no un registro de auditoría persistente. `/readyz` también sigue devolviendo 200 después de que todas las fuentes se hayan sincronizado una vez; no demuestra que sigan actualizadas. Compruebe por separado las revisiones de metadatos, las respuestas reales del SDK y el estado de la fuente/provider.
 
 ### Registro de auditoría
 
-Para auditoría de cumplimiento y seguridad, combine varias fuentes de datos:
+Un archivo de política de auditoría autogestionado configura el servidor de API; no es un recurso normal para aplicar. En EKS, use el registro de auditoría del plano de control admitido. Defina la retención y el acceso según la política del equipo. `evaluator: json` o `logFormat: json` no garantiza un registro de cada evaluación.
 
-| Fuente de datos | Qué captura | Estrategia de retención |
-|-------------|-----------------|-------------------|
-| Commits de Git | Quién cambió qué, cuándo y por qué (descripción de PR) | Permanente (historial de Git) |
-| Registros de auditoría de Kubernetes | Llamadas al servidor de API para recursos FeatureFlag | Registro centralizado (más de 90 días) |
-| Registros de evaluación de flagd | Cada evaluación de flag con contexto y resultado | Basada en muestreo (flags de alto volumen) |
-| Métricas de Prometheus | Recuentos agregados de evaluaciones y tasas de error | Retención de series temporales (15-30 días) |
-
-Habilite el registro de evaluaciones en flagd para obtener pistas de auditoría detalladas:
-
-```yaml
-apiVersion: core.openfeature.dev/v1beta1
-kind: FeatureFlagSource
-metadata:
-  name: audited-flags
-spec:
-  sources:
-    - source: product-flags
-      provider: kubernetes
-  # Enable structured evaluation logging
-  evaluator: json
-  logFormat: json
-```
+Use los servicios, triggers y plantillas validados en [Notificaciones de Argo CD](./argocd/08-notifications.md). No sobrescriba un ConfigMap de notificaciones existente con un ejemplo abreviado independiente.
 
 ---
 
-<span id="production-best-practices"></span>
+## Buenas prácticas de producción {#production-best-practices}
 
-## Mejores prácticas de producción
+### Gestión del ciclo de vida de los flags
 
-### Gestión del ciclo de vida de flags
+Asigne propietarios y fechas de revisión a los flags de lanzamiento y experimentación, distinguiéndolos de los interruptores operativos de larga duración. Antes de quitar ramas y definiciones, compruebe todas las versiones de la aplicación, los demás consumidores y la ventana de reversión. No elimine una definición mientras el código dependa de esa clave.
 
-Cada feature flag debe tener un ciclo de vida definido. Los flags que persisten más allá de su propósito previsto se convierten en deuda técnica que aumenta la complejidad del código, la superficie de pruebas y la carga cognitiva.
+![Los flags temporales de lanzamiento se retiran tras comprobar los consumidores y la ventana de reversión, manteniendo el comportamiento final elegido.](../.gitbook/assets/en-gitops-05-feature-flags-9.png)
 
-```mermaid
-flowchart LR
-    CREATE["Create Flag<br/>(PR + Review)"] --> DEV["Development<br/>(flag off)"]
-    DEV --> ROLLOUT["Gradual Rollout<br/>(5% → 25% → 100%)"]
-    ROLLOUT --> STABLE["Stable<br/>(flag on, 100%)"]
-    STABLE --> CLEANUP["Cleanup<br/>(remove flag + code paths)"]
-
-    classDef active fill:#28a745,stroke:#333,color:white
-    classDef cleanup fill:#dc3545,stroke:#333,color:white
-
-    class CREATE,DEV,ROLLOUT,STABLE active
-    class CLEANUP cleanup
-```
-
-Reglas de ciclo de vida recomendadas:
-
-| Tipo de flag | Duración máxima | Acción al vencimiento |
-|-----------|-----------------|-----------------|
-| Flag de lanzamiento | 30 días después de la implementación al 100% | Eliminar el flag, borrar la ruta de código antigua |
-| Flag de experimento | 90 días | Analizar resultados, elegir ganador, eliminar flag |
-| Flag de operaciones | Sin vencimiento (permanente) | Revisar trimestralmente |
-| Flag de permisos | Sin vencimiento (permanente) | Revisar trimestralmente |
+[🔍 Ver el diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-9.html)
 
 ### Prevención de deuda técnica
 
-Los feature flags obsoletos son una fuente significativa de deuda técnica. Implemente estas salvaguardas:
-
-**1. Metadatos de flags con fechas de vencimiento**:
+Este es un **fragmento de metadatos para añadir a un FeatureFlag existente**. Si un CR contiene varios flags, las anotaciones se aplican al recurso completo. La fecha de revisión es una política del equipo; el Operator no elimina ni desactiva los flags automáticamente en esa fecha.
 
 ```yaml
-apiVersion: core.openfeature.dev/v1beta1
-kind: FeatureFlag
 metadata:
-  name: product-flags
   annotations:
-    # Metadata for lifecycle tracking
-    openfeature.dev/owner: "checkout-team"
-    openfeature.dev/created: "2025-06-01"
-    openfeature.dev/expires: "2025-07-15"
-    openfeature.dev/jira: "CHECKOUT-1234"
-    openfeature.dev/type: "release"
-spec:
-  flagSpec:
-    flags:
-      new-checkout-flow:
-        state: ENABLED
-        # ...
+    example.com/owner: checkout-team
+    example.com/review-on: "2026-12-31"
 ```
 
-**2. Detección automatizada de flags obsoletos** (CronJob):
+Este CronJob de solo lectura informa de los recursos cuya fecha de revisión vence hasta hoy en UTC y de las fechas no válidas. Solo puede enumerar FeatureFlags de su propio namespace y sigue la paginación. El token de su ServiceAccount autentica la solicitud a la API. No modifica ni elimina flags; que el Job termine correctamente tampoco demuestra que se hayan completado las revisiones. El análisis de los registros y las alertas se configura aparte.
 
 ```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flag-review
+  namespace: flag-demo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: flag-review
+  namespace: flag-demo
+rules:
+- apiGroups:
+  - core.openfeature.dev
+  resources:
+  - featureflags
+  verbs:
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flag-review
+  namespace: flag-demo
+subjects:
+- kind: ServiceAccount
+  name: flag-review
+  namespace: flag-demo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: flag-review
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: stale-flag-detector
-  namespace: open-feature-operator-system
+  name: flag-review
+  namespace: flag-demo
 spec:
-  schedule: "0 9 * * 1"  # Every Monday at 9 AM
+  schedule: 0 9 * * 1
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 60
       template:
         spec:
+          serviceAccountName: flag-review
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
           containers:
-            - name: detector
-              image: bitnami/kubectl:latest
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  echo "Checking for expired feature flags..."
-                  TODAY=$(date +%Y-%m-%d)
-                  kubectl get featureflags --all-namespaces -o json | \
-                    jq -r --arg today "$TODAY" \
-                    '.items[] |
-                     select(.metadata.annotations["openfeature.dev/expires"] != null) |
-                     select(.metadata.annotations["openfeature.dev/expires"] < $today) |
-                     "\(.metadata.namespace)/\(.metadata.name) expired on \(.metadata.annotations["openfeature.dev/expires"])"'
-          restartPolicy: OnFailure
-```
+          - name: review
+            image: python:3.12.13-slim@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36
+            command:
+            - python
+            - -I
+            - -B
+            - -c
+            - |
+              import datetime
+              import json
+              import re
+              import ssl
+              import urllib.parse
+              import urllib.request
+              from pathlib import Path
 
-**3. Linting a nivel de código**: Use análisis estático para detectar referencias a flags en el código y cruzarlas con las definiciones de flags activas. Los flags referenciados en el código pero ausentes de la CRD (o viceversa) indican artefactos obsoletos.
+              ANNOTATION = "example.com/review-on"
+
+
+              def review_dates(items, today):
+                  results = []
+                  for item in items:
+                      metadata = item.get("metadata", {})
+                      value = metadata.get("annotations", {}).get(ANNOTATION)
+                      if value is None:
+                          continue
+                      identity = {"namespace": metadata.get("namespace"), "name": metadata.get("name")}
+                      try:
+                          if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+                              raise ValueError("expected YYYY-MM-DD")
+                          due = datetime.date.fromisoformat(value)
+                      except (ValueError, TypeError):
+                          results.append({**identity, "status": "invalid-review-date"})
+                          continue
+                      if due <= today:
+                          results.append({**identity, "status": "review-due", "reviewOn": due.isoformat()})
+                  return results
+
+
+              def fetch_flags(namespace, token, tls_context, open_url=urllib.request.urlopen):
+                  endpoint = (
+                      "https://kubernetes.default.svc/apis/core.openfeature.dev/v1beta1/namespaces/"
+                      + urllib.parse.quote(namespace, safe="") + "/featureflags"
+                  )
+                  items, cursor = [], ""
+                  while True:
+                      query = urllib.parse.urlencode({"limit": 500, "continue": cursor})
+                      request = urllib.request.Request(endpoint + "?" + query, headers={
+                          "Authorization": "Bearer " + token, "Accept": "application/json"
+                      })
+                      with open_url(request, context=tls_context, timeout=10) as response:
+                          page = json.load(response)
+                      items.extend(page.get("items", []))
+                      cursor = page.get("metadata", {}).get("continue", "")
+                      if not cursor:
+                          return items
+
+
+              if __name__ == "__main__":
+                  service_account = Path("/var/run/secrets/kubernetes.io/serviceaccount")
+                  namespace = (service_account / "namespace").read_text().strip()
+                  token = (service_account / "token").read_text().strip()
+                  tls_context = ssl.create_default_context(cafile=str(service_account / "ca.crt"))
+                  today = datetime.datetime.now(datetime.timezone.utc).date()
+                  for result in review_dates(fetch_flags(namespace, token, tls_context), today):
+                      print(json.dumps(result))
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 200m
+                memory: 128Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+        metadata:
+          annotations:
+            sidecar.istio.io/inject: 'false'
+```
 
 ### Interruptor de apagado de emergencia
 
-Diseñe feature flags críticos como interruptores de apagado que puedan deshabilitar instantáneamente funcionalidades problemáticas:
+Diseñe los interruptores para que seleccionen un valor booleano explícito. Este ejemplo permanece `ENABLED` y cambia `defaultVariant` entre on y off, sin targeting. `DISABLED` puede devolver el valor predeterminado que pasó el llamador del SDK; por eso no garantiza un valor false.
 
 ```yaml
 apiVersion: core.openfeature.dev/v1beta1
 kind: FeatureFlag
 metadata:
   name: kill-switches
-  namespace: default
-  labels:
-    openfeature.dev/type: ops
+  namespace: flag-demo
 spec:
   flagSpec:
     flags:
-      # Kill switch for external payment provider
-      enable-stripe-payments:
+      external-payment-enabled:
         state: ENABLED
         variants:
-          "on": true
-          "off": false
-        defaultVariant: "on"   # Change to "off" to disable Stripe globally
-
-      # Kill switch for recommendation engine
-      enable-recommendations:
+          'on': true
+          'off': false
+        defaultVariant: 'on'
+      recommendation-enabled:
         state: ENABLED
         variants:
-          "on": true
-          "off": false
-        defaultVariant: "on"
-
-      # Kill switch for real-time notifications
-      enable-push-notifications:
+          'on': true
+          'off': false
+        defaultVariant: 'on'
+      notification-enabled:
         state: ENABLED
         variants:
-          "on": true
-          "off": false
-        defaultVariant: "on"
+          'on': true
+          'off': false
+        defaultVariant: 'on'
 ```
 
-Para escenarios de emergencia, utilice `kubectl` para activar un interruptor de apagado inmediatamente sin esperar al pipeline de GitOps:
+Haga referencia a este CR adicional en FeatureFlagSource o combine sus flags con el mapa existente. Antes de un cambio manual, coordine la propiedad de GitOps y la autorreparación del recurso, y prepare la actualización correspondiente en Git. No suspenda globalmente aplicaciones que no estén relacionadas.
+
+Este script Bash/jq rechaza acciones no válidas, flags con targeting y variantes booleanas incorrectas. Una comprobación resourceVersion en el mismo JSON Patch evita sobrescribir un cambio concurrente. Si hay un conflicto, vuelva a leer el estado y confirme el cambio previsto.
 
 ```bash
-# Emergency: disable Stripe payments
-kubectl patch featureflag kill-switches -n default --type='json' \
-  -p='[{
-    "op": "replace",
-    "path": "/spec/flagSpec/flags/enable-stripe-payments/defaultVariant",
-    "value": "off"
-  }]'
+#!/usr/bin/env bash
+set -euo pipefail
+FLAG_NAME="${1:?usage: emergency-kill-switch.sh FLAG on|off}"
+FLAG_ACTION="${2:?usage: emergency-kill-switch.sh FLAG on|off}"
+case "$FLAG_ACTION" in on|off) ;; *) echo 'action must be on or off' >&2; exit 2 ;; esac
+[[ "$FLAG_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] || { echo 'invalid flag name' >&2; exit 2; }
+FLAG_OBJECT_JSON="$(kubectl get featureflag kill-switches -n flag-demo -o json)"
+jq -e --arg flag "$FLAG_NAME" '
+  .spec.flagSpec.flags[$flag] as $f |
+  ($f != null) and ($f.state == "ENABLED") and
+  ($f.variants.on == true) and ($f.variants.off == false) and
+  (($f | has("targeting")) | not)
+' <<< "$FLAG_OBJECT_JSON" >/dev/null || { echo 'expected an ENABLED boolean kill switch without targeting' >&2; exit 2; }
+FLAG_RESOURCE_VERSION="$(jq -er '.metadata.resourceVersion' <<< "$FLAG_OBJECT_JSON")"
+FLAG_PATCH="$(jq -nc --arg version "$FLAG_RESOURCE_VERSION" --arg flag "$FLAG_NAME" --arg action "$FLAG_ACTION" '
+  [ {op:"test", path:"/metadata/resourceVersion", value:$version},
+    {op:"replace", path:("/spec/flagSpec/flags/" + $flag + "/defaultVariant"), value:$action} ]
+')"
+kubectl patch featureflag kill-switches -n flag-demo --type=json -p "$FLAG_PATCH"
+echo 'Configuration updated; verify GitOps reconciliation and actual consumer behavior.'
 ```
 
-Una vez resuelta la emergencia, confirme el cambio en Git para mantener sincronizada la fuente de verdad, o revierta el parche manual y deje que GitOps restaure el estado original.
+Una respuesta correcta de Kubernetes confirma que se actualizó la configuración. Compruebe también el comportamiento del consumidor y la revisión: la sincronización o las cachés pueden tardar, y algunos providers conservan reglas anteriores. El cambio del flag y la reversión de la carga de trabajo no forman automáticamente una sola transacción.
 
-### Estrategias de implementación gradual
+### Estrategias de despliegue gradual
 
-Utilice el operador `fractional` para implementaciones seguras e incrementales:
+Elija la audiencia, el período de observación y los criterios de promoción a partir del SLO y del tamaño de muestra. Esta secuencia es un ejemplo, no fija porcentajes ni plazos universales.
 
-| Etapa | Porcentaje | Duración | Criterios de aprobación |
-|-------|-----------|----------|---------------|
-| Interna | 0.1% (solo correos de la empresa) | 1-2 días | Sin errores P0/P1 |
-| Adoptantes tempranos | 5% | 2-3 días | Tasa de error < 0.1%, latencia p99 < 500ms |
-| Canary | 25% | 3-5 días | Sin degradación en las métricas de negocio |
-| Amplia | 50% | 2-3 días | Tasas de conversión estables |
-| Disponibilidad general | 100% | -- | Eliminar el flag en 30 días |
+| Etapa | Comprobaciones principales |
+|-------|----------------------------|
+| Audiencia interna | Comportamiento, compatibilidad, disponibilidad del SDK y política de reserva |
+| Grupo limitado | Errores, latencia, exposición real y conversión |
+| Ampliación | Muestra suficiente, capacidad y resultados de negocio |
+| Audiencia completa | Propagación real del flag y de la carga de trabajo, y plan de reversión |
+| Limpieza | Consumidores restantes y ventana de reversión antes de quitar el código y las definiciones |
 
-Actualice la regla de targeting en cada etapa:
-
-```bash
-# Stage: Canary (25%)
-kubectl patch featureflag product-flags -n default --type='json' \
-  -p='[{
-    "op": "replace",
-    "path": "/spec/flagSpec/flags/new-checkout-flow/targeting",
-    "value": {
-      "if": [
-        {"in": [{"var": "targetingKey"},
-          {"fractional": [["on", 25], ["off", 75]]}]},
-        "on", "off"
-      ]
-    }
-  }]'
-```
+Cambie los pesos mediante la ruta validada de Kustomize/Git. El hashing no produce un porcentaje exacto del tráfico y el recuento de evaluaciones no equivale al número de usuarios únicos.
 
 ### Minimización del impacto en el rendimiento
 
-La evaluación de feature flags añade latencia a cada solicitud. Minimice el impacto con estas técnicas:
-
-**1. Utilice streaming gRPC con el provider de flagd**: El provider de flagd admite streaming gRPC, donde los valores de flags se envían al SDK y se almacenan en caché localmente. Las evaluaciones se resuelven desde la caché en proceso con una latencia inferior a un milisegundo.
-
-```go
-provider := flagd.NewProvider(
-    flagd.WithResolverType(flagd.IN_PROCESS), // In-process evaluation
-)
-```
-
-**2. Evaluación masiva**: Cuando necesite varios flags para una única solicitud, evalúelos juntos para reducir los viajes de ida y vuelta (relevante para providers sin streaming).
-
-**3. Evite flags en bucles activos**: Los feature flags deben evaluarse en el límite de la solicitud, no dentro de bucles ajustados. Almacene el resultado en caché en una variable con ámbito de solicitud.
-
-```go
-// Good: evaluate once per request
-newCheckout, _ := client.BooleanValue(ctx, "new-checkout-flow", false, evalCtx)
-for _, item := range cart.Items {
-    if newCheckout {
-        processItemV2(item)
-    } else {
-        processItemV1(item)
-    }
-}
-
-// Bad: evaluate inside the loop
-for _, item := range cart.Items {
-    newCheckout, _ := client.BooleanValue(ctx, "new-checkout-flow", false, evalCtx)
-    // ...
-}
-```
-
-**4. Establezca plazos de evaluación**: Configure timeouts para que los fallos en la evaluación de flags no se conviertan en fallos de solicitudes en cascada. El valor predeterminado siempre se devuelve al producirse un timeout.
-
-**5. Límites de recursos para sidecars de flagd**: Establezca límites adecuados de CPU y memoria para evitar que el sidecar compita con el contenedor de aplicación:
-
-```yaml
-# Recommended resource settings for flagd sidecar
-resources:
-  requests:
-    cpu: 50m
-    memory: 32Mi
-  limits:
-    cpu: 200m
-    memory: 128Mi
-```
+- Mida la latencia RPC o en proceso, CPU, memoria y demora de sincronización en el entorno real. No existe una garantía universal de 20 MB de memoria ni de 5 ms de latencia.
+- Use el comportamiento documentado de caché e invalidación de cada provider. Reutilice el resultado dentro de una solicitud si el contexto no cambia. Una caché duradera cuya clave solo incluya el flag y el ID de usuario puede omitir otros atributos, actualizaciones de reglas, cambios de provider y valores de reserva.
+- La evaluación en proceso utiliza reglas locales. Que una desconexión conserve las reglas anteriores o devuelva errores/valores predeterminados depende del estado y la configuración del provider; compruebe que los flags estén actualizados.
+- Defina plazos y políticas de valor predeterminado en la aplicación. Observe DISABLED, DEFAULT y otras razones, además de los errores. La disponibilidad inicial no demuestra que las reglas estén actualizadas.
+- La evaluación por lotes y las optimizaciones de red dependen del producto/provider; no son una API universalmente admitida por los SDK de OpenFeature.
 
 ---
 
-<span id="references"></span>
-
-## Referencias
+## Referencias {#references}
 
 ### Documentación oficial
 
+- [Definiciones y targeting de flagd](https://flagd.dev/reference/flag-definitions/)
+- [Supervisión y disponibilidad inicial de flagd](https://flagd.dev/reference/monitoring/)
+- [Configuración y CRD de Operator 0.9.3](https://github.com/open-feature/open-feature-operator/tree/v0.9.3/docs)
+
 - [Especificación de OpenFeature](https://openfeature.dev/specification/)
-- [Documentación del SDK de OpenFeature](https://openfeature.dev/docs/reference/intro)
+- [Documentación de los SDK de OpenFeature](https://openfeature.dev/docs/reference/intro/)
 - [Documentación de flagd](https://flagd.dev/)
 - [OpenFeature Operator](https://github.com/open-feature/open-feature-operator)
 - [Proyecto OpenFeature de CNCF](https://www.cncf.io/projects/openfeature/)
 
 ### Documentación de providers
 
-- [Provider de flagd (Go)](https://github.com/open-feature/go-sdk-contrib/tree/main/providers/flagd)
-- [Provider de flagd (Java)](https://github.com/open-feature/java-sdk-contrib/tree/main/providers/flagd)
-- [Provider de flagd (Python)](https://github.com/open-feature/python-sdk-contrib/tree/main/providers/openfeature-provider-flagd)
-- [Provider de flagd (Node.js)](https://github.com/open-feature/js-sdk-contrib/tree/main/libs/providers/flagd)
-- [Providers de OpenFeature de LaunchDarkly](https://docs.launchdarkly.com/sdk/openfeature)
-- [Providers de OpenFeature de Flagsmith](https://docs.flagsmith.com/clients/openfeature)
+- [Provider flagd (Go)](https://github.com/open-feature/go-sdk-contrib/tree/main/providers/flagd)
+- [Provider flagd (Java)](https://github.com/open-feature/java-sdk-contrib/tree/main/providers/flagd)
+- [Provider flagd (Python)](https://github.com/open-feature/python-sdk-contrib/tree/main/providers/openfeature-provider-flagd)
+- [Provider flagd (Node.js)](https://github.com/open-feature/js-sdk-contrib/tree/main/libs/providers/flagd)
+- [Providers OpenFeature de LaunchDarkly](https://launchdarkly.com/docs/sdk/openfeature)
+- [Providers OpenFeature de Flagsmith](https://docs.flagsmith.com/integrating-with-flagsmith/openfeature)
 
 ### Documentación interna relacionada
 
 - [Descripción general de GitOps](./README.md) -- Principios de GitOps y selección de herramientas
-- [ArgoCD](./argocd/README.md) -- Instalación de ArgoCD, aplicaciones y estrategias de sincronización
+- [Argo CD](./argocd/README.md) -- Instalación, aplicaciones y estrategias de sincronización
 - [FluxCD](./02-fluxcd.md) -- Controladores de FluxCD y automatización de imágenes
-- [Gestión de tráfico de ArgoCD](./argocd/05-traffic-management.md) -- Argo Rollouts y entrega progresiva
-- [División de tráfico de Istio](../service-mesh/istio/traffic-management/04-traffic-splitting.md) -- Gestión de tráfico de service mesh
+- [Gestión del tráfico de Argo CD](./argocd/05-traffic-management.md) -- Argo Rollouts y entrega progresiva
+- [División de tráfico de Istio](../service-mesh/istio/traffic-management/04-traffic-splitting.md) -- Gestión del tráfico de la service mesh
 - [Prometheus](../observability/metrics/01-prometheus.md) -- Recopilación de métricas y alertas
 - [Grafana](../observability/grafana/README.md) -- Creación y visualización de dashboards
 
 ### Recursos de la comunidad
 
-- [Organización de OpenFeature en GitHub](https://github.com/open-feature)
-- [Ecosistema de OpenFeature](https://openfeature.dev/ecosystem) -- Lista completa de providers, hooks e integraciones
-- [Mejores prácticas de feature flags (Martin Fowler)](https://martinfowler.com/articles/feature-toggles.html)
-- [Entrega progresiva con feature flags (CNCF)](https://www.cncf.io/blog/2023/01/31/progressive-delivery/)
+- [Organización OpenFeature en GitHub](https://github.com/open-feature)
+- [Ecosistema OpenFeature](https://openfeature.dev/ecosystem/) -- Lista completa de providers, hooks e integraciones
+- [Buenas prácticas para feature flags (Martin Fowler)](https://martinfowler.com/articles/feature-toggles.html)

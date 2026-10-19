@@ -1,51 +1,51 @@
-# Plataforma de visibilidad de costos de FinOps
+# Plataforma FinOps de visibilidad de costes
 
 > **Última actualización**: 16 de octubre de 2026. OpenCost 1.121.3 / chart 2.5.33, Kubecost 3.2.4, Kyverno 1.19.1.
-> **Validación**: renderizado de Helm, esquemas de Kubernetes, proveedores simulados de Terraform, cálculos locales de costos y evaluación de políticas. Esto no representa una instalación en un clúster de producción ni una conciliación con una factura real de AWS.
+> **Validación**: renderizado de Helm, esquemas de Kubernetes, proveedores simulados de Terraform, cálculos locales de costes y evaluación de políticas. Estas comprobaciones no representan una instalación en un clúster de producción ni una conciliación con una factura real de AWS.
 
-< [Anterior: Planificación de capacidad para eventos](./12-event-capacity-planning.md) | [Contenido](./README.md) | [Siguiente: Pipelines de Tekton](./14-tekton-pipelines.md) >
+< [Anterior: Planificación de capacidad para eventos](./12-event-capacity-planning.md) | [Contenido](./README.md) | [Siguiente: Tekton Pipelines](./14-tekton-pipelines.md) >
 
 ## Descripción general
 
-FinOps reúne a los equipos de ingeniería, finanzas, producto y negocio para gestionar el valor del gasto en tecnología. Reducir costos por sí solo no es el criterio de éxito: también importan los niveles de servicio, el crecimiento, la economía unitaria y una atribución confiable.
+FinOps reúne a los equipos de ingeniería, finanzas, producto y negocio para gestionar el valor del gasto tecnológico. Reducir costes no es el único criterio de éxito: también importan los niveles de servicio, el crecimiento, el coste por unidad y una atribución fiable.
 
-Este capítulo distingue el modelo de asignación de Kubernetes, los datos de facturación de AWS y los presupuestos de los equipos, y después los conecta. Sustituya los nombres de clúster, espacios de nombres, buckets y roles de IAM de ejemplo antes del despliegue. Los comandos de instalación crean recursos reales; la validación aquí descrita se realizó localmente.
+Este capítulo distingue el modelo de asignación de costes de Kubernetes, los datos de facturación de AWS y los presupuestos de los equipos, y después los conecta. Sustituya los nombres de clústeres, namespaces, buckets y roles IAM de ejemplo antes del despliegue. Los comandos de instalación crean recursos reales; la validación descrita aquí se realizó localmente.
 
-## 1. Modelo operativo de FinOps
+## 1. Modelo operativo FinOps
 
-Informar abarca la recopilación de datos, la asignación y la visibilidad. Optimizar convierte las mediciones en mejoras. Operar mantiene la responsabilidad, los presupuestos y las revisiones. Estas fases se repiten.
+Inform abarca la recopilación de datos, la asignación de costes y la visibilidad. Optimize convierte las mediciones en mejoras. Operate mantiene responsables, presupuestos y revisiones. Estas fases se repiten.
 
-![Visibilidad iterativa, optimización revisada, presupuestos y responsabilidades](../.gitbook/assets/en-ops-13-finops-cost-platform-0.png)
+![Visibilidad iterativa, optimización revisada, presupuestos y responsables](../.gitbook/assets/en-ops-13-finops-cost-platform-0.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-0.html)
 
 | Rol | Responsabilidad |
 | --- | --- |
-| Plataforma | Recopilación confiable, control de acceso a los datos de costos y actualizaciones |
+| Plataforma | Recopilación fiable, control de acceso a los datos de costes y actualizaciones |
 | Equipos de servicio | Etiquetas, solicitudes de recursos, pruebas de rendimiento y revisión de cambios |
-| Finanzas / FinOps | Conciliación de facturas, reglas de costos compartidos, presupuestos y previsiones |
-| Producto / negocio | Economía unitaria, valor y prioridades de inversión |
+| Finanzas / FinOps | Conciliación de facturas, reglas de costes compartidos, presupuestos y previsiones |
+| Producto / negocio | Coste por unidad, valor y prioridades de inversión |
 
-Crawl/Walk/Run describe capacidades en áreas específicas. No representa cronogramas universales de 1–3 o 6–12 meses. Establezca la calidad de los datos y la responsabilidad antes de automatizar la refacturación o la eliminación.
+Crawl, Walk y Run describen capacidades en áreas concretas. No establecen plazos universales de 1–3 o 6–12 meses. Asegure la calidad de los datos y asigne responsables antes de automatizar la facturación interna o la eliminación de recursos.
 
-## 2. Datos de costos e instalación
+## 2. Datos de costes e instalación
 
-### 2.1 Distinguir las mediciones
+### 2.1 Distinguir mediciones
 
 | Medición | Significado | Limitación |
 | --- | --- | --- |
-| Tasa de asignación actual, USD/hora | Asignación y modelo de precios actuales | No representa el gasto mensual real |
-| Costo del modelo de asignación en un período | Atribución de Kubernetes durante un período explícito | Depende de la cobertura, la retención y el modelo |
-| CUR 2.0 / Cost Explorer | Costos basados en la facturación de AWS | Retrasos de actualización, descuentos, créditos, impuestos y opciones de amortización |
-| Estimación lineal de fin de mes | Costo hasta la fecha / días transcurridos × días del mes | No modela la estacionalidad ni los cambios en la demanda |
+| Tasa actual de asignación, USD/hora | Modelo de asignación y precios actuales | No representa el gasto mensual real |
+| Coste del modelo de asignación para un periodo | Atribución de costes de Kubernetes durante un periodo explícito | Depende de la cobertura, la retención y el modelo |
+| CUR 2.0 / Cost Explorer | Costes basados en la facturación de AWS | Retraso de actualización, descuentos, créditos, impuestos y criterios de amortización |
+| Estimación lineal de fin de mes | Coste acumulado / días completos × días del mes | No modela la estacionalidad ni los cambios de demanda |
 
-Por lo general, EC2 no factura CPU y memoria como productos separados. Los precios por núcleo y por GiB de OpenCost distribuyen el costo de las instancias. No presente precios arbitrarios de CPU/RAM ni un segundo descuento general del contrato como si fueran una factura. Sumar los totales de Cloud Cost a los de Allocation para la misma infraestructura puede contabilizar dos veces el gasto.
+La CPU y la memoria de EC2 generalmente no son productos facturados por separado. Los precios por núcleo y por GiB de OpenCost distribuyen el coste de la instancia. Los precios arbitrarios de CPU/RAM o un segundo descuento contractual aplicado de forma general no representan una factura. Sumar los totales de Cloud Cost y Allocation para la misma infraestructura puede contabilizar el gasto dos veces.
 
 ### 2.2 Instalar OpenCost
 
-Se presupone que el Prometheus Operator y el CRD ServiceMonitor de la [pila de observabilidad](./09-observability-stack.md) ya están instalados, además de una StorageClass `gp3` adecuada. El almacenamiento de EKS puede usar el controlador EBS CSI o la configuración de StorageClass de Auto Mode. El valor de ejemplo `release: prometheus` debe coincidir con el selector real de ServiceMonitor de Prometheus.
+Esto presupone Prometheus Operator y el CRD ServiceMonitor de la [pila de observabilidad](./09-observability-stack.md), más un StorageClass `gp3` apropiado. El almacenamiento de EKS puede utilizar el controlador EBS CSI o la configuración de StorageClass de Auto Mode. El `release: prometheus` del ejemplo debe coincidir con el selector real de ServiceMonitor de Prometheus.
 
-La retención de Prometheus de siete días configurada anteriormente no permite reconstruir un mes completo. El análisis mensual requiere suficiente retención y almacenamiento. Aumentar la retención no recupera los datos eliminados. El PVC del exportador que se muestra a continuación no reemplaza el almacenamiento de Prometheus.
+La retención anterior de siete días de Prometheus no permite reconstruir un mes completo. El análisis mensual requiere suficiente retención y almacenamiento. Aumentar la retención no recupera los datos eliminados. El PVC del exporter siguiente no sustituye al almacenamiento de Prometheus.
 
 **`opencost-values.yaml`**
 
@@ -104,13 +104,13 @@ kubectl -n opencost get pods,pvc,svc,servicemonitor
 kubectl -n opencost port-forward service/opencost 9090:9090 9003:9003
 ```
 
-La interfaz local usa el puerto `9090`; la API usa el `9003`. `opencost.prometheus` y `opencost.cloudCost` no son elementos secundarios de exporter. El chart 2.5.33 habilita MCP de forma predeterminada, por lo que esta configuración base lo deshabilita explícitamente. Si expone herramientas de costos mediante MCP, diseñe por separado la autenticación y el alcance de acceso; MCP para datos de costos es distinto de MCP para búsquedas en documentación.
+La interfaz local usa el puerto `9090` y la API, el `9003`. `opencost.prometheus` y `opencost.cloudCost` no son elementos secundarios de exporter. El chart 2.5.33 habilita MCP de forma predeterminada, por lo que esta configuración lo deshabilita explícitamente. Si expone herramientas de costes mediante MCP, diseñe por separado la autenticación y el alcance del acceso. El MCP de datos de costes es distinto del MCP de búsqueda de documentación.
 
 ### 2.3 Elegir Kubecost 3.x
 
-Kubecost es un producto y una opción de despliegue independientes. La versión 3.x usa almacenamiento ClickHouse y recopilación mediante `finops-agent`. No copie sin cambios la configuración `kubecostModel`, de Prometheus o de ETL de la versión 2.x. Las instalaciones existentes de la versión 2.x requieren el procedimiento oficial de migración, incluidos agentes intermedios, reingesta y restricciones de funcionalidades.
+Kubecost es un producto distinto y requiere una decisión de despliegue independiente. La versión 3.x usa almacenamiento ClickHouse y recopilación mediante `finops-agent`. No copie sin cambios los ajustes de `kubecostModel`, Prometheus o ETL de 2.x. Las instalaciones 2.x existentes necesitan el procedimiento oficial de migración, incluidos los agentes intermedios, la reingesta de datos y las restricciones de funciones.
 
-El repositorio actual del chart es `https://kubecost.github.io/kubecost/`. Esta es una configuración base con funcionalidades limitadas. Deshabilita explícitamente Cluster Controller, Admission Controller y las previsiones. No la use como comando de reemplazo en el lugar para instalaciones y almacenamiento existentes.
+El repositorio actual del chart es `https://kubecost.github.io/kubecost/`. Esta es una configuración base de instalación con funciones limitadas. Deshabilita explícitamente Cluster Controller, Admission Controller y la previsión. No la utilice como comando de sustitución directa de instalaciones y almacenamiento existentes.
 
 **`kubecost-values.yaml`**
 
@@ -158,17 +158,17 @@ helm install kubecost kubecost/kubecost --version 3.2.4 \
   --namespace kubecost --create-namespace -f kubecost-values.yaml
 ```
 
-Compruebe las licencias y funcionalidades del producto para SSO, RBAC detallado y funciones multiclúster. La presencia de valores SAML/OIDC no habilita esas funciones en todos los despliegues. `global.acknowledged` corresponde a la confirmación de actualizaciones mayores de Enterprise, no a la aceptación general de la licencia. Un ALB interno no autentica a los usuarios.
+Compruebe los derechos del producto para SSO, RBAC detallado y funciones multiclúster. La presencia de valores SAML/OIDC no habilita esas funciones en todos los despliegues. `global.acknowledged` se refiere a la confirmación de una actualización principal de Enterprise, no a la aceptación general de la licencia. Un ALB interno no autentica usuarios.
 
-### 2.4 CUR 2.0, Athena y Cloud Cost de OpenCost
+### 2.4 CUR 2.0, Athena y OpenCost Cloud Cost
 
-El siguiente Terraform define una **exportación CUR 2.0 nueva, dos buckets de S3, un grupo de trabajo de Athena y un rol IRSA para OpenCost**. Compruebe la titularidad e importe los recursos existentes antes de administrarlos. Los datos de facturación de toda la organización requieren los permisos adecuados de la cuenta de administración.
+El siguiente Terraform define **una nueva exportación CUR 2.0, dos buckets S3, un grupo de trabajo Athena y un rol IRSA de OpenCost**. Compruebe quién gestiona los recursos existentes y cómo importarlos antes de administrarlos. Los datos de facturación de toda la organización requieren los permisos adecuados de la cuenta de administración.
 
-No se incluye la creación de tablas ni del rastreador de Glue. Siga el procedimiento de procesamiento de Athena de Data Exports: espere a la entrega inicial y, después, cree y actualice la tabla y las particiones de Glue usando el **directorio de datos** de la exportación. No combine los manifiestos ni los metadatos con la tabla de datos. Proporcione los nombres resultantes de la base de datos y la tabla. La protección de Lake Formation requiere concesiones adicionales.
+No se incluyen un crawler de Glue ni la creación de tablas. Siga el procedimiento de procesamiento de Data Exports con Athena: espere a la primera entrega y después cree y actualice la tabla Glue y sus particiones usando el **directorio de datos** de la exportación. No mezcle los manifiestos y metadatos con la tabla de datos. Proporcione los nombres de la base de datos y la tabla resultantes. La protección de Lake Formation requiere concesiones adicionales.
 
-`COST_AND_USAGE_REPORT` es el origen SQL de Data Exports, no un nombre universal para una tabla de Glue en Athena. Inspeccione el esquema resultante: CUR 2.0 usa una partición `billing_period`; no dé por sentado el diseño heredado de CUR con `year`/`month`.
+`COST_AND_USAGE_REPORT` es la fuente SQL de Data Exports, no un nombre universal de tabla Glue de Athena. Inspeccione el esquema resultante: CUR 2.0 usa una partición `billing_period`, por lo que no debe asumir la estructura `year`/`month` del CUR antiguo.
 
-Data Exports entrega los datos mediante SSE-S3. No copie una configuración que requiera la entrega directa cifrada con KMS. Si se necesita KMS, diseñe conjuntamente el proceso documentado de cifrado posterior a la entrega y los permisos de los consumidores. El almacenamiento de archivo que requiera restauración puede interrumpir las consultas sobre datos activos.
+Data Exports entrega los datos con SSE-S3. No copie una configuración que exija la entrega directa con cifrado KMS. Si necesita KMS, diseñe conjuntamente el proceso documentado de cifrado posterior a la entrega y los permisos de los consumidores. El almacenamiento de archivo que requiere restauración puede impedir las consultas sobre datos activos.
 
 **`cur.tf`**
 
@@ -428,9 +428,9 @@ output "athena_results" {
 }
 ```
 
-`glue_database` y `glue_table` identifican el destino de la consulta; no lo crean. El límite de análisis de Athena del ejemplo es de 10 GiB por consulta: investigue los errores y ajuste el valor al tamaño del conjunto de datos. Que los registros sean horarios no implica que los informes se entreguen cada hora.
+`glue_database` y `glue_table` identifican el destino de consulta; no lo crean. El límite de datos explorados de Athena del ejemplo es de 10 GiB por consulta. Investigue los fallos y ajuste el límite al conjunto de datos. Que los registros sean horarios no significa que el informe se entregue cada hora.
 
-Este ejemplo usa **IRSA**. Proporcione el ARN y el emisor del proveedor OIDC existente, y haga coincidir `sub` en la política de confianza con la cuenta de servicio real `opencost/opencost`. EKS Pod Identity usa una política de confianza y una asociación diferentes, en lugar de la anotación de IRSA.
+Este ejemplo utiliza **IRSA**. Proporcione el ARN y el emisor del proveedor OIDC existente y haga coincidir el `sub` de la política de confianza con el ServiceAccount real `opencost/opencost`. EKS Pod Identity utiliza una política de confianza y una asociación diferentes en lugar de la anotación IRSA.
 
 **`cloud-integration.json`**
 
@@ -478,19 +478,19 @@ helm upgrade opencost opencost/opencost --version 2.5.33 \
   --namespace opencost -f opencost-values.yaml -f opencost-cloud-values.yaml
 ```
 
-El `bucket` del JSON es el **bucket de resultados de consultas de Athena**, no el bucket de origen de CUR. `AWSServiceAccount` usa la cadena de credenciales predeterminada del SDK de AWS, no claves de acceso estáticas. Verifique las lecturas del origen, las escrituras de resultados, el montaje del Secret y la actualización del importador antes de afirmar que la integración de facturación funciona.
+El campo JSON `bucket` identifica el **bucket de resultados de consultas de Athena**, no el bucket de origen de CUR. `AWSServiceAccount` usa la cadena de credenciales predeterminada del AWS SDK, no claves de acceso estáticas. Verifique las lecturas del origen, las escrituras de resultados, el montaje del Secret y la actualización reciente del importador antes de afirmar que funciona la integración de facturación.
 
-Es posible que las claves de etiquetas de asignación de costos no estén disponibles antes de su activación. Actualmente AWS admite la reposición de datos históricos desde la cuenta de administración hasta por 12 meses, sujeta a que las etiquetas existieran realmente en los recursos durante ese período y a los retrasos de procesamiento. Aplicar una etiqueta ahora no genera etiquetas históricas.
+Las claves de etiquetas de asignación de costes pueden faltar antes de su activación. AWS permite actualmente completar los datos históricos desde la cuenta de administración hasta 12 meses atrás, siempre que las etiquetas realmente existieran en los recursos durante ese periodo y teniendo en cuenta el retraso del procesamiento. Aplicar una etiqueta ahora no crea un historial de etiquetas.
 
-## 3. Transparencia y refacturación
+## 3. Showback y chargeback
 
-La transparencia permite que los equipos consumidores vean sus gastos. La refacturación los asigna y factura según reglas contables acordadas. El valor de un modelo no se convierte automáticamente en una factura interna. Defina primero el período, la moneda, las categorías directas/compartidas/inactivas/no asignadas, los impuestos, los créditos, los reembolsos y el redondeo.
+Showback hace visible el gasto a los equipos que consumen los recursos. Chargeback lo asigna y factura conforme a reglas contables acordadas. Un valor calculado por el modelo no se convierte automáticamente en una factura interna. Defina primero el periodo, la moneda, las categorías de costes directos, compartidos, ociosos y no asignados, los impuestos, créditos, reembolsos y el redondeo.
 
 ### 3.1 Etiquetas y políticas
 
-Use etiquetas `team` en los espacios de nombres para agrupar por equipo y etiquetas `team` / `cost-center` en las plantillas de Pod para una atribución más detallada. Las etiquetas de Kubernetes y las etiquetas de asignación de costos de AWS son datos independientes. La asignación por espacio de nombres puede seguir funcionando sin etiquetas de equipo, pero no se garantiza la correspondencia con los equipos.
+Use etiquetas `team` de namespace para agregar por equipo y etiquetas `team` / `cost-center` en las plantillas de Pods para una atribución más detallada. Las etiquetas de Kubernetes y las de asignación de costes de AWS son datos distintos. La asignación por namespace puede funcionar sin etiquetas de equipo, pero no está garantizada la asociación con un equipo.
 
-Kyverno 1.19.1 advierte que ClusterPolicy está obsoleto. Los ejemplos nuevos usan `ValidatingPolicy` con CEL de `policies.kyverno.io/v1`, que requiere el CRD correspondiente y la versión adecuada del controlador. Se aplican a los espacios de nombres con la etiqueta `finops.example.com/enabled=true` y generan comprobaciones para las plantillas de los controladores de Pod.
+Kyverno 1.19.1 advierte que ClusterPolicy está obsoleto. Los ejemplos nuevos usan CEL `ValidatingPolicy` de `policies.kyverno.io/v1` y requieren el CRD y la versión de controlador correspondientes. Se aplican a namespaces etiquetados con `finops.example.com/enabled=true` y generan comprobaciones para las plantillas de los controladores de Pods.
 
 **`cost-labels.yaml`**
 
@@ -561,9 +561,9 @@ spec:
       message: "Set positive CPU and memory requests for each regular container."
 ```
 
-`Audit` no bloquea las infracciones. Revise los informes de segundo plano y el alcance, resuelva los problemas con las personas responsables y, después, cambie a `Deny` las políticas seleccionadas. Elija `Warn` por separado si desea mostrar advertencias a los usuarios. La CLI local puede devolver un error de prueba para una política Audit; eso no demuestra que la admisión vaya a denegarse.
+`Audit` no bloquea infracciones. Revise los informes en segundo plano y el ámbito, resuelva los problemas con los responsables y cambie después las políticas seleccionadas a `Deny`. Elija `Warn` por separado si desea advertencias para los usuarios. La CLI local puede devolver una prueba fallida para una política Audit; eso no demuestra que se denegaría la admisión.
 
-La política de solicitudes comprueba que **cada contenedor normal tenga solicitudes positivas de CPU y memoria**. Los presupuestos y las estrategias de límites para contenedores de inicialización y a nivel de Pod requieren políticas separadas. Los límites universales de cuatro núcleos / 8 GiB no demuestran que las aplicaciones tengan el tamaño adecuado.
+La política comprueba **solicitudes de CPU y memoria positivas en cada contenedor ordinario**. Los presupuestos de contenedores init y del Pod, así como las estrategias de límites, requieren políticas separadas. Aplicar límites universales de cuatro núcleos y 8 GiB no demuestra que las aplicaciones estén bien dimensionadas.
 
 ```yaml
 apiVersion: v1
@@ -588,11 +588,11 @@ spec:
     pods: "100"
 ```
 
-Esta cuota es un límite de recursos de ejemplo, no un presupuesto en dólares ni un tope para todo el gasto en la nube. Ajústela al uso actual y a los máximos del escalado automático, y prevea solicitudes de creación rechazadas.
+Esta cuota es un ejemplo de límite de recursos, no un presupuesto en dólares ni un límite de todo el gasto en la nube. Ajústela al uso actual y a los máximos del escalado automático, y planifique cómo responder a las solicitudes de creación rechazadas.
 
 ### 3.2 API de asignación por período
 
-Esto usa `/allocation/compute` de OpenCost 1.121.3. Verifique el período, la agregación y la estructura de respuesta para el producto y la versión correspondientes. `includeIdle` y `shareIdle` son valores booleanos; `shareIdle=weighted` no es el formato booleano documentado.
+El ejemplo usa `/allocation/compute` de OpenCost 1.121.3. Verifique el periodo, la agregación y la estructura de respuesta del producto y la versión utilizados. `includeIdle` y `shareIdle` son booleanos; `shareIdle=weighted` no es la forma booleana documentada.
 
 ```bash
 curl --fail --silent --show-error --get \
@@ -603,11 +603,11 @@ curl --fail --silent --show-error --get \
   --data-urlencode 'shareIdle=false'
 ```
 
-### 3.3 Asignación de costos compartidos y conservación
+### 3.3 Reparto de costes compartidos y conservación
 
-Estos son **datos de entrada sintéticos en USD para validar los cálculos, no una factura real**. Los grupos no superpuestos contienen costos directos de 6,500, costos compartidos de 2,500 y costos inactivos de 1,000. Los costos compartidos se ponderan según el costo directo; los costos inactivos se dividen por igual. Para los centavos fraccionarios se usa el método del mayor resto, con desempate por nombre de equipo en orden lexicográfico.
+Son **datos sintéticos en USD para validar cálculos, no una factura real**. Las categorías no se solapan y contienen 6,500 de costes directos, 2,500 de costes compartidos y 1,000 de costes ociosos. Los costes compartidos se ponderan según el coste directo; los ociosos se dividen por igual. Las fracciones de céntimo se reparten con el método de los mayores restos, resolviendo los empates por el orden lexicográfico del nombre del equipo.
 
-![Asignación sintética de USD 10,000 que conserva el total después del redondeo](../.gitbook/assets/en-ops-13-finops-cost-platform-1.png)
+![Asignación sintética de USD 10,000 que conserva el total tras redondear](../.gitbook/assets/en-ops-13-finops-cost-platform-1.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-1.html)
 
@@ -728,13 +728,13 @@ if __name__=="__main__":
 python3 allocate_costs.py allocation-example.json
 ```
 
-Mantenga los importes sin atribuir como `unallocated`. Esta calculadora no redistribuye automáticamente los costos negativos ni los reembolsos. La contabilidad real requiere reglas independientes para créditos, reembolsos y conversión de monedas. La política de ejemplo no es necesariamente la opción más justa para todas las organizaciones.
+Conserve los importes sin atribuir como `unallocated`. Esta calculadora no redistribuye automáticamente los costes negativos ni los reembolsos. La contabilidad real necesita reglas separadas para créditos, reembolsos y conversión de monedas. La política del ejemplo no es necesariamente la opción más justa para todas las organizaciones.
 
 ### 3.4 Prometheus y Grafana
 
-Estas reglas presuponen **el Prometheus de un solo clúster**. Las consultas de Prometheus/Thanos centralizados deben conservar un identificador de clúster real en cada agregación y unión. Una unión de varios clústeres basada solo en el nombre del nodo puede mezclar costos.
+Estas reglas presuponen **un Prometheus de un solo clúster**. Las consultas centrales de Prometheus/Thanos deben conservar un identificador real de clúster en cada agregación y unión. Unir varios clústeres solo por el nombre del nodo puede mezclar los costes.
 
-`node_cpu_hourly_cost` se expresa por núcleo y `node_ram_hourly_cost`, por GiB por hora. Multiplique por las métricas de asignación y elimine duplicados de scrapes repetidos con `max`. No invente métricas como `kubecost_container_cpu_cost`. Combine esta configuración de kube-state-metrics con los valores del chart de observabilidad existente antes de unir las etiquetas.
+`node_cpu_hourly_cost` expresa el coste por núcleo y `node_ram_hourly_cost`, por GiB y hora. Multiplíquelos por las métricas de asignación y elimine las capturas repetidas mediante `max`. No invente métricas como `kubecost_container_cpu_cost`. Integre este ajuste de kube-state-metrics en los valores existentes del chart de observabilidad antes de unir las etiquetas.
 
 ```yaml
 kube-state-metrics:
@@ -789,17 +789,17 @@ groups:
           summary: "Allocated compute model exceeds the example USD 20/hour threshold"
 ```
 
-El archivo tiene el formato de archivo de reglas de Prometheus. Con el Operator, colóquelo en `PrometheusRule.spec` y establezca etiquetas de metadatos que coincidan con el selector real de reglas. USD 20/hora durante 30 minutos es un umbral de revisión de ejemplo sobre datos del modelo. `for` exige que la condición persista; no elimina los falsos positivos.
+El archivo tiene formato de archivo de reglas de Prometheus. Con el operador, colóquelo bajo `PrometheusRule.spec` y establezca etiquetas de metadatos que coincidan con el selector real de reglas. USD 20/hora durante 30 minutos es un umbral de revisión de ejemplo sobre datos del modelo. `for` requiere que una condición persista; no elimina los falsos positivos.
 
-Los paneles de Grafana pueden usar `finops:namespace_compute_cost_per_hour` y `finops:team_compute_cost_per_hour`, con la etiqueta **USD/hora**. Son tasas asignadas de CPU/RAM, no una factura que incluya todo el almacenamiento, las redes, el plano de control y los costos inactivos. Etiquete cualquier panel `* 730` como estimación fija de 730 horas. Los precios faltantes deben aparecer como datos faltantes, no como costo cero.
+Los paneles de Grafana pueden usar `finops:namespace_compute_cost_per_hour` y `finops:team_compute_cost_per_hour`, etiquetados como **USD/hora**. Son tasas de CPU/RAM asignadas, no una factura que incluya todo el almacenamiento, la red, el plano de control y la capacidad ociosa. Identifique cualquier panel `* 730` como una estimación fija de 730 horas. Los precios ausentes deben mostrarse como datos ausentes, no como coste cero.
 
-Los espacios de nombres sin etiquetas de equipo pueden desaparecer de la agregación por equipo. Compare el total de todos los espacios de nombres con el total por equipo. Las variables y carpetas del dashboard no aplican la autorización de las fuentes de datos. Use permisos de fuentes de datos del lado del servidor o tenants separados para aislar a los equipos, y compruebe que se denieguen las consultas entre equipos.
+Los espacios de nombres sin etiquetas de equipo pueden desaparecer de la agregación por equipo. Compare el total completo de espacios de nombres con el total de equipos. Las variables y carpetas de paneles no imponen autorización de fuentes de datos. Utilice permisos de fuentes de datos del servidor o inquilinos separados para aislar equipos, y pruebe que se denieguen las consultas entre equipos.
 
-## 4. Detección de anomalías basada en la facturación
+## 4. Anomalías basadas en facturación
 
-Un monitor de detección de anomalías de costos `DIMENSIONAL` / `SERVICE` abarca el gasto en servicios de AWS. Llamarlo “EKS” no lo limita a EKS. Para los monitores CUSTOM que usan etiquetas, cuentas vinculadas o Cost Categories, verifique el alcance admitido y la disponibilidad de los datos. Cuando corresponda, reutilice un ARN de monitor existente.
+Un monitor de Cost Anomaly Detection `DIMENSIONAL` / `SERVICE` abarca el gasto en servicios de AWS. Llamarlo «EKS» no lo limita a EKS. Para monitores CUSTOM basados en etiquetas, cuentas vinculadas o Cost Categories, verifique el alcance admitido y la disponibilidad de los datos. Reutilice el ARN de un monitor existente cuando corresponda.
 
-Esta configuración opcional va junto al archivo Terraform anterior. Separe los resúmenes por EMAIL `DAILY` de las notificaciones SNS `IMMEDIATE`. La entrega por SNS sigue dependiendo de las actualizaciones de facturación y de la detección de anomalías; no detiene el gasto instantáneamente. El tema requiere suscriptores aprobados por separado. Este ejemplo no crea una suscripción a Slack.
+Esta configuración opcional se añade junto al archivo Terraform anterior. Distinga los resúmenes por EMAIL `DAILY` de las notificaciones SNS `IMMEDIATE`. La entrega de SNS sigue dependiendo de la actualización de la facturación y la detección de anomalías; no detiene el gasto instantáneamente. El topic necesita suscriptores aprobados por separado. Este ejemplo no crea una suscripción de Slack.
 
 **`anomaly.tf`**
 
@@ -876,15 +876,15 @@ resource "aws_ce_anomaly_subscription" "immediate" {
 }
 ```
 
-La creación de recursos y suscripciones tiene efectos reales sobre los costos y las notificaciones. Para SNS cifrado con KMS, configure también los permisos de clave necesarios para `costalerts.amazonaws.com` y limite SourceAccount/SourceArn. Ajuste el umbral de ejemplo de USD 100 a las necesidades de la organización.
+Crear recursos y suscripciones tiene efectos reales sobre los costes y las notificaciones. Para SNS cifrado con KMS, configure también los permisos de clave necesarios para `costalerts.amazonaws.com` y las restricciones SourceAccount/SourceArn. Ajuste el umbral de ejemplo de USD 100 a la organización.
 
-AWS Budgets Actions puede realizar acciones admitidas sobre EC2/RDS, además de acciones de IAM/SCP. Siguen aplicándose los retrasos de actualización y el alcance de las acciones; no es un tope estricto que detenga de inmediato todo el gasto.
+AWS Budgets Actions puede realizar acciones compatibles de EC2/RDS además de acciones IAM/SCP. Siguen aplicándose los retrasos de actualización y los límites del alcance de las acciones; no es un límite rígido que detenga inmediatamente todo el gasto.
 
-## 5. Presupuestos de equipo e informes programados
+## 5. Presupuestos de equipos e informes programados
 
 ### 5.1 Presupuestos numéricos explícitos
 
-`label_replace` no convierte una cadena de anotación de un espacio de nombres en una serie temporal numérica. Este ejemplo analiza presupuestos explícitos en USD a partir de JSON. Si falta un presupuesto, la proporción resultante es `null`; se rechazan los presupuestos cero, negativos o numéricamente no válidos.
+`label_replace` no convierte una anotación de namespace con texto en una serie temporal numérica. Este ejemplo lee presupuestos explícitos en USD desde JSON. Si falta un presupuesto, la proporción es `null`; se rechazan los presupuestos de cero, negativos o con valores numéricos inválidos.
 
 **`budgets.json`**
 
@@ -900,9 +900,9 @@ AWS Budgets Actions puede realizar acciones admitidas sobre EC2/RDS, además de 
 
 ### 5.2 Informe mensual del modelo y envío opcional a Slack
 
-Este script usa únicamente la biblioteca estándar de Python 3.12. Consulta fechas UTC completadas; `--as-of` es la **fecha final exclusiva**. El primer día del mes informa sobre el mes anterior ya completado. Si los datos están vacíos o hay varios pasos temporales, el script falla en lugar de producir un resultado falso de USD 0. El script no puede demostrar que la cobertura histórica esté completa: inspeccione las advertencias de la API y la actualización del importador.
+Este script solo usa la biblioteca estándar de Python 3.12. Consulta fechas UTC completas; `--as-of` es la **fecha final excluida**. El primer día de un mes informa sobre el mes anterior completo. Los datos vacíos o varios intervalos temporales provocan un fallo en lugar de convertirse en un resultado falso de USD 0. El script no puede demostrar una cobertura histórica completa: inspeccione las advertencias de la API y la actualización reciente del importador.
 
-De forma predeterminada, crea archivos JSON y no envía mensajes a Slack. La entrega requiere tanto `--send` como `--webhook-file`. Los canales distintos necesitan webhooks entrantes independientes; no se usa ninguna sobrescritura `channel` en el contenido de la solicitud.
+De forma predeterminada, el script crea archivos JSON y no envía mensajes a Slack. El envío requiere tanto `--send` como `--webhook-file`. Cada canal necesita su propio webhook entrante; no se usa un campo `channel` en el payload para sustituir el canal de destino.
 
 **`report_costs.py`**
 
@@ -1088,11 +1088,11 @@ python3 report_costs.py \
   --report cost-report.json --slack-payload slack-payload.json
 ```
 
-Los datos sintéticos verificaron un costo total del modelo de **USD 1,610.10** y una estimación lineal de fin de mes de **USD 4,391.18**. Estos no son costos de la cuenta del lector. La estimación usa 11 días completados de un septiembre de 30 días, no una proyección fija de 730 horas.
+Los datos sintéticos verificaron un coste total del modelo de **USD 1,610.10** y una estimación lineal de fin de mes de **USD 4,391.18**. No son costes de la cuenta del lector. La estimación usa 11 días completos de un septiembre de 30 días, no una proyección fija de 730 horas.
 
 ### 5.3 Ejecutar como CronJob
 
-Guarde el script y los presupuestos en un ConfigMap. Este CronJob se ejecuta a diario a las **09:00, hora de Asia/Seúl**, imprime el informe en stdout y no envía mensajes a Slack. Los límites temporales de los informes siguen siendo UTC. Los registros contienen información interna de costos, así que configure el acceso y la retención. Los archivos de salida en `emptyDir` desaparecen cuando se elimina el Pod.
+Guarde el script y los presupuestos en un ConfigMap. Este CronJob se ejecuta diariamente a las **09:00 Asia/Seoul**, imprime el informe en stdout y no envía mensajes a Slack. Los límites del periodo del informe siguen siendo UTC. Los registros contienen información interna de costes: configure su acceso y retención. Los archivos de salida de `emptyDir` desaparecen cuando se elimina el Pod.
 
 ```bash
 kubectl -n opencost create configmap finops-report-code \
@@ -1169,15 +1169,15 @@ spec:
               emptyDir: {}
 ```
 
-Verifique el digest de la imagen y la compatibilidad con la plataforma antes del despliegue; después, fije el digest. La versión de Python y el código de la biblioteca estándar se probaron localmente; no se probaron ni la descarga de la imagen del contenedor ni la ejecución del CronJob en el clúster.
+Verifique el digest de la imagen y la compatibilidad de la plataforma antes del despliegue y después fije ese digest. La versión de Python y el código de la biblioteca estándar se probaron localmente; no se descargaron imágenes de contenedor ni se ejecutó el CronJob en un clúster.
 
-Para habilitar la entrega operativa a Slack, monte el webhook como archivo Secret y añada `--send --webhook-file /secrets/webhook`. Nunca lo incluya en la documentación, Git ni los registros. `concurrencyPolicy: Forbid` y `backoffLimit: 0` reducen el riesgo de duplicados, pero no garantizan una entrega exactamente una vez. Si se reintenta tras perder una confirmación, los mensajes pueden duplicarse; determine si se necesita un registro de entregas y eliminación de duplicados.
+Para habilitar el envío operativo a Slack, monte el webhook como un archivo Secret y añada `--send --webhook-file /secrets/webhook`. Nunca lo incluya en la documentación, Git o los registros. `concurrencyPolicy: Forbid` y `backoffLimit: 0` reducen el riesgo de duplicados, pero no garantizan una entrega exactamente una vez. Reintentar tras perder la confirmación puede duplicar mensajes; decida si necesita un registro de entregas y deduplicación.
 
-## 6. Ajuste del tamaño de los recursos
+## 6. Ajuste de recursos
 
-### 6.1 Recopilar recomendaciones de VPA
+### 6.1 Recoger recomendaciones VPA
 
-Se presupone que el recomendador VPA y el CRD ya están instalados. Observe en modo `Off` y evite que varios VPA apunten a la misma carga de trabajo. Si Goldilocks administra los VPA, no los duplique con el ejemplo manual. `target` es una solicitud recomendada; `upperBound` no es un límite obligatorio del contenedor.
+Esto presupone que el recomendador de VPA y el CRD ya estén instalados. Observe en modo `Off` y evite varios VPA dirigidos a la misma carga de trabajo. Si Goldilocks gestiona los VPA, no los duplique con el ejemplo manual. `target` es una solicitud de recursos recomendada; `upperBound` no es un límite obligatorio del contenedor.
 
 **`vpa.yaml`**
 
@@ -1201,13 +1201,13 @@ spec:
         controlledValues: RequestsOnly
 ```
 
-Goldilocks es un dashboard opcional, habilitado por espacio de nombres, para recomendaciones de VPA. Antes de instalarlo, compruebe las dependencias actuales del chart, los permisos del controlador y el acceso al dashboard; no añada un recomendador duplicado. Etiquetar un espacio de nombres con `goldilocks.fairwinds.com/enabled=true` no ahorra dinero ni aprueba cambios por sí solo.
+Goldilocks es un panel opcional de recomendaciones de VPA que se habilita explícitamente por espacio de nombres. Compruebe las dependencias actuales del chart, los permisos del controlador y el acceso al panel antes de instalarlo; no añada un recomendador duplicado. Etiquetar un espacio de nombres con `goldilocks.fairwinds.com/enabled=true` no ahorra dinero ni aprueba cambios por sí solo.
 
-### 6.2 Generar propuestas de cambios
+### 6.2 Generar propuestas
 
-Este script **no modifica el clúster ni crea un PR**. Lee instantáneas JSON de `kubectl`, compara contenedores de Deployment/StatefulSet por nombre y propone reducciones de solicitudes de al menos un 20 %. Requiere `kubernetes==36.0.3`, cuyo analizador de cantidades se probó con el ejemplo.
+Este script **no modifica el clúster ni crea un PR**. Lee capturas JSON de `kubectl`, relaciona los contenedores de Deployment/StatefulSet por nombre y propone reducciones de solicitudes de recursos de al menos el 20%. Requiere `kubernetes==36.0.3`, cuyo analizador de cantidades se probó con el ejemplo.
 
-Compruebe si las recomendaciones abarcan suficiente tráfico, los picos y los escenarios de recuperación, y si los cambios en las solicitudes de CPU afectan los cálculos de utilización de HPA. Los contenedores de inicialización y los recursos a nivel de Pod requieren una revisión aparte. No se hacen conjeturas sobre VPA duplicados, contenedores desconocidos ni solicitudes faltantes.
+Compruebe si las recomendaciones cubren suficiente tráfico, picos y escenarios de recuperación, y si los cambios de solicitudes de CPU afectan a los cálculos de utilización del HPA. Los contenedores de inicialización y los recursos a nivel de Pod siguen siendo elementos de revisión separados. No se hacen suposiciones ante VPA duplicados, contenedores desconocidos ni solicitudes de recursos ausentes.
 
 ```bash
 python3 -m venv .venv
@@ -1324,17 +1324,17 @@ if __name__ == "__main__":
                              json.loads(args.vpas.read_text()), args.threshold), indent=2))
 ```
 
-![Propuestas de solo lectura seguidas de manifiestos preparados por sus responsables, PR y validación](../.gitbook/assets/en-ops-13-finops-cost-platform-2.png)
+![Propuestas de solo lectura, seguidas de manifiestos, PR y validación preparados por el responsable](../.gitbook/assets/en-ops-13-finops-cost-platform-2.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-2.html)
 
-`estimatedBillingSavings` es `null`: unas solicitudes menores no garantizan menos nodos ni menores costos de compromiso. La persona responsable edita los manifiestos reales de Git, ejecuta pruebas de rendimiento, revisa el PR y supervisa los SLO después del despliegue. Para automatizarlo se requiere asignar los archivos del repositorio, configurar la autenticación, gestionar PR duplicados y establecer las reglas de CI y aprobación.
+`estimatedBillingSavings` es `null`: reducir las solicitudes de recursos no garantiza menos nodos ni menores costes de compromisos contratados. El responsable modifica los manifiestos reales de Git, ejecuta pruebas de rendimiento, revisa el PR y observa los SLO después del despliegue. Automatizar ese proceso requiere relacionar los recursos con los archivos del repositorio, autenticación, gestión de PR duplicados, CI y reglas de aprobación.
 
 ## 7. Candidatos inactivos y gobernanza
 
-### 7.1 Listas para revisar, no instrucciones para eliminar
+### 7.1 Listas de candidatos para revisión
 
-Esta consulta de un solo clúster busca PVC Bound que no tengan una referencia actual a un volumen de Pod. Compara el indicador con 1 y coincide tanto con el espacio de nombres como con el nombre de la solicitud.
+Esta consulta de un solo clúster encuentra PVC Bound sin referencias de volumen en ningún Pod actual. Compara la métrica gauge con 1 y relaciona tanto el namespace como el nombre de la solicitud.
 
 ```promql
 (kube_persistentvolumeclaim_status_phase{phase="Bound"} == 1)
@@ -1342,34 +1342,34 @@ unless on (namespace, persistentvolumeclaim)
 kube_pod_spec_volumes_persistentvolumeclaims_info
 ```
 
-Esto puede incluir datos de StatefulSets escalados a cero, volúmenes de recuperación o tareas pausadas. Antes de eliminar, compruebe la titularidad, los requisitos de recuperación, el último uso, las instantáneas y la retención. Que un Deployment se haya creado hace siete días no demuestra que haya permanecido con cero réplicas durante siete días. Verifique la continuidad del historial, la cobertura y las brechas.
+La lista puede incluir datos de StatefulSets escalados a cero, volúmenes de recuperación o Jobs pausados. Antes de eliminar nada, compruebe el responsable, los requisitos de recuperación, el último uso, las instantáneas y la retención. Que un Deployment se creara hace siete días no demuestra que permaneciera siete días con cero réplicas. Verifique el historial continuo, su cobertura y sus lagunas.
 
-Un uso bajo de CPU o memoria puede ser válido para cargas de trabajo con picos o en espera. Para agregar Pods en Deployments se requieren relaciones de propietarios (ReplicaSet → Deployment), espacios de nombres e identificadores de clúster. El tráfico de recepción de red por sí solo no permite identificar el tráfico de negocio ni determinar si se necesita un recurso.
+Un uso bajo de CPU o memoria puede ser válido para cargas con ráfagas o en espera. Agregar Pods por Deployment requiere relaciones de propiedad (ReplicaSet → Deployment), namespaces e identificadores de clúster. El tráfico de red recibido, por sí solo, no identifica el tráfico de negocio ni demuestra si se necesita un recurso.
 
 ### 7.2 Revisiones periódicas
 
 | Frecuencia | Revisión |
 | --- | --- |
-| Diaria | Brechas de recopilación, actualización del importador, anomalías y estimaciones presupuestarias |
-| Semanal | Responsables de los candidatos inactivos, propuestas de VPA y efectos en los SLO |
-| Mensual | Conciliación de facturas, descuentos, créditos, costos no atribuidos, reglas compartidas y economía unitaria |
+| Diaria | Lagunas de recopilación, actualización del importador, anomalías y estimaciones de presupuesto |
+| Semanal | Responsables de los candidatos inactivos, propuestas de VPA y efectos sobre los SLO |
+| Mensual | Conciliación de facturas, descuentos, créditos, costes sin atribuir, reglas compartidas y coste por unidad |
 
-Registre el período, la moneda, la fuente del modelo frente a la facturación, la hora de actualización, la política de asignación, el importe no atribuido y quién aprobó. No dé por sentado que las etiquetas completas implican una precisión perfecta, que reducir solicitudes equivale a ahorrar dinero ni que los filtros del dashboard aplican el acceso de los equipos.
+Registre el periodo, la moneda, si el origen es el modelo o la facturación, la hora de actualización, la política de asignación, el importe sin atribuir y quién aprueba. No suponga que tener todas las etiquetas garantiza una exactitud perfecta, que reducir solicitudes de recursos equivale a ahorrar ni que los filtros de un panel controlan el acceso de los equipos.
 
 ## 8. Referencias
 
 - [Definición de FinOps Foundation](https://www.finops.org/introduction/what-is-finops/)
-- [Versión de OpenCost 1.121.3](https://github.com/opencost/opencost/releases/tag/v1.121.3)
-- [Helm chart de OpenCost](https://github.com/opencost/opencost-helm-chart)
+- [Versión OpenCost 1.121.3](https://github.com/opencost/opencost/releases/tag/v1.121.3)
+- [Chart Helm de OpenCost](https://github.com/opencost/opencost-helm-chart)
 - [API de OpenCost](https://opencost.io/docs/integrations/api/)
-- [Código del autorizador de AWS de OpenCost](https://github.com/opencost/opencost/blob/v1.121.3/pkg/cloud/aws/authorizer.go)
+- [Código del autorizador AWS de OpenCost](https://github.com/opencost/opencost/blob/v1.121.3/pkg/cloud/aws/authorizer.go)
 - [Chart y migración de Kubecost](https://github.com/kubecost/cost-analyzer-helm-chart)
 - [AWS Data Exports](https://docs.aws.amazon.com/cur/latest/userguide/what-is-data-exports.html)
 - [Cifrado de Data Exports](https://docs.aws.amazon.com/cur/latest/userguide/data-protection.html)
-- [Política del bucket de Data Exports](https://docs.aws.amazon.com/cur/latest/userguide/dataexports-s3-bucket.html)
-- [Reposición de etiquetas de asignación de costos](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-allocation-backfill.html)
-- [Permisos de SNS para anomalías de costos](https://docs.aws.amazon.com/cost-management/latest/userguide/ad-SNS.html)
-- [Migración de Kyverno a CEL](https://kyverno.io/docs/guides/migration-to-cel/)
+- [Política de bucket de Data Exports](https://docs.aws.amazon.com/cur/latest/userguide/dataexports-s3-bucket.html)
+- [Datos históricos de etiquetas de asignación de costes](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-allocation-backfill.html)
+- [Permisos SNS para anomalías de costes](https://docs.aws.amazon.com/cost-management/latest/userguide/ad-SNS.html)
+- [Migración a CEL de Kyverno](https://kyverno.io/docs/guides/migration-to-cel/)
 - [ValidatingPolicy de Kyverno](https://kyverno.io/docs/policy-types/validating-policy/)
 - [Goldilocks](https://goldilocks.docs.fairwinds.com/)
 

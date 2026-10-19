@@ -1,23 +1,23 @@
 # EKS クラスターの作成
 
-> **最終更新日**: 2026年10月16日
+> **最終更新**: 2026年10月16日
 
-Amazon EKS クラスターを作成する方法はいくつかあります。この章では、さまざまなツールや方法を使って EKS クラスターを作成する手順を詳しく説明します。
+Amazon EKS クラスターの作成方法はいくつかあります。この章では、さまざまなツールと方法を使ってクラスターを作成する手順を詳しく説明します。
 
-この章で紹介する作成方法は、それぞれ別の選択肢です。新しい専用クラスターを作成する際はいずれか一つを選び、同じリソースを複数のツールで同時に管理しないでください。サンプルの名前、アカウント、ロール、VPC、サブネット、CIDR は、承認済みの実値に置き換えてください。特に記載がない限り、シェルの例は Bash を使用します。前提条件を満たせない場合は処理を中止してください。この監査では、AWS リソースのプロビジョニングやワークロードの測定は実施していません。
+この章で紹介する作成方法は互いに代替の選択肢です。新しく専用クラスターを作るときは1つを選び、同じリソースを複数のツールで同時に管理しないでください。例の名前、アカウント、ロール、VPC、サブネット、CIDRは、承認済みの実値に置き換えてください。特に記載がない限り、シェル例はBashです。前提条件の確認に失敗した場合は先へ進まないでください。この監査ではAWSリソースの作成も、ワークロードの計測も行っていません。
 
-**現在のリリース:** EKS 1.37 は2026年10月1日に利用可能になりました。
+**最新リリース:** EKS 1.37は2026年10月1日に利用可能になりました。
 
-**サンプルの基準:** 以下の例では、レビュー済みの EKS 1.36 を引き続き使用します。別のバージョンを選ぶ場合は、[現在の EKS バージョンカレンダー](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)とコンポーネントの互換性に関するドキュメントを確認してください。
+**例で使用する基準:** 以下の例は、確認済みのEKS 1.36を引き続き使用します。別のバージョンを選ぶ場合は、[現在のEKSバージョンカレンダー](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)と各コンポーネントの互換性資料を確認してください。
 
 ## 目次
 
 1. [前提条件](#prerequisites)
-2. [eksctl を使用したクラスターの作成](#creating-a-cluster-using-eksctl)
-3. [AWS Management Console を使用したクラスターの作成](#creating-a-cluster-using-aws-management-console)
-4. [AWS CLI を使用したクラスターの作成](#creating-a-cluster-using-aws-cli)
-5. [Terraform を使用したクラスターの作成](#creating-a-cluster-using-terraform)
-6. [AWS CDK を使用したクラスターの作成](#creating-a-cluster-using-aws-cdk)
+2. [eksctlを使用したクラスター作成](#creating-a-cluster-using-eksctl)
+3. [AWS Management Consoleを使用したクラスター作成](#creating-a-cluster-using-aws-management-console)
+4. [AWS CLIを使用したクラスター作成](#creating-a-cluster-using-aws-cli)
+5. [Terraformを使用したクラスター作成](#creating-a-cluster-using-terraform)
+6. [AWS CDKを使用したクラスター作成](#creating-a-cluster-using-aws-cdk)
 7. [クラスターアクセスの設定](#configuring-cluster-access)
 8. [クラスターの検証](#cluster-validation)
 9. [クラスターのアップグレード](#cluster-upgrade)
@@ -25,42 +25,42 @@ Amazon EKS クラスターを作成する方法はいくつかあります。こ
 
 ## 前提条件 {#prerequisites}
 
-EKS クラスターを作成する前に、以下の前提条件を満たす必要があります。
+EKSクラスターを作成する前に、次の前提条件を満たしてください。
 
-### 1. AWS アカウント
+### 1. AWSアカウント
 
-有効な AWS アカウントが必要です。AWS アカウントをお持ちでない場合は、[AWS のウェブサイト](https://aws.amazon.com/)で登録できます。
+有効なAWSアカウントが必要です。アカウントをお持ちでない場合は、[AWSウェブサイト](https://aws.amazon.com/)から登録してください。
 
-### 2. IAM の権限
+### 2. IAM権限
 
-必要な権限は、使用するツールとそのツールが管理するリソースによって異なります。すべてのリソースに対して `eks:*`、`ec2:*`、`iam:*`、`cloudformation:*` を許可するポリシーは、最小権限を満たすために必要なポリシーではありません。
+必要な権限は、使用するツールとそのツールが管理するリソースによって異なります。すべてのリソースに対する`eks:*`、`ec2:*`、`iam:*`、`cloudformation:*`を許可するポリシーは、最小権限に必要なものではありません。
 
 | タスク | 確認する権限の範囲 |
 | --- | --- |
-| EKS クラスター／ノードグループの管理 | 必要な EKS アクションと対象リソース |
-| 既存の IAM ロールの受け渡し | 承認済みのロール ARN とサービス条件に対する `iam:PassRole` |
-| IAM ロール／ポリシー／OIDC プロバイダーの作成 | ツールが管理する IAM リソースと名前／タグの範囲 |
-| ネットワークの作成 | 新しい VPC、サブネット、セキュリティグループに対する EC2 アクション |
-| eksctl／CDK の使用 | 関連する CloudFormation スタック、実行ロール、ブートストラップリソース |
+| EKSクラスター/ノードグループの管理 | 必要なEKSアクションと対象リソース |
+| 既存IAMロールの引き渡し | 承認済みロールARNとサービス条件に対する`iam:PassRole` |
+| IAMロール/ポリシー/OIDCプロバイダーの作成 | ツールが管理するIAMリソース、名前、タグの範囲 |
+| ネットワークの作成 | 新しいVPC、サブネット、セキュリティグループに必要なEC2アクション |
+| eksctl/CDKの利用 | 関連するCloudFormationスタック、実行ロール、ブートストラップリソース |
 
-プロビジョニングに使用する ID、クラスターのサービスロール、ノードロールはそれぞれ別のものです。SCP、権限境界、セッションポリシーも引き続き適用されます。組織のプロビジョニング権限を、合成されたテンプレート／プランと照らして確認してください。Auto Mode に必要なロールは、従来のノードグループの場合とは異なります。
+プロビジョニングに使うID、クラスターサービスロール、ノードロールはそれぞれ別です。SCP、権限境界、セッションポリシーも引き続き適用されます。組織のプロビジョニング権限を、生成したテンプレートやプランと照らし合わせて確認してください。Auto Modeのロール要件は従来のノードグループとは異なります。
 
-参照先: [EKS IAM アクションとリソース](https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelastickubernetesservice.html)、[Auto Mode のロール](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
+参考資料: [EKS IAMアクションとリソース](https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelastickubernetesservice.html)、[Auto Modeのロール](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
 
 ### 3. ツールのインストール
 
 #### AWS CLI
 
-使用する OS／CPU に対応するパッケージを選び、[AWS CLI v2 の公式インストールガイド](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)に記載された署名検証手順に従ってください。v1／v2 がすでにインストールされている場合は、まず更新／移行の手順を確認してください。
+使用するOS/CPUに合ったパッケージを選び、[公式AWS CLI v2インストールガイド](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)の署名検証手順に従ってください。既存のv1/v2を更新する場合は、先に更新/移行方法を確認してください。
 
-| 環境 | 公式パッケージ／インストール方法 |
+| 環境 | 公式パッケージ/インストール方法 |
 | --- | --- |
-| macOS | 署名付きの `AWSCLIV2.pkg` |
-| Linux x86_64 | PGP 署名を検証する `awscli-exe-linux-x86_64.zip` |
-| Linux ARM64 | PGP 署名を検証する `awscli-exe-linux-aarch64.zip` |
-| Windows | サポート対象の Windows バージョン向け MSI インストーラー |
+| macOS | 署名済み`AWSCLIV2.pkg` |
+| Linux x86_64 | PGP署名を検証した`awscli-exe-linux-x86_64.zip` |
+| Linux ARM64 | PGP署名を検証した`awscli-exe-linux-aarch64.zip` |
+| Windows | サポートされているWindows用MSIインストーラー |
 
-Linux x86_64 用パッケージを ARM でそのまま使用しないでください。`aws --version` で使用中の CLI を確認してください。組織で IAM Identity Center を使用している場合は、次のように承認済みのプロファイルを設定します。それ以外の場合は、長期間有効なアクセスキーを使わず、組織のフェデレーション手順に従ってください。
+Linux x86_64用パッケージをARMでそのまま使わないでください。`aws --version`で有効なCLIを確認します。組織でIAM Identity Centerを使う場合は、承認済みプロファイルを次のように設定してください。それ以外の場合は、長期アクセスキーを前提にせず、組織のフェデレーション手順に従ってください。
 
 ```bash
 aws configure sso --profile eks-docs
@@ -69,13 +69,13 @@ aws sts get-caller-identity --profile eks-docs
 export AWS_PROFILE=eks-docs
 ```
 
-[IAM Identity Center 認証](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html)を参照してください。以降のコマンドでも、承認済みのアカウント、ロール、リージョンを使用してください。
+[IAM Identity Center認証](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html)を参照してください。以降のコマンドでも、承認されたアカウント、ロール、リージョンを使用してください。
 
-#### kubectl と eksctl（Linux/macOS）
+#### kubectlとeksctl（Linux/macOS）
 
-この章の EKS 1.36 の例では、kubectl **1.36.5** と eksctl **0.231.0** を基準にしています。サーバーと同じ kubectl のマイナーバージョンを使用することを推奨します。サポートされるバージョン差はマイナーバージョンで ±1 です。古い EKS クラスターに対して、上流の `stable.txt` から最新のマイナーバージョンを無条件にインストールしないでください。
+この章のEKS 1.36の例では、kubectl **1.36.5**とeksctl **0.231.0**を基準にします。kubectlはサーバーと同じマイナーバージョンを優先してください。許容されるバージョン差は±1マイナーです。古いEKSクラスターに対して、上流の`stable.txt`から最新マイナー版を無条件にインストールしないでください。
 
-この Bash の例は AMD64／ARM64 を選択し、インストール前に公式チェックサムを検証します。`curl`、`tar`、`awk`、および `sha256sum` または `shasum` が必要です。`/usr/local/bin` へのインストールには管理者権限が必要です。ダウンロードまたはチェックサムの検証に失敗した場合、インストールは中止されます。
+次のBash例はAMD64/ARM64を選択し、インストール前に公式チェックサムを検証します。`curl`、`tar`、`awk`、`sha256sum`または`shasum`が必要です。`/usr/local/bin`へのインストールには管理者権限が必要です。ダウンロードまたはチェックサム検証に失敗した場合、インストールは停止します。
 
 ```bash
 (
@@ -122,36 +122,36 @@ export AWS_PROFILE=eks-docs
 )
 ```
 
-公式の手順: [Linux 版 kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)、[macOS 版 kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/)、[eksctl のインストール](https://eksctl.io/installation/)。
+公式手順: [Linux版kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)、[macOS版kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/)、[eksctlのインストール](https://eksctl.io/installation/)。
 
 #### Windows
 
-PowerShell で[公式の kubectl インストール手順](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/)に従ってください。この章の AMD64 の例では、[kubectl 1.36.5](https://dl.k8s.io/release/v1.36.5/bin/windows/amd64/kubectl.exe)と、同じパスにある `.sha256` ファイルを使用します。使用する CPU に合った Windows ZIP と、[eksctl 0.231.0 のリリース](https://github.com/eksctl-io/eksctl/releases/tag/v0.231.0)にある `eksctl_checksums.txt` を選んでください。
+PowerShellでは[公式kubectlインストール手順](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/)に従ってください。この章のAMD64例では[kubectl 1.36.5](https://dl.k8s.io/release/v1.36.5/bin/windows/amd64/kubectl.exe)と同じパスにある`.sha256`ファイルを使います。CPUに合うWindows ZIPと、[eksctl 0.231.0リリース](https://github.com/eksctl-io/eksctl/releases/tag/v0.231.0)の`eksctl_checksums.txt`を選んでください。
 
-`Get-FileHash -Algorithm SHA256` の結果を公式のハッシュと比較し、一致しない場合は中止してください。検証後に ZIP を展開し、実行ファイルのディレクトリを PATH に追加して、`kubectl version --client` と `eksctl version` で確認します。Bash で PowerShell の構文を実行しないでください。
+`Get-FileHash -Algorithm SHA256`の結果を公式ハッシュと比較し、一致しなければ停止します。検証後にZIPを展開し、実行ファイルのディレクトリをPATHに追加して、`kubectl version --client`と`eksctl version`を確認してください。PowerShellの構文をBashで実行しないでください。
 
-また、AWS CLI の例で JSON を生成するために `jq` を用意してください。この監査では、実際のクライアントのダウンロード／インストールやログインは実施していません。
+AWS CLIの例でJSONを生成するため、`jq`も準備してください。この監査では、クライアントのダウンロード/インストールやログインは行っていません。
 
-### 4. VPC とサブネット
+### 4. VPCとサブネット
 
-リージョンの EKS クラスターには、同じ VPC 内の異なる AZ に少なくとも2つのサブネットが必要です。クラスターの各サブネットには、EKS 用に少なくとも6個の空き IP アドレスが必要です。AWS は少なくとも16個を推奨しています。ノード、Pod、ロードバランサー、アップグレード用に追加のアドレスを計画してください。VPC の DNS ホスト名と DNS 解決を有効にしてください。
+リージョンEKSクラスターには、同じVPC内の異なるAZに少なくとも2つのサブネットが必要です。クラスターの各サブネットにはEKS用に少なくとも6個の空きIPが必要で、AWSは16個以上を推奨しています。ノード、Pod、ロードバランサー、アップグレード分の追加アドレスも計画してください。VPCのDNSホスト名とDNS解決を有効にします。
 
-すべての EKS クラスターでインターネットアクセスが必須というわけではありません。ノードとワークロードは、NAT／インターネット経路、または必要な VPC エンドポイントとミラーイメージを通じて、Kubernetes API、イメージ、必要な AWS サービスにアクセスする必要があります。プライベート Kubernetes エンドポイントには、適切な DNS とルーティングを設定したうえで、VPC 内または接続されたネットワークからアクセスできます。
+すべてのEKSクラスターにインターネット接続が必須というわけではありません。ノードとワークロードがKubernetes API、イメージ、必要なAWSサービスへ接続できるよう、NAT/インターネット経路か、必要なVPCエンドポイントとミラー済みイメージを用意してください。Kubernetesのプライベートエンドポイントには、適切なDNSとルーティングを備えたVPC内または接続ネットワークから到達できます。
 
-#### EKS クラスター向けの VPC タグ
+#### EKSクラスター用VPCタグ
 
-`kubernetes.io/cluster/<cluster-name>` VPC タグはレガシーな仕組みであり、現在の EKS クラスター作成で一律に必須となるものではありません。ロードバランシングのためのサブネット検出ルールは、選択したコントローラーのルールに従ってください。
+`kubernetes.io/cluster/<cluster-name>` VPCタグは従来の仕組みであり、現在のEKSクラスター作成に常に必要なものではありません。ロードバランシングで使うサブネットは、選択したコントローラーのサブネット検出ルールに従ってください。
 
-- パブリックロードバランサー用のサブネット: `kubernetes.io/role/elb=1`
-- 内部ロードバランサー用のサブネット: `kubernetes.io/role/internal-elb=1`
+- パブリックロードバランサー用サブネット: `kubernetes.io/role/elb=1`
+- 内部ロードバランサー用サブネット: `kubernetes.io/role/internal-elb=1`
 
-タグを設定しても、ルーティング、セキュリティグループ、空き IP アドレス容量は設定されません。[VPC／サブネットの要件](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)と[インターネットアクセスのないクラスター](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html)を参照してください。
+タグはルーティング、セキュリティグループ、空きIP容量を設定しません。[VPC/サブネット要件](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)と[インターネット接続のないクラスター](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html)を参照してください。
 
-## eksctl を使用したクラスターの作成 {#creating-a-cluster-using-eksctl}
+## eksctlを使用したクラスター作成 {#creating-a-cluster-using-eksctl}
 
-eksctl は EKS クラスターの作成と管理を行う最も簡単な方法です。eksctl は CloudFormation を使用して EKS クラスターと関連リソースを作成します。
+eksctlはEKSクラスターを作成・管理する簡単な方法です。CloudFormationを使ってクラスターと関連リソースを作成します。
 
-このシェル専用のパスに eksctl の kubeconfig を保存します。
+このシェル専用のパスにeksctlのkubeconfigを保存します。
 
 ```bash
 EKS_CLIENT_DIR=$(mktemp -d /tmp/eks-client.XXXXXX)
@@ -160,19 +160,19 @@ EKS_KUBECONFIG="$EKS_CLIENT_DIR/kubeconfig"
 export KUBECONFIG="$EKS_KUBECONFIG"
 ```
 
-### 基本的なクラスターの作成
+### 基本的なクラスター作成
 
-レビュー済みの構成ファイルを使って、基本的なクラスターを作成します。
+確認済み設定ファイルを使って基本的なクラスターを作成します。
 
 ```bash
 eksctl create cluster --config-file cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
 ```
 
-このコマンドを実行する前に、以下の `cluster.yaml` を読んで編集してください。EKS 1.36、AL2023、既存の VPC サブネット、ノードグループの容量を明示的に選択しています。サンプルの識別子とドキュメント用 CIDR を、実際の承認済みの値に置き換えてください。これらは選択した設定であり、すべての eksctl バージョンでのデフォルト設定を示すものではありません。
+実行前に、以下の`cluster.yaml`を読んで編集してください。ここではEKS 1.36、AL2023、既存のVPCサブネット、ノードグループ容量を明示的に指定します。例の識別子とドキュメント用CIDRは承認済みの実値に置き換えてください。これらは選択した設定であり、すべてのeksctlバージョンにおける既定値を示すものではありません。
 
-### 構成ファイルを使用したクラスターの作成
+### 設定ファイルを使ったクラスター作成
 
-より複雑な構成では、YAML ファイルを使ってクラスターを定義できます。
+より複雑な構成では、YAMLファイルでクラスターを定義できます。
 
 ```yaml
 # cluster.yaml
@@ -238,17 +238,17 @@ accessConfig:
   authenticationMode: API
 ```
 
-この構成ファイルを使ってクラスターを作成するには、次のコマンドを実行します。
+この設定ファイルでクラスターを作るには、次のコマンドを実行します。
 
 ```bash
 eksctl create cluster -f cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
 ```
 
-上記の構成では EC2 ノードと、任意のアプリケーション用 Fargate プロファイルを示しています。CoreDNS は EC2 上で稼働します。CoreDNS を Fargate に移す場合は、プロファイルだけでなく CoreDNS のコンピューティング設定も確認する必要があります。
+上記の構成はEC2ノードと任意のアプリケーション用Fargateプロファイルを示します。CoreDNSはEC2上に残ります。Fargateへ移す場合は、プロファイルだけでなくCoreDNSのコンピューティング設定も確認してください。
 
 ### マネージドノードグループの作成
 
-既存のクラスターにマネージドノードグループを追加するには、次のコマンドを実行します。
+既存クラスターにマネージドノードグループを追加するには、次のコマンドを実行します。
 
 ```bash
 eksctl create nodegroup \
@@ -262,7 +262,7 @@ eksctl create nodegroup \
   --managed --node-ami-family AmazonLinux2023 --node-private-networking
 ```
 
-または、構成ファイルを使用できます。
+設定ファイルを使うこともできます。
 
 ```yaml
 # nodegroup.yaml
@@ -288,27 +288,27 @@ managedNodeGroups:
 eksctl create nodegroup -f nodegroup.yaml
 ```
 
-### EKS Auto Mode クラスターの作成
+### EKS Auto Modeクラスターの作成
 
-EKS Auto Mode は2024年に一般提供が開始され、運用負荷を軽減するために Kubernetes クラスターのインフラストラクチャを自動化します。コンピューティング、ネットワーク、ストレージの機能は AWS が管理します。
+EKS Auto Modeは2024年に一般提供が始まり、クラスターインフラストラクチャを自動化して運用負荷を軽減します。AWSがコンピューティング、ネットワーキング、ストレージ機能を管理します。
 
-#### EKS Auto Mode の主な機能
+#### EKS Auto Modeの主な機能
 
-- **ノード管理の自動化**: ワークロードの要件に応じてノードを自動的に追加／削除
-- **セキュリティの強化**: 不変の AMI、SELinux の強制モード、読み取り専用のルートファイルシステム
-- **ノードのメンテナンス**: 有効期限切れや構成ドリフトが発生したノードを置き換えます。21日間という期間は、コントロールプレーンのマイナーバージョンのアップグレードサイクルではありません
-- **コンポーネントの統合**: Pod ネットワーク、DNS、ストレージ、GPU サポートをデフォルトで提供
-- **コストの最適化**: 使用されていないインスタンスの自動終了とワークロードの集約
+- **ノード管理の自動化**: ワークロード要件に応じてノードを自動で追加/削除
+- **セキュリティ強化**: 不変のAMI、SELinuxの強制モード、読み取り専用ルートファイルシステム
+- **ノードの保守**: 期限切れやドリフトのあるノードを置き換えます。21日間はコントロールプレーンのマイナーバージョンアップグレード周期ではありません
+- **コンポーネント統合**: Podネットワーキング、DNS、ストレージ、GPUサポートを既定で提供
+- **コスト最適化**: 未使用インスタンスを自動終了し、ワークロードを集約
 
-#### Auto Mode クラスターの基本的な作成
+#### Auto Modeクラスターの基本作成
 
-まず、以下の `auto-cluster.yaml` の CIDR とネットワークを確認してください。Auto Mode と同じネットワーク、DNS、ブロックストレージ機能を提供するアドオンを自分で重複して設定しないでください。複数のコンピューティング方式を混在させるクラスターでは、各方式の配置とコンポーネントの適用範囲を明示する必要があります。
+以下の`auto-cluster.yaml`を使う前に、CIDRとネットワーク設定を確認してください。Auto Modeが管理するネットワーク、DNS、ブロックストレージ機能を自己管理アドオンで重複させないでください。混在クラスターでは、各コンピューティング種別に対する配置とコンポーネントの適用範囲を明示する必要があります。
 
 ```bash
 eksctl create cluster --config-file auto-cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
 ```
 
-#### 構成ファイルを使用した Auto Mode クラスターの作成
+#### 設定ファイルを使ったAuto Modeクラスター作成
 
 ```yaml
 # auto-cluster.yaml
@@ -350,21 +350,21 @@ accessConfig:
 eksctl create cluster -f auto-cluster.yaml --kubeconfig "${EKS_KUBECONFIG:?}"
 ```
 
-#### Auto Mode と従来方式の比較
+#### Auto Modeと従来方式の比較
 
-| 機能 | 従来の EKS | EKS Auto Mode |
+| 機能 | 従来のEKS | EKS Auto Mode |
 |---------|-----------------|---------------|
-| ノード管理 | マネージドノードグループまたは利用者管理ノード | AWS が管理するノードのライフサイクル |
-| スケーリング | Cluster Autoscaler、セルフマネージド Karpenter、または別の方式を設定 | マネージドのノード自動スケーリング |
-| アップグレード | コントロールプレーン、ノード、アドオンの更新を計画 | AWS がノード／コンポーネントの更新を管理。サポートポリシーに沿ったコントロールプレーンのマイナーアップグレードを計画 |
-| セキュリティ | ユーザーが設定 | デフォルトでセキュリティを強化 |
-| ネットワーク | CNI プラグインのセットアップ | ネットワーク設定を自動化 |
-| ストレージ | CSI のインストールと権限設定が必要 | マネージド EBS プロビジョナー `ebs.csi.eks.amazonaws.com` |
-| GPU サポート | 互換性のある高速化 AMI と必要なデバイスプラグインを選択 | サポート対象インスタンス向けのマネージドドライバー／プラグイン |
+| ノード管理 | マネージドノードグループまたは顧客管理ノード | AWSがノードライフサイクルを管理 |
+| スケーリング | Cluster Autoscaler、自己管理Karpenterなどを設定 | マネージドノードの自動スケーリング |
+| アップグレード | コントロールプレーン、ノード、アドオンを計画して更新 | AWSがノード/コンポーネントを更新。サポートポリシーに沿ったコントロールプレーンのマイナー更新は計画が必要 |
+| セキュリティ | ユーザーが設定 | 既定でセキュリティを強化 |
+| ネットワーキング | CNIプラグインを設定 | ネットワーク設定を自動化 |
+| ストレージ | CSIのインストールと権限が必要 | 管理対象EBSプロビジョナー`ebs.csi.eks.amazonaws.com` |
+| GPUサポート | 互換性のある高速化AMIと必要なデバイスプラグインを選択 | 対応インスタンスでは管理対象ドライバー/プラグインを提供 |
 
-#### Auto Mode クラスターの検証
+#### Auto Modeクラスターの検証
 
-クラスターの作成後、次のコマンドでステータスを確認できます。
+クラスター作成後、次のコマンドで状態を確認できます。
 
 ```bash
 # Check cluster status
@@ -380,9 +380,9 @@ kubectl get nodeclasses
 kubectl get pods -n kube-system
 ```
 
-#### カスタムノードプールの作成
+#### カスタムNodePoolの作成
 
-Auto Mode では、デフォルトのノードプールに加えてカスタムノードプールを作成できます。
+Auto Modeでは、既定のNodePoolに加えてカスタムNodePoolを作成できます。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -421,20 +421,20 @@ spec:
     consolidateAfter: 30s
 ```
 
-> **注**: Auto Mode では `EC2NodeClass`、`amiFamily`、カスタムの `userData`（`/etc/eks/bootstrap.sh`）を使用できません。AWS がノード AMI とブートストラップを管理します。サブネット、セキュリティグループ、一時ストレージは、代わりに `eks.amazonaws.com/v1` の `NodeClass` で定義します。
+> **注意:** Auto Modeでは`EC2NodeClass`、`amiFamily`、カスタム`userData`（`/etc/eks/bootstrap.sh`）は使えません。AWSがノードAMIとブートストラップを管理します。サブネット、セキュリティグループ、一時ストレージは`eks.amazonaws.com/v1`の`NodeClass`で定義します。
 
-GPU の例では、現在の公式サポート対象リストに含まれる p3 を使用しています。AZ の容量、クォータ、GPU メモリ／モデルの要件を確認してください。GPU Pod は `nvidia.com/gpu` を要求し、上記の taint を許容する必要があります。この YAML はレビュー済みですが、GPU ノードのプロビジョニングやベンチマークは実施していません。
+GPU例では、現行の公式サポート一覧にあるp3を使用します。AZの容量、クォータ、GPUメモリ/モデル要件を確認してください。GPU Podは`nvidia.com/gpu`を要求し、上記のtaintを許容する必要があります。このYAMLは確認済みですが、GPUノードのプロビジョニングやベンチマークは行っていません。
 
-#### Auto Mode の制限
+#### Auto Modeの制限
 
-- SSH または SSM によるノードへの直接アクセスはできません
-- デフォルトの有効期限は336時間（14日間）で、サポートされる `expireAfter` の最大値は21日間です。ドレイン、PDB／NodePool による阻害要因、デフォルトの24時間の終了猶予期間を併せて確認してください
-- デフォルトのノードプールとノードクラスは変更できません
+- SSHまたはSSMによるノードへの直接アクセスはできません
+- 既定の有効期限は336時間（14日）です。サポートされる`expireAfter`の最大値は21日です。drain、PDB/NodePoolによるブロック、既定の24時間の終了猶予を併せて確認してください
+- 既定のNodePoolとNodeClassは変更できません
 - 特定のインスタンスタイプに制限がある場合があります
 
-#### Auto Mode の監視
+#### Auto Modeの監視
 
-インフラストラクチャがマネージドであっても、すべてのワークロードについて CloudWatch メトリクスが自動設定されるわけではありません。`cluster_node_count` は `AWS/EKS` ではなく **ContainerInsights** に属し、Container Insights の収集パイプラインが設定されている必要があります。環境に合わせて収集を設定し、実際のデータが存在する時間範囲を指定してクエリしてください。
+インフラストラクチャ管理によって、各ワークロードのCloudWatchメトリクスが自動設定されるわけではありません。`cluster_node_count`は`AWS/EKS`ではなく**ContainerInsights**に属し、設定済みのContainer Insights収集パイプラインが必要です。環境に合わせて収集を設定し、実データのある期間をクエリしてください。
 
 ```bash
 # Requires a configured Container Insights collection pipeline and metric data.
@@ -448,11 +448,11 @@ aws cloudwatch get-metric-statistics \
   --period 3600 --statistics Average
 ```
 
-結果が空でも、ノードがゼロであることや Auto Mode の障害を示すわけではありません。まず収集設定、ディメンション、時間範囲を確認してください。この監査では CloudWatch クエリや測定を実施していません。[Container Insights の公式メトリクス一覧](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html)を参照してください。
+結果が空でも、ノードがゼロであることやAuto Modeの失敗を意味しません。まず収集設定、ディメンション、時間範囲を確認してください。この監査ではCloudWatchクエリや計測を行っていません。[公式Container Insightsメトリクス一覧](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html)を参照してください。
 
-### Fargate プロファイルの作成
+### Fargateプロファイルの作成
 
-Fargate プロファイルを作成するには、次のコマンドを実行します。
+Fargateプロファイルを作成するには、次のコマンドを実行します。
 
 ```bash
 eksctl create fargateprofile \
@@ -463,7 +463,7 @@ eksctl create fargateprofile \
   --labels env=fargate
 ```
 
-または、構成ファイルを使用できます。
+設定ファイルを使うこともできます。
 
 ```yaml
 # fargate.yaml
@@ -486,143 +486,142 @@ eksctl create fargateprofile -f fargate.yaml
 
 ### クラスターの更新
 
-コントロールプレーン、ノード、アドオンの互換性を確認したうえで、[クラスターのアップグレード](#cluster-upgrade)の手順に従ってください。
+コントロールプレーン、ノード、アドオンの互換性を確認し、[クラスターのアップグレード](#cluster-upgrade)に従ってください。
 
 ### クラスターの削除
 
-ワークロード、ロードバランサー、データ保持、リソースを管理するツールを確認したうえで、[クラスターの削除](#cluster-deletion)の手順に従ってください。
+ワークロード、ロードバランサー、データ保持、所有ツールを確認し、[クラスターの削除](#cluster-deletion)に従ってください。
 
-## AWS Management Console を使用したクラスターの作成 {#creating-a-cluster-using-aws-management-console}
+## AWS Management Consoleを使用したクラスター作成 {#creating-a-cluster-using-aws-management-console}
 
-AWS Management Console を使って EKS クラスターを作成する手順は次のとおりです。
+AWS Management ConsoleでEKSクラスターを作成する手順は次のとおりです。
 
 1. [AWS Management Console](https://console.aws.amazon.com/)にログインします。
-2. 「EKS」を検索するか、サービス一覧から「Elastic Kubernetes Service」を選択します。
-3. 「Clusters」ページで「Create cluster」ボタンをクリックします。
+2. 「EKS」を検索するか、サービス一覧から「Elastic Kubernetes Service」を選びます。
+3. 「Clusters」ページで「Create cluster」を選択します。
 
-### EKS Auto Mode クラスターの作成（クイック設定）
+### EKS Auto Modeクラスターの作成（クイック設定）
 
-EKS Auto Mode により、インフラストラクチャのセットアップが簡素化されます。ただし、ワークロードの ID、ネットワーク、容量、可用性、復旧については、引き続き明示的な設定と検証が必要です。
+EKS Auto Modeはインフラストラクチャの設定を簡素化します。ワークロードのID、ネットワーク、容量、可用性、復旧方法は、引き続き明示的な設定と検証が必要です。
 
-#### 1. クイック設定の選択
+#### 1. クイック設定を選択
 
 4. 「Quick configuration」が選択されていることを確認します。
 5. 次の情報を入力します。
-   - **クラスター名**: クラスターの一意な名前を入力します。
-   - **Kubernetes バージョン**: 使用する Kubernetes バージョンを選択します（最新バージョンを推奨）。
+   - **Cluster name**: 一意のクラスター名
+   - **Kubernetes version**: 使用するKubernetesバージョン（最新バージョンを推奨）
 
-#### 2. IAM ロールの設定
+#### 2. IAMロールを設定
 
-6. **クラスター IAM ロール**の選択:
-   - 最初の Auto Mode クラスターでは、「Create recommended role」オプションを使用します。
-   - 既存のロールがある場合は、それを再利用できます。
+6. **クラスターIAMロール**を選択します。
+   - 初めてAuto Modeクラスターを作成する場合は、「Create recommended role」を使います。
+   - 既存ロールを再利用することもできます。
    - 推奨ロール名: `AmazonEKSAutoClusterRole`
 
-7. **ノード IAM ロール**の選択:
-   - 最初の Auto Mode クラスターでは、「Create recommended role」オプションを使用します。
+7. **ノードIAMロール**を選択します。
+   - 初めて作成する場合は、「Create recommended role」を使います。
    - 推奨ロール名: `AmazonEKSAutoNodeRole`
 
-#### 3. ネットワークの設定
+#### 3. ネットワーキングを設定
 
-8. **VPC を選択**:
-   - 新しい VPC を作成する: 「Create VPC」を選択して EKS 用の新しい VPC を作成します。
-   - 既存の VPC を使用する: 以前に作成した EKS 用 VPC を選択します。
+8. **VPCを選択**します。
+   - 新しいVPCを作る場合は「Create VPC」を選択します。
+   - 既存のEKS VPCを使う場合は、そのVPCを選択します。
 
-9. **サブネットの設定**（任意）:
-   - EKS Auto Mode は VPC 内のプライベートサブネットを自動的に選択します。
+9. **サブネット設定**（任意）:
+   - EKS Auto ModeはVPC内のプライベートサブネットを自動選択します。
    - 必要に応じてサブネットを追加または削除できます。
 
-#### 4. 設定の確認と作成
+#### 4. 設定を確認して作成
 
-10. **View quick configuration defaults**を選択し、すべての設定値を確認します。
-11. **Create cluster**をクリックします。（クラスターの作成には約15分かかります）
+10. **View quick configuration defaults**を選択して設定値をすべて確認します。
+11. **Create cluster**を選択します（作成には約15分かかります）。
 
-### カスタム設定によるクラスターの作成
+### カスタム設定によるクラスター作成
 
-より細かく制御する必要がある場合は、カスタム設定を使用できます。
+より細かく制御する場合は、カスタム設定を使用します。
 
-### クラスターの設定
+### クラスター設定
 
-4. 「Configure cluster」ページで、次の情報を入力します。
-   - **クラスター名**: クラスターの一意な名前を入力します。
-   - **Kubernetes バージョン**: 使用する Kubernetes バージョンを選択します。
-   - **クラスターサービスロール**: 新しいロールを作成するか、既存のロールを選択します。
-   - **EKS Auto Mode**: Auto Mode を有効にするには、チェックボックスをオンにします。
-   - **タグ**: 必要に応じてタグを追加します。
-   - 「Next」ボタンをクリックします。
+4. 「Configure cluster」ページで次の情報を入力します。
+   - **Cluster name**: 一意のクラスター名
+   - **Kubernetes version**: 使用するバージョン
+   - **Cluster service role**: 新しいロールを作るか、既存ロールを選択
+   - **EKS Auto Mode**: 有効にする場合はチェックボックスをオン
+   - **Tags**: 必要に応じてタグを追加
+   - 「Next」を選択
 
-### ネットワークの指定
+### ネットワーキングを指定
 
-5. 「Specify networking」ページで、次の情報を入力します。
-   - **VPC**: 新しい VPC を作成するか、既存の VPC を選択します。
-   - **サブネット**: クラスターで使用するサブネットを選択します。少なくとも2つのサブネットが、異なるアベイラビリティーゾーンに存在する必要があります。
-   - **セキュリティグループ**: クラスターで使用するセキュリティグループを選択します。
-   - **クラスターエンドポイントへのアクセス**: クラスター API サーバーのエンドポイントへのアクセスを設定します。
-     - **パブリック**: API サーバーにインターネット経由でアクセスできます。
-     - **プライベート**: VPC 内または接続されたネットワークからアクセスするには、適切な DNS とルーティングが必要です。
-     - **パブリックおよびプライベート**: API サーバーにインターネット経由と VPC 内の両方からアクセスできます。
-   - 「Next」ボタンをクリックします。
+5. 「Specify networking」ページで次の情報を入力します。
+   - **VPC**: 新しいVPCを作るか、既存VPCを選択
+   - **Subnets**: クラスターで使うサブネットを選択。異なるAZに少なくとも2つ必要です
+   - **Security groups**: クラスターで使うセキュリティグループを選択
+   - **Cluster endpoint access**: クラスターAPIサーバーエンドポイントへのアクセスを設定
+     - **Public**: APIサーバーにインターネットからアクセス可能
+     - **Private**: 適切なDNSとルーティングがあれば、VPC内または接続ネットワークからアクセス可能
+     - **Public and Private**: インターネットとVPC内の両方からアクセス可能
+   - 「Next」を選択
 
-### ログの設定
+### ロギングを設定
 
-6. 「Configure logging」ページで、次の情報を入力します。
-   - **コントロールプレーンのログ記録**: 有効にするログの種類を選択します。
-     - API サーバーログ
-     - 監査ログ
-     - 認証ログ
-     - コントローラーマネージャーログ
-     - スケジューラーログ
-   - 「Next」ボタンをクリックします。
+6. 「Configure logging」ページで有効にするログ種別を選択します。
+   - APIサーバーログ
+   - 監査ログ
+   - 認証ログ
+   - コントローラーマネージャーログ
+   - スケジューラーログ
+   - 「Next」を選択
 
-### アドオンの選択
+### アドオンを選択
 
-以下のアドオンは従来のコンピューティング方式を対象としています。Auto Mode は、機能が重複するネットワーク、DNS、ブロックストレージの機能を管理します。クラスター内のコンピューティング方式に応じてコンポーネントを選択してください。
+以下のアドオンは従来型コンピューティングを説明しています。Auto Modeは重複するネットワーク、DNS、ブロックストレージ機能を管理します。クラスター内のコンピューティング種別に応じてコンポーネントを選択してください。
 
-7. 「Select add-ons」ページで、次の情報を入力します。
-   - **Amazon VPC CNI**: Pod ネットワーク用の CNI プラグイン。
-   - **CoreDNS**: クラスター内の DNS サービス。
-   - **kube-proxy**: ネットワークプロキシとロードバランシングを提供します。
-   - **ストレージ／ネットワークのアドオン**: 従来のコンピューティング方式では、適切なコンポーネントをインストールし、IAM 権限を設定する必要があります。Auto Mode はマネージド EBS／ネットワーク／DNS 機能を提供するため、Auto Mode ノードに機能が重複するコンポーネントをインストールしないでください。
-   - 「Next」ボタンをクリックします。
+7. 「Select add-ons」ページで次のアドオンを設定します。
+   - **Amazon VPC CNI**: Podネットワーキング用CNIプラグイン
+   - **CoreDNS**: クラスター内のDNSサービス
+   - **kube-proxy**: ネットワークプロキシとロードバランシングを提供
+   - **ストレージ/ネットワークアドオン**: 従来型コンピューティングには適切なコンポーネントとIAM権限が必要です。Auto Modeは管理対象EBS/ネットワーク/DNS機能を提供するため、Auto Modeノード上に重複コンポーネントをインストールしないでください
+   - 「Next」を選択
 
-### 確認と作成
+### 確認して作成
 
-8. 「Review and create」ページで設定を確認し、「Create」ボタンをクリックします。
+8. 「Review and create」ページで設定を確認し、「Create」を選択します。
 
-### Auto Mode 以外のクラスターへのノードグループの追加
+### Auto Modeを使わないクラスターへのノードグループ追加
 
-従来の EC2 コンピューティングを使用する場合は、クラスター作成後にノードグループを追加します。Fargate プロファイルなど、ほかのサポート対象の選択肢にはそれぞれ独自の設定があります。Auto Mode 以外のすべてのクラスターでマネージドノードグループが必須というわけではありません。
+従来型EC2コンピューティングでは、クラスター作成後にノードグループを追加します。Fargateプロファイルなど、ほかのサポート対象の方式には個別の設定があります。Auto Modeを使わないクラスターすべてでマネージドノードグループが必須というわけではありません。
 
 ### ノードグループの追加
 
-1. 「Node group configuration」ページで、次の情報を入力します。
-   - **ノードグループ名**: ノードグループの一意な名前を入力します。
-   - **ノード IAM ロール**: 新しいロールを作成するか、既存のロールを選択します。
-   - 「Next」ボタンをクリックします。
+1. 「Node group configuration」ページで次を入力します。
+   - **Node group name**: 一意のノードグループ名
+   - **Node IAM role**: 新しいロールを作るか、既存ロールを選択
+   - 「Next」を選択
 
-2. 「Set compute and scaling configuration」ページで、次の情報を入力します。
-   - **AMI タイプ**: ノードに使用する AMI タイプを選択します。
-   - **インスタンスタイプ**: ノードに使用する EC2 インスタンスタイプを選択します。
-   - **ディスクサイズ**: ノードのディスクサイズを指定します。
-   - **ノード数**: ノードの最小数、最大数、希望数を指定します。
-   - 「Next」ボタンをクリックします。
+2. 「Set compute and scaling configuration」ページで次を入力します。
+   - **AMI type**: ノード用AMIの種類
+   - **Instance type**: EC2インスタンスタイプ
+   - **Disk size**: ノードのディスクサイズ
+   - **Node count**: ノードの最小数、最大数、希望数
+   - 「Next」を選択
 
-3. 「Specify networking」ページで、次の情報を入力します。
-   - **サブネット**: ノードグループで使用するサブネットを選択します。
-   - **リモートアクセス設定**: 承認済みの管理経路で必要な場合を除き、SSH を無効のままにしてください。送信元セキュリティグループを確認せずに SSH キーを指定しないでください。
-   - 「Next」ボタンをクリックします。
+3. 「Specify networking」ページで次を入力します。
+   - **Subnets**: ノードグループで使用するサブネット
+   - **Remote access configuration**: 承認済みの管理経路で必要な場合を除き、SSHは無効のままにします。SSHキーを指定する前に、送信元セキュリティグループを確認してください
+   - 「Next」を選択
 
-4. 「Review and create」ページで設定を確認し、「Create」ボタンをクリックします。
+4. 「Review and create」ページで設定を確認し、「Create」を選択します。
 
-## AWS CLI を使用したクラスターの作成 {#creating-a-cluster-using-aws-cli}
+## AWS CLIを使用したクラスター作成 {#creating-a-cluster-using-aws-cli}
 
-以下の例では**新しいクラスター**を作成します。Auto Mode と従来の EKS のいずれかを選び、同じ名前で両方の作成コマンドを続けて実行しないでください。Bash、`jq`、最新の AWS CLI v2、認可された AWS ロールを使用してください。EKS 1.36 は検証済みのサンプルバージョンです。別のバージョンを選ぶ場合は、リージョンでのサポート状況と互換性を確認してください。
+以下の例は**新しいクラスター**を作成します。Auto Modeか従来のEKSを選び、同じ名前で両方の作成コマンドを続けて実行しないでください。Bash、`jq`、最新のAWS CLI v2、認証済みのAWSロールを使います。検証済みの例はEKS 1.36です。別のバージョンを選ぶ前に、リージョンでの対応状況と互換性を確認してください。
 
-2つのサブネットは、同じ VPC 内の異なる AZ に存在する必要があります。DNS、空き IP アドレス、セキュリティグループ、ノードからイメージ／サービスへのアクセスは、それぞれ別途準備してください。実際の API フィールド名は `endpointPrivateAccess` と `endpointPublicAccess` です。この専用サンプルでは、クラスター作成者の管理者アクセスを初期設定に使います。その後のアクセスはアクセスエントリで管理してください。
+2つのサブネットは同じVPC内の異なるAZに置く必要があります。DNS、空きIP、セキュリティグループ、ノードからのアクセス先を別途準備してください。APIの実際のフィールド名は`endpointPrivateAccess`と`endpointPublicAccess`です。この専用例では、作成者に付与された管理者アクセスを初期設定に使います。その後のアクセスはアクセスエントリで管理してください。
 
-### 共通の入力値を準備する
+### 共通入力の準備
 
-選択したモード用のクラスターロールを事前に作成し、必要な `iam:PassRole` とサービスリンクロール作成の権限を確認してください。作成コマンドを実行する前に、アカウント、リージョン、サブネット、承認済み CIDR を確認してください。
+選択したモード用のクラスターIAMロールを事前に作成し、必要な`iam:PassRole`とサービスリンクロール作成権限を確認してください。実行前にアカウント、リージョン、サブネット、承認済みCIDRも確認します。
 
 ```bash
 : "${EKS_CLUSTER_NAME:?Choose a unique new cluster name}"
@@ -638,11 +637,11 @@ unset EKS_CREATED_CLUSTER_ARN
 aws sts get-caller-identity
 ```
 
-### EKS Auto Mode クラスターの作成
+### EKS Auto Modeクラスターの作成
 
-クラスターロールには、`eks.amazonaws.com` に対する `sts:AssumeRole` と `sts:TagSession` の信頼設定、および `AmazonEKSClusterPolicy`、`AmazonEKSComputePolicy`、`AmazonEKSBlockStoragePolicyV2`、`AmazonEKSLoadBalancingPolicy`、`AmazonEKSNetworkingPolicy`、またはそれらと同等のカスタム権限が必要です。
+クラスターIAMロールは`eks.amazonaws.com`に対する`sts:AssumeRole`と`sts:TagSession`の信頼を持ち、`AmazonEKSClusterPolicy`、`AmazonEKSComputePolicy`、`AmazonEKSBlockStoragePolicyV2`、`AmazonEKSLoadBalancingPolicy`、`AmazonEKSNetworkingPolicy`、または同等のカスタム権限を備える必要があります。
 
-ノードロールは `ec2.amazonaws.com` を信頼し、`AmazonEKSWorkerNodeMinimalPolicy` と `AmazonEC2ContainerRegistryPullOnly` を使用します。ワークロード用の AWS 権限は、Pod Identity／IRSA を使って別途付与してください。コンピューティング、ロードバランシング、ブロックストレージをまとめて有効にし、デフォルトのセルフマネージドアドオンのブートストラップは無効にしてください。
+ノードロールは`ec2.amazonaws.com`を信頼し、`AmazonEKSWorkerNodeMinimalPolicy`と`AmazonEC2ContainerRegistryPullOnly`を使用します。ワークロードのAWS権限はPod Identity/IRSAを通じて別途付与してください。コンピューティング、ロードバランシング、ブロックストレージをまとめて有効にし、既定の自己管理アドオンのブートストラップを無効にします。
 
 ```bash
 : "${EKS_AUTO_NODE_ROLE_ARN:?Pre-created Auto Mode node role}"
@@ -683,7 +682,7 @@ EKS_CREATED_CLUSTER_ARN=$(aws eks create-cluster --region "${EKS_REGION:?}" \
 : "${EKS_CREATED_CLUSTER_ARN:?Creation failed; inspect the error before continuing}"
 ```
 
-#### 作成とアクセスの確認
+#### 作成とアクセスを確認
 
 ```bash
 : "${EKS_CREATED_CLUSTER_ARN:?Create and verify the new cluster first}"
@@ -696,7 +695,7 @@ aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
 kubectl --kubeconfig "$EKS_KUBECONFIG" get nodes
 ```
 
-Auto Mode では、ワークロードが容量を必要とするまでノードが存在しない場合があります。NodePool／NodeClass のステータスと、その後の Pod スケジューリングを確認してください。クラスターが `ACTIVE` でも、アプリケーションの正常性が証明されるわけではなく、作成時間が一定であることも保証されません。
+ワークロードが容量を必要とするまでは、Auto Modeにノードが存在しないことがあります。NodePool/NodeClassの状態と、その後のPodスケジューリングを確認してください。クラスターが`ACTIVE`でも、アプリケーションの健全性や一定時間内の作成は保証されません。
 
 ```bash
 kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodepools.karpenter.sh
@@ -705,7 +704,7 @@ kubectl --kubeconfig "$EKS_KUBECONFIG" get nodeclasses.eks.amazonaws.com
 
 ### 従来型クラスターの作成
 
-Auto Mode を選択していない場合に限り、この方法を使用してください。クラスターロールには従来型 EKS のクラスター権限が必要です。EC2 ノードロールと CNI／アドオンの権限は別途必要です。デフォルトのネットワークアドオンをブートストラップしても、EBS CSI や AWS LBC はインストールされません。
+Auto Modeを選択しなかった場合に限り、この代替方法を使います。クラスターIAMロールには従来型EKSの権限が必要です。EC2ノードロールとCNI/アドオン権限は別に設定します。既定のネットワークアドオンをブートストラップしても、EBS CSIやAWS LBCはインストールされません。
 
 ```bash
 jq -n \
@@ -740,7 +739,7 @@ EKS_CREATED_CLUSTER_ARN=$(aws eks create-cluster --region "${EKS_REGION:?}" \
 : "${EKS_CREATED_CLUSTER_ARN:?Creation failed; inspect the error before continuing}"
 ```
 
-#### 作成を待ち、kubeconfig を設定する
+#### 作成を待ち、kubeconfigを設定
 
 ```bash
 : "${EKS_CREATED_CLUSTER_ARN:?Create and verify the new cluster first}"
@@ -753,9 +752,9 @@ aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
 kubectl --kubeconfig "$EKS_KUBECONFIG" get nodes
 ```
 
-#### マネージドノードグループの作成
+#### マネージドノードグループを作成
 
-EC2 ノードロールにはワーカーノードと ECR からのプルに必要な権限を準備し、CNI ロールまたはレビュー済みのノードロール向け CNI 権限は別途用意してください。Auto Mode の最小権限ノードロールをそのまま再利用しないでください。プライベートサブネットには NAT または必要な VPC エンドポイントも必要です。この AL2023 の例では、デフォルトで SSH を有効にしません。
+EC2ノードロールにはワーカーノードとECRイメージ取得の権限を準備し、CNI用には別のロールを用意するか、ノードロールのCNI権限を確認してください。Auto Mode用の最小権限ノードロールをそのまま流用しないでください。プライベートサブネットにはNATまたは必要なVPCエンドポイントも必要です。このAL2023例ではSSHを既定で有効にしません。
 
 ```bash
 : "${EKS_MANAGED_NODE_ROLE_ARN:?Pre-created conventional EC2 node role}"
@@ -777,19 +776,19 @@ aws eks describe-nodegroup --cluster-name "$EKS_CLUSTER_NAME" \
 kubectl --kubeconfig "${EKS_KUBECONFIG:?}" get nodes
 ```
 
-`minSize`／`maxSize` を指定しただけでは、Pod の需要に応じたノードスケーリングは有効になりません。ステータスとヘルスエラーを確認し、必要であればオートスケーラーを設定してください。作成に失敗した場合は、記録された名前／ARN と関連リソースを確認してください。この監査では、これらの作成および待機コマンドを実行していません。
+`minSize`/`maxSize`を指定するだけでは、Pod需要に応じたノードスケーリングは有効になりません。状態とヘルスエラーを確認し、必要ならオートスケーラーを設定してください。作成に失敗した場合は、記録された名前/ARNと関連リソースを調べます。この監査では作成コマンドも待機コマンドも実行していません。
 
-参照先: [CreateCluster API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html)、[CreateNodegroup API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html)、[Auto Mode の IAM と作成手順](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
+参考資料: [CreateCluster API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html)、[CreateNodegroup API](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html)、[Auto ModeのIAMと作成手順](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
 
-## Terraform を使用したクラスターの作成 {#creating-a-cluster-using-terraform}
+## Terraformを使用したクラスター作成 {#creating-a-cluster-using-terraform}
 
-以下の完全な例は、Auto Mode または従来型のマネージドノードグループを最初の apply 前に選択して、**新しいクラスターを1つ**作成するものです。もう一方の方法を2つ目のクラスターリソースとして追加したり、移行計画なしに既存クラスターの設定を切り替えたりしないでください。Terraform の state と provider のロックファイルは、このデプロイメント専用のものです。
+次の完全な例では、**新しいクラスターを1つ**作成し、最初のapplyより前にAuto Modeまたは従来のマネージドノードグループを選択します。代替方法を2つ目のクラスターリソースとして追加したり、移行計画なしで既存クラスターを切り替えたりしないでください。Terraformのstateとprovider lockファイルは、このデプロイメント専用のものです。
 
-### EKS Auto Mode クラスターの Terraform 設定
+### EKS Auto Mode用Terraform設定
 
-`main.tf` として保存します。この例では AWS provider **6.69.1** を固定し、EKS **1.36** を使用します。既存のプライベートサブネット ID を明示的に指定してください。カスタムの `Type=Private` タグは、ルートや接続性を検証する代わりにはなりません。事前条件により、プラン作成時に VPC／AZ の関係は検査されますが、プライベートルーティング、サービスエンドポイント、DNS、IP 容量、ロードバランサー用サブネットタグは検証されません。
+`main.tf`として保存します。この例ではAWS provider **6.69.1**を固定し、EKS **1.36**を使います。既存のプライベートサブネットIDを明示的に指定してください。`Type=Private`のカスタムタグだけではルートや接続性の確認になりません。事前条件はplan時にVPC/AZの関係を確認しますが、プライベートルーティング、サービスエンドポイント、DNS、IP容量、ロードバランサー用サブネットタグまでは検証しません。
 
-Auto Mode では、コンピューティング、ロードバランシング、ブロックストレージをまとめて有効にし、`bootstrap_self_managed_addons = false` にする必要があります。クラスターロールには `sts:TagSession` と5つすべての必須ポリシーが含まれます。IAM アタッチメントの依存関係により、EKS がマネージドインフラストラクチャを削除している間も権限が維持されます。
+Auto Modeでは、コンピューティング、ロードバランシング、ブロックストレージをすべて有効にし、`bootstrap_self_managed_addons = false`にします。クラスターIAMロールには`sts:TagSession`と5つの必須ポリシーを設定します。IAMアタッチメントの依存関係は、EKSが管理対象インフラストラクチャを削除し終えるまで権限を保持します。
 
 ```hcl
 terraform {
@@ -1023,13 +1022,13 @@ output "cluster_arn" {
 }
 ```
 
-オペレーターのアクセスエントリにより、承認済み IAM ロールにクラスター管理者権限が付与されます。作成者に Kubernetes 管理者権限が自動的に付与されるわけではありません。このオペレーターロールは事前に存在している必要があり、kubectl を使用するユーザーはそのロールを引き受けられる必要があります。
+オペレーターアクセスエントリは、承認済みIAMロールにこのクラスターの管理者権限を付与します。作成者にKubernetes管理者権限が自動付与されるわけではありません。そのオペレーターロールはあらかじめ存在し、kubectl利用者がそのロールを引き受けられる必要があります。
 
-従来型ノードを使う方法では、初期ブートストラップ用の基準として、ノードロールに CNI 権限が含まれています。これは権限の共通境界であり、本番環境向けに強化されたワークロード ID 設計ではありません。本番環境で使用する前に、専用の CNI ロールを検討し、Pod から IMDS へのアクセスを制限してください。アプリケーションの AWS 権限は、ワークロードごとの ID に付与します。無関係なアドオンの権限をすべてのノードにアタッチしないでください。
+従来型ノードの代替構成では、初期ブートストラップ用のCNI権限をノードロールに含めます。これは共通の権限境界であり、本番向けの強化されたワークロードID設計ではありません。本番利用前に専用CNIロールを検討し、PodからIMDSへのアクセスを制限してください。アプリケーションのAWS権限はワークロードごとのIDに付与し、無関係なアドオン権限をすべてのノードに付けないでください。
 
-### Terraform の実行
+### Terraformの実行
 
-新しい作業ディレクトリと、認証済みのプロビジョニングロールを使用してください。サンプル ID とドキュメント用 CIDR は、対象アカウントのリソースと承認済みのクライアント CIDR に置き換えてください。デフォルトでは Auto Mode が選択されます。
+新しい作業ディレクトリと認証済みプロビジョニングロールを使用します。サンプルIDとCIDRを対象アカウントのリソースおよび承認済みクライアントCIDRに置き換えてください。既定ではAuto Modeを選びます。
 
 ```hcl
 # terraform.tfvars: replace every example identifier before planning.
@@ -1058,31 +1057,31 @@ aws eks update-kubeconfig --name "$(terraform output -raw cluster_name)" \
 kubectl --kubeconfig ./kubeconfig get nodes
 ```
 
-apply の前に、state／バックエンド、提案された IAM とネットワークの変更、課金対象となるすべてのリソースを確認してください。`terraform validate` では、AWS アカウントの権限、クォータ、ルーティング、選択したノードでワークロードを実行できるかどうかは検証できません。ノードグループのスケーリング上限を設定しても、Pod の需要に応じたオートスケーラーはインストールされません。
+apply前にstate/backend、IAMとネットワークの変更案、課金対象リソースを確認してください。`terraform validate`ではAWSアカウント権限、クォータ、ルーティング、選択ノードがワークロードを実行できるかは検証できません。ノードグループのスケーリング範囲を設定しても、Pod需要に応じたオートスケーラーはインストールされません。
 
-### 従来型 Terraform の設定
+### 従来型Terraform設定
 
-**新しい従来型クラスター**を作成する場合は、同じ完全な `main.tf` を使用し、最初の plan の前に `terraform.tfvars` で次の値を設定します。
+**新しい従来型クラスター**を作る場合は、同じ完全な`main.tf`を使い、最初のplanより前に`terraform.tfvars`で次の値を設定してください。
 
 ```hcl
 enable_auto_mode = false
 ```
 
-これにより、Auto Mode の3つの機能すべてが無効になり、従来型のネットワークアドオンがブートストラップされ、従来型 EC2 ノードの権限が選択され、AL2023 のマネージドノードグループが作成されます。EBS CSI、AWS LBC、Metrics Server、ノードオートスケーラーはインストールされません。ワークロードに必要なコンポーネントは別途設定してください。デプロイ後にこの値を切り替えると、インフラストラクチャと IAM が変更されるため、別途移行レビューが必要です。
+この設定では3つのAuto Mode機能を無効にし、従来型ネットワークアドオンをブートストラップし、従来型EC2ノード権限とAL2023マネージドノードグループを選択します。EBS CSI、AWS LBC、Metrics Server、ノードオートスケーラーはインストールしません。ワークロードに必要なコンポーネントは別途設定してください。デプロイ後にこの値を切り替えるとインフラストラクチャとIAMが変更されるため、別途移行レビューが必要です。
 
-検証: 署名付き AWS provider **6.69.1** を使用した Terraform **1.16.6** で、ローカルの `terraform validate` がエラー／警告ゼロで成功しました。**plan、apply、AWS API 呼び出しは実行していません**。どちらのモードも、引き続きデプロイ後の検証が必要です。この例は本番環境への準備が整っていることを示すものではありません。
+検証: Terraform **1.16.6**と署名済みAWS provider **6.69.1**で、ローカルの`terraform validate`を実行し、エラー/警告なしで通過しました。**plan、apply、AWS API呼び出しは実行していません**。どちらのモードもデプロイ後の検証が必要です。この例は本番運用への適合性を証明するものではありません。
 
-参照先: [AWS provider の EKS クラスター](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_cluster.html.markdown)、[マネージドノードグループ](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_node_group.html.markdown)、[Auto Mode のロール要件](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
+参考資料: [AWS provider EKS cluster](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_cluster.html.markdown)、[マネージドノードグループ](https://github.com/hashicorp/terraform-provider-aws/blob/v6.69.1/website/docs/r/eks_node_group.html.markdown)、[Auto Modeロール要件](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)。
 
-## AWS CDK を使用したクラスターの作成 {#creating-a-cluster-using-aws-cdk}
+## AWS CDKを使用したクラスター作成 {#creating-a-cluster-using-aws-cdk}
 
-この**新しいスタック**の例では `aws-cdk-lib/aws-eks-v2` を使用します。ネイティブの `AWS::EKS::Cluster` とアクセスエントリを作成するため、Auto Mode の有効化に Lambda カスタムリソースは必要ありません。既存のデプロイ済み構成をこの例で置き換えることを、インプレース移行として扱わないでください。
+この**新しいスタック**の例では`aws-cdk-lib/aws-eks-v2`を使います。ネイティブの`AWS::EKS::Cluster`とアクセスエントリを作成し、Auto Modeの有効化にLambdaカスタムリソースを必要としません。既存のデプロイ済みconstructをこの例に置き換えることを、インプレース移行として扱わないでください。
 
-この例では CDK ライブラリ **2.273.0**、CLI **2.1145.0**、EKS **1.36** を使用します。合成時に VPC を検索せず、属性を指定して既存のプライベートサブネットをインポートします。デプロイ前に、指定したサブネットと AZ の対応関係、VPC の DNS、ルーティング、サービスアクセス、ロードバランサー用サブネットタグを確認してください。VPC 定義をインポートしても、これらの条件は検証されません。
+使用するバージョンはCDKライブラリ**2.273.0**、CLI **2.1145.0**、EKS **1.36**です。合成時のVPC lookupを行わず、属性指定で既存プライベートサブネットを読み込みます。デプロイ前に、指定サブネットとAZの対応、VPC DNS、ルーティング、サービス接続、ロードバランサー用サブネットタグを確認してください。インポートしたVPC定義は、これらの条件を検証しません。
 
-### TypeScript を使用した EKS Auto Mode クラスター
+### TypeScriptを使ったEKS Auto Modeクラスター
 
-`lib/eks-auto-mode-stack.ts` として保存します。呼び出し元が既存の承認済みオペレーターロールを指定します。このクラスターの管理者アクセスを受け取るのは、そのロールだけです。ワークロードの権限は別途管理します。
+`lib/eks-auto-mode-stack.ts`として保存します。呼び出し側は既存の承認済みオペレーターロールを渡します。このクラスターの管理者アクセスを得るのはそのロールだけです。ワークロード権限は別に管理します。
 
 ```typescript
 import * as cdk from 'aws-cdk-lib';
@@ -1174,13 +1173,13 @@ export class EksAutoModeStack extends cdk.Stack {
 }
 ```
 
-クラスターロールには、`sts:TagSession` と、`AmazonEKSBlockStoragePolicyV2` を含む Auto Mode の5つのポリシーを明示的に指定しています。`withoutPolicyUpdates()` によって、CDK 2.273.0 が古いブロックストレージポリシーを追加することを防ぎます。この例では必要な権限をすべて指定する責任があります。クラスターの削除が完了するまで、依存関係によってこれらのロールが保持されます。ノードロールには、Auto Mode の最小権限ワーカー用ポリシーと ECR からのプル用ポリシーのみが設定されています。
+クラスターIAMロールには`sts:TagSession`と、`AmazonEKSBlockStoragePolicyV2`を含む5つのAuto Modeポリシーを明示的に設定します。`withoutPolicyUpdates()`により、CDK 2.273.0が古いブロックストレージポリシーを追加しないようにします。この例では必要な権限をすべて指定する責任があります。依存関係はクラスター削除完了までロールを保持します。ノードロールに付けるのはAuto Mode最小ワーカーポリシーとECR pullポリシーだけです。
 
-`bootstrapSelfManagedAddons: false` により、機能が重複するセルフマネージドのネットワークアドオンを避けます。Auto Mode はコンピューティング、ロードバランシング、ブロックストレージをまとめて管理します。オペレーターのアクセスエントリは、クラスター実行ロールとは別に作成されます。
+`bootstrapSelfManagedAddons: false`は、自己管理ネットワークアドオンとの重複を避けます。Auto Modeはコンピューティング、ロードバランシング、ブロックストレージをまとめて管理します。オペレーターアクセスエントリはクラスター実行ロールとは別に作成します。
 
-### CDK アプリケーションのエントリーポイント
+### CDKアプリのエントリーポイント
 
-`bin/eks-auto-mode.ts` として保存します。シバンは1行目に置いてください。サンプルのアカウント、VPC、ロール値が誤って使われることを防ぐため、環境変数は必須です。
+`bin/eks-auto-mode.ts`として保存し、shebangを1行目に置いてください。例のアカウント、VPC、ロール値を誤って使わないよう、環境値は必須です。
 
 ```typescript
 #!/usr/bin/env node
@@ -1210,9 +1209,9 @@ new EksAutoModeStack(app, 'EksAutoModeStack', {
 });
 ```
 
-### CDK のデプロイ
+### CDKのデプロイ
 
-新しいプロジェクトを作成し、初期化後に上記の2つのファイルを保存して、対象のアカウント／リージョンの値を指定します。認証済みで認可された AWS ロールを使用してください。デプロイ前に、合成された IAM／ネットワーク設定と差分を確認します。CDK ライブラリと CLI は別々のパッケージであり、バージョン番号は同じではありません。
+新しいプロジェクトを作成し、初期化後に上記の2ファイルを保存して、対象のアカウント/リージョンの値を指定します。認証済みで権限のあるAWSロールを使ってください。デプロイ前に合成されたIAM/ネットワーク設定と差分を確認します。CDKライブラリとCLIは別パッケージであり、バージョン番号は共通ではありません。
 
 ```bash
 mkdir eks-auto-mode
@@ -1246,13 +1245,13 @@ aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$CDK_DEFAULT_REGI
 kubectl --kubeconfig ./kubeconfig get nodes
 ```
 
-監査では、ダミーの識別子を使って両方の TypeScript ファイルをコンパイルし、スタックをローカルで合成しました。Auto Mode の3つすべての機能、スコープを限定した API CIDR、必要なロール、1つのオペレーターアクセスエントリを確認しました。Lambda／カスタムリソースは生成されませんでした。必須入力が不足している場合はエラーになりました。**ブートストラップ、検索、デプロイ、クラスター作成、AWS API 呼び出しは実行していません**。そのため、アカウントのクォータ、ネットワーク、ワークロードの可用性はデプロイ時に確認する必要があります。
+監査では両方のTypeScriptファイルをコンパイルし、ダミー識別子でスタックをローカル合成しました。Auto Modeの3機能、範囲を絞ったAPI CIDR、必須ロール、オペレーターアクセスエントリ1件を確認しました。Lambda/カスタムリソースは生成されませんでした。必須入力を省略すると拒否されました。**bootstrap、lookup、deploy、クラスター作成、AWS API呼び出しは実行していません**。したがって、アカウントクォータ、ネットワーク、ワークロード利用可能性はデプロイ時の確認事項です。
 
-参照先: [EKS V2 コンストラクトライブラリ](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_eks_v2-readme.html)、[Auto Mode のクラスター IAM ロール](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)、[Auto Mode の作成手順](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
+参考資料: [EKS V2 constructライブラリ](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_eks_v2-readme.html)、[Auto ModeクラスターIAMロール](https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html)、[Auto Mode作成手順](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)。
 
 ## クラスターアクセスの設定 {#configuring-cluster-access}
 
-選択した方法で作成したクラスター名、リージョン、専用 kubeconfig パスを設定します。Terraform／CDK の例では、承認済みのオペレーターロールを `EKS_OPERATOR_ROLE_ARN` に設定してください。CLI の作成者アクセスを使用する場合は省略できます。kubeconfig を書き込んでも Kubernetes の権限は付与されません。
+選択した作成方法で設定したクラスター名、リージョン、専用kubeconfigパスを使います。Terraform/CDKの例では、承認済みオペレーターロールを`EKS_OPERATOR_ROLE_ARN`に設定してください。CLI作成者のアクセスを使う場合は省略できます。kubeconfigを書き込んでもKubernetes権限は付与されません。
 
 ```bash
 : "${EKS_CLUSTER_NAME:?Use the selected cluster name}"
@@ -1274,9 +1273,9 @@ aws eks describe-cluster --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
   --query cluster.accessConfig.authenticationMode
 ```
 
-### RBAC の設定
+### RBACの設定
 
-新しい IAM アクセスにはアクセスエントリを使用します。この例では、既存の `dev` Namespace に対し、新しいロールに読み取りアクセスを付与します。作成ツールが管理するオペレーターエントリを重複して作成しないでください。認証モードは `API` または `API_AND_CONFIG_MAP` である必要があります。レガシーの `aws-auth` 方式は非推奨です。ConfigMap 全体を上書きしないでください。必要に応じて公式の移行手順に従ってください。
+新しいIAMアクセスにはアクセスエントリを使います。この例は既存の`dev` namespaceで新しいロールに読み取りアクセスを付与します。作成ツールが管理するオペレーターエントリを重複して作成しないでください。認証モードは`API`または`API_AND_CONFIG_MAP`である必要があります。従来の`aws-auth`方式は非推奨です。ConfigMap全体を上書きしないでください。必要に応じて公式移行手順に従います。
 
 ```bash
 # A new reader identity, distinct from the operator already granted by IaC.
@@ -1319,11 +1318,11 @@ eks_kubectl create -f "$EKS_ACCESS_DIR/rbac.yaml"
 fi
 ```
 
-この読み取りロールでは、Secret API へのアクセスも変更権限も付与されません。そのロールとして認証し、`kubectl auth can-i` で確認してください。ほかの RBAC／EKS ポリシーの許可によって権限が追加される場合があります。[EKS アクセスエントリ](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
+このreaderロールにはSecret APIアクセスも変更権限もありません。そのロールで認証し、`kubectl auth can-i`を使って確認してください。他のRBAC/EKSポリシー付与で権限が追加される場合があります。[EKSアクセスエントリ](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)を参照してください。
 
 ## クラスターの検証 {#cluster-validation}
 
-アクセスのセクションで設定した `eks_kubectl` と同じ専用 kubeconfig を使用します。コントロールプレーンにアクセスできるだけでは、ノードやワークロードの正常性は確認できません。
+アクセス設定の章で準備した専用kubeconfigと`eks_kubectl`を使用してください。コントロールプレーンへアクセスできても、ノードやワークロードが健全とは限りません。
 
 ### 基本的な検証
 
@@ -1334,9 +1333,9 @@ eks_kubectl get pods -n kube-system
 eks_kubectl get events --sort-by='.lastTimestamp'
 ```
 
-### Auto Mode 固有の検証
+### Auto Mode固有の検証
 
-Auto Mode のプロビジョニングコントローラーは AWS が管理します。`karpenter` Namespace にセルフマネージドのコントローラー Pod があると想定しないでください。NodePool／NodeClass の Conditions とイベントを確認し、容量が必要なワークロードについては NodeClaim も確認してください。
+Auto ModeのプロビジョニングコントローラーはAWSが管理します。`karpenter` namespaceに自己管理コントローラーPodがあると期待しないでください。NodePool/NodeClassの条件とイベントを確認し、容量を必要とするワークロードではNodeClaimも調べます。
 
 ```bash
 eks_kubectl get nodepools.karpenter.sh
@@ -1346,7 +1345,7 @@ eks_kubectl get nodeclaims.karpenter.sh
 
 ### サンプルアプリケーションのデプロイ
 
-新しい Namespace を使って、イメージへのアクセス、スケジューリング、HTTP の準備完了状態、Service を確認します。Fargate のみを使う構成では、まずこの Namespace に一致するプロファイルが必要です。
+新しいnamespaceを使って、イメージ取得、スケジューリング、HTTP readiness、Serviceを確認します。Fargateのみの構成では、先にこのnamespaceに一致するプロファイルを用意してください。
 
 ```bash
 EKS_SAMPLE_DIR=$(mktemp -d /tmp/eks-validate.XXXXXX)
@@ -1412,13 +1411,13 @@ eks_kubectl -n "$EKS_SAMPLE_NAMESPACE" get pods,services
 eks_kubectl -n "$EKS_SAMPLE_NAMESPACE" port-forward --address 127.0.0.1 service/sample-app-service 8080:80
 ```
 
-ポートフォワーディングの実行中に `http://127.0.0.1:8080` を開き、その後 Ctrl-C で停止します。これは ClusterIP へのアクセスを確認するものであり、外部ロードバランサーは確認しません。NLB を使用する場合は、Auto Mode の `eks.amazonaws.com/nlb`、またはインストール済みで認可された AWS LBC の `service.k8s.aws/nlb` を選択し、ネットワーク／コストの前提条件を別途確認してください。この監査ではデプロイやポートフォワーディングを実行していません。
+ポートフォワーディング中に`http://127.0.0.1:8080`を開き、Ctrl-Cで停止します。これはClusterIPへのアクセスを確認するもので、外部ロードバランサーは検証しません。NLBの場合は、Auto Modeの`eks.amazonaws.com/nlb`か、インストール済みで承認されたAWS LBCの`service.k8s.aws/nlb`を選び、ネットワーク/コストの前提条件を別途確認してください。この監査ではデプロイもポートフォワーディングも行っていません。
 
 ## クラスターのアップグレード {#cluster-upgrade}
 
-まず、アップグレードインサイト、削除された API、Webhook／アドオンの互換性、ノードのバージョン、予備の IP アドレス、復旧計画を確認してください。遅れているノードを現在のコントロールプレーンバージョンに合わせてから、サポート対象のマイナーバージョンを一つずつ進めます。コンポーネントによっては、コントロールプレーンより先に互換性のある更新が必要です。
+まずアップグレードインサイト、削除されたAPI、webhook/アドオン互換性、ノードバージョン、空きIP、復旧計画を確認してください。古いノードを現在のコントロールプレーンバージョンまで更新してから、サポートされるマイナーバージョンを一つずつ進めます。コンポーネントによっては、コントロールプレーンより先に互換性のある更新が必要です。
 
-Auto Mode では、コントロールプレーンのマイナーバージョンを21日ごとにアップグレードするわけではありません。オペレーターはマイナーアップグレードを計画し、バージョンサポートポリシーに基づく自動アップグレードも考慮する必要があります。
+Auto Modeが21日ごとにコントロールプレーンのマイナーバージョンを更新するわけではありません。オペレーターがマイナーアップグレードを計画し、バージョンサポートポリシーに基づく自動アップグレードも考慮します。
 
 ```bash
 aws eks describe-cluster-versions --region "${EKS_REGION:?}" --output table
@@ -1439,7 +1438,7 @@ aws eks describe-update --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
 # eksctl upgrade cluster --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" --version "$NEXT_MINOR_VERSION" --approve
 ```
 
-更新が `Successful` と報告されてから、データプレーンに進んでください。AWS は Auto Mode ノードを段階的に更新します。従来型のマネージドノードグループは別途更新が必要です。
+更新結果が`Successful`になってからデータプレーンに進んでください。AWSはAuto Modeノードを段階的に更新します。従来型マネージドノードグループは別途更新が必要です。
 
 ```bash
 # Conventional managed node group only, after the control plane update is Successful.
@@ -1448,15 +1447,15 @@ aws eks update-nodegroup-version --cluster-name "${EKS_CLUSTER_NAME:?}" \
   --kubernetes-version "${NEXT_MINOR_VERSION:?}"
 ```
 
-セルフマネージド／Hybrid Node の更新、Fargate Pod の置き換え、アドオンの更新、kubectl の更新は、それぞれの仕組みに応じて計画してください。失敗を force フラグで隠すのではなく、PDB と予備容量を確認してください。条件を満たすコントロールプレーンのアップグレードは、ノード／アドオン／API の互換性とサポートポリシーの制約に従い、7日以内であれば1つ前のマイナーバージョンにロールバックできる場合があります。ロールバックはアプリケーションデータの復旧に代わるものではありません。
+自己管理/Hybrid Node、Fargate Podの置き換え、アドオン、kubectlは、それぞれの方式に合わせて更新を計画してください。失敗をforceフラグで隠さず、PDBと余剰容量を確認します。条件を満たすコントロールプレーンアップグレードは、ノード/アドオン/API互換性とサポートポリシー上の制約のもと、7日以内なら1マイナー分ロールバックできる場合があります。ロールバックはアプリケーションデータの復旧に代わるものではありません。
 
-[アップグレード手順](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html) · [ロールバックの条件](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
+[アップグレード手順](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html) · [ロールバック条件](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
 
 ## クラスターの削除 {#cluster-deletion}
 
-対象のアカウントとリージョンで、最初にリソースを作成したツール／state を使って削除してください。まず、コントローラーが稼働している間にワークロードと Ingress／LoadBalancer Service を削除し、完了を確認します。PVC／PV、スナップショット、ログを保持するか復旧するかを決めてください。タイムアウトや finalizer を force オプションで回避しないでください。
+対象アカウントとリージョンで、元の所有ツール/stateを使って削除してください。まず、コントローラーが稼働中のうちにワークロードとIngress/LoadBalancer Serviceを削除し、完了を確認します。PVC/PV、スナップショット、ログの保持または復旧方法を決めてください。タイムアウトやfinalizerをforceオプションで回避しないでください。
 
-### サンプル Namespace のクリーンアップ
+### サンプルnamespaceのクリーンアップ
 
 ```bash
 EKS_SAMPLE_CLEANUP_OK=true
@@ -1485,7 +1484,7 @@ else
 fi
 ```
 
-クリーンアップに失敗した場合は停止して調査してください。対象 ARN は、未確認の現在の検索結果だけでなく、作成時の結果またはリソースを管理する IaC state と照合してください。
+クリーンアップに失敗したら停止して調査してください。未確認の現在値だけでなく、作成結果または所有IaC stateと対象ARNを照合します。
 
 ```bash
 : "${EKS_EXPECTED_CLUSTER_ARN:?Copy the ARN from the creation result or owning IaC state}"
@@ -1507,9 +1506,9 @@ fi
 fi
 ```
 
-### eksctl を使用した削除
+### eksctlで削除
 
-eksctl で作成したクラスターには、この方法を使用します。
+eksctlで作成したクラスターには、この方法を使います。
 
 ```bash
 if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
@@ -1517,9 +1516,9 @@ if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
 fi
 ```
 
-### AWS CLI を使用した削除
+### AWS CLIで削除
 
-CLI で直接作成したクラスターでは、上記で一覧表示した管理対象のノードグループ名／プロファイル名を設定し、各リソースについて繰り返します。削除を待ち、残存リソースがないことを確認してからクラスターを削除してください。
+CLIで直接作成したクラスターの場合は、上記に記録した所有ノードグループ/プロファイル名を設定し、各リソースについて繰り返します。リソースを削除して残存がないことを確認してから、クラスターを削除してください。
 
 ```bash
 # For a cluster created directly with the AWS CLI, after workload/data cleanup.
@@ -1549,9 +1548,9 @@ if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
 fi
 ```
 
-### Terraform を使用した削除
+### Terraformで削除
 
-元の構成、バックエンド、workspace を使用し、対象のリソース／アカウント向けにレビューした破棄プランのみを適用してください。
+元の設定、backend、workspaceを使い、対象リソース/アカウント用にレビューした破棄プランだけを適用します。
 
 ```bash
 if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
@@ -1560,9 +1559,9 @@ if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
 fi
 ```
 
-### CDK を使用した削除
+### CDKで削除
 
-元のアプリケーション、入力値、アカウント、リージョンを使用し、対象のスタックを確認してください。
+元のアプリケーション、入力値、アカウント、リージョンを使い、対象スタックを確認してください。
 
 ```bash
 if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
@@ -1571,21 +1570,21 @@ if [[ ${EKS_DELETE_TARGET_VERIFIED:-false} = true ]]; then
 fi
 ```
 
-削除後、EKS／CloudFormation のステータスと、残存する ELB、ディスク、NAT、ログ、IAM リソースを確認してください。マネージドインフラストラクチャの削除が完了するまで、Auto Mode のロール／ポリシーを保持してください。クラスターを削除しても、別の場所で管理されている VPC、IAM ロール、ログ、保持対象データまで削除されるとは限りません。この監査では削除コマンドを実行していません。
+完了後、EKS/CloudFormationの状態と、残存するELB、ディスク、NAT、ログ、IAMリソースを確認してください。Auto Modeのロール/ポリシーは、管理対象インフラストラクチャの削除が終わるまで保持します。クラスターの削除によって、別所有のVPC、IAMロール、ログ、保持データまで削除されるとは限りません。この監査では削除コマンドを実行していません。
 
 ## まとめ
 
-EKS クラスターの作成方法はいくつかあり、それぞれに長所と短所があります。
+EKSクラスターの作成方法はいくつかあり、それぞれに利点と注意点があります。
 
-- **EKS Auto Mode**: インフラストラクチャの運用を自動化します。アプリケーションの準備状況は引き続き検証が必要です
-- **eksctl**: 簡単かつ迅速にクラスターを作成できます
-- **AWS Management Console**: GUI を使って直感的に作成できます
+- **EKS Auto Mode**: インフラ運用を自動化しますが、アプリケーションの準備状況は別途検証が必要です
+- **eksctl**: シンプルで迅速なクラスター作成
+- **AWS Management Console**: GUIによる作成
 - **AWS CLI**: スクリプトによる自動化に適しています
-- **Terraform**: インフラストラクチャをコードとして管理できます
-- **AWS CDK**: プログラミング言語を使用してインフラストラクチャを定義できます
+- **Terraform**: Infrastructure as Codeで管理
+- **AWS CDK**: プログラミング言語でインフラストラクチャを定義
 
-本番環境では、要件に合ったコンピューティング方式とインフラストラクチャツールを選び、IAM、接続性、容量、中断、復旧の動作を検証してください。テンプレートやクラスターの作成に成功しても、本番環境への準備が整ったことの証明にはなりません。
+本番環境では、要件に合ったコンピューティング方式とインフラ管理ツールを選び、IAM、接続性、容量、中断、復旧の動作を検証してください。テンプレートの検証やクラスター作成に成功しても、本番運用に耐えることの証明にはなりません。
 
 ### 監査での検証範囲
 
-両方の完全な言語版を読み、公式ドキュメントとスキーマに照らして確認しました。検証範囲には、シェル／JSON／YAML、CDK のコンパイル／合成、Terraform validate、モックを使った失敗経路が含まれます。AWS のプロビジョニング、アップグレード、削除、アプリケーションの実行時／負荷テスト、コスト測定は実施していません。
+英語版と日本語版をそれぞれ全文読み、公式ドキュメントおよびスキーマと照合しました。検証範囲は、シェル/JSON/YAML、CDKのコンパイル/合成、Terraform validate、モックした失敗経路です。AWSプロビジョニング、アップグレード、削除、アプリケーションの実行/負荷テスト、コスト計測は行っていません。

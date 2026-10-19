@@ -1,17 +1,17 @@
-# Kubernetes Podとワークロード
+# Kubernetes Pods と Workloads
 
-> **サポート対象バージョン**: Kubernetes 1.35、1.36、1.37
-> **最終更新日**: 2026年10月12日
+> **対応バージョン**: Kubernetes 1.35, 1.36, 1.37
+> **最終更新**: October 12, 2026
 
-このドキュメントでは、Kubernetesにおける基本的な実行単位であるPodと、それらを管理するさまざまなワークロードリソースについて詳しく説明します。Podの概念から始めて、Deployment、StatefulSet、DaemonSetなど、さまざまなワークロードリソースの特性とユースケースを取り上げます。
+このドキュメントでは、Kubernetes の基本的な実行単位である Pod と、それらを管理するさまざまな workload resource について詳しく説明します。Pod の概念から始めて、Deployment、StatefulSet、DaemonSet など、さまざまな workload resource の特徴とユースケースを取り上げます。
 
-## ラボ環境のセットアップ
+## Lab 環境のセットアップ
 
-このドキュメントの例を試すには、以下のツールと環境が必要です。
+このドキュメントの例を実行するには、以下のツールと環境が必要です。
 
 ### 必要なツール
-- APIサーバーとマイナーバージョンが1つ以内のkubectl
-- 動作するKubernetesクラスター（EKS、minikube、kindなど）
+- API server と 1 つのマイナーバージョン以内の kubectl
+- 稼働中の Kubernetes cluster（EKS、minikube、kind など）
 
 ### サンプルアプリケーションのデプロイ
 
@@ -56,44 +56,44 @@ kubectl -n workloads-demo get deployments,pods
 ```
 
 ## 目次
-- [Podの概念](#pod-concepts)
-- [Podのライフサイクル](#pod-lifecycle)
-- [Podの設計パターン](#pod-design-patterns)
-- [ワークロードリソースの概要](#workload-resources-overview)
+- [Pod の概念](#pod-concepts)
+- [Pod のライフサイクル](#pod-lifecycle)
+- [Pod の設計パターン](#pod-design-patterns)
+- [Workload Resources の概要](#workload-resources-overview)
 - [ReplicaSet](#replicaset)
 - [Deployment](#deployment)
 - [StatefulSet](#statefulset)
 - [DaemonSet](#daemonset)
-- [JobとCronJob](#jobs-and-cronjobs)
+- [Job と CronJob](#jobs-and-cronjobs)
 
-## Podの概念 {#pod-concepts}
+## Pod の概念 {#pod-concepts}
 
-> **重要な概念**: PodはKubernetesでデプロイ可能な最小のコンピューティング単位であり、ストレージとネットワークを共有する1つ以上のコンテナで構成されます。
+> **重要な概念**: Pod は Kubernetes における最小のデプロイ可能なコンピューティング単位であり、storage と network を共有する 1 つ以上の container group から構成されます。
 
-PodはKubernetesでデプロイ可能な最小のコンピューティング単位です。Podは、ストレージとネットワークを共有し、まとめてスケジュールされる1つ以上のコンテナのグループです。
+Pod は Kubernetes における最小のデプロイ可能なコンピューティング単位です。Pod は、storage と network を共有し、まとめてスケジューリングされる 1 つ以上の container のグループです。
 
-### Podの特性
+### Pod の特徴
 
-1. **コンテキストの共有**: コンテナはPodのネットワークと通常はIPCを共有します。プロセス名前空間の共有には`shareProcessNamespace: true`が必要です。コンテナのルートファイルシステムは個別に保たれます。
-2. **同じNode**: Pod内のすべてのコンテナは、常に同じNodeで実行されます。
-3. **一意のIPアドレス**: 各Podにはクラスター内で一意のIPアドレスが割り当てられます。
-4. **一時的な存在**: Podは本質的に一時的なものであり、障害が発生した場合は新しいPodに置き換えられることがあります。
-5. **原子的な単位**: Podはデプロイ、スケジューリング、レプリケーションにおける原子的な単位です。
+1. **共有コンテキスト**: Container は Pod network と通常は IPC を共有します。process namespace の共有には `shareProcessNamespace: true` が必要です。Container の root filesystem は引き続き分離されています。
+2. **同一 Node**: Pod 内のすべての container は常に同じ node で実行されます。
+3. **一意の IP アドレス**: 各 Pod には cluster 内で一意の IP アドレスが割り当てられます。
+4. **一時的**: Pod は本質的に一時的であり、障害時には新しい Pod に置き換えられることがあります。
+5. **アトミックな単位**: Pod は deployment、scheduling、replication のアトミックな単位です。
 
-### Podの構造
+### Pod の構造
 
-Podは次のコンポーネントで構成されます。
+Pod は次のコンポーネントで構成されます。
 
-1. **コンテナ**: Pod内で実行される1つ以上のコンテナ
-2. **ボリューム**: Pod内のコンテナ間で共有されるストレージ
-3. **ネットワーク**: Podに割り当てられるIPアドレスとポート
-4. **コンテナ仕様**: コンテナイメージ、環境変数、リソース要件など
+1. **Containers**: Pod 内で実行される 1 つ以上の container
+2. **Volumes**: Pod 内の container が共有する storage
+3. **Network**: Pod に割り当てられる IP アドレスと port
+4. **Container Spec**: Container image、環境変数、resource requirements など
 
-![Kubernetes Podの境界を示す図。アプリケーションコンテナ、サイドカーコンテナ、Initコンテナが1つのPodのIPアドレスとネットワーク名前空間を共有し、マウント可能な4種類のストレージボリューム（emptyDir、configMap、secret、persistentVolumeClaim）も示されています。](../.gitbook/assets/en-core-02-pods-and-workloads-0.png)
+![1 つの Pod IP アドレスと network namespace を共有する application container、sidecar container、init container、およびマウント可能な 4 種類の storage volume（emptyDir、configMap、secret、persistentVolumeClaim）を示す Kubernetes Pod の境界。](../.gitbook/assets/en-core-02-pods-and-workloads-0.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-core-02-pods-and-workloads-0.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-02-pods-and-workloads-0.html)
 
-### Podの例
+### Pod の例
 
 ```yaml
 apiVersion: v1
@@ -128,9 +128,9 @@ spec:
     emptyDir: {}
 ```
 
-### 実例: WebアプリケーションPod
+### 実践例: Web Application Pod
 
-以下は、Webアプリケーションとサイドカーコンテナを含むPodの例です。
+以下は、web application と sidecar container を含む Pod の例です。
 
 ```yaml
 apiVersion: v1
@@ -173,19 +173,19 @@ spec:
     emptyDir: {}
 ```
 
-この例では、実際のシナリオとして以下を示しています。
-- Nginx Webサーバーをメインコンテナとして実行する
-- Fluentdログコレクターをサイドカーコンテナとして実行する
-- 2つのコンテナ間でログボリュームを共有する
-- 各コンテナのリソース要求と上限を設定する
+この例は、次の実際のシナリオを示しています。
+- Nginx web server をメイン container として実行する
+- Fluentd log collector を sidecar container として実行する
+- 2 つの container 間で log volume を共有する
+- 各 container に resource request と limit を設定する
 
-この構成は、マイクロサービスアーキテクチャで、ロギング、監視、プロキシなどの機能を分離しながら、密接に連携するコンテナを実行するのに適しています。
+この構成は、microservice architecture において logging、monitoring、proxying などの機能を分離しつつ、密接に接続された container を実行するのに適しています。
 
-これらのロギング用マニフェストは、ボリュームの接続方法を示しています。Fluentdでログを収集するには、明示的なtailソースと出力の設定も必要です。ディレクトリをマウントするだけではログは収集されません。イメージとアプリケーション設定は説明用であり、本番環境で使用するバージョンの推奨ではありません。ネイティブサイドカーは`restartPolicy: Always`を指定した`initContainers`を使用します（v1.33以降安定版）。通常の複数コンテナPodでは、起動順序やシャットダウン順序は保証されません。
+これらの logging manifest は volume の接続方法を示しています。Fluentd には明示的な tail source と output configuration も必要です。directory をマウントするだけでは log は収集されません。Image と application configuration は例示であり、production 向けの version 推奨ではありません。Native sidecar は `restartPolicy: Always` を指定した `initContainers` を使用します（v1.33 以降で stable）。通常の multi-container Pod では、startup または shutdown の順序は保証されません。
 
-### Podの定義
+### Pod の定義
 
-PodはYAMLまたはJSON形式のマニフェストファイルを使って定義します。基本的なPod定義の例を示します。
+Pod は YAML または JSON 形式の manifest file を使用して定義します。以下は基本的な Pod 定義の例です。
 
 ```yaml
 apiVersion: v1
@@ -209,23 +209,23 @@ spec:
         cpu: "500m"
 ```
 
-### 単一コンテナPodと複数コンテナPod
+### Single Container Pod と Multi-Container Pod
 
-**単一コンテナPod**:
+**Single Container Pod**:
 - 最も一般的なユースケース
-- アプリケーションコンテナを1つだけ含む
-- 構造がシンプルで直感的
+- 1 つの application container のみを含む
+- シンプルで直感的な構造
 
-**複数コンテナPod**:
-- 密接に連携する複数のコンテナを含む
-- コンテナ間のローカル通信が可能（localhost）
-- 共有ボリュームによるデータ共有
-- まとめてスケーリング、配置される
+**Multi-Container Pod**:
+- 密接に結合された複数の container を含む
+- Container 間でローカル通信が可能（localhost）
+- 共有 volume を介したデータ共有
+- まとめてスケーリングおよび配置される
 
-### 複数コンテナPodのパターン
+### Multi-Container Pod パターン
 
-1. **サイドカーパターン**: メインコンテナの機能を拡張する補助コンテナ
-   - 例: ログコレクター、ファイル同期、プロキシ
+1. **Sidecar Pattern**: メイン container の機能を拡張する補助 container
+   - 例: log collector、file synchronization、proxy
 
 ```yaml
 apiVersion: v1
@@ -249,8 +249,8 @@ spec:
     emptyDir: {}
 ```
 
-2. **アンバサダーパターン**: 外部サービスへのプロキシとして機能するコンテナ
-   - 例: データベースプロキシ、サービスメッシュのサイドカー
+2. **Ambassador Pattern**: 外部 service への proxy として機能する container
+   - 例: database proxy、service mesh sidecar
 
 ```yaml
 apiVersion: v1
@@ -267,8 +267,8 @@ spec:
     - containerPort: 9901
 ```
 
-3. **アダプターパターン**: メインコンテナの出力を標準化するコンテナ
-   - 例: ログ形式の変換、メトリクスの変換
+3. **Adapter Pattern**: メイン container の出力を標準化する container
+   - 例: log format conversion、metrics conversion
 
 ```yaml
 apiVersion: v1
@@ -292,8 +292,8 @@ spec:
     emptyDir: {}
 ```
 
-4. **Initコンテナパターン**: メインコンテナの起動前に実行されるコンテナ
-   - 例: 設定ファイルの作成、データベースのマイグレーション、権限の設定
+4. **Init Container Pattern**: メイン container の起動前に実行される container
+   - 例: configuration file の作成、database migration、permission setup
 
 ```yaml
 apiVersion: v1
@@ -310,25 +310,25 @@ spec:
     image: myapp:1.0
 ```
 
-### Podのネットワーク
+### Pod Networking
 
-Pod内のコンテナには、次のネットワーク特性があります。
+Pod 内の container には次の networking 特性があります。
 
-1. **同じIPアドレス**: Pod内のすべてのコンテナは同じIPアドレスを共有します。
-2. **ポートの共有**: Pod内のコンテナはポート空間を共有するため、通常、同じIPアドレス、プロトコル、ポートの組み合わせにバインドすることはできません。
-3. **localhost通信**: Pod内のコンテナはlocalhost経由で相互に通信できます。
-4. **Pod間通信**: 各Podには一意のIPアドレスが割り当てられ、他のPodと直接通信できます。
+1. **同じ IP アドレス**: Pod 内のすべての container は同じ IP アドレスを共有します。
+2. **Port の共有**: Pod 内の container は port space を共有するため、通常、同じ IP/protocol/port の組み合わせには bind できません。
+3. **Localhost 通信**: Pod 内の container は localhost 経由で相互に通信できます。
+4. **Pod 間通信**: 各 Pod は一意の IP アドレスを持ち、他の Pod と直接通信できます。
 
-### Podのストレージ
+### Pod Storage
 
-Podでは、データの保存や共有にさまざまな種類のボリュームを使用できます。
+Pod はさまざまな種類の volume を使用して、データを保存および共有できます。
 
-1. **emptyDir**: Podの作成時に作成され、Podの削除時に削除される一時ボリューム
-2. **hostPath**: ホストNodeのファイルシステムからPodにマウントされるボリューム
-3. **persistentVolumeClaim**: 永続ストレージを要求するボリューム
-4. **configMap**: ボリュームとしてマウントされたConfigMap
-5. **secret**: ボリュームとしてマウントされたSecret
-6. **projected**: 複数のボリュームソースを同じディレクトリにマッピングするもの
+1. **emptyDir**: Pod の作成時に作成され、Pod の削除時に削除される一時 volume
+2. **hostPath**: Host node の file system から Pod にマウントされる volume
+3. **persistentVolumeClaim**: Persistent storage を要求する volume
+4. **configMap**: Volume としてマウントされる ConfigMap
+5. **secret**: Volume としてマウントされる Secret
+6. **projected**: 同じ directory にマッピングされる複数の volume source
 
 ```yaml
 apiVersion: v1
@@ -352,44 +352,44 @@ spec:
       name: app-config
 ```
 
-## Podのライフサイクル {#pod-lifecycle}
+## Pod のライフサイクル {#pod-lifecycle}
 
-Podは作成から終了まで、さまざまなライフサイクル段階を経ます。アプリケーションの安定性と可用性を確保するには、このライフサイクルを理解することが重要です。
+Pod は作成から終了まで、さまざまな lifecycle stage を経ます。この lifecycle を理解することは、application の安定性と可用性を確保するうえで重要です。
 
-### Podのフェーズ
+### Pod Phase
 
-Podは次のフェーズを経ます。
+Pod は次の phase を経ます。
 
-1. **Pending**: Podはクラスターに受け付けられていますが、1つ以上のコンテナのセットアップがまだ完了していません。
-2. **Running**: PodはNodeに割り当てられ、すべてのコンテナが作成されており、少なくとも1つのコンテナが実行中、起動中、または再起動中です。
-3. **Succeeded**: Pod内のすべてのコンテナが正常に終了しており、再起動されません。
-4. **Failed**: Pod内のすべてのコンテナが終了しており、少なくとも1つのコンテナが失敗して終了しています。
-5. **Unknown**: 何らかの理由でPodの状態を取得できませんでした。
+1. **Pending**: Pod は cluster に受け入れられましたが、1 つ以上の container がまだセットアップされていません
+2. **Running**: Pod は node に割り当てられ、すべての container が作成され、少なくとも 1 つの container が実行中または起動中/再起動中です
+3. **Succeeded**: Pod 内のすべての container が正常に終了し、再起動されません
+4. **Failed**: Pod 内のすべての container が終了し、少なくとも 1 つの container が失敗により終了しました
+5. **Unknown**: 何らかの理由で Pod の状態を取得できませんでした
 
-### コンテナの状態
+### Container State
 
-Pod内の各コンテナは、次の状態をとることがあります。
+Pod 内の各 container は次の state を持つことができます。
 
-1. **Waiting**: コンテナが実行される前の状態（イメージのダウンロード中、依存関係の待機中など）
-2. **Running**: プロセスが実行中の状態。ただし、これだけではアプリケーションの健全性や準備完了を示しません。
-3. **Terminated**: コンテナの実行が完了したか、何らかの理由で失敗した状態
+1. **Waiting**: Container の実行前の状態（image のダウンロード、dependency の待機など）
+2. **Running**: Process が実行中です。これだけでは application の健全性または readiness は確立されません
+3. **Terminated**: Container が実行を完了したか、何らかの理由で失敗しました
 
-### PodのConditions
+### Pod Condition
 
-Podは、次のConditionsによって状態をより詳細に示します。
+Pod は次の condition を通じて、より具体的に状態を示します。
 
-1. **PodScheduled**: PodがNodeにスケジュールされたかどうか
-2. **ContainersReady**: Pod内のすべてのコンテナが準備完了かどうか
-3. **Initialized**: 通常のInitコンテナが完了し、再起動可能なInitコンテナ（ネイティブサイドカー）が起動したかどうか
-4. **Ready**: Podがリクエストを処理でき、Serviceの負荷分散プールに追加できるかどうか
+1. **PodScheduled**: Pod が node にスケジューリングされたかどうか
+2. **ContainersReady**: Pod 内のすべての container が ready かどうか
+3. **Initialized**: 通常の init container が完了し、restartable init container（native sidecar）が起動したかどうか
+4. **Ready**: Pod が request を処理でき、service の load balancing pool に追加できるかどうか
 
-### コンテナのProbe
+### Container Probe
 
-Kubernetesには、コンテナの状態を確認するためのProbeが用意されています。
+Kubernetes は container の状態を確認するために、次の probe を提供します。
 
-1. **livenessProbe**: コンテナが生存しているかを確認し、失敗時にはコンテナを再起動します。
-2. **readinessProbe**: コンテナがリクエストを処理する準備ができているかを確認し、失敗時にはServiceのトラフィック対象から除外します。
-3. **startupProbe**: コンテナ内のアプリケーションが起動したかを確認し、成功するまで他のProbeを無効にします。
+1. **livenessProbe**: Container が生存しているかを確認します。失敗時には container を再起動します
+2. **readinessProbe**: Container が request を処理する準備ができているかを確認します。失敗時には service traffic から除外します
+3. **startupProbe**: Container 内の application が起動したかを確認します。成功するまで他の probe を無効にします
 
 ```yaml
 apiVersion: v1
@@ -424,27 +424,27 @@ spec:
       periodSeconds: 10
 ```
 
-### Podの終了プロセス
+### Pod 終了プロセス
 
-Podを終了すると、次のプロセスが実行されます。
+Pod が終了されると、次のプロセスが発生します。
 
-1. **APIサーバーへの削除リクエスト**: ユーザーまたはコントローラーがPodの削除を要求します。
-2. **終了猶予期間の開始**: デフォルトの終了猶予期間（30秒）が設定されます。
-3. **APIの更新**: APIサーバーがPodの削除タイムスタンプを更新します。
-4. **Endpointの更新**: EndpointSliceはEndpointを終了中かつ未準備としてマークします。これとNodeのシャットダウンへの反映は並行して行われます。
-5. **停止シグナル**: kubeletは猶予期間内にpreStopフックを実行し、その後ランタイムに停止シグナルを送信するよう依頼します（通常はSIGTERM。ただし、イメージまたはコンテナによって上書きされている場合を除きます）。
-6. **正常なシャットダウンの待機**: アプリケーションが正常にシャットダウンするための時間が与えられます。
-7. **SIGKILLシグナル**: 終了猶予期間の経過後もコンテナが終了しない場合、SIGKILLシグナルが送信されます。
-8. **リソースのクリーンアップ**: kubeletがPodのリソースをクリーンアップします。
+1. **API Server への削除リクエスト**: User または controller が Pod の削除をリクエストします
+2. **Termination Period の開始**: Default の termination period（30 秒）が設定されます
+3. **API Update**: API server が Pod の deletion timestamp を更新します
+4. **Endpoint update**: EndpointSlice は endpoint を terminating かつ not ready としてマークします。Node shutdown と同時に propagation が発生します
+5. **Stop signal**: kubelet は grace period 内に preStop hook を実行し、その後 runtime に stop signal を送信するよう求めます（通常は SIGTERM。ただし image/container による override を除く）
+6. **Graceful Shutdown の待機**: Application が graceful に shutdown するための時間が提供されます
+7. **SIGKILL Signal**: Termination period 後も container が終了しない場合、SIGKILL signal が送信されます
+8. **Resource Cleanup**: kubelet が Pod resource を cleanup します
 
-### Initコンテナ
+### Init Container
 
-Initコンテナは、Pod内のアプリコンテナが起動する前に実行される特別なコンテナです。
+Init container は、Pod 内の app container が起動する前に実行される特別な container です。
 
-1. **順次実行**: Initコンテナは、定義された順序で1つずつ実行されます。
-2. **前提条件**: 各Initコンテナは、前のコンテナが正常に完了した後にのみ起動します。
-3. **失敗時の再起動**: Initコンテナが失敗した場合、Podの再起動ポリシーに従って再起動されます。
-4. **目的**: アプリコンテナの起動前のセットアップ、依存関係の確認、権限の設定など
+1. **順次実行**: Init container は定義された順序で 1 つずつ実行されます
+2. **前提条件**: 各 init container は、前の container が正常に完了した後にのみ起動します
+3. **失敗時の再起動**: Init container が失敗した場合、Pod の restart policy に従って再起動されます
+4. **目的**: App container 起動前の setup、dependency の検証、permission setup など
 
 ```yaml
 apiVersion: v1
@@ -464,34 +464,34 @@ spec:
     image: myapp:1.0
 ```
 
-### PodのDisruption
+### Pod Disruption
 
-PodのDisruptionは、自発的なものと非自発的なものに分けられます。
+Pod の disruption は、voluntary disruption と involuntary disruption に分けられます。
 
-1. **自発的なDisruption**: クラスター管理者や自動化ツールによって発生するDisruption
-   - Nodeのドレイン
-   - Deploymentの更新
-   - Podの削除
+1. **Voluntary Disruption**: Cluster administrator または automation tool による disruption
+   - Node draining
+   - Deployment update
+   - Pod deletion
 
-2. **非自発的なDisruption**: ハードウェア障害、カーネルパニック、ネットワーク分断などによるDisruption
+2. **Involuntary Disruption**: Hardware failure、kernel panic、network partition などによる disruption
 
-PodDisruptionBudgetは、Eviction API（たとえばdrain）を介した自発的な退避を制限します。Podの直接削除やDeploymentのローリングアップデートはこれを迂回するため、ロールアウト時の可用性は別途設定してください。非自発的な障害を防ぐことはできません。
+PodDisruptionBudget は Eviction API（たとえば drain）を通じて voluntary eviction を制限します。直接的な Pod deletion と Deployment rolling update はこれを回避するため、rollout の可用性は別途設定してください。Involuntary failure は防止できません。
 
-## Podの設計パターン {#pod-design-patterns}
+## Pod の設計パターン {#pod-design-patterns}
 
-Podを設計する際に検討すべきパターンとベストプラクティスがいくつかあります。これらを理解して適用することで、アプリケーションの安定性、スケーラビリティ、保守性を向上させられます。
+Pod を設計する際に考慮すべきパターンと best practice がいくつかあります。これらのパターンを理解して適用すると、application の安定性、scalability、maintainability を向上できます。
 
-### 単一責任の原則
+### Single Responsibility Principle
 
-Podは単一責任の原則に従う必要があります。
+Pod は Single Responsibility Principle に従うべきです。
 
-1. **主要な機能を1つにする**: 各Podは、1つの主要な機能またはプロセスを担当します。
-2. **独立してスケーリングできるようにする**: 各機能を独立してスケーリングできるように設計します。
-3. **ライフサイクルを分離する**: 各機能が独自のライフサイクルを持てるように設計します。
+1. **1 つの主要機能**: 各 Pod は 1 つの主要な機能または process を担当する必要があります
+2. **独立したスケーリング**: 各機能を独立して scale できるように設計します
+3. **個別のライフサイクル**: 各機能が独自の lifecycle を持てるように設計します
 
-### Podテンプレート
+### Pod Template
 
-Podテンプレートは、ワークロードリソース（Deployment、StatefulSetなど）でPodを作成するために使用する仕様です。
+Pod template は、workload resource（Deployment、StatefulSet など）で Pod を作成するために使用される specification です。
 
 ```yaml
 apiVersion: apps/v1
@@ -516,12 +516,12 @@ spec:
   # Pod template ends
 ```
 
-### Podのアフィニティとアンチアフィニティ
+### Pod Affinity と Anti-Affinity
 
-Podのアフィニティとアンチアフィニティは、PodをどのNodeにスケジュールするかを制御するルールです。
+Pod affinity と anti-affinity は、Pod をどの node にスケジューリングするかを制御する rule です。
 
-1. **Podアフィニティ**: 特定のPodと同じNodeまたはトポロジードメインにスケジュールします。
-2. **Podアンチアフィニティ**: 特定のPodとは異なるNodeまたはトポロジードメインにスケジュールします。
+1. **Pod Affinity**: 特定の Pod と同じ node または topology domain にスケジューリングする
+2. **Pod Anti-Affinity**: 特定の Pod とは異なる node または topology domain にスケジューリングする
 
 ```yaml
 apiVersion: v1
@@ -555,9 +555,9 @@ spec:
     image: nginx:1.30.6
 ```
 
-### Nodeアフィニティ
+### Node Affinity
 
-Nodeアフィニティは、Podのスケジューリング先を特定のNodeに制限するルールです。
+Node affinity は、Pod を特定の node にスケジューリングするよう制限する rule です。
 
 ```yaml
 apiVersion: v1
@@ -579,9 +579,9 @@ spec:
     image: gpu-app:1.0
 ```
 
-### TaintとToleration
+### Taint と Toleration
 
-Taintは特定のPodがスケジュールされないようにNodeに適用され、TolerationはTaintのあるNodeへのスケジューリングを許可するためにPodに適用されます。
+Taint は特定の Pod がスケジューリングされないよう node に適用され、toleration は taint を持つ node へのスケジューリングを許可するために Pod に適用されます。
 
 ```bash
 # Apply taint to node
@@ -605,9 +605,9 @@ spec:
     image: myapp:1.0
 ```
 
-### リソース要求と上限
+### Resource Request と Limit
 
-Pod内のコンテナにリソース要求と上限を設定することは、クラスターリソースを効率的に使用し、安定性を確保するうえで重要です。
+Pod 内の container に resource request と limit を設定することは、cluster resource を効率的に使用し、安定性を確保するために重要です。
 
 ```yaml
 apiVersion: v1
@@ -627,9 +627,9 @@ spec:
         cpu: "500m"
 ```
 
-### Podのセキュリティコンテキスト
+### Pod Security Context
 
-セキュリティコンテキストは、Podまたはコンテナレベルのセキュリティ設定を定義します。
+Security context は、Pod または container level の security setting を定義します。
 
 ```yaml
 apiVersion: v1
@@ -651,9 +651,9 @@ spec:
         - ALL
 ```
 
-### Podの優先度とプリエンプション
+### Pod Priority と Preemption
 
-クラスターのリソースが不足しているときに、どのPodをスケジュールし、どのPodをプリエンプトするかは、Podの優先度とプリエンプションによって決まります。
+Pod priority と preemption は、cluster resource が不足した場合に、どの Pod をスケジューリングし、どの Pod を preempt するかを決定します。
 
 ```yaml
 # Priority class definition
@@ -677,43 +677,43 @@ spec:
     image: myapp:1.0
 ```
 
-## ワークロードリソースの概要 {#workload-resources-overview}
+## Workload Resources の概要 {#workload-resources-overview}
 
-Kubernetesには、Podを管理するためのさまざまなワークロードリソースがあります。それぞれ特定のユースケースや要件に合わせて設計されています。
+Kubernetes は Pod を管理するためのさまざまな workload resource を提供します。各 workload resource は、特定のユースケースと要件向けに設計されています。
 
-### ワークロードリソースの種類
+### Workload Resource の種類
 
-Kubernetesの主なワークロードリソースは次のとおりです。
+Kubernetes の主な workload resource は次のとおりです。
 
-1. **ReplicaSet**: 指定された数のPodレプリカを維持します。
-2. **Deployment**: ReplicaSetを管理し、宣言的な更新を提供します。
-3. **StatefulSet**: 状態の永続化が必要なアプリケーション向けのリソースです。
-4. **DaemonSet**: すべてのNodeでPodのコピーを1つ実行します。
-5. **Job**: 完了後に終了する単発タスクを実行します。
-6. **CronJob**: スケジュールに従って定期的にJobを実行します。
+1. **ReplicaSet**: 指定した数の Pod replica を維持する
+2. **Deployment**: ReplicaSet を管理して declarative update を提供する
+3. **StatefulSet**: State persistence が必要な application 向けの resource
+4. **DaemonSet**: すべての node で Pod の copy を実行する
+5. **Job**: 完了後に終了する one-time task
+6. **CronJob**: Schedule に従って定期的に Job を実行する
 
-### ワークロードリソースの選択基準
+### Workload Resource の選択基準
 
-適切なワークロードリソースを選ぶ基準は次のとおりです。
+適切な workload resource を選択するための基準は次のとおりです。
 
-1. **状態の永続性**: アプリケーションが状態を保持する必要があるかどうか
-2. **実行パターン**: 継続的に実行されるのか、単発なのか、定期的なのか
-3. **デプロイ要件**: ローリングアップデート、ブルー／グリーンデプロイなどの要件
-4. **Nodeのカバレッジ**: すべてのNodeで実行する必要があるかどうか
-5. **スケーラビリティ要件**: 水平スケーリングが必要かどうか
+1. **State Persistence**: Application が state を維持する必要があるか
+2. **Execution Pattern**: 継続的、one-time、定期的のいずれで実行されるか
+3. **Deployment Requirements**: Rolling update、blue/green deployment などの要件
+4. **Node Coverage**: すべての node で実行する必要があるか
+5. **Scalability Requirements**: Horizontal scaling が必要か
 
 ## ReplicaSet
 
-ReplicaSetは、指定された数のPodレプリカが常に実行されるようにします。Podに障害が発生したり、削除されたりすると、ReplicaSetは自動的に置き換え用のPodを作成します。
+ReplicaSet は、指定した数の Pod replica が常に実行されることを保証します。Pod が失敗または削除されると、ReplicaSet は自動的に代替 Pod を作成します。
 
-### ReplicaSetの主な機能
+### ReplicaSet の主な機能
 
-1. **Podレプリカの維持**: 指定された数のPodレプリカを維持します。
-2. **Podの選択**: ラベルセレクターを使って管理対象のPodを識別します。
-3. **Podの作成**: 必要に応じて新しいPodを作成します。
-4. **Podの削除**: 過剰なPodを削除します。
+1. **Pod Replica の維持**: 指定した数の Pod replica を維持する
+2. **Pod Selection**: Label selector を通じて管理対象の Pod を識別する
+3. **Pod Creation**: 必要に応じて新しい Pod を作成する
+4. **Pod Deletion**: 余分な Pod を削除する
 
-### ReplicaSetの定義
+### ReplicaSet の定義
 
 ```yaml
 apiVersion: apps/v1
@@ -744,41 +744,41 @@ spec:
         - containerPort: 80
 ```
 
-### ReplicaSetの動作
+### ReplicaSet の動作
 
-1. **ラベルセレクターとの照合**: ReplicaSetはラベルセレクターに一致するPodを識別します。
-2. **現在の状態の確認**: 現在実行中のPod数を確認します。
-3. **望ましい状態との比較**: 現在のPod数と望ましいレプリカ数を比較します。
-4. **調整処理**: 必要に応じてPodを作成または削除します。
+1. **Label Selector の照合**: ReplicaSet は label selector に一致する Pod を識別します
+2. **現在の状態の確認**: 現在実行中の Pod の数を確認します
+3. **望ましい状態との比較**: 現在の Pod 数と望ましい replica 数を比較します
+4. **調整アクション**: 必要に応じて Pod を作成または削除します
 
-### ReplicaSetとReplication Controllerの比較
+### ReplicaSet と Replication Controller の比較
 
-ReplicaSetはReplication Controllerの後継であり、より強力なラベルセレクターを備えています。
+ReplicaSet は Replication Controller の後継であり、より強力な label selector を提供します。
 
-1. **Replication Controller**: 等価性に基づくセレクターのみをサポートします（例: app=nginx）。
-2. **ReplicaSet**: 集合に基づくセレクターをサポートします（例: app in (nginx, apache)）。
+1. **Replication Controller**: Equality-based selector（例: app=nginx）のみをサポートします
+2. **ReplicaSet**: Set-based selector（例: app in (nginx, apache)）をサポートします
 
-### ReplicaSetのユースケース
+### ReplicaSet のユースケース
 
-ReplicaSetは通常、直接ではなくDeploymentを介して間接的に使用します。ただし、次のケースでは直接使用できます。
+ReplicaSet は通常、直接ではなく Deployment を通じて間接的に使用されます。ただし、次の場合は直接使用できます。
 
-1. **シンプルなレプリケーション**: Podレプリカを維持するだけの場合
-2. **カスタム更新**: 独自の更新メカニズムが必要な場合
-3. **レガシーサポート**: レガシーアプリケーションをサポートする場合
+1. **単純な Replication**: Pod replica を単純に維持する場合
+2. **Custom Update**: Custom update mechanism が必要な場合
+3. **Legacy Support**: Legacy application をサポートする場合
 
 ## Deployment
 
-DeploymentはReplicaSetを管理し、Podの宣言的な更新を行います。アプリケーションのローリングアップデート、ロールバック、スケーリングなどを管理します。
+Deployment は ReplicaSet を管理し、Pod に対する declarative update を提供します。Deployment は application の rolling update、rollback、scaling などを管理します。
 
-### Deploymentの主な機能
+### Deployment の主な機能
 
-1. **宣言的な更新**: 望ましい状態を宣言すると、Deploymentが現在の状態をその状態に変更します。
-2. **ローリングアップデート**: ダウンタイムなしでアプリケーションを更新します。
-3. **ロールバック**: 以前のバージョンに簡単に戻せます。
-4. **スケーリング**: アプリケーションのレプリカ数を調整します。
-5. **Deploymentの履歴**: 以前のDeploymentバージョンの記録を保持します。
+1. **Declarative Update**: Desired state を宣言すると、Deployment が current state を desired state に変更する
+2. **Rolling Update**: Downtime なしで application を更新する
+3. **Rollback**: Previous version への簡単な rollback
+4. **Scaling**: Application replica 数を調整する
+5. **Deployment History**: 以前の deployment version の記録を維持する
 
-### Deploymentの定義
+### Deployment の定義
 
 ```yaml
 apiVersion: apps/v1
@@ -828,19 +828,19 @@ spec:
           periodSeconds: 5
 ```
 
-### Deploymentの更新戦略
+### Deployment Update Strategy
 
-Deploymentでは、次の2つの更新戦略を利用できます。
+Deployment には 2 つの update strategy があります。
 
-1. **RollingUpdate**: ダウンタイムを発生させずにPodを段階的に更新します（デフォルト）。
-   - **maxSurge**: 望ましいPod数を超えて作成できるPodの最大数
-   - **maxUnavailable**: 更新中に利用できなくなるPodの最大数
+1. **RollingUpdate**: Downtime なしで deployment するために Pod を段階的に更新します（default）
+   - **maxSurge**: Desired Pod 数を超えて作成できる Pod の最大数
+   - **maxUnavailable**: Update 中に利用不可にできる Pod の最大数
 
-2. **Recreate**: 新しいPodを作成する前に、既存のPodをすべて削除します（一時的なダウンタイムが発生します）。
+2. **Recreate**: 新しい Pod を作成する前に既存のすべての Pod を削除します（一時的な downtime が発生します）
 
-### Deploymentのロールバック
+### Deployment Rollback
 
-Deploymentでは、以前のバージョンにロールバックできます。
+Deployment は previous version への rollback をサポートします。
 
 ```bash
 # Check deployment history
@@ -856,9 +856,9 @@ kubectl -n workloads-demo rollout undo deployment/nginx-deployment
 kubectl -n workloads-demo rollout undo deployment/nginx-deployment --to-revision=2
 ```
 
-### Deploymentのスケーリング
+### Deployment Scaling
 
-Deploymentは簡単にスケーリングできます。
+Deployment は簡単に scale できます。
 
 ```bash
 # Imperative scaling
@@ -868,9 +868,9 @@ kubectl -n workloads-demo scale deployment/nginx-deployment --replicas=5
 kubectl apply -f deployment.yaml
 ```
 
-### Deploymentの一時停止と再開
+### Deployment Pause と Resume
 
-Deploymentのロールアウトは一時停止および再開できます。
+Deployment rollout は pause と resume が可能です。
 
 ```bash
 # Pause rollout
@@ -884,22 +884,22 @@ kubectl -n workloads-demo set resources deployment/nginx-deployment -c=nginx --l
 kubectl -n workloads-demo rollout resume deployment/nginx-deployment
 ```
 
-### Deploymentの状態
+### Deployment Status
 
-DeploymentのConditionsには`Progressing`、`Available`、`ReplicaFailure`があります。ロールアウトが停滞すると、reasonが`ProgressDeadlineExceeded`の`Progressing=False`が報告されることがあります。Kubernetesが自動的にロールバックすることはありません。「Complete」はロールアウトの完了を示すものであり、Conditionの種類ではありません。
+Deployment condition には `Progressing`、`Available`、`ReplicaFailure` があります。Stalled rollout は reason `ProgressDeadlineExceeded` で `Progressing=False` を報告することがあります。Kubernetes は自動的に rollback しません。「Complete」は condition type ではなく rollout の完了を表します。
 
 ## StatefulSet
 
-StatefulSetは、状態の永続化が必要なアプリケーション向けのワークロードリソースです。各Podに一意の識別子を割り当て、安定したネットワーク識別子と永続ストレージを提供します。
+StatefulSet は state persistence を必要とする application 向けの workload resource です。各 Pod に一意の identifier を割り当て、安定した network identifier と persistent storage を提供します。
 
-### StatefulSetの主な機能
+### StatefulSet の主な機能
 
-1. **安定した一意のネットワーク識別子**: 再起動後もPod名とホスト名が維持されます。
-2. **安定した永続ストレージ**: Podが再スケジュールされても、同じストレージにアクセスできます。
-3. **順序に従ったデプロイとスケーリング**: Podは順序に従って作成、更新、削除されます。
-4. **順序に従った自動ローリングアップデート**: Podは順序に従って更新されます。
+1. **安定した一意の Network Identifier**: Pod name と hostname は restart 後も維持されます
+2. **安定した Persistent Storage**: Pod が reschedule されても同じ storage にアクセスできます
+3. **順次 Deployment と Scaling**: Pod は順番に作成、更新、削除されます
+4. **順次 Automatic Rolling Update**: Pod は順番に更新されます
 
-### StatefulSetの定義
+### StatefulSet の定義
 
 ```yaml
 apiVersion: apps/v1
@@ -940,18 +940,18 @@ spec:
           storage: 1Gi
 ```
 
-### StatefulSetのPod識別子
+### StatefulSet Pod Identifier
 
-StatefulSetは、次の形式でPodに一意の識別子を割り当てます。
+StatefulSet は、次の形式で Pod に一意の identifier を割り当てます。
 ```
 <StatefulSet name>-<ordinal index>
 ```
 
-たとえば、`web` StatefulSetは`web-0`、`web-1`、`web-2`のようなPodを作成します。
+たとえば、`web` StatefulSet は `web-0`、`web-1`、`web-2` のような Pod を作成します。
 
-### StatefulSetのHeadless Service
+### StatefulSet Headless Service
 
-StatefulSetは通常、Headless Service（clusterIP: None）と組み合わせて使用します。これにより、各PodのDNSレコードが作成されます。
+StatefulSet は通常、headless service（clusterIP: None）とともに使用されます。これにより、各 Pod の DNS record が作成されます。
 
 ```yaml
 apiVersion: v1
@@ -969,43 +969,43 @@ spec:
     app: nginx
 ```
 
-この場合、各Podには次の形式のDNS名が割り当てられます。
+これにより、各 Pod は次の形式の DNS name を持ちます。
 ```
 <Pod name>.<service name>.<namespace>.svc.cluster.local
 ```
 
 例: `web-0.nginx.default.svc.cluster.local`
 
-### StatefulSetのストレージ
+### StatefulSet Storage
 
-StatefulSetは`volumeClaimTemplates`を使って、各Pod用のPersistentVolumeClaim（PVC）を自動的に作成します。Podが再スケジュールされても、これらのPVCは維持されます。
+StatefulSet は `volumeClaimTemplates` を使用して、各 Pod 用の Persistent Volume Claim（PVC）を自動的に作成します。これらの PVC は、Pod が reschedule されても維持されます。
 
-### StatefulSetの更新戦略
+### StatefulSet Update Strategy
 
-StatefulSetでは、次の2つの更新戦略を利用できます。
+StatefulSet には 2 つの update strategy があります。
 
-1. **RollingUpdate**: Podを順番に更新します（デフォルト）。
-2. **OnDelete**: Podが削除された場合にのみ更新します。
+1. **RollingUpdate**: Pod を順番に更新します（default）
+2. **OnDelete**: Pod が削除された場合にのみ更新します
 
-### Pod管理ポリシー
+### Pod Management Policy
 
-StatefulSetでは、次の2つのPod管理ポリシーを利用できます。
+StatefulSet には 2 つの Pod management policy があります。
 
-1. **OrderedReady**: Podを順番に作成、終了します（デフォルト）。
-2. **Parallel**: Podを並行して作成、終了します。
+1. **OrderedReady**: Pod を順番に作成および終了します（default）
+2. **Parallel**: Pod を並列に作成および終了します
 
-### StatefulSetのユースケース
+### StatefulSet のユースケース
 
-StatefulSetは、次のようなアプリケーションに適しています。
+StatefulSet は次の application に適しています。
 
-1. **データベース**: MySQL、PostgreSQL、MongoDBなど
-2. **分散システム**: Kafka、ZooKeeper、Elasticsearchなど
-3. **メッセージキュー**: RabbitMQなど
-4. **その他のステートフルアプリケーション**: ファイルサーバー、セッションストアなど
+1. **Database**: MySQL、PostgreSQL、MongoDB など
+2. **Distributed System**: Kafka、ZooKeeper、Elasticsearch など
+3. **Message Queue**: RabbitMQ など
+4. **その他の Stateful Application**: File server、session store など
 
-### StatefulSetの例: 永続ストレージを使うMySQLインスタンス
+### StatefulSet の例: Persistent MySQL Instance
 
-この例では、1つのMySQLインスタンスに対して安定した識別子とPVCを設定します。レプリケーションやデータベースの自動フェイルオーバーは**設定しません**。`replicas`を増やすと、それぞれ独立したデータベースが作成されます。同じnamespace内に`password`キーを持つ`mysql-secret`を作成し、デフォルトのStorageClassを用意してください（または適切なクラスを明示的に設定してください）。検証済みのMySQL 8.4パッチバージョンまたはダイジェストを使用してください。認証情報を変更する場合は、Secretを更新するだけではなく、データベース側でローテーションする必要があります。
+この例は、1 つの MySQL instance に対する stable identity と PVC を示します。Replication または automatic database failover は構成していません。`replicas` を増やすと、独立した database が作成されます。同じ namespace に `password` key を持つ `mysql-secret` を作成し、default StorageClass を提供してください（または適切な class を明示的に設定してください）。テスト済みの MySQL 8.4 patch/digest を使用してください。Credential の変更には、単に Secret を更新するのではなく、database level の rotation が必要です。
 
 ```yaml
 apiVersion: v1
@@ -1080,20 +1080,20 @@ spec:
           storage: 10Gi
 ```
 
-レプリケーションとリーダー昇格を行うには、データベースOperator、または別途テスト済みのレプリケーション手順書を使用してください。StatefulSet単体では、どちらも提供されません。[上流のレプリケーションチュートリアル](https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/)では、安全でない学習用のデフォルト設定が明示的に使用されており、本番環境向けの構成ではありません。
+Replication と leader promotion には database operator または個別にテストした replication runbook を使用してください。StatefulSet 単体では、どちらも提供されません。[upstream replication tutorial](https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/) は、安全でない学習用 default を明示的に使用しており、production configuration ではありません。
 
 ## DaemonSet
 
-DaemonSetは、すべてのNode（または特定のNode）でPodのコピーを1つ実行します。Nodeがクラスターに追加されるとPodが自動的に追加され、Nodeが削除されるとPodも削除されます。
+DaemonSet は、Pod の copy がすべての node（または特定の node）で実行されることを保証します。Node が cluster に追加されると Pod は自動的に追加され、node が削除されると Pod も削除されます。
 
-### DaemonSetの主な機能
+### DaemonSet の主な機能
 
-1. **すべてのNodeで実行**: クラスター内のすべてのNodeでPodを実行します。
-2. **Nodeの選択**: Nodeセレクターを使って特定のNodeのみで実行できます。
-3. **自動デプロイ**: 新しいNodeが追加されるとPodを自動的にデプロイします。
-4. **自動クリーンアップ**: Nodeが削除されるとPodを自動的にクリーンアップします。
+1. **すべての Node で実行**: Cluster 内のすべての node で Pod を実行する
+2. **Node Selection**: Node selector を通じて特定の node でのみ実行できる
+3. **Automatic Deployment**: 新しい node が追加されると Pod を自動的に deploy する
+4. **Automatic Cleanup**: Node が削除されると Pod を自動的に cleanup する
 
-### DaemonSetの定義
+### DaemonSet の定義
 
 ```yaml
 apiVersion: apps/v1
@@ -1139,20 +1139,20 @@ spec:
           path: /var/log
 ```
 
-CRIランタイムでは、ログコレクターがDocker JSONログではなく、`/var/log/pods`（通常は`/var/log/containers`からリンクされています）配下のCRIログを解析するように設定してください。ログコレクターには、独自のソース／出力設定とRBACも必要です。
+CRI runtime では、collector が Docker JSON log ではなく、`/var/log/pods` 配下の CRI log（通常は `/var/log/containers` から link される）を parse するよう構成してください。Collector には独自の source/output configuration と RBAC が必要です。
 
-### DaemonSetの更新戦略
+### DaemonSet Update Strategy
 
-DaemonSetでは、次の2つの更新戦略を利用できます。
+DaemonSet には 2 つの update strategy があります。
 
-1. **RollingUpdate**: Podを順番に更新します（デフォルト）。
-   - **maxUnavailable**: 更新中に利用できなくなるPodの最大数
+1. **RollingUpdate**: Pod を順次更新します（default）
+   - **maxUnavailable**: Update 中に利用不可にできる Pod の最大数
 
-2. **OnDelete**: Podが削除された場合にのみ更新します。
+2. **OnDelete**: Pod が削除された場合にのみ更新します
 
-### DaemonSetのNode選択
+### DaemonSet Node Selection
 
-DaemonSetは、特定のNodeのみで実行するように設定できます。
+DaemonSet は、特定の node でのみ実行するように構成できます。
 
 ```yaml
 spec:
@@ -1162,9 +1162,9 @@ spec:
         disk: ssd
 ```
 
-### DaemonSetのTaint許容
+### DaemonSet Taint Toleration
 
-DaemonSetにTolerationを設定すると、TaintのあるNodeでも実行できます。
+DaemonSet は、taint を持つ node で実行するために toleration を設定できます。
 
 ```yaml
 spec:
@@ -1175,17 +1175,17 @@ spec:
         effect: NoSchedule
 ```
 
-### DaemonSetのユースケース
+### DaemonSet のユースケース
 
-DaemonSetは、次の目的で使用されます。
+DaemonSet は次の目的で使用されます。
 
-1. **ログコレクター**: Fluentd、Logstashなど
-2. **監視エージェント**: Prometheus Node Exporter、Datadog Agentなど
-3. **ネットワークプラグイン**: Calico、Ciliumなど
-4. **ストレージデーモン**: Ceph、GlusterFSなど
-5. **セキュリティエージェント**: Falco、Sysdigなど
+1. **Log Collector**: Fluentd、Logstash など
+2. **Monitoring Agent**: Prometheus Node Exporter、Datadog Agent など
+3. **Network Plugin**: Calico、Cilium など
+4. **Storage Daemon**: Ceph、GlusterFS など
+5. **Security Agent**: Falco、Sysdig など
 
-### DaemonSetの例: Prometheus Node Exporter
+### DaemonSet の例: Prometheus Node Exporter
 
 ```yaml
 apiVersion: apps/v1
@@ -1249,22 +1249,22 @@ spec:
           path: /
 ```
 
-## JobとCronJob {#jobs-and-cronjobs}
+## Job と CronJob {#jobs-and-cronjobs}
 
-JobとCronJobは、単発または定期的なタスクを実行するためのワークロードリソースです。
+Job と CronJob は、one-time task または定期 task を実行するための workload resource です。
 
 ### Job
 
-Jobは1つ以上のPodを作成し、指定された数のPodが正常に終了するまで実行を続けます。
+Job は 1 つ以上の Pod を作成し、指定数の Pod が正常に終了するまで実行を継続します。
 
-#### Jobの主な機能
+#### Job の主な機能
 
-1. **完了状況の追跡**: 成功したPodを追跡します。再試行回数の上限や期限によってJobが失敗することがあります。
-2. **並列実行**: 複数のPodを並列に実行できます。
-3. **再試行**: 失敗したPodを自動的に再試行します。
-4. **完了後のクリーンアップ**: Jobの完了後にPodを削除するよう設定できます。
+1. **Completion Tracking**: Successful Pod を追跡します。Retry limit または deadline により Job が失敗することがあります
+2. **Parallel Execution**: 複数の Pod を並列に実行できます
+3. **Retry**: Failed Pod を自動的に retry します
+4. **完了後の Cleanup**: Job 完了後の Pod の optional cleanup
 
-#### Jobの定義
+#### Job の定義
 
 ```yaml
 apiVersion: batch/v1
@@ -1293,12 +1293,12 @@ spec:
       restartPolicy: Never  # or OnFailure
 ```
 
-#### Jobの完了モード
+#### Job Completion Mode
 
-Jobには、次の2つの完了モードがあります。
+Job には 2 つの completion mode があります。
 
-1. **NonIndexed**: 指定された数のPodが正常に完了したときにJobが完了する標準モード
-2. **Indexed**: 各Podに0から始まるインデックスが割り当てられ、それぞれが特定のインデックス範囲のタスクを実行します。
+1. **NonIndexed**: 指定数の Pod が正常に完了すると Job が完了する標準 Job mode
+2. **Indexed**: 各 Pod に 0 から始まる index が割り当てられ、特定の index range の task を実行する
 
 ```yaml
 apiVersion: batch/v1
@@ -1318,27 +1318,27 @@ spec:
       restartPolicy: Never
 ```
 
-#### Jobのユースケース
+#### Job のユースケース
 
-Jobは、次の目的で使用されます。
+Job は次の目的で使用されます。
 
-1. **バッチ処理**: データ処理、ETLタスク
-2. **計算タスク**: 科学計算、レンダリング
-3. **データベースのマイグレーション**: Schemaの更新
-4. **単発の管理タスク**: バックアップ、クリーンアップタスク
+1. **Batch Processing**: Data processing、ETL task
+2. **Computation Task**: Scientific calculation、rendering
+3. **Database Migration**: Schema update
+4. **One-time Administrative Task**: Backup、cleanup task
 
 ### CronJob
 
-CronJobは、指定されたスケジュールに従って定期的にJobを実行します。Linuxのcronジョブと同様に動作します。
+CronJob は、指定された schedule に従って Job を定期的に実行します。Linux cron job と同様に動作します。
 
-#### CronJobの主な機能
+#### CronJob の主な機能
 
-1. **スケジュール実行**: cron式を使用して実行スケジュールを指定します。
-2. **Jobの管理**: スケジュールに従ってJobを作成します。
-3. **同時実行ポリシー**: 前のJobがまだ実行中の場合の動作を定義します。
-4. **履歴の上限**: 完了したJobの履歴数を制限します。
+1. **Scheduled Execution**: Cron expression を使用して execution schedule を指定する
+2. **Job Management**: Schedule に従って Job を作成する
+3. **Concurrency Policy**: Previous job がまだ実行中の場合の動作を定義する
+4. **History Limit**: Completed job の history を制限する
 
-#### CronJobの定義
+#### CronJob の定義
 
 ```yaml
 apiVersion: batch/v1
@@ -1366,9 +1366,9 @@ spec:
           restartPolicy: OnFailure
 ```
 
-#### Cron式
+#### Cron Expression
 
-Cron式は、次の形式です。
+Cron expression は次の形式です。
 ```
 +------------------- minute (0 - 59)
 | +----------------- hour (0 - 23)
@@ -1380,33 +1380,33 @@ Cron式は、次の形式です。
 * * * * *
 ```
 
-Cron式の一般的な例:
-- `*/5 * * * *`: 5分ごと
-- `0 * * * *`: 毎時0分
-- `0 0 * * *`: 毎日午前0時
-- `0 0 * * 0`: 毎週日曜日の午前0時
-- `0 0 1 * *`: 毎月1日の午前0時
-- `0 0 1 1 *`: 毎年1月1日の午前0時
+一般的な cron expression の例:
+- `*/5 * * * *`: 5 分ごと
+- `0 * * * *`: 毎時 0 分
+- `0 0 * * *`: 毎日午前 0 時
+- `0 0 * * 0`: 毎週日曜日の午前 0 時
+- `0 0 1 * *`: 毎月 1 日の午前 0 時
+- `0 0 1 1 *`: 毎年 1 月 1 日の午前 0 時
 
-#### 同時実行ポリシー
+#### Concurrency Policy
 
-CronJobには、次の3つの同時実行ポリシーがあります。
+CronJob には 3 つの concurrency policy があります。
 
-1. **Allow**: 複数のJobを同時に実行できます（デフォルト）。
-2. **Forbid**: 前のJobがまだ実行中の場合、新しいJobをスキップします。
-3. **Replace**: 前のJobが実行中の場合、新しいJobで置き換えます。
+1. **Allow**: 複数の Job を同時に実行できます（default）
+2. **Forbid**: Previous Job がまだ実行中の場合は、新しい Job を skip します
+3. **Replace**: Previous Job がまだ実行中の場合は、新しい Job に置き換えます
 
-#### CronJobのユースケース
+#### CronJob のユースケース
 
-CronJobは、次の目的で使用されます。
+CronJob は次の目的で使用されます。
 
-1. **定期バックアップ**: データベースのバックアップ、スナップショットの作成
-2. **データ同期**: 定期的なデータ同期
-3. **レポートの生成**: 日次／週次／月次レポートの生成
-4. **クリーンアップタスク**: 一時ファイルの削除、ログローテーション
-5. **通知と監視**: 状態確認、アラート送信
+1. **定期 Backup**: Database backup、snapshot creation
+2. **Data Synchronization**: 定期的な data synchronization
+3. **Report Generation**: Daily/weekly/monthly report generation
+4. **Cleanup Task**: Temporary file cleanup、log rotation
+5. **Notification と Monitoring**: Status check、alert の送信
 
-#### CronJobの例: データベースのバックアップ
+#### CronJob の例: Database Backup
 
 ```yaml
 apiVersion: batch/v1
@@ -1460,12 +1460,12 @@ spec:
               claimName: backup-pvc
 ```
 
-CronJobのスケジュール実行は厳密ではないため、Jobは重複実行されても問題ないようにする必要があります。`Forbid`が適用されるのは、同じCronJobから作成されたJobに限られます。履歴の上限が削除するのはJob／Podオブジェクトであり、バックアップファイルではありません。バックアップの例は毎日02:00 UTCに実行され、`backup-pvc`、`postgres-secret`、および接続可能なデータベースが必要です。`pg_dump`のメジャーバージョンはサーバーと同じか、それより新しい必要があります。`PGDATABASE`が`PGUSER`と異なる場合は、`PGDATABASE`を指定してください。実際のリストアテストは別途実施してください。
+CronJob scheduling はおおよそのものであり、job は重複実行に耐えられなければなりません。`Forbid` は同じ CronJob からの Job にのみ適用されます。History limit は backup file ではなく Job/Pod object を削除します。Backup の例は UTC の 02:00 に実行され、`backup-pvc`、`postgres-secret`、および到達可能な database が必要です。`pg_dump` は server major version と同じかそれより新しい必要があります。`PGDATABASE` が `PGUSER` と異なる場合は指定してください。実際の restore は別途テストしてください。
 
 ## まとめ
 
-このドキュメントでは、Kubernetesの基本構成要素であるPodと、さまざまなワークロードリソースについて説明しました。Podの概念から始めて、Deployment、StatefulSet、DaemonSet、Job、CronJobなど、さまざまなワークロードリソースの特性とユースケースを取り上げました。これらのリソースにはそれぞれ独自の目的と機能があり、適切に使用することで、アプリケーションを効率的にデプロイし、管理できます。
+このドキュメントでは、Kubernetes の基本的な構成要素である Pod と、さまざまな workload resource を取り上げました。Pod の概念から始めて、Deployment、StatefulSet、DaemonSet、Job、CronJob など、さまざまな workload resource の特徴とユースケースを確認しました。これらの resource にはそれぞれ固有の目的と機能があり、適切に使用することで、効率的な application deployment と management が可能になります。
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[Podとワークロードのクイズ](../quizzes/core/02-pods-and-workloads-quiz.md)に挑戦してください。
+この章で学んだ内容を確認するには、[Pods と Workloads のクイズ](../quizzes/core/02-pods-and-workloads-quiz.md)に挑戦してください。

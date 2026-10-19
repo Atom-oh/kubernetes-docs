@@ -1,31 +1,31 @@
-# Guía de selección entre Sidecar y Ambient Mode (resultados de pruebas en EKS 1.36)
+# Guía para elegir entre sidecar y modo ambient (resultados de pruebas en EKS 1.36)
 
-> **Versiones de prueba informadas**: Istio 1.30.2 / EKS 1.36.2 / Fortio 1.69.4
+> **Versiones indicadas en las pruebas**: Istio 1.30.2 / EKS 1.36.2 / Fortio 1.69.4
 > **Fecha del informe original**: 21 de agosto de 2026 · **Revisión del contenido**: 11 de septiembre de 2026
 
-Este documento conserva las mediciones informadas de mTLS, NetworkPolicy, latencia y despliegue gradual. No se adjuntaron los archivos completos con los datos sin procesar ni los scripts exactos de ejecución, y esta revisión no recreó los clústeres de AWS. Las comprobaciones de configuración y aritmética no constituyen una replicación independiente de estos resultados.
+Este documento conserva las mediciones de mTLS, NetworkPolicy, latencia y despliegues recogidas en el informe original. No se adjuntaron los archivos completos de resultados ni los scripts exactos de ejecución, y esta revisión no recreó los clústeres de AWS. Comprobar la configuración y los cálculos no equivale a reproducir estos resultados de forma independiente.
 
-El apéndice ahora es una **ilustración de laboratorio revisada** que corrige defectos concretos de los scripts y la configuración. No debe describirse como la fuente exacta de las cifras históricas. Conserve el software real, los resúmenes criptográficos de las imágenes, las políticas y los artefactos junto con las nuevas mediciones; no vuelva a etiquetar estos resultados como Istio 1.31 ni como otra versión.
+El apéndice contiene ahora un **ejemplo de laboratorio revisado** que corrige defectos concretos de los scripts y la configuración. No debe presentarse como el procedimiento exacto que produjo las cifras históricas. Para cada nueva medición, conserve las versiones del software, los digests de las imágenes, las políticas y los archivos de resultados utilizados. No atribuya estos resultados a Istio 1.31 ni a otra versión.
 
-## Resumen de la decisión
+## Resumen para la elección
 
 | Requisito | Sidecar | Ambient (L4, sin waypoint) | Ambient (L7, con waypoint) | Cilium |
 |---|---|---|---|---|
-| mTLS | Se informó que las comprobaciones STRICT pasaron | Se informó que las comprobaciones STRICT pasaron | Se informó que las comprobaciones STRICT pasaron | No se midió; la autenticación mutua de identidades y WireGuard/IPsec habilitado por separado no equivalen a un único interruptor STRICT |
-| NetworkPolicy | La regla probada para el puerto de la aplicación funcionó | El flujo probado también necesitó TCP 15008 | El flujo probado también necesitó TCP 15008 | No se midió; Cilium aplica la NetworkPolicy estándar de Kubernetes y las extensiones CiliumNetworkPolicy/de ámbito de clúster |
-| P50 informado sobre la línea base |+1.29 ms|+0.04 ms|+1.86 ms|No se midió|
-| Despliegue gradual sin ajustes |324 HTTP 503 + 2 errores no HTTP /60,000|0 HTTP 503 + 195 errores no HTTP /60,000|1,528 HTTP 503 + 84 errores no HTTP /59,913|No se midió|
-| Despliegue gradual con medidas de robustecimiento |0 errores observados /60,000|0 errores observados /60,000|648 HTTP 503 /60,000|No se midió|
+| mTLS | Las comprobaciones STRICT del informe se superaron | Las comprobaciones STRICT del informe se superaron | Las comprobaciones STRICT del informe se superaron | No medido; la autenticación mutua de identidades y el cifrado WireGuard/IPsec se habilitan por separado, no mediante un único ajuste equivalente a STRICT |
+| NetworkPolicy | La regla probada para el puerto de aplicación funcionó | El flujo probado también necesitó TCP 15008 | El flujo probado también necesitó TCP 15008 | No medido; Cilium aplica NetworkPolicy estándar de Kubernetes y las extensiones CiliumNetworkPolicy y de ámbito de clúster |
+| Diferencia de P50 respecto a la referencia, según el informe | +1.29 ms | +0.04 ms | +1.86 ms | No medido |
+| Despliegue sin ajustes | 324 HTTP 503 + 2 errores sin respuesta HTTP / 60,000 | 0 HTTP 503 + 195 errores sin respuesta HTTP / 60,000 | 1,528 HTTP 503 + 84 errores sin respuesta HTTP / 59,913 | No medido |
+| Despliegue con ajustes de cierre | 0 errores observados / 60,000 | 0 errores observados / 60,000 | 648 HTTP 503 / 60,000 | No medido |
 
-En este informe, Ambient L4 presentó una pequeña diferencia de P50 observada y menos respuestas no exitosas que Sidecar sin ajustes. Tanto Sidecar como Ambient L4 registraron cero errores en las muestras con medidas de robustecimiento. Un recuento de cero HTTP 503 no significa por sí solo que no haya habido interrupciones, y la fracción de errores observada en el waypoint no demuestra una tasa de fallos intrínseca ni prueba que la reutilización de IP haya sido la causa.
+En este informe, ambient L4 mostró una pequeña diferencia de P50 y menos resultados fallidos que sidecar sin ajustes. Tanto sidecar como ambient L4 registraron cero errores en las muestras con ajustes de cierre. Contar cero HTTP 503 no demuestra por sí solo la ausencia de interrupciones. La proporción de errores observada con waypoint tampoco establece una tasa de fallo intrínseca ni demuestra que su causa sea la reutilización de IP.
 
-Elija primero las funciones necesarias y luego valide los errores totales, la latencia, la identidad y las operaciones frente al presupuesto de la carga de trabajo. La columna de Cilium describe únicamente las capacidades documentadas; Cilium no se implementó en este ciclo de pruebas.
+Elija primero las funciones necesarias y después contraste los errores totales, la latencia, la identidad y las operaciones con el presupuesto de la carga de trabajo. La columna Cilium describe únicamente capacidades documentadas; Cilium no se desplegó en este ciclo de pruebas.
 
 ## 1. mTLS: resultados de las pruebas (EKS 1.36.2, Istio 1.30.2)
 
-El informe original menciona un clúster dedicado `mesh-isolated-test`, su propia VPC, nodos Amazon Linux 2023 arm 64 m 7g.xlarge y PeerAuthentication con ámbito de espacio de nombres en modo STRICT en los tres espacios de nombres de la malla. Se informó que las versiones de Kubernetes del plano de control y de los nodos de trabajo eran 1.36.2.
+El informe original describe un clúster dedicado `mesh-isolated-test`, con VPC propia, nodos Amazon Linux 2023 arm64 m7g.xlarge y PeerAuthentication STRICT con ámbito de namespace en los tres namespaces de la malla. Tanto el plano de control como los nodos de trabajo se indicaron como Kubernetes 1.36.2.
 
-Se registró que los intentos de comunicación en texto sin cifrar a las IP de los Pod fallaron:
+Los intentos registrados de conexión sin cifrar a la IP del Pod fallaron:
 
 ```text
 plaintext-client -> sidecar echo pod:8080  => connection reset
@@ -33,26 +33,26 @@ plaintext-client -> ambient-L4 echo:8080  => EOF
 plaintext-client -> ambient-L7 echo:8080  => EOF
 ```
 
-Las llamadas registradas dentro de la malla a los Service devolvieron HTTP 200 en los tres modos. Las cabeceras de respuesta relacionadas con Envoy fueron distintas, pero la presencia o ausencia de una cabecera no prueba el cifrado ni la ruta completa del proxy.
+Las llamadas registradas a Services desde dentro de la malla devolvieron HTTP 200 en los tres modos. Los encabezados de respuesta relacionados con Envoy variaron, pero su presencia o ausencia no demuestra el cifrado ni el recorrido completo por los proxies.
 
-Los comandos de certificados inspeccionaron los proxies que tenían o solicitaban certificados. Un proxy no es quien emite el certificado:
+Los comandos de certificados inspeccionaron los proxies que conservan o solicitan certificados. Un proxy no es el emisor del certificado:
 
 | Carga de trabajo | Proxy inspeccionado | ID SPIFFE | CA raíz |
 |---|---|---|---|
-| ambient-L4 echo | ztunnel | `spiffe://cluster.local/ns/mesh-test-ambient-l4/sa/default` | compartida |
-| ambient-L7 echo | ztunnel | `spiffe://cluster.local/ns/mesh-test-ambient-l7/sa/default` | compartida |
-| sidecar echo | istio-proxy | `spiffe://cluster.local/ns/mesh-test-sidecar/sa/default` | compartida |
+| echo de ambient-L4 | ztunnel | `spiffe://cluster.local/ns/mesh-test-ambient-l4/sa/default` | compartida |
+| echo de ambient-L7 | ztunnel | `spiffe://cluster.local/ns/mesh-test-ambient-l7/sa/default` | compartida |
+| echo de sidecar | istio-proxy | `spiffe://cluster.local/ns/mesh-test-sidecar/sa/default` | compartida |
 
 
-Los ID que se muestran son **identidades de espacio de nombres/ServiceAccount**. Los Pod echo y cliente que utilizan la misma ServiceAccount predeterminada comparten esa identidad; no son ID SPIFFE únicos por Pod. Istiod o la CA configurada proporciona los certificados de las cargas de trabajo.
+Los ID mostrados son **identidades de namespace/ServiceAccount**. Los Pods echo y cliente que usan el mismo ServiceAccount default comparten esa identidad; no son ID SPIFFE exclusivos de cada Pod. Istiod o la CA configurada proporciona los certificados de las cargas de trabajo.
 
-Los casos negativos y positivos informados concuerdan con la aplicación de STRICT para esos flujos. No demuestran la cobertura de todas las rutas, los protocolos, los orígenes o las vías de elusión del clúster. Ambient utiliza la ruta de captura de espacios de nombres de red de Istio CNI y HBONE por TCP 15008; el modo Sidecar utiliza el proxy de la carga de trabajo. Consulte la [guía de mTLS](../security/01-mtls.md) para conocer los límites de aplicación.
+Los casos fallidos y satisfactorios descritos concuerdan con la aplicación de STRICT a esos flujos. No demuestran cobertura de todas las rutas, protocolos, orígenes o mecanismos de omisión del clúster. Ambient captura el tráfico mediante Istio CNI en el namespace de red y usa HBONE sobre TCP 15008; el modo sidecar usa el proxy de la carga de trabajo. Consulte los límites de aplicación en la [guía de mTLS](../security/01-mtls.md).
 
 ## 2. NetworkPolicy: resultados de las pruebas
 
-El informe utilizó la aplicación de políticas de red de VPC CNI e identificó el agente como `v1.3.5-eksbuild.3`. No archiva la configuración/versión completa del complemento, los endpoints de las políticas ni pruebas del estado de los nodos. Conserve la versión informada en los resultados históricos.
+El informe utilizó la aplicación de políticas de red de VPC CNI e identificó al agente como `v1.3.5-eksbuild.3`. No conserva la configuración y versión completas del complemento, los endpoints de política ni pruebas del estado de los nodos. Mantenga la versión indicada al presentar resultados históricos.
 
-**Prueba registrada del puerto de entrada, después de que el autor informara haber confirmado la aplicación de la política:**
+**Prueba registrada del puerto de entrada, después de que el autor indicara haber confirmado la aplicación de la política:**
 
 | Modo | Resultado |
 |---|---|
@@ -61,7 +61,7 @@ El informe utilizó la aplicación de políticas de red de VPC CNI e identificó
 | ambient-L7 | ❌ bloqueado (`i/o timeout`) |
 
 
-**Resultado registrado después de permitir 8080 y HBONE15008:**
+**Resultado registrado después de permitir 8080 y HBONE 15008:**
 
 | Modo | Resultado |
 |---|---|
@@ -69,50 +69,50 @@ El informe utilizó la aplicación de políticas de red de VPC CNI e identificó
 | ambient-L7 | ✅ 200 OK (restablecido) |
 
 
-Estos resultados muestran la importancia de HBONE para la ruta probada. No significan que todas las políticas existentes funcionen sin cambios con Sidecar ni que permitir 15008 constituya una política Ambient completa de mínimo privilegio. Importan los selectores de origen, las rutas al waypoint, el egreso de DNS/plano de control y la implementación de CNI. La política de red ve el puerto del túnel; utilice una política adecuada de identidad/puerto para el tráfico que circula dentro del túnel.
+Estos resultados muestran la importancia de HBONE en la ruta probada. No significan que todas las políticas existentes funcionen sin cambios con sidecars ni que permitir 15008 constituya una política completa de mínimo privilegio para ambient. Importan los selectores de origen, las rutas por waypoint, las salidas hacia DNS y el plano de control y la implementación del CNI. La política de red observa el puerto del túnel; aplique políticas adecuadas de identidad y puerto al tráfico que circula dentro de él.
 
-El autor informó que recrear los Pod después de habilitar la aplicación de las políticas hizo que un control negativo surtiera efecto. Esa es una observación para la configuración informada, no una prueba de que todos los agentes actuales solo puedan asociarse durante CNI ADD o de que las políticas nunca se apliquen retroactivamente. Verifique la conciliación y la aplicación real antes de medir. La documentación actual de AWS distingue el inicio estándar, que permite el tráfico hasta que se configura la política, del inicio estricto, que necesita permisos explícitos para las dependencias necesarias.
+El autor indicó que recrear los Pods después de habilitar la aplicación de políticas hizo efectivo un control negativo. Es una observación de esa configuración, no una prueba de que todos los agentes actuales solo puedan conectarse durante CNI ADD o de que las políticas nunca se apliquen retroactivamente. Antes de medir, verifique la reconciliación y la aplicación efectiva. La documentación actual de AWS distingue el arranque estándar, que permite tráfico hasta configurar la política, del arranque estricto, que requiere permisos explícitos para las dependencias necesarias.
 
-La documentación actual de AWS admite los Pod administrados por controladores, incluidos Deployments, StatefulSets, DaemonSets y Jobs; los Pod independientes tienen limitaciones adicionales. Cilium admite por separado la NetworkPolicy estándar y sus propias CRD de políticas. No debe inferirse ninguno de esos comportamientos a partir de un resultado obtenido con otra implementación.
+La documentación actual de AWS admite Pods gestionados por controladores, incluidos Deployments, StatefulSets, DaemonSets y Jobs; los Pods independientes tienen limitaciones adicionales. Cilium admite por separado NetworkPolicy estándar y sus propios CRD de políticas. No deduzca el comportamiento de una implementación a partir de resultados obtenidos en otra.
 
 ## 3. Latencia: resultados de las pruebas (T5)
 
-El informe describe una prueba Fortio en estado estable, con una carga solicitada de 200 QPS durante 60 segundos y 16 conexiones, con 12,000 solicitudes exitosas por caso en el mismo clúster Graviton:
+El informe describe una prueba de Fortio en estado estable, con una carga solicitada de 200 QPS durante 60 segundos y 16 conexiones, que registró 12,000 solicitudes satisfactorias por caso en el mismo clúster Graviton:
 
 | Caso | P50 | P75 | P90 | P99 | P99.9 |
 |---|---|---|---|---|---|
-| sin malla (línea base) | 0.82ms | 1.33ms | 1.73ms | 1.97ms | 2.00ms |
+| no-mesh (referencia) | 0.82ms | 1.33ms | 1.73ms | 1.97ms | 2.00ms |
 | sidecar | 2.11ms | 2.60ms | 2.89ms | 3.91ms | 8.00ms |
 | ambient-L4 (sin waypoint) | 0.86ms | 1.34ms | 1.74ms | 1.98ms | 2.93ms |
 | ambient-L7 (con waypoint) | 2.68ms | 3.06ms | 3.63ms | 3.98ms | 7.67ms |
 
 
-Las diferencias de P50 informadas son 1.29 ms para Sidecar, 0.04 ms para Ambient L4 y 1.86 ms para Ambient L7. Estas restas son correctas. Se necesitan datos de variación entre ejecuciones, detalles de recursos/ubicación y el JSON real de los resultados antes de calificar una diferencia pequeña como insignificante o aplicarla al presupuesto de trading/SLO.
+Las diferencias de P50 indicadas son 1.29 ms para sidecar, 0.04 ms para ambient L4 y 1.86 ms para ambient L7. Estas restas son correctas. Antes de considerar insignificante una pequeña diferencia o aplicarla al presupuesto de una operación financiera o un SLO, se necesitan la variación entre ejecuciones, los detalles de recursos y ubicación y los JSON reales de resultados.
 
-El apéndice utiliza un comando de Fortio basado en duración. QPS solicitado × duración es el volumen de trabajo nominal ofrecido, no una garantía de recuento exacto de llamadas; utilice DurationHistogram.Count/RetCodes registrados en cada ejecución. No actualice las etiquetas históricas de versión sin volver a ejecutar el experimento y conservar sus resultados.
+El apéndice usa un comando Fortio basado en duración. Los QPS solicitados multiplicados por la duración expresan la carga nominal ofrecida; no garantizan un número exacto de llamadas. Use los valores DurationHistogram.Count/RetCodes registrados en cada ejecución. No cambie las etiquetas de versiones históricas sin repetir y conservar el experimento.
 
 
-## 4. Despliegue gradual sin interrupciones: resultados de las pruebas 503 (hallazgo principal)
+## 4. Despliegues sin interrupciones: resultados de las pruebas de 503 (hallazgo principal)
 
 ### Antecedentes
 
-La terminación de los Pod, la propagación de endpoints, el drenaje de la aplicación/el proxy, los grupos de conexiones y los tiempos de espera pueden afectar los fallos durante el despliegue gradual. La atribución original a una condición de carrera por reutilización de la IP de destino y a la falta de una notificación de ztunnel es una **hipótesis**, no una causa demostrada por los recuentos presentados. Confírmela con las marcas de respuesta del proxy, los hosts upstream reales, las líneas de tiempo de endpoints/UID de Pod y las pruebas de conexión antes de atribuir el resultado a un único mecanismo.
+La terminación de Pods, la propagación de endpoints, el cierre gradual de aplicaciones y proxies, los pools de conexiones y los tiempos de espera pueden influir en los fallos durante un despliegue. La atribución original a una condición de carrera por reutilización de la IP de destino y a la falta de notificación de ztunnel es una **hipótesis**, no una causa demostrada por los recuentos. Antes de atribuir el resultado a un mecanismo, contraste los indicadores de respuesta del proxy, los destinos upstream reales, las cronologías de endpoints y UID de Pods y las pruebas de conexiones.
 
-El informe utilizó seis réplicas de echo y un cliente Fortio en cada espacio de nombres de la malla, con una carga solicitada de 100 QPS durante 600 segundos, y reinició repetidamente el Deployment de destino. Se pretendía que los manifiestos de la aplicación coincidieran; los recursos de proxy inyectados/compartidos y la exposición real al despliegue gradual seguían siendo distintos según el modo.
+El informe utilizó seis réplicas de echo y un cliente Fortio en cada namespace de la malla, solicitó 100 QPS durante 600 segundos y reinició repetidamente el Deployment de destino. Se pretendía que los manifiestos de aplicación coincidieran, pero los recursos de proxy inyectados o compartidos y la exposición efectiva a los despliegues variaron entre modos.
 
 ### Resultados
 
-| Modo | Ciclos de despliegue gradual | Solicitudes | Recuento 503 | Tasa 503 | Resultados no HTTP (-1) | Sockets utilizados |
+| Modo | Ciclos de despliegue | Solicitudes | Cantidad de 503 | Tasa de 503 | Resultados sin respuesta HTTP (-1) | Sockets utilizados |
 |---|---|---|---|---|---|---|
 | sidecar | 42 | 60,000 | 324 | **0.5%** | 2 (0.0%) | 350 |
 | ambient-L4 (sin waypoint) | 64 | 60,000 | **0** | **0%** | 195 (0.3%) | 1,652 |
 | ambient-L7 (con waypoint) | 65 | 59,913 | 1,528 | **2.6%** | 84 (0.1%) | 2,486 |
 
 
-El artículo original también presentó este resumen anotado, no los artefactos completos legibles por máquina:
+El artículo original también incluía este resumen anotado, pero no los archivos completos en formato procesable:
 
 <details>
-<summary>Recuentos registrados (anotaciones interpretativas corregidas)</summary>
+<summary>Recuentos registrados (con las anotaciones interpretativas corregidas)</summary>
 
 ```text
 [sidecar]      42 rollouts, Sockets used: 350 (client concurrency: 16)
@@ -134,124 +134,124 @@ El artículo original también presentó este resumen anotado, no los artefactos
 
 </details>
 
-Interprete los valores teniendo presentes estos límites:
+Interprete los valores teniendo en cuenta estos límites:
 
-1. Las fracciones HTTP 503 calculadas a partir de las llamadas contabilizadas son 324/60,000 =0.54% y 1,528/59,913 ≈2.55%; la proporción entre ellas es de aproximadamente 4.72. El redondeo original de 0.5%/2.6% y la expresión «unas 5 veces» describen esta muestra, no un multiplicador intrínseco del producto.
-2. Ambient L4 tuvo 195 fallos no HTTP, por lo que cero HTTP 503 no significa cero fallos. Fortio -1 abarca resultados no HTTP; para determinar la causa específica (reset/EOF/timeout) se necesitan los errores subyacentes.
-3. La diferencia de 87 llamadas respecto de las 60,000 nominales no demuestra que 87 solicitudes iniciadas nunca se completaran. Una ejecución en modo de duración puede contabilizar menos llamadas. Conserve el valor informado de 59,913 y la latencia promedio de 50.4 ms sin inventar el estado de las solicitudes faltantes.
-4. SocketCount de Fortio describe los sockets del cliente. No mide directamente el grupo de conexiones upstream del waypoint. Dieciséis sockets coincidirían con la concurrencia configurada del cliente si se reutilizaran de forma sostenida, pero no demuestran que todas las conexiones upstream estuvieran en buen estado.
-5. Los recuentos de despliegues graduales completados en la línea base fueron 42/64/65; Ambient L7, no L4, tuvo el mayor recuento. La exposición desigual al despliegue gradual y la falta de artefactos de recursos/líneas de tiempo limitan una comparación causal.
+1. Las proporciones de HTTP 503 calculadas a partir de las llamadas contadas son 324/60,000 = 0.54% y 1,528/59,913 ≈ 2.55%; su relación es aproximadamente 4.72. Los valores originales redondeados de 0.5%/2.6% y «unas 5 veces» describen esta muestra, no un multiplicador intrínseco del producto.
+2. Ambient L4 registró 195 fallos sin respuesta HTTP, por lo que cero HTTP 503 no equivale a cero fallos. Fortio -1 agrupa resultados sin respuesta HTTP; para distinguir resets, EOF o tiempos de espera se necesitan los errores subyacentes.
+3. La diferencia de 87 llamadas respecto a las 60,000 nominales no demuestra que 87 solicitudes iniciadas quedaran sin completar. Una ejecución basada en tiempo puede contar menos llamadas. Conserve las 59,913 llamadas y la media de 50.4 ms indicadas sin inventar estados de solicitudes perdidas.
+4. SocketCount de Fortio describe sockets del cliente. No mide directamente el pool upstream del waypoint. Dieciséis sockets corresponderían a la concurrencia configurada del cliente con reutilización sostenida, pero no demostrarían que todas las conexiones upstream funcionaran correctamente.
+5. Los despliegues completados en la referencia fueron 42/64/65; ambient L7, no L4, tuvo el mayor recuento. La exposición desigual a los despliegues y la falta de archivos de recursos y cronologías limitan la comparación causal.
 
-### Seguimiento: después de reforzar el apagado gradual
+### Seguimiento: después de ajustar el cierre ordenado
 
-El informe original aplicó a todos los modos una espera preStop de 10 segundos y un período de gracia de terminación del Pod de 40 segundos. Sidecar también recibió EXIT_ON_ZERO_ACTIVE_CONNECTIONS=true y terminationDrainDuration 30s:
+El informe original aplicó un preStop de 10 segundos y un período de gracia de terminación de Pod de 40 segundos a todos los modos. Sidecar también recibió EXIT_ON_ZERO_ACTIVE_CONNECTIONS=true y terminationDrainDuration 30s:
 
-| Modo | Ciclos de despliegue gradual | Código 200 | Código 503 | Código -1 | Sockets utilizados | Latencia promedio |
+| Modo | Ciclos de despliegue | Code 200 | Code 503 | Code -1 | Sockets utilizados | Latencia media |
 |---|---|---|---|---|---|---|
-| sidecar (con medidas de robustecimiento) | 42 | 60,000 (100%) | **0** | **0** | 16 | 2.630ms |
-| ambient-L4 (con medidas de robustecimiento) | 38 | 60,000 (100%) | **0** | **0** | 395 | 1.189ms |
-| ambient-L7 (con medidas de robustecimiento) | 45 | 59,352 (98.9%) | 648 (1.1%) | **0** | 678 | 3.843ms |
+| sidecar (con ajustes) | 42 | 60,000 (100%) | **0** | **0** | 16 | 2.630ms |
+| ambient-L4 (con ajustes) | 38 | 60,000 (100%) | **0** | **0** | 395 | 1.189ms |
+| ambient-L7 (con ajustes) | 45 | 59,352 (98.9%) | 648 (1.1%) | **0** | 678 | 3.843ms |
 
 
-| Modo | Tasa de errores de la línea base | Tasa de errores con medidas de robustecimiento | Cambio |
+| Modo | Tasa de error de referencia | Tasa de error con ajustes | Cambio |
 |---|---|---|---|
-| sidecar | 0.5% 503 + 0% TCP | 0% 503 + 0% TCP | **0 HTTP 503 observados en esta muestra** |
-| ambient-L4 | 0% 503 + 0.3% TCP | 0% 503 + 0% TCP | **0 errores no HTTP observados en esta muestra** |
-| ambient-L7 | 2.6% 503 + 0.1% TCP | 1.1% 503 + 0% TCP | La tasa 503 se redujo en más de la mitad |
+| sidecar | 0.5% 503 + 0% TCP | 0% 503 + 0% TCP | **0 respuestas 503 observadas en esta muestra** |
+| ambient-L4 | 0% 503 + 0.3% TCP | 0% 503 + 0% TCP | **0 errores sin respuesta HTTP observados en esta muestra** |
+| ambient-L7 | 2.6% 503 + 0.1% TCP | 1.1% 503 + 0% TCP | La tasa de 503 se redujo en más de la mitad |
 
 
-Estas son observaciones de las muestras indicadas. En Sidecar se cambiaron **dos factores**, por lo que el resultado no puede atribuirse únicamente a preStop. Los recuentos de despliegues graduales con medidas de robustecimiento también difieren: 42/38/45. Los ajustes del apagado de la carga de trabajo mejoraron los resultados informados, pero no demuestran que los errores restantes del waypoint compartan una única causa ni que los otros dos modos siempre vayan a tener cero errores.
+Son observaciones de las muestras indicadas. En sidecar se cambiaron **dos factores**, por lo que el resultado no puede atribuirse únicamente a preStop. Los recuentos de despliegues con ajustes, 42/38/45, también difieren. Ajustar el cierre de la carga de trabajo mejoró los resultados registrados, pero no demuestra que los errores restantes del waypoint tengan una sola causa ni que los otros dos modos siempre registren cero errores.
 
-El período de gracia incluye preStop y la terminación del contenedor. Una espera de diez segundos da tiempo, pero no confirma que se haya propagado la actualización de todos los endpoints. En el código publicado de la versión 1.30.2, EXIT_ON_ZERO_ACTIVE_CONNECTIONS primero espera el período mínimo de drenaje configurado y luego consulta cada segundo las estadísticas de conexiones del listener downstream. Esa rama no utiliza el temporizador habitual terminationDrainDuration; los límites de terminación de Kubernetes y los errores de observación siguen siendo relevantes. No la describa como una salida inmediata ni como un máximo incondicional de 30 segundos.
+El período de gracia incluye preStop y la terminación del contenedor. Una espera de diez segundos da margen, pero no confirma que todas las actualizaciones de endpoints se hayan propagado. En el código publicado de 1.30.2, EXIT_ON_ZERO_ACTIVE_CONNECTIONS primero espera el período mínimo de drenaje configurado y después consulta cada segundo las estadísticas de conexiones de los listeners downstream. Esa rama no utiliza el temporizador ordinario de terminationDrainDuration; los límites de terminación de Kubernetes y los errores de observación siguen siendo relevantes. No lo describa como una salida inmediata ni como un máximo incondicional de 30 segundos.
 
-### Riesgo de usar reintentos como medida paliativa: resultados de las pruebas (T2)
+### Riesgo de usar reintentos como mitigación: resultados de las pruebas (T2)
 
-El informe original describió un servicio de pedidos con seis réplicas, un colector y un cliente, con una configuración de 20 solicitudes/s, ejecuciones de 300 segundos y una política VirtualService con tres reintentos y un tiempo de espera de dos segundos por intento. Los siguientes valores se conservan como **informados, no reproducidos de forma independiente**:
+El informe original describía un servicio order con seis réplicas, un collector y un cliente, una configuración de 20 solicitudes/s, ejecuciones de 300 segundos y una política de VirtualService con tres reintentos y dos segundos de tiempo de espera por intento. Se conservan los siguientes valores como **resultados del informe, no reproducidos de forma independiente**:
 
-| Modo | Ciclos de despliegue gradual | Solicitudes enviadas | Fallos visibles para el cliente informados | Informes duplicados (según lo informado) |
+| Modo | Ciclos de despliegue | Solicitudes enviadas | Fallos visibles para el cliente según el informe | Registros duplicados según el informe |
 |---|---|---|---|---|
-| sidecar (reintento VirtualService) | 11 | 9,135 | 15 (0.16%) | **0** |
-| ambient-L7 (reintento en waypoint) | 12 | 7,229 | 21 (0.29%) | **0** |
+| sidecar (reintentos con VirtualService) | 11 | 9,135 | 15 (0.16%) | **0** |
+| ambient-L7 (reintentos con waypoint) | 12 | 7,229 | 21 (0.29%) | **0** |
 
 
 El apéndice original no permite respaldar estas interpretaciones:
 
-- Su único cliente secuencial se ejecutaba indefinidamente, nunca imprimía estadísticas y solo incrementaba el contador de envíos al tener éxito. Con un límite de 20 iteraciones/s, una ejecución de 300 segundos no puede contabilizar 9,135 ni 7,229 iteraciones; el retraso de 0.1 segundos del servidor limita aún más la tasa alcanzada.
-- Un tiempo de espera de tres segundos para el cliente puede vencer antes de que terminen los intentos nominales: el original más tres intentos de dos segundos. Un fallo final no demuestra que se agotaran todos los reintentos.
-- Se descartaban los errores de informe del colector, mientras el servidor de pedidos devolvía 201. El reinicio del contador coincidió con un cliente que ya se estaba ejecutando, y los manifiestos de Ambient copiados seguían apuntando a los Service del espacio de nombres de Sidecar.
-- X-Request-Id es un identificador de proxy/trazado, no necesariamente un ID inmutable del comando de negocio. Un recuento de cero informes duplicados con observación incompleta no demuestra que no se haya repetido ninguna ejecución de negocio.
-- Las bajas tasas de fallos finales no demuestran que se activaran los reintentos. El informe no incluyó las rutas efectivas, los contadores de reintentos ni las entregas reales.
+- Su único cliente secuencial se ejecutaba indefinidamente, no imprimía estadísticas y solo incrementaba sent cuando había éxito. Con un límite de 20 iteraciones/s, una ejecución de 300 segundos no puede explicar 9,135 ni 7,229 iteraciones; el retraso de 0.1 segundos del servidor reduce aún más la tasa alcanzable.
+- Un tiempo de espera del cliente de tres segundos puede agotarse antes de completar el intento original más tres reintentos de dos segundos cada uno. Un fallo final no demuestra que se agotaran todos los reintentos.
+- Los errores al informar a collector se ignoraban mientras el servidor order devolvía 201. El contador se reiniciaba con un cliente ya en ejecución y los manifiestos copiados de ambient seguían apuntando a los servicios del namespace de sidecar.
+- X-Request-Id es un identificador de proxy o trazabilidad, no necesariamente un ID inmutable de comando de negocio. Un recuento cero de registros duplicados con observación incompleta no demuestra que ninguna operación de negocio se ejecutara varias veces.
+- Las bajas tasas de fallo final no demuestran que se ejecutaran reintentos. El informe no incluía rutas efectivas, contadores de reintentos ni entregas reales.
 
-El apéndice revisado limita y permite observar el controlador, utiliza un identificador de negocio independiente y trata los fallos del observador como un resultado desconocido/de error. No corrige la procedencia de las cifras antiguas. El colector en memoria no es un registro de transacciones duradero ni una implementación de idempotencia.
+El apéndice revisado limita la ejecución del cliente y permite observarla, usa un identificador de negocio independiente y trata el fallo del observador como un resultado desconocido o erróneo. No subsana la procedencia de las cifras antiguas. Su collector en memoria no es un registro transaccional duradero ni una implementación de idempotencia.
 
-### Separar los fallos sin procesar de los fallos ocultos por los reintentos
+### Separar los fallos originales de los ocultos por reintentos
 
-La selección del plano de datos mTLS y la política de reintentos HTTP son decisiones independientes. Envoy de Sidecar y Envoy del waypoint pueden reintentar solicitudes HTTP en L7; ztunnel es un [proxy L4](https://istio.io/latest/docs/ambient/architecture/data-plane/) y no puede interpretar HTTP 503 ni volver a enviar una solicitud HTTP.
+La elección del plano de datos mTLS y la política de reintentos HTTP son decisiones independientes. Envoy en sidecar y en waypoint puede reintentar solicitudes HTTP en L7; ztunnel es un [proxy L4](https://istio.io/latest/docs/ambient/architecture/data-plane/) y no puede interpretar HTTP 503 ni repetir una solicitud HTTP.
 
-Para obtener una línea base justa, establezca explícitamente attempts:0 en las rutas de escritura como POST/PUT/PATCH/DELETE y mida por separado lo siguiente:
+Para obtener una referencia comparable, establezca explícitamente attempts:0 en las rutas de escritura, como POST/PUT/PATCH/DELETE, y mida por separado:
 
-- Errores HTTP y fallos no HTTP antes de reintentar.
-- Contadores Envoy upstream_rq_retry y upstream_rq_retry_success del proxy/clúster pertinente.
-- Recuentos de entregas upstream/registros del observador, incluidas las solicitudes originales.
-- Éxitos/fallos finales del cliente y contabilización completa del cliente.
-- ID estables de comandos de negocio repetidos, fallos del observador y reinicios del observador.
+- Errores HTTP y fallos sin respuesta HTTP antes del reintento.
+- Contadores Envoy upstream_rq_retry y upstream_rq_retry_success del proxy y clúster que intervienen realmente.
+- Recuentos de entregas upstream y registros del observador, incluidas las solicitudes originales.
+- Éxitos y fallos finales del cliente y su contabilidad completa.
+- Repeticiones de ID estables de comandos de negocio, fallos del observador y reinicios del observador.
 
-| Plano de datos | Significado de mTLS/cifrado | Dónde se aplica el reintento L7 | Uso recomendado |
+| Plano de datos | Significado de mTLS/cifrado | Ubicación del reintento L7 | Uso recomendado |
 |---|---|---|---|
-| Istio sidecar | mTLS con certificado SPIFFE de la carga de trabajo | Envoy por Pod | Línea base conservadora para rutas críticas no idempotentes |
-| Istio ambient L4 | mTLS de carga de trabajo mediante HBONE entre ztunnels | Ninguno | Primer candidato cuando solo se necesitan mTLS de Istio y políticas L4 |
-| Istio ambient L7 | HBONE más Envoy del waypoint | Waypoint compartido | Añadirlo solo a los Service que necesiten enrutamiento HTTP o políticas L7 |
-| Cilium fuera de banda + WireGuard/IPsec | La autenticación mutua de identidades y el cifrado de transporte, como WireGuard/IPsec, se seleccionan por separado | Ninguno en la capa de cifrado L3/L4 | Planos de datos Cilium existentes que necesiten políticas de identidad y cifrado de red |
+| Istio sidecar | mTLS con certificados SPIFFE de la carga de trabajo | Envoy por Pod | Referencia conservadora para rutas críticas no idempotentes |
+| Istio ambient L4 | mTLS de cargas de trabajo mediante HBONE entre ztunnels | Ninguna | Primer candidato cuando solo se requieren mTLS de Istio y políticas L4 |
+| Istio ambient L7 | HBONE y Envoy en waypoint | Waypoint compartido | Añadir únicamente a servicios que necesitan enrutamiento HTTP o políticas L7 |
+| Cilium fuera de banda + WireGuard/IPsec | La autenticación mutua de identidades y el cifrado de transporte, como WireGuard/IPsec, se eligen por separado | Ninguna en la capa de cifrado L3/L4 | Planos de datos Cilium existentes que necesitan políticas de identidad y cifrado de red |
 
 
-La entrada de Cilium se refiere a su capa de autenticación/cifrado L3/L4; no significa que Cilium carezca de funciones opcionales de proxy L7. Aquí no se midió su rendimiento ni su comportamiento durante el despliegue gradual.
+La fila Cilium se refiere a su capa de autenticación y cifrado L3/L4; no significa que Cilium carezca de funciones opcionales de proxy L7. Aquí no se midieron su rendimiento ni su comportamiento durante despliegues.
 
-Cilium 1.20.1 también proporciona una versión beta independiente de [cifrado transparente con ztunnel](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), seleccionada con `encryption.type: ztunnel`. Proporciona mTLS para cargas de trabajo TCP con inscripción por espacio de nombres; ambos extremos deben estar inscritos. Excluye ClusterMesh y los Pod que utilizan la red del host, y la guía publicada advierte que las políticas L4 ordinarias no funcionan en esta ruta, salvo cuando se dirigen al puerto HBONE 15008. Se trata de una opción de despliegue distinta, con sus propios requisitos de CA/inicialización.
+Cilium 1.20.1 también ofrece una [versión beta de cifrado transparente con ztunnel](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), que se selecciona por separado con `encryption.type: ztunnel`. Proporciona mTLS TCP de cargas de trabajo mediante la inscripción de namespaces; ambos extremos deben estar inscritos. Excluye ClusterMesh y los Pods que usan la red del host. La guía publicada advierte que las políticas L4 ordinarias no funcionan en esta ruta salvo si se dirigen al puerto HBONE 15008. Es una alternativa de despliegue distinta, con sus propios requisitos de CA e inicialización.
 
 La versión beta de ztunnel no formó parte de las mediciones presentadas en este capítulo.
 
-> **Regla operativa:** si el único requisito es mTLS, valide primero Ambient L4 y añada waypoints solo a los Service que necesiten políticas L7 o enrutamiento HTTP este-oeste. Mantenga Sidecar como línea base para las rutas críticas no idempotentes cuando los errores totales de Ambient, medidos con los reintentos de escritura deshabilitados, superen el presupuesto de errores de la carga de trabajo. Los reintentos de la aplicación y la idempotencia siguen necesitando controles independientes.
+> **Regla operativa:** si mTLS es el único requisito, valide primero ambient L4 y añada waypoints solo a los servicios que necesitan políticas L7 o enrutamiento HTTP este-oeste. Mantenga sidecar como referencia para rutas críticas no idempotentes si los errores totales de ambient, medidos con los reintentos de escritura deshabilitados, superan el presupuesto de errores de la carga de trabajo. Los reintentos y la idempotencia de la aplicación también requieren controles independientes.
 
 ### Nota sobre el aislamiento de las pruebas
 
-El autor original informó de interferencias/desaparición de recursos en un clúster compartido y de un cambio del contexto actual en una estación de trabajo independiente durante un intento inicial con un clúster dedicado. No se adjunta ningún archivo forense, por lo que estos informes no identifican una causa de eliminación ni demuestran que se trate de un defecto de Istio.
+El autor original informó de interferencias y desaparición de recursos en un clúster compartido, y de un cambio de current-context en una estación de trabajo durante un primer intento con un clúster dedicado. No se adjunta un archivo de investigación, por lo que estos informes no identifican la causa de la eliminación ni establecen un defecto de Istio.
 
-El requisito útil es un aislamiento explícito: un clúster de pruebas controlado, comprobaciones del servidor/contexto/kubeconfig dedicado, un inventario completo de recursos y la conservación de los artefactos. El apéndice anterior omitía las comprobaciones del contexto mencionadas en su descripción. El procedimiento revisado las hace explícitas. Los espacios de nombres por sí solos no garantizan condiciones independientes de CPU/red o del plano de control.
+El requisito útil es un aislamiento explícito: un clúster de pruebas controlado, comprobaciones de kubeconfig, contexto y servidor dedicados, un inventario completo de recursos y conservación de los archivos de resultados. El apéndice anterior omitía las comprobaciones de contexto descritas en el relato; el procedimiento revisado las incluye. Los namespaces, por sí solos, no garantizan condiciones independientes de CPU, red o plano de control.
 
 ## 5. Recomendación: enfoque por niveles
 
-Los niveles de carga de trabajo son etiquetas de planificación, no garantías de seguridad:
+Los niveles de carga de trabajo sirven para planificar; no garantizan seguridad:
 
 | Requisito de la carga de trabajo | Candidato | Validación necesaria |
 |---|---|---|
-| Solo mTLS y políticas L4 | Empezar por Ambient L4; conservar una línea base Sidecar probada cuando corresponda | Identidad real, aplicación de NetworkPolicy/puertos internos, fallos totales y latencia |
-| Enrutamiento HTTP o autorización L7 | El waypoint adecuado, el Sidecar del cliente o un gateway | Asociación correcta de la política, configuración efectiva y presupuesto de errores de la carga de trabajo |
-| Comandos críticos no idempotentes | Cualquier plano de datos elegido, con una política explícita de reintentos de escritura y controles de corrección del lado del servidor | ID estables de negocio, idempotencia/transacciones duraderas, pruebas de pérdida de respuesta y recuperación |
-| API de lectura, notificaciones y procesamiento por lotes | Elegir según la semántica real y las funciones necesarias | Las notificaciones y el procesamiento por lotes pueden tener efectos secundarios; incluso las lecturas seguras ante reintentos pueden amplificar la carga |
+| Solo mTLS y políticas L4 | Probar primero ambient L4; conservar una referencia sidecar validada cuando corresponda | Identidad real, aplicación de NetworkPolicy y puertos internos, fallos totales y latencia |
+| Enrutamiento HTTP o autorización L7 | Waypoint, sidecar del emisor o gateway adecuados | Vinculación correcta de políticas, configuración efectiva y presupuesto de errores de la carga de trabajo |
+| Comandos críticos no idempotentes | Cualquier plano de datos elegido con política explícita de reintentos de escritura y controles de corrección en el servidor | ID de negocio estables, idempotencia y transacciones duraderas, pruebas de pérdida de respuesta y recuperación |
+| API de lectura, notificaciones y procesamiento por lotes | Elegir según la semántica real y las funciones necesarias | Las notificaciones y los lotes pueden tener efectos secundarios; incluso las lecturas que admiten reintentos pueden amplificar la carga |
 
-La coexistencia informada de tres espacios de nombres de malla es útil, pero no demuestra que todas las implementaciones mixtas, cargas de trabajo o combinaciones de políticas sean seguras.
+La coexistencia de los tres namespaces de la malla descrita en el informe es útil, pero no demuestra que todas las combinaciones de despliegues, cargas de trabajo y políticas sean seguras.
 
-### Limitaciones de L4 únicamente: ¿puedo seguir haciendo despliegues canary?
+### Limitaciones de L4: ¿se pueden hacer despliegues canary?
 
-ztunnel no proporciona enrutamiento, duplicación ni reintentos HTTP por cabecera/ruta de cada solicitud HTTP. Un gateway de entrada **administrado por Istio** puede tomar decisiones de enrutamiento L7 antes de reenviar el tráfico a los backends Ambient. Gateway API es una API, no necesariamente un Deployment de Envoy: el comportamiento depende de GatewayClass/controlador.
+ztunnel no proporciona enrutamiento por encabezado o ruta de cada solicitud HTTP, duplicación de tráfico ni reintentos HTTP. Un gateway de entrada **gestionado por Istio** puede tomar decisiones de enrutamiento L7 antes de enviar el tráfico a backends ambient. Gateway API es una API, no necesariamente un Deployment de Envoy: el comportamiento depende de GatewayClass y del controlador.
 
-Istio VirtualService puede seleccionar subconjuntos de DestinationRule; los backendRefs de HTTPRoute estándar normalmente seleccionan Service. No los describa como si fueran la misma API de subconjuntos.
+VirtualService de Istio puede seleccionar subconjuntos de DestinationRule; los backendRefs de HTTPRoute estándar suelen seleccionar Services. No los describa como una misma API de subconjuntos.
 
-Para el enrutamiento de solicitudes HTTP este-oeste, la decisión L7 debe tomarse en la ruta real del cliente/gateway/waypoint. Añadir un Sidecar únicamente al destino B no hace que un cliente Ambient L4 elija B-v 1/B-v 2 mediante una política HTTP de salida. Utilice el waypoint de B, un proxy adecuado en el lado del cliente u otro salto L7 diseñado explícitamente. La distribución a nivel de conexión L4 y las estrategias de despliegue gradual basadas en réplicas son distintas de la división HTTP por solicitud.
+Para enrutar solicitudes HTTP este-oeste, la decisión L7 debe producirse en la ruta real del emisor, gateway o waypoint. Añadir únicamente un sidecar al destino B no hace que un emisor ambient L4 elija entre B-v1 y B-v2 mediante una política HTTP de salida. Use el waypoint de B, un proxy adecuado del lado del emisor u otro salto L7 diseñado explícitamente. La distribución L4 por conexión y los despliegues basados en réplicas difieren del reparto HTTP por solicitud.
 
-Revise los requisitos reales de funciones, el comportamiento de CNI/políticas, los reintentos de escritura y las mediciones de la propia carga de trabajo. La siguiente ilustración de laboratorio recopila nuevos datos; no puede demostrar retroactivamente los hechos que faltan en el informe original.
+Revise las funciones necesarias, el comportamiento del CNI y las políticas, los reintentos de escritura y las mediciones de su propia carga de trabajo. El siguiente ejemplo de laboratorio recoge nuevas pruebas; no puede establecer retroactivamente los datos que faltan en el informe original.
 
 
-## Apéndice: reproducción de estas pruebas
+## Apéndice: reproducción de las pruebas
 
-Este es un procedimiento revisado para un seguimiento controlado, no una garantía de que al copiarlo y pegarlo se obtengan los resultados originales. Las comprobaciones locales abarcan la sintaxis, la generación de configuración y el comportamiento del cliente/observador Python. La programación en el clúster, la asociación de políticas de malla, la aplicación de CNI y la integridad de las mediciones aún deben validarse en el laboratorio real.
+Es un procedimiento revisado para una prueba posterior controlada, no una garantía de reproducir los resultados originales al copiarlo. Las comprobaciones locales abarcan sintaxis, generación de configuración y comportamiento del observador y cliente Python. La planificación en el clúster, la vinculación de políticas de malla, la aplicación del CNI y la integridad de las mediciones aún deben validarse en el laboratorio real.
 
 ### A. Aprovisionamiento del clúster (eksctl)
 
-Lo siguiente es la **entrada archivada** descrita en el informe original. Explica las opciones de nodos/red; esta auditoría no la ejecutó:
+La siguiente es la **configuración archivada** descrita en el informe original. Explica las elecciones de nodos y red; esta revisión no la ejecutó:
 
 <details>
-<summary>eksctl-cluster.yaml registrado</summary>
+<summary>eksctl-cluster.yaml registrado en el informe</summary>
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -291,13 +291,13 @@ addons:
 
 </details>
 
-La versión secundaria de Kubernetes, los complementos sin fijar y la selección actual de AMI no recrean el parche exacto del plano de control original, la imagen de los nodos ni las versiones del agente. Una disposición de prueba con subred pública/sin NAT no es una recomendación para producción; los endpoints privados, IPv 6 o el egreso basado en NAT dependen de los requisitos reales de red.
+Indicar solo la versión menor de Kubernetes, usar complementos sin versión fijada y seleccionar una AMI actual no recrea exactamente el parche original del plano de control ni las versiones de imagen de nodo y agente. Un laboratorio con subredes públicas y sin NAT no constituye una recomendación para producción. El uso de endpoints privados, IPv6 o salidas mediante NAT depende de los requisitos reales de red.
 
-Para nuevos trabajos, utilice un clúster de pruebas aprobado y aislado, y registre su ARN/endpoint de API, las versiones de los nodos/AMI/kernel, la configuración de CNI/agente y el inventario de recursos. No active políticas que antes estaban inactivas ni sustituya CRD compartidas en un clúster ajeno.
+Para las nuevas pruebas, use un clúster de laboratorio autorizado y aislado. Registre su ARN y endpoint de API, las versiones de nodos, AMI y kernel, la configuración de CNI y agentes y el inventario de recursos. No active políticas antes inactivas ni sustituya CRD compartidos en otro clúster.
 
-### B. Instalación de Istio (CRD de Gateway API + perfil ambient)
+### B. Instalación de Istio (CRD de Gateway API y perfil ambient)
 
-Configure estos valores a partir del registro del clúster previsto. Los auxiliares seleccionan explícitamente el kubeconfig/contexto y vuelven a comprobar la asignación del servidor de API:
+Obtenga estos valores del registro del clúster que pretende usar. Las funciones auxiliares seleccionan explícitamente kubeconfig y contexto y vuelven a comprobar su asociación con el servidor de API:
 
 ```bash
 set -euo pipefail
@@ -332,9 +332,9 @@ check_mesh_context
 mkdir -p "$RUN_DIR"
 ```
 
-Esto evita depender del valor del contexto actual compartido; no protege contra todos los cambios simultáneos del clúster o las credenciales. Mantenga bajo control el archivo dedicado y conserve la identidad del clúster verificada.
+Esto evita depender del valor compartido de current-context; no protege contra todos los cambios concurrentes de clúster o credenciales. Controle el archivo dedicado y conserve la identidad verificada del clúster.
 
-La versión informada fue Istio 1.30.2. La afirmación del apéndice original sobre la compatibilidad con Gateway API 1.1.0 no estaba respaldada por un archivo del paquete instalado. Las dependencias/conformidad de la versión publicada 1.30.2 usan 1.5.1. Para los casos revisados con Gateway/HTTPRoute, utilice el paquete estándar correspondiente después de comprobar los demás controladores instalados; no considere que la entrada más reciente del catálogo demuestra compatibilidad.
+La versión indicada fue Istio 1.30.2. La afirmación de compatibilidad con Gateway API 1.1.0 del apéndice original no estaba respaldada por un archivo del paquete instalado. Las dependencias y pruebas de conformidad publicadas de 1.30.2 utilizan 1.5.1. Para los casos revisados de Gateway/HTTPRoute, use el paquete estándar correspondiente tras comprobar los demás controladores instalados. La última entrada de un catálogo no demuestra compatibilidad.
 
 ```bash
 # Only for a new dedicated lab needing this compatible bundle.
@@ -344,7 +344,7 @@ imesh manifest generate -f ambient-overlay.yaml > "$RUN_DIR/istio-rendered.yaml"
 imesh install -f ambient-overlay.yaml
 ```
 
-Ambient L4 por sí solo no requiere un recurso waypoint. Este experimento incluye un caso L7, por lo que se necesitan recursos compatibles de Gateway API antes de crear el waypoint. Utilice la versión prevista y adecuada de la CLI de Istio y una ruta de actualización compatible; no actualice silenciosamente una prueba histórica a una nueva versión.
+Ambient L4 por sí solo no requiere un recurso waypoint. Este experimento incluye un caso L7, por lo que necesita recursos Gateway API compatibles antes de crear el waypoint. Use la CLI y versión de Istio previstas y una ruta de actualización admitida; no actualice silenciosamente una prueba histórica a otra versión.
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -386,9 +386,9 @@ spec:
                   - arm64
 ```
 
-La afinidad arm 64 de CNI, ztunnel e Istiod de esta capa adicional se comprobó en una representación sin conexión, nativa de la versión 1.30.2. Una representación no es una prueba de despliegue.
+La afinidad arm64 para CNI, ztunnel e Istiod de este overlay se comprobó mediante renderizado sin conexión de la versión nativa 1.30.2. Renderizar una configuración no prueba su despliegue.
 
-### C. Manifiestos de espacio de nombres y cargas de trabajo
+### C. Manifiestos de namespaces y cargas de trabajo
 
 ```yaml
 apiVersion: v1
@@ -418,10 +418,10 @@ metadata:
     istio.io/dataplane-mode: ambient
 ```
 
-La siguiente plantilla de aplicación corresponde a un caso. Cambie todos los valores metadata.namespace por el caso seleccionado y aplíquela con `-n "$NS"` explícito para que se produzca un error si no coinciden. Mantenga equivalentes los ajustes de la aplicación, pero registre también la configuración distinta de los proxy inyectados/compartidos.
+La siguiente plantilla de aplicación corresponde a un caso. Cambie todos los campos metadata.namespace al caso seleccionado y aplíquela con `-n "$NS"` explícito, para que una discrepancia produzca un error. Mantenga equivalentes los ajustes de aplicación y registre también las diferencias de configuración de los proxies inyectados o compartidos.
 
 <details>
-<summary>Plantilla revisada de la carga de trabajo echo y Fortio</summary>
+<summary>Plantilla revisada de cargas de trabajo echo y Fortio</summary>
 
 ```yaml
 apiVersion: apps/v1
@@ -523,7 +523,7 @@ spec:
 
 </details>
 
-La nueva ilustración fija la versión informada de Fortio a un resumen criptográfico del registro comprobado durante esta revisión y especifica los puertos HTTP. El informe original no archivó el resumen criptográfico de la imagen ni todos los ajustes del protocolo; estas revisiones no demuestran que la ejecución anterior utilizara los mismos bytes. La imagen de Fortio está basada en scratch: utilice su binario, no dé por sentado que incluye utilidades sh/curl/cat.
+El nuevo ejemplo fija la versión indicada de Fortio a un digest del registro comprobado durante esta revisión y nombra explícitamente los puertos HTTP. El informe original no conservaba su digest de imagen ni todos los ajustes de protocolo; estos cambios no demuestran que la ejecución antigua usara los mismos bytes. La imagen de Fortio se basa en scratch: use su binario, sin suponer que contiene sh, curl o cat.
 
 ### D. mTLS: PeerAuthentication (§1)
 
@@ -556,30 +556,30 @@ spec:
     mode: STRICT
 ```
 
-Para el espacio de nombres L7:
+Para el namespace L7:
 
 ```bash
 imesh waypoint apply -n mesh-test-ambient-l7 --enroll-namespace --wait
 kmesh -n mesh-test-ambient-l7 get gateways.gateway.networking.k8s.io -o yaml
 ```
 
-Verifique la inyección/inscripción real de los Pod, los certificados y la ruta del tráfico del Service antes de generar carga. Rechazar texto sin cifrar dirigido directamente a la IP del Pod comprueba la aplicación L4; no demuestra que todas las llamadas posibles pasen por un waypoint o una política L7.
+Antes de aplicar carga, compruebe la inyección o inscripción real de los Pods, los certificados y la ruta de tráfico del Service. Rechazar una conexión sin cifrar directa a la IP del Pod comprueba la aplicación L4; no demuestra que todas las llamadas posibles atraviesen un waypoint o una política L7.
 
 ### E. NetworkPolicy (§2)
 
-Combine la habilitación de la política de red con la configuración existente del complemento **ya revisada**, a través de su propietario:
+Integre la habilitación de políticas de red en la configuración existente del complemento, **previamente revisada**, mediante la herramienta que la gestiona:
 
 ```json
 {"enableNetworkPolicy":"true"}
 ```
 
-Registre la versión real de CNI/agente y el modo de inicio estándar/estricto. No sustituya a ciegas otros ajustes del complemento por una actualización de un solo campo y OVERWRITE. Compruebe los endpoints de política generados y el tráfico de control negativo después de la conciliación. Si la configuración instalada lo requiere, recree los Pod de prueba previstos; la observación histórica no es una regla universal de falta de aplicación retroactiva.
+Registre las versiones reales de CNI y agente y el modo de arranque estándar o estricto. No sustituya a ciegas otros ajustes del complemento mediante una actualización de un solo campo y OVERWRITE. Compruebe los endpoints de política generados y el tráfico del control negativo después de la reconciliación. Recree los Pods de prueba previstos si la configuración instalada lo requiere; la observación histórica no es una regla universal de ausencia de retroactividad.
 
 ```bash
 kmesh -n "$NS" get policyendpoints.networking.k8s.aws
 ```
 
-Las pruebas 1 y 2 son alternativas sucesivas para la misma carga de trabajo/nombre de política seleccionados:
+La Prueba 1 y la Prueba 2 son alternativas sucesivas para la misma carga de trabajo seleccionada y el mismo nombre de política:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -619,12 +619,12 @@ spec:
       port: 15008
 ```
 
-Aplique cada una en el espacio de nombres del caso seleccionado. Estas reglas de puertos, que no restringen el origen de forma deliberada, son un experimento de alcanzabilidad, no un aislamiento completo entre tenants. Otras políticas seleccionadas se combinan con ellas. Pruebe los requisitos reales de DNS, plano de control, origen y puerto/identidad interno, en lugar de dar por sentado que permitir un solo puerto del túnel conserva todos los límites de la política original.
+Aplique cada política en el namespace del caso seleccionado. Estas reglas de puerto sin restricciones de origen son deliberadamente un experimento de conectividad, no un aislamiento completo de tenants. Las demás políticas seleccionadas se combinan con ellas. Pruebe los requisitos reales de DNS, plano de control, origen y puertos internos o identidad; permitir un puerto de túnel no garantiza conservar todos los límites de las políticas originales.
 
 
-### F. Prueba de despliegue gradual + 503 (T1, §4)
+### F. Prueba de despliegue y 503 (T1, §4)
 
-Para cada caso, empiece con las cargas de trabajo listas y un directorio de artefactos nuevo. El bucle limitado que se muestra a continuación registra los intervalos de despliegue gradual junto con los resultados reales de Fortio. Su inicio no es una barrera atómica con el generador de carga: utilice las marcas de tiempo para identificar el período de exposición coincidente, incluido un despliegue que termine después de que cese la carga.
+Para cada caso, comience con las cargas de trabajo listas y un directorio nuevo de resultados. El bucle limitado siguiente registra los intervalos de despliegue junto con los resultados reales de Fortio. Su inicio no constituye una barrera atómica con el generador de carga: use las marcas de tiempo para identificar la exposición coincidente, incluido cualquier despliegue que termine después de que cese la carga.
 
 ```bash
 # Run after loading the context helpers above. Requires GNU timeout.
@@ -669,9 +669,9 @@ jq -e '.DurationHistogram.Count > 0 and (.RetCodes | type == "object")' \
   "$RUN_DIR/fortio.json" >/dev/null
 ```
 
-Conserve el JSON de resultados, ambos registros de salida de error, los intervalos de despliegue gradual, las líneas de tiempo de Pod/endpoints y la configuración del proxy. Si se agota el tiempo o falla el despliegue gradual, la ejecución queda incompleta; no trate silenciosamente los resultados parciales como una muestra válida. `SocketCount` mide los sockets del lado del cliente de Fortio.
+Conserve el JSON de resultados, ambos registros stderr, los intervalos de despliegue, las cronologías de Pods y endpoints y la configuración de proxy. Un tiempo de espera agotado o un despliegue fallido deja incompleta la ejecución; no considere silenciosamente un resultado parcial como una muestra válida. `SocketCount` mide los sockets del lado cliente de Fortio.
 
-Para el seguimiento, combine el fragmento adecuado que aparece a continuación con el Deployment echo existente. Son **fragmentos de strategic merge**, no manifiestos Deployment independientes: el primero es el cambio común de la aplicación; el segundo también modifica los ajustes de apagado del proxy Sidecar.
+Para la prueba posterior, integre el fragmento correspondiente en el Deployment echo existente. Son **fragmentos de fusión estratégica**, no manifiestos Deployment completos: el primero contiene el cambio común de aplicación y el segundo modifica también el cierre del proxy sidecar.
 
 ```yaml
 apiVersion: apps/v1
@@ -712,11 +712,11 @@ spec:
               seconds: 10
 ```
 
-Repita el experimento en un directorio de ejecución nuevo y etiquete los factores que hayan cambiado. El hook de ciclo de vida sleep de kubelet se puede utilizar en la versión de Kubernetes informada; compruebe por separado la compatibilidad con esa función en los clústeres más antiguos. El período de gracia del Pod incluye preStop. Una espera no confirma que los endpoints hayan convergido, y la ruta exit-on-zero del proxy no garantiza un tiempo máximo de drenaje fijo de 30 segundos.
+Repita el experimento con un directorio nuevo e identifique los factores modificados. El hook de ciclo de vida sleep del kubelet se puede usar en la versión indicada de Kubernetes; compruebe por separado la compatibilidad en clústeres antiguos. El período de gracia del Pod incluye preStop. Una espera no confirma la convergencia de endpoints, y la salida del proxy al llegar a cero conexiones no garantiza un máximo fijo de drenaje de 30 segundos.
 
 ### G. Prueba de latencia (T5, §3)
 
-Utilice cargas de trabajo estables, sin el bucle de despliegue gradual:
+Use cargas de trabajo estables sin el bucle de despliegue:
 
 ```bash
 # No rollout loop for this steady-state case.
@@ -733,16 +733,16 @@ jq '{Version, RequestedQPS, ActualQPS, ActualDuration,
   "$RUN_DIR/fortio-latency.json"
 ```
 
-Informe los recuentos reales, los QPS alcanzados, los códigos de error, todos los percentiles necesarios y la variación entre ejecuciones. Solicitar 200 QPS durante 60 segundos es un ajuste de carga, no una prueba de que se hayan realizado exactamente 12,000 llamadas exitosas.
+Informe de los recuentos reales, QPS alcanzados, códigos de error, todos los percentiles necesarios y la variación entre ejecuciones. Solicitar 200 QPS durante 60 segundos es un ajuste de carga, no una prueba de haber completado exactamente 12,000 llamadas satisfactorias.
 
 ### H. Observación de ejecuciones duplicadas (T2, §4)
 
-El siguiente harness de juguete revisado sustituye al cliente sin límite original y a los fallos silenciosos del observador. Registra un `Idempotency-Key` estable para cada comando lógico del cliente; las cabeceras de trazado de Envoy no se utilizan como identificador de negocio. Deliberadamente **no deduplica** los comandos ni implementa una transacción de negocio duradera.
+El siguiente entorno de prueba revisado sustituye al cliente original sin límite de ejecución y a los fallos silenciosos del observador. Registra un `Idempotency-Key` estable para cada comando lógico del cliente; no utiliza encabezados de trazabilidad de Envoy como identificador de negocio. Deliberadamente, **no elimina duplicados** ni implementa una transacción de negocio duradera.
 
-Guarde el ConfigMap como t 2-configmap.yaml:
+Guarde el ConfigMap como t2-configmap.yaml:
 
 <details>
-<summary>Cliente limitado, servidor de pedidos y observador en memoria</summary>
+<summary>Cliente con ejecución limitada, servidor order y observador en memoria</summary>
 
 ```yaml
 apiVersion: v1
@@ -899,12 +899,12 @@ data:
 
 </details>
 
-El retraso de 0.1 segundos del servidor de pedidos ocurre **antes** del registro, por lo que no es una prueba de pérdida de respuesta después de confirmar una transacción. Un timeout/error del colector devuelve 503 y deja un resultado desconocido: el observador podría haber registrado antes de que se perdiera su respuesta. En este modelo de juguete, el éxito del cliente significa que el observador confirmó la recepción; no demuestra una ejecución real de negocio exactamente una vez.
+El retraso de 0.1 segundos del servidor order ocurre **antes** del registro, por lo que no comprueba la pérdida de respuesta posterior a una transacción confirmada. Un error o tiempo de espera agotado del collector devuelve 503 y deja un resultado desconocido: el observador podría haber registrado la operación antes de perder su respuesta. El éxito del cliente significa que el observador confirmó el registro en este ejemplo, no demuestra una ejecución real de negocio exactamente una vez.
 
-Guarde los primeros cuatro recursos siguientes como t 2-servers.yaml y el Job final como order-client-job.yaml. Para cada caso, utilice un colector nuevo, sin clientes anteriores, y cambie de forma coherente todos los valores metadata.namespace. Los nombres cortos de Service mantienen las llamadas dentro del espacio de nombres seleccionado.
+Guarde los primeros cuatro recursos siguientes como t2-servers.yaml y el Job final como order-client-job.yaml. Use un collector nuevo, sin clientes anteriores, para cada caso y cambie coherentemente todos los campos metadata.namespace. Los nombres cortos de Service mantienen las llamadas dentro del namespace seleccionado.
 
 <details>
-<summary>Deployments, Service del colector y de pedidos, y Job limitado del cliente</summary>
+<summary>Deployments y Services de collector/order y Job de cliente con ejecución limitada</summary>
 
 ```yaml
 apiVersion: v1
@@ -1064,11 +1064,11 @@ spec:
 
 </details>
 
-El Job no tiene reintentos automáticos y utiliza la anotación native-sidecar para que la inyección de Sidecar seleccionada no impida que el Job termine. Esa anotación no inscribe un Pod Ambient ni habilita por sí sola la inyección de Sidecar. Verifique el Pod Job real y la inscripción del espacio de nombres. Las plantillas revisadas añaden comprobaciones de disponibilidad TCP y fijan la imagen Python a un resumen criptográfico del registro verificado durante la revisión; el informe anterior no archivó ese resumen. El comportamiento local de Python se probó con la biblioteca estándar de Python 3.9 del host; esta revisión no ejecutó el contenedor Python 3.12 ni desplegó estos recursos.
+El Job no reintenta automáticamente y usa la anotación de sidecar nativo para que una inyección de sidecar seleccionada no impida su finalización. Esa anotación no inscribe un Pod ambient ni habilita por sí sola la inyección de sidecar. Verifique el Pod real del Job y la inscripción del namespace. Las plantillas revisadas añaden comprobaciones TCP de preparación y fijan la imagen Python a un digest del registro verificado durante la revisión; el informe antiguo no conservó ese digest. El comportamiento local de Python se probó con la biblioteca estándar de Python 3.9 del host. Esta revisión no ejecutó el contenedor Python 3.12 ni desplegó estos recursos.
 
-El cliente es **secuencial**: RPS20 limita los nuevos intentos, pero no garantiza una tasa constante de 20 QPS en modo abierto. El retraso de 0.1 segundos del servicio y los fallos reducen el caudal alcanzado. DURATION_SECONDS limita el inicio de nuevas solicitudes; la última solicitud puede prolongar el tiempo transcurrido hasta su timeout. El JSON final incluye attempted/succeeded/failed y achieved_rps, con attempted = succeeded + failed.
+El cliente es **secuencial**: RPS20 limita los nuevos intentos; no garantiza una carga constante de bucle abierto de 20 QPS. El retraso de 0.1 segundos del servicio y los fallos reducen el rendimiento alcanzado. DURATION_SECONDS limita el inicio de nuevas solicitudes; la última puede prolongar la ejecución hasta su tiempo de espera. El JSON final incluye attempted/succeeded/failed y achieved_rps, con attempted = succeeded + failed.
 
-Empiece con rutas explícitas sin reintentos para el comando de pedido **y la escritura del observador**, guardadas juntas como order-no-retry.yaml:
+Comience con rutas explícitas sin reintentos tanto para el comando order **como para la escritura del observador**; guárdelas juntas en order-no-retry.yaml:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1120,7 +1120,7 @@ spec:
       attempts: 0
 ```
 
-Únicamente para un **experimento aislado de reintentos deliberadamente inseguro**, sustituya la política de pedidos por el order-retry-experiment.yaml que se muestra a continuación. Mantenga la política sin reintentos del colector. El experimento pretende revelar posibles entregas repetidas; no es una recomendación para reintentar escrituras de producción.
+Solo para un **experimento aislado con reintentos deliberadamente inseguros**, sustituya la política de order por order-retry-experiment.yaml, que se muestra a continuación. Mantenga la política sin reintentos de collector. El experimento pretende revelar posibles entregas repetidas; no recomienda reintentar escrituras en producción.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1150,9 +1150,9 @@ spec:
       retryOn: 503,reset,connect-failure
 ```
 
-Tres reintentos permiten hasta cuatro intentos. El ajuste de dos segundos por intento y el timeout de ruta de diez segundos interactúan con el tiempo de conexión/inicialización; el timeout de doce segundos del cliente proporciona una ventana de observación mayor, pero no demuestra que se hayan realizado todos los intentos. Capture la configuración real del proxy y los contadores de reintentos.
+Tres reintentos permiten hasta cuatro intentos. El tiempo de espera de dos segundos por intento y el de diez segundos de la ruta interactúan con el tiempo de conexión e inicialización. El tiempo de espera de doce segundos del cliente amplía la ventana de observación, pero no demuestra que se realizaran todos los intentos. Capture la configuración real del proxy y los contadores de reintentos.
 
-En la línea Istio 1.30 informada, el uso de VirtualService con Ambient es Alpha, y no se admite mezclarlo con la configuración de tráfico de Gateway API. No instale un HTTPRoute que compita con ella en este experimento. Compruebe las rutas efectivas en el Sidecar real del cliente o en el waypoint de destino; Ambient L4 por sí solo no puede aplicar esta política de reintentos HTTP.
+En la línea Istio 1.30 indicada, el uso de VirtualService con ambient es Alpha y no se admite combinarlo con la configuración de tráfico de Gateway API. No instale un HTTPRoute que compita en este experimento. Compruebe las rutas efectivas en el sidecar real del cliente o en el waypoint de destino; ambient L4 por sí solo no puede aplicar esta política de reintentos HTTP.
 
 ```bash
 # A fresh collector and no earlier client must be running for this case.
@@ -1184,17 +1184,17 @@ kmesh -n "$NS" exec deployment/collector -c collector -- python3 -c \
   >"$RUN_DIR/observer.json"
 ```
 
-Este controlador gestiona la configuración y la contabilización; **no** inicia el bucle de despliegue gradual de pedidos. Para un experimento con cambios continuos, coordine una versión limitada por separado de §F que tenga como objetivo deployment/order durante la ventana de 300 segundos del cliente y conserve ambas líneas de tiempo. Sin esa coordinación, el resultado es una prueba del observador en estado estable.
+Este procedimiento prepara los recursos y contabiliza los resultados; **no** inicia el bucle de despliegue de order. Para un experimento con reemplazos continuos, coordine una variante limitada de §F que apunte a deployment/order durante la ventana de 300 segundos del cliente y conserve ambas cronologías. Sin esa coordinación, el resultado es una prueba del observador en estado estable.
 
-No reinicie el observador mientras haya un cliente en ejecución. Compare los UID de los Pod del colector y los recuentos de reinicios antes y después, conserve todos los errores de pedidos/observador y utilice una retención de registros que sobreviva a la eliminación de los Pod. El comando anterior solo recupera los registros que sigan disponibles en los Pod actuales. Un reinicio del observador, la falta de registros o un error del observador invalida cualquier afirmación de detección completa de duplicados. Para investigar la seguridad real de las transacciones se necesita un registro duradero por comando y pruebas controladas de pérdida de respuesta posterior a la confirmación.
+No reinicie el observador mientras se ejecuta un cliente. Compare los UID de Pods y los recuentos de reinicios de collector antes y después, conserve todos los errores de order y del observador y use retención de registros que sobreviva a la eliminación de Pods. El comando anterior solo recupera registros todavía disponibles en los Pods actuales. Un reinicio del observador, registros ausentes o un error del observador impiden afirmar una detección completa de duplicados. Para investigar la seguridad transaccional real se necesitan un registro duradero por comando y pruebas controladas de pérdida de respuesta después de confirmar la operación.
 
-## Referencias y límites de verificación
+## Referencias y límites de la verificación
 
-- [Versión de Istio 1.30.2](https://github.com/istio/istio/releases/tag/1.30.2), [dependencias publicadas](https://github.com/istio/istio/blob/1.30.2/go.mod) e [implementación del apagado del proxy](https://github.com/istio/istio/blob/1.30.2/pkg/envoy/agent.go)
-- [Estado de las funciones L7 de Ambient en Istio 1.30](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/l7-features/index.md) y [gestión del tráfico](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/traffic-distribution/index.md)
-- [Hooks del ciclo de vida de contenedores de Kubernetes](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/) y [contenedores Sidecar nativos](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/)
-- [NetworkPolicy de Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html) y [modos de configuración/inicio](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
-- [Compatibilidad de Cilium con políticas](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/index.rst)
-- [Código fuente y uso de Fortio 1.69.4](https://github.com/fortio/fortio/tree/v1.69.4) y [compilación del contenedor](https://github.com/fortio/fortio/blob/v1.69.4/Dockerfile)
+- [Versión Istio 1.30.2](https://github.com/istio/istio/releases/tag/1.30.2), [dependencias publicadas](https://github.com/istio/istio/blob/1.30.2/go.mod) e [implementación del cierre del proxy](https://github.com/istio/istio/blob/1.30.2/pkg/envoy/agent.go)
+- [Estado de funciones L7 de ambient en Istio 1.30](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/l7-features/index.md) y [gestión de tráfico](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/traffic-distribution/index.md)
+- [Hooks de ciclo de vida de contenedores Kubernetes](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/) y [contenedores sidecar nativos](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/)
+- [NetworkPolicy en Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html) y [configuración y modos de arranque](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
+- [Compatibilidad de políticas de Cilium](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/index.rst)
+- [Código y uso de Fortio 1.69.4](https://github.com/fortio/fortio/tree/v1.69.4) y [compilación del contenedor](https://github.com/fortio/fortio/blob/v1.69.4/Dockerfile)
 
-La generación de configuración, las comprobaciones de Schema, la aritmética y las pruebas HTTP locales respaldan las correcciones concretas anteriores. No reproducen las mediciones históricas de EKS ni demuestran el rendimiento en producción, la compatibilidad con una combinación de complementos no probada o la ejecución de negocio exactamente una vez.
+La generación de configuración, las comprobaciones de esquema, los cálculos y las pruebas HTTP locales respaldan las correcciones concretas anteriores. No reproducen las mediciones históricas de EKS ni establecen rendimiento en producción, compatibilidad con combinaciones de complementos no probadas o ejecución de operaciones de negocio exactamente una vez.

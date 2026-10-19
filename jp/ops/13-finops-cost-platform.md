@@ -1,6 +1,6 @@
 # FinOpsコスト可視化プラットフォーム
 
-> **最終更新**: September 12, 2026。OpenCost 1.121.2 / chart 2.5.31、Kubecost 3.2.4、Kyverno 1.19.1。
+> **最終更新**: 2026年10月16日。OpenCost 1.121.3 / chart 2.5.33、Kubecost 3.2.4、Kyverno 1.19.1。
 > **検証**: Helmレンダリング、Kubernetesスキーマ、Terraformモックプロバイダー、ローカル費用計算、ポリシー評価。本番クラスターへのインストールや実際のAWS請求との照合を示すものではありません。
 
 < [前: イベント容量計画](./12-event-capacity-planning.md) | [目次](./README.md) | [次: Tekton Pipelines](./14-tekton-pipelines.md) >
@@ -98,13 +98,13 @@ opencost:
 helm repo add opencost https://opencost.github.io/opencost-helm-chart
 helm repo update opencost
 helm upgrade --install opencost opencost/opencost \
-  --version 2.5.31 --namespace opencost --create-namespace \
+  --version 2.5.33 --namespace opencost --create-namespace \
   -f opencost-values.yaml --wait --timeout 10m
 kubectl -n opencost get pods,pvc,svc,servicemonitor
 kubectl -n opencost port-forward service/opencost 9090:9090 9003:9003
 ```
 
-ローカルUIは`9090`、APIは`9003`を使います。`opencost.prometheus`と`opencost.cloudCost`はexporterの子ではありません。チャート2.5.31はMCPをデフォルト有効にするため、この基準設定は明示的に無効にします。MCPで費用ツールを公開するなら認証とアクセス範囲を別途設計してください。費用データMCPはドキュメント検索MCPとは別です。
+ローカルUIは`9090`、APIは`9003`を使います。`opencost.prometheus`と`opencost.cloudCost`はexporterの子ではありません。チャート2.5.33はMCPをデフォルト有効にするため、この基準設定は明示的に無効にします。MCPで費用ツールを公開するなら認証とアクセス範囲を別途設計してください。費用データMCPはドキュメント検索MCPとは別です。
 
 ### 2.3 Kubecost 3.xの選択
 
@@ -178,7 +178,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.64.0"
+      version = "= 6.69.1"
     }
   }
 }
@@ -474,7 +474,7 @@ opencost:
 kubectl -n opencost create secret generic opencost-cloud-integrations \
   --from-file=cloud-integration.json=cloud-integration.json \
   --dry-run=client -o yaml | kubectl apply -f -
-helm upgrade opencost opencost/opencost --version 2.5.31 \
+helm upgrade opencost opencost/opencost --version 2.5.33 \
   --namespace opencost -f opencost-values.yaml -f opencost-cloud-values.yaml
 ```
 
@@ -592,7 +592,7 @@ spec:
 
 ### 3.2 期間指定の配賦API
 
-OpenCost 1.121.2の`/allocation/compute`を使います。製品と版に対応する期間、集約、応答構造を確認します。`includeIdle`と`shareIdle`はブール値で、`shareIdle=weighted`は文書化されたブール形式ではありません。
+OpenCost 1.121.3の`/allocation/compute`を使います。製品と版に対応する期間、集約、応答構造を確認します。`includeIdle`と`shareIdle`はブール値で、`shareIdle=weighted`は文書化されたブール形式ではありません。
 
 ```bash
 curl --fail --silent --show-error --get \
@@ -1359,10 +1359,10 @@ CPUやメモリ使用量が低いことは、突発負荷や待機ワークロ�
 ## 8. 参考資料
 
 - [FinOps Foundationの定義](https://www.finops.org/introduction/what-is-finops/)
-- [OpenCost 1.121.2リリース](https://github.com/opencost/opencost/releases/tag/v1.121.2)
+- [OpenCost 1.121.3リリース](https://github.com/opencost/opencost/releases/tag/v1.121.3)
 - [OpenCost Helmチャート](https://github.com/opencost/opencost-helm-chart)
 - [OpenCost API](https://opencost.io/docs/integrations/api/)
-- [OpenCost AWSオーソライザーのソース](https://github.com/opencost/opencost/blob/v1.121.2/pkg/cloud/aws/authorizer.go)
+- [OpenCost AWSオーソライザーのソース](https://github.com/opencost/opencost/blob/v1.121.3/pkg/cloud/aws/authorizer.go)
 - [Kubecostチャートと移行](https://github.com/kubecost/cost-analyzer-helm-chart)
 - [AWS Data Exports](https://docs.aws.amazon.com/cur/latest/userguide/what-is-data-exports.html)
 - [Data Exports暗号化](https://docs.aws.amazon.com/cur/latest/userguide/data-protection.html)

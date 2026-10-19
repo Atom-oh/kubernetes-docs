@@ -309,11 +309,11 @@ marker は authorization ではありません。test workload と caller の sc
 aws vpc-lattice create-target-group --region "$AWS_REGION"   --cli-input-json file://target-group.json
 ```
 
-file には、実際の値を含む表示済みの完全な input が必要です。health check は `healthCheckIntervalSeconds` と `healthCheckTimeoutSeconds` を伴い config 内に置きます。この operation に top-level の `--health-check` flag はありません。作成後に実際のサポート対象 target を register します。EKS Pod IP lifecycle は、恒久的な手書き Pod IP ではなく、通常は適切な AWS Gateway API Controller により管理されるべきです。
+file には、実際の値を含む表示済みの完全な input が必要です。health check は healthCheckIntervalSeconds と healthCheckTimeoutSeconds を伴い config 内に置きます。この operation に top-level の `--health-check` flag はありません。作成後に実際のサポート対象 target を register します。EKS Pod IP lifecycle は、恒久的な手書き Pod IP ではなく、通常は適切な AWS Gateway API Controller により管理されるべきです。
 
 Lattice は自動的に healthy target を使用します。group 内のすべての target が unhealthy である場合、**fail open** してそれらに route します。単に手動削除を待つわけではありません。health check は application を修復しません。Lattice health routing は Istio の per-proxy connection-pool および outlier control とは異なります。
 
-Service `idleTimeoutSeconds` は 60～600 秒で設定可能です。これは per-route request timeout や retry budget と同じ control ではありません。一般的な勝者を決めつけるのではなく、選択した HTTP、gRPC、TLS path の connection/request limit と failure behavior を test してください。
+Service idleTimeoutSeconds は 60～600 秒で設定可能です。これは per-route request timeout や retry budget と同じ control ではありません。一般的な勝者を決めつけるのではなく、選択した HTTP、gRPC、TLS path の connection/request limit と failure behavior を test してください。
 
 ## セキュリティと Identity {#security-and-identity}
 

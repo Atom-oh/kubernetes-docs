@@ -5,7 +5,7 @@
 Este cuestionario evalúa tu comprensión de las funciones, herramientas y prácticas recomendadas de monitoreo y registro de Amazon EKS.
 
 ## Descripción general del cuestionario
-- Monitoreo de clústeres de EKS
+- Monitoreo de clústeres EKS
 - Registro de contenedores y aplicaciones
 - Recopilación y análisis de métricas de rendimiento
 - Alertas y detección de anomalías
@@ -14,37 +14,37 @@ Este cuestionario evalúa tu comprensión de las funciones, herramientas y prác
 
 ## Preguntas de opción múltiple
 
-### 1. ¿Qué principio orienta correctamente el diseño de una solución de monitoreo para EKS?
+### 1. ¿Qué principio debe guiar el diseño de una solución de monitoreo para EKS?
 
 - A. CloudWatch no puede recopilar trazas de aplicaciones.
-- B. Instalar Grafana por sí solo recopila automáticamente todas las métricas de los Pod.
-- C. Seleccionar las señales necesarias, configurar los recopiladores y las fuentes de datos propios, y verificar la entrega y la cobertura.
-- D. Instalar CloudWatch, Prometheus, Grafana y X-Ray siempre garantiza una visibilidad completa.
+- B. Instalar Grafana por sí solo recopila automáticamente todas las métricas de los Pods.
+- C. Seleccionar las señales necesarias, configurar los recolectores y fuentes de datos bajo control del equipo, y verificar la entrega y la cobertura.
+- D. Instalar CloudWatch, Prometheus, Grafana y X-Ray siempre garantiza visibilidad completa.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Seleccionar y verificar el diseño de señales, recopiladores y backends.**
+**Respuesta: C. Seleccionar y verificar el diseño de señales, recolectores y backends.**
 
 **Explicación:**
 
-Combinar herramientas puede ser útil, pero las señales necesarias y las limitaciones operativas determinan el diseño. CloudWatch admite más que las métricas básicas de infraestructura; entre otras cosas, ofrece trazas/APM de Application Signals para cargas de trabajo compatibles. Grafana puede consultar fuentes de datos de AWS y de trazas, pero la interfaz de usuario no recopila por sí sola todas las señales. Los recopiladores, la instrumentación, las identidades, los endpoints accesibles y las configuraciones compatibles deben conectarse explícitamente; ninguna lista de productos garantiza una cobertura completa.
+Una combinación de herramientas puede resultar útil, pero el diseño depende de las señales necesarias y de las restricciones operativas. CloudWatch admite más que métricas básicas de infraestructura; también ofrece trazas/APM de Application Signals en cargas de trabajo compatibles. Grafana puede consultar fuentes de datos de AWS y de trazas, pero la interfaz no recopila por sí sola todas las señales. Es necesario conectar de forma explícita los recolectores, la instrumentación, las identidades, los endpoints accesibles y las configuraciones compatibles; ninguna lista de productos garantiza una cobertura completa.
 
 **Conserva las capas útiles:**
 
 | Capa | Ejemplos de señales | Dependencia importante |
 | --- | --- | --- |
-| Infraestructura | CPU/memoria de los nodos, disco, red | Recopilador de nodos compatible y dimensiones de métricas correctas |
-| Kubernetes | Estado de los objetos, preparación, actividad de la API | Permisos del exportador/API/auditoría y targets reales |
-| Aplicación | Latencia de solicitudes, errores, métricas de negocio | Instrumentación de la aplicación y un Schema de métricas acotado |
-| Solicitudes distribuidas | Intervalos de traza y relaciones entre servicios | Propagación de contexto, muestreo y exportación correcta |
+| Infraestructura | CPU/memoria de nodos, disco, red | Recolector de nodos compatible y dimensiones de métricas correctas |
+| Kubernetes | Estado de objetos, disponibilidad, actividad de la API | Permisos de exporter/API/auditoría y destinos reales |
+| Aplicación | Latencia de solicitudes, errores, métricas de negocio | Instrumentación de la aplicación y esquema de métricas acotado |
+| Solicitudes distribuidas | Spans de trazas y relaciones entre servicios | Propagación de contexto, muestreo y exportación correcta |
 
 **Secuencia de implementación:**
 
-1. Sigue el [capítulo de referencia](../../eks/06-eks-monitoring-logging.md) para revisar el catálogo, el Schema y las identidades del complemento de CloudWatch administrado. Deben revisarse Auto Monitor de la versión 5+ y la configuración de reinicio; no añadas otro agente a cargas de trabajo ya instrumentadas sin revisar posibles conflictos.
-2. Si necesitas recopilación o consultas de Prometheus, usa los valores de KPS92.9.0 indicados en la fuente y los requisitos previos de almacenamiento preparado, Secret de Grafana y certificado de la CA de servicio de kubelet. El Operator gestiona ServiceMonitor/PrometheusRule; una instalación independiente de Prometheus no es equivalente. Comprueba los targets reales después de la instalación.
-3. Para la ruta ADOT explícita, usa el ejemplo de la fuente con Operator0.158/Collector0.50 v1beta1, configuración de tipo objeto, TLS y su ServiceAccount preparado. La versión de Collector no incluye el manifiesto de instalación de Operator. Esta ruta, que solo envía trazas, las envía a X-Ray; las aplicaciones siguen necesitando instrumentación y propagación.
-4. Para AMP, configura el endpoint de remote-write real del workspace y la identidad de escritura. Configura por separado la identidad de consulta/fuente de datos de Grafana/AMG; AMG12+ usa el complemento de AMP. Un exportador awsemf publica a través de CloudWatch, no automáticamente en AMP.
+1. Sigue el [capítulo fuente](../../eks/06-eks-monitoring-logging.md) para revisar el catálogo/esquema/identidades del complemento CloudWatch que controla el equipo. Deben revisarse la configuración de Auto Monitor versión 5+ y los reinicios; antes de instalar otro agente en cargas ya instrumentadas, comprueba los posibles conflictos.
+2. Si necesitas recopilación o consultas de Prometheus, usa los valores KPS92.9.0 de la fuente y prepara el almacenamiento, el Secret de Grafana y los requisitos previos de CA para servir kubelet. El Operator gestiona ServiceMonitor/PrometheusRule; una instalación independiente de Prometheus no es equivalente. Tras la instalación, verifica los destinos reales.
+3. Para la ruta explícita de ADOT, usa el ejemplo v1beta1 de Operator0.158/Collector0.50 de la fuente, con configuración como objeto, TLS y su ServiceAccount preparado. La versión de Collector no incluye el manifiesto de instalación de Operator. Esta ruta, solo para trazas, envía spans a X-Ray; las aplicaciones siguen necesitando instrumentación y propagación.
+4. Para AMP, configura el endpoint real de remote write del workspace y la identidad de escritura. Configura por separado la identidad de consulta/fuente de datos de Grafana/AMG; AMG12+ usa el complemento de AMP. Un exporter awsemf publica en CloudWatch, no automáticamente en AMP.
 
 **Ejemplos de rutas de datos:**
 
@@ -57,11 +57,11 @@ Metric targets ----------> Prometheus -----------------> local TSDB
 Grafana/AMG -- configured queries --> Prometheus / AMP / CloudWatch / X-Ray
 ```
 
-Estas son rutas seleccionables; no significan que todos los recopiladores exporten a todos los backends. Verifica los permisos, TLS, el descubrimiento/los selectores, los datos descartados y las consultas representativas antes de confiar en los paneles. Define las prioridades y la escalación de las alertas, y controla la cardinalidad, el muestreo y la retención; prueba por separado cualquier respuesta automatizada.
+Estas son rutas que pueden elegirse, no una afirmación de que cada recolector exporte a todos los backends. Antes de depender de los dashboards, verifica permisos, TLS, descubrimiento/selectores, datos descartados y consultas representativas. Define prioridades de alertas y escalamiento, controla la cardinalidad, el muestreo y la retención, y prueba cualquier respuesta automatizada por separado.
 
 **Ejemplo de planificación con Terraform:**
 
-El siguiente ejemplo de recursos utiliza AWS provider 6.69.1. Presupone la cuenta/Región seleccionada, un rol de workspace de Grafana existente y revisado, una versión compatible de AMG y una configuración apta de IAM Identity Center. Los recursos existentes requieren el procedimiento de importación/cambio de su propietario. El nombre del grupo de registros de la aplicación coincide con la ruta del recopilador de la fuente; no crees un segundo propietario para un grupo que ya administre un complemento u otra pila.
+El siguiente ejemplo de recursos usa AWS provider 6.69.1. Presupone la cuenta/Región elegida, un rol existente y revisado para el workspace de Grafana, una versión compatible de AMG y una configuración apta de IAM Identity Center. Los recursos existentes requieren el procedimiento de importación/cambio de su propietario. El nombre del grupo de logs de la aplicación coincide con la ruta del recolector de la fuente; no crees un segundo propietario para un grupo que ya administre un complemento u otra pila.
 
 ```hcl
 terraform {
@@ -136,33 +136,33 @@ output "grafana_workspace_id" {
 }
 ```
 
-Esto define recursos, no una ruta funcional de recopilación o inicio de sesión. Configura los permisos de consulta del rol para el ARN real del workspace, asigna usuarios/grupos, añade fuentes de datos y conecta los recopiladores con los ID/endpoints devueltos. CUSTOMER_MANAGED deja explícitamente la gestión de IAM en manos del propietario; el fragmento antiguo SERVICE_MANAGED/data_sources no demostraba que un workspace creado mediante API tuviera esos roles y conexiones. Revisa por separado los requisitos de cifrado, retención, acceso y costo. En esta auditoría no se ejecutó ningún plan/apply de Terraform, inicio de sesión ni consulta de telemetría activa.
+Esto define recursos, no una ruta funcional de recopilación o inicio de sesión. Configura los permisos de consulta del rol para el ARN real del workspace, asigna usuarios/grupos, agrega fuentes de datos y conecta los recolectores mediante los ID/endpoints devueltos. CUSTOMER_MANAGED deja explícitamente la gestión de IAM en manos del propietario; el fragmento anterior de SERVICE_MANAGED/data_sources no demostraba que un workspace creado mediante API tuviera esos roles y conexiones. Revisa por separado los requisitos de cifrado, retención, acceso y costo. En esta auditoría no se ejecutaron un plan/aplicación de Terraform, un inicio de sesión ni una consulta de telemetría en vivo.
 
-**Por qué las otras opciones son incorrectas:** A minimiza las capacidades actuales de CloudWatch; B confunde visualización con recopilación; D trata la instalación como garantía de cobertura. Los scripts personalizados aún pueden ser útiles para comprobaciones y automatización acotadas si se definen claramente su propiedad, errores y alcance.
+**Por qué las otras opciones son incorrectas:** A subestima las capacidades actuales de CloudWatch; B confunde la visualización con la recopilación; D trata la instalación como garantía de cobertura. Los scripts personalizados pueden seguir siendo útiles para automatización y comprobaciones acotadas si se definen claramente su propietario, errores y alcance.
 
 </details>
 
-### 2. ¿Qué enfoque conecta correctamente los registros de los contenedores con la retención y el análisis centralizados?
+### 2. ¿Qué enfoque conecta correctamente los logs de contenedores con la retención y el análisis centralizados?
 
-- A. Considerar que copiar manualmente y de forma periódica archivos de nodos constituye una canalización de registros completa y duradera.
+- A. Tratar las copias manuales periódicas de archivos de nodos como una canalización de logs duradera y completa.
 - B. Suponer que los archivos dentro de un contenedor siempre sobreviven a la sustitución del contenedor y del nodo.
-- C. Usar un recopilador administrado por un propietario, con el analizador del runtime, los permisos, el almacenamiento y el backend configurados correctamente.
-- D. Instalar dos recopiladores para los mismos archivos y suponer que así se garantiza una entrega sin pérdidas.
+- C. Usar un recolector bajo control del equipo, con el parser de runtime, permisos, almacenamiento y backend configurados correctamente.
+- D. Instalar dos recolectores para los mismos archivos y suponer que así se garantiza una entrega sin pérdidas.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Configurar y verificar una ruta de recopilación administrada por un propietario.**
+**Respuesta: C. Configurar y verificar una ruta de recopilación bajo control del equipo.**
 
 **Explicación:**
 
-Por lo general, las aplicaciones deben escribir registros estructurados adecuados en stdout/stderr, mientras que la plataforma proporciona la recopilación y la retención. stdout es una buena interfaz, pero no es por sí mismo un almacén centralizado y duradero. Un recopilador puede añadir análisis, filtrado, almacenamiento en búfer y enrutamiento; la rotación, los búferes finitos, la pérdida de nodos y los reintentos siguen afectando la cobertura y los duplicados. Controla el acceso, los campos sensibles y la retención en vez de afirmar que un recopilador garantiza la integridad o una entrega sin pérdidas.
+Normalmente, las aplicaciones deben escribir registros estructurados apropiados en stdout/stderr, mientras la plataforma proporciona la recopilación y la retención. stdout es una buena interfaz, pero no es por sí mismo un almacén centralizado y duradero. Un recolector puede agregar análisis sintáctico, filtrado, búferes y enrutamiento; la rotación, los búferes finitos, la pérdida de nodos y los reintentos siguen afectando la cobertura y los duplicados. Controla el acceso, los campos sensibles y la retención, en lugar de afirmar que un recolector garantiza la integridad o una entrega sin pérdidas.
 
-**Configuración básica conectada de Fluent Bit:**
+**Una base conectada de Fluent Bit:**
 
-Usa el [capítulo de referencia](../../eks/06-eks-monitoring-logging.md) en lugar de aplicar manifiestos sin relación de la rama master. Su ejemplo independiente utiliza AWS chart0.2.0/image3.4.14, ajustes nativos de cloudWatchLogs, análisis CRI, registros de nodos de solo lectura, almacenamiento/almacenamiento en búfer separados y un post-renderer de RBAC revisado. Prepara el grupo de registros real y la identidad de IAM. Si el complemento de CloudWatch ya administra Fluent Bit, usa la configuración de ese propietario en lugar de crear accidentalmente un segundo lector.
+Usa el [capítulo fuente](../../eks/06-eks-monitoring-logging.md) en vez de aplicar manifiestos ajenos de la rama master. Su ejemplo independiente usa AWS chart0.2.0/image3.4.14, configuración nativa de cloudWatchLogs, análisis CRI, logs de nodos de solo lectura, almacenamiento separado para estado/búferes y un post-renderer de RBAC revisado. Prepara el grupo de logs y la identidad IAM reales. Si el complemento CloudWatch ya controla Fluent Bit, usa la configuración de ese propietario en lugar de crear accidentalmente un segundo lector.
 
-Para distribuir también a OpenSearch, combina esta superposición de la fuente con sus valores base completos y su post-renderer, según el procedimiento de instalación/actualización del propietario:
+Para enviar también a OpenSearch, combina este overlay de la fuente con sus valores base completos y el post-renderer del procedimiento de instalación/actualización del propietario:
 
 ```yaml
 opensearch:
@@ -182,11 +182,11 @@ opensearch:
     '
 ```
 
-Sustituye el endpoint/Región por los valores inspeccionados del dominio. Los permisos SigV4, la política del dominio, la asignación de roles de FGAC y la verificación de TLS son requisitos distintos. No combines credenciales de autenticación básica con SigV4 en una misma solicitud. Cada salida tiene un comportamiento independiente de éxito/reintento; que haya éxito en CloudWatch no demuestra que la entrega a OpenSearch se haya completado. Usa plantillas de accesores de registros compatibles y un nombre alternativo para el flujo; log_stream_prefix no admite expansiones arbitrarias de estilo shell de los campos de registros de Kubernetes.
+Sustituye el endpoint/Región por los valores inspeccionados del dominio. Los permisos de SigV4, la política del dominio, el mapeo de roles FGAC y la verificación de TLS son requisitos separados. No combines credenciales de autenticación básica con SigV4 en una misma solicitud. Cada salida tiene su propio comportamiento de éxito/reintento; tener éxito en CloudWatch no demuestra que la entrega a OpenSearch funcione. Usa plantillas de accessor de registros compatibles y un nombre de stream alternativo; `log_stream_prefix` no expande arbitrariamente campos de registros como si fueran variables de shell.
 
-**Alternativa con Fluentd: contratos explícitos de complementos y entradas:**
+**Alternativa de Fluentd: contratos explícitos de plugins y entradas:**
 
-Fluentd sigue siendo una opción cuando la imagen administrada por el propietario incluye los complementos necesarios de análisis, metadatos de Kubernetes y OpenSearch. Hay que decodificar el envoltorio de containerd/CRI-O antes de tratar el cuerpo de la aplicación como JSON. Configura la entrada tail, los permisos de metadatos, el almacenamiento de posiciones y búferes por recopilador y la configuración montada; lo siguiente es solo un fragmento de salida de OpenSearch, no una instalación completa de ConfigMap/DaemonSet:
+Fluentd sigue siendo una opción si la imagen controlada por el equipo incluye el parser necesario y los plugins de metadatos de Kubernetes y OpenSearch. Antes de tratar el cuerpo de la aplicación como JSON, debe decodificarse el sobre de containerd/CRI-O. Configura la entrada tail, los permisos de metadatos, el almacenamiento de posiciones/búferes de cada recolector y la configuración montada; lo siguiente es solo un fragmento de salida de OpenSearch, no una instalación completa de ConfigMap/DaemonSet:
 
 ```text
 <match kubernetes.**>
@@ -213,13 +213,13 @@ Fluentd sigue siendo una opción cuando la imagen administrada por el propietari
 </match>
 ```
 
-Usa los campos de endpoint IRSA oficiales de fluent-plugin-opensearch y un índice fijo. Prepara las variables de entorno OPENSEARCH_URL y las del rol/archivo de token inyectadas por IRSA. logstash_format=true ignoraría index_name; las expresiones arbitrarias de índices por Pod no sustituyen un diseño de enrutamiento/retención verificado. Elige índices/alias acotados y revisa las políticas de rollover. Los búferes de archivos necesitan una ruta de almacenamiento grabable y aislada adecuada; el bloqueo/reintento aún puede perder registros sin leer tras la rotación o la pérdida de un nodo. En esta auditoría no se ejecutó la composición de complementos/entradas.
+Esto usa los campos de endpoint IRSA del plugin oficial fluent-plugin-opensearch y un índice fijo. Prepara OPENSEARCH_URL y las variables de entorno del archivo de token/rol inyectadas por IRSA. `logstash_format=true` ignora `index_name`; las expresiones arbitrarias de índice por Pod no sustituyen un diseño verificado de enrutamiento/retención. Elige índices/alias acotados y revisa las políticas de rollover. Los búferes de archivos necesitan una ruta de almacenamiento escribible y aislada; bloquear/reintentar aún puede perder logs no leídos después de una rotación o pérdida del nodo. La composición de plugin/entrada no se ejecutó en esta auditoría.
 
-**La recopilación de registros con ADOT es compatible con los componentes seleccionados:**
+**La recopilación de logs de ADOT es compatible con los componentes seleccionados:**
 
-ADOT0.50.0 incluye filelog, file_storage y awscloudwatchlogs. El exportador de CloudWatch Logs correspondiente de upstream0.158 está marcado como alfa; se trata de un ejemplo específico de versión con requisitos previos explícitos del runtime, no de una afirmación de preparación para producción. Úsalo como recopilador alternativo para el conjunto de datos seleccionado, no como duplicado accidental de Fluent Bit.
+ADOT0.50.0 incluye filelog, file_storage y awscloudwatchlogs. El exporter de CloudWatch Logs correspondiente de upstream0.158 está marcado como alpha; este es un ejemplo específico de versión con requisitos previos explícitos de runtime, no una afirmación de que esté listo para producción. Úsalo como recolector alternativo para el conjunto de datos seleccionado, no como duplicado accidental de Fluent Bit.
 
-Prepara Operator0.158, el namespace de registro y el ServiceAccount adot-logs con su rol IRSA revisado y permisos de escritura de registros de AWS. Limita la confianza a este proveedor OIDC del clúster, sub=system:serviceaccount:logging:adot-logs y aud=sts.amazonaws.com; proporciona la ruta de red necesaria para STS/Logs. El ejemplo es para nodos EC2 Linux estándar y requiere permiso de admisión para un agente de nodo root con /var/log/pods de solo lectura y un directorio de estado dedicado y grabable. El filtro de inclusión del namespace default limita los datos exportados; no convierte el montaje del host de todo el nodo en una frontera de seguridad del sistema de archivos. Revisa la ubicación/las taints de los nodos, la propiedad de los archivos y la política del namespace. Establece los valores reales de Región/grupo de registros antes del despliegue:
+Prepara Operator0.158, el namespace de registro y ServiceAccount adot-logs con su rol IRSA revisado y permisos de escritura en AWS Logs. Limita la confianza al proveedor OIDC de este clúster, sub=system:serviceaccount:logging:adot-logs y aud=sts.amazonaws.com; proporciona la ruta de red requerida para STS/Logs. El ejemplo es para nodos EC2 Linux estándar y necesita permiso de admisión para un agente de nodo root con `/var/log/pods` montado como solo lectura y un directorio de estado escribible dedicado. El filtro de inclusión del namespace predeterminado limita los datos exportados; no convierte el montaje del host en todo el nodo en una frontera de seguridad del sistema de archivos. Revisa la ubicación/taints de los nodos, la propiedad de archivos y la política del namespace. Configura los valores reales de Región/grupo de logs antes del despliegue:
 
 ```yaml
 apiVersion: opentelemetry.io/v1beta1
@@ -330,15 +330,15 @@ spec:
           exporters: [awscloudwatchlogs]
 ```
 
-El operador de contenedores procesa los envoltorios CRI/registros parciales y obtiene los metadatos del Pod a partir de log.file.path. Un analizador JSON genérico aplicado a líneas CRI sin procesar es incorrecto. El nombre del flujo proviene del nombre del nodo de la Downward API mediante la sustitución de variables de entorno de Collector, no de marcadores {pod_name}.{container_name} no compatibles.
+El operador de contenedores gestiona los sobres CRI/registros parciales y deriva los metadatos del Pod de log.file.path. Un parser JSON genérico sobre líneas CRI sin procesar es incorrecto. El nombre del stream se obtiene del nombre del nodo mediante la API Downward y la sustitución de variables del Collector, no mediante marcadores de posición no compatibles como {pod_name}.{container_name}.
 
-El exportador puede crear grupos/flujos y log_retention se aplica a los grupos creados recientemente; configura la retención de grupos existentes con el propietario del grupo de registros. Su manejo documentado de EMF puede sustituir los nombres configurados de grupo/flujo, así que limita el alcance de destino de IAM e inspecciona el formato real de los datos. Una cadena de configuración por sí sola no es una frontera de autorización.
+El exporter puede crear grupos/streams y `log_retention` se aplica a los grupos nuevos; configura la retención existente mediante el propietario del grupo de logs. El manejo EMF documentado puede anular los nombres de grupo/stream configurados, así que limita el ámbito IAM de destino e inspecciona el formato real de los datos. Una cadena de configuración no es una frontera de autorización.
 
-file_storage conserva los offsets del receptor, no todos los lotes sin exportar. El ejemplo utiliza una cola de envío en memoria y reintentos finitos; el estado de los checkpoints, los lotes y los datos de hostPath tienen comportamientos de fallo/ciclo de vida distintos. start_at=end omite el contenido existente en una lectura inicial si no hay offsets guardados. Supervisa los reintentos, la cola, los errores de descarte/almacenamiento y la rotación de nodos. No se probaron procesos de Collector, montajes, flujo de credenciales de AWS ni ingesta.
+file_storage conserva los offsets del receptor, no cada lote que aún no se exportó. El ejemplo usa una cola de envío en memoria y reintentos finitos; el estado de checkpoint, los lotes y los datos hostPath tienen comportamientos de fallo/ciclo de vida distintos. start_at=end omite el contenido existente durante la lectura inicial si no hay offsets guardados. Supervisa reintentos, errores de cola/pérdida/almacenamiento y rotación de nodos. En esta auditoría no se probaron el proceso Collector, el montaje, el flujo de credenciales de AWS ni la ingesta.
 
 **Comprobaciones de análisis e infraestructura:**
 
-Para el Schema de la fuente de Fluent Bit, inspecciona los errores estructurados con los campos reales de namespace/contenedor. El envoltorio de ADOT u otro recopilador puede generar un Schema almacenado diferente:
+Para el esquema fuente de Fluent Bit, inspecciona los errores estructurados con los campos reales de namespace/contenedor. El wrapper de ADOT u otro recolector puede producir un esquema almacenado diferente:
 
 ```
 fields @timestamp, @log, kubernetes.pod_name, data.level, data.message
@@ -348,7 +348,7 @@ fields @timestamp, @log, kubernetes.pod_name, data.level, data.message
 | limit 100
 ```
 
-Un ejemplo de inspección independiente con Terraform lee un dominio existente de OpenSearch aprobado:
+Un ejemplo independiente de inspección con Terraform consulta un dominio OpenSearch existente y aprobado:
 
 ```hcl
 terraform {
@@ -390,33 +390,33 @@ output "opensearch_domain_arn" {
 }
 ```
 
-La fuente de datos no configura la red, la política de dominio/IAM, FGAC ni la entrega. Mantén separada la administración de la ingesta, evita las contraseñas maestras en el código/estado y revisa cualquier migración de recursos/direcciones. Las consultas y pruebas de acceso requieren el entorno real; la validación de Terraform no realiza esas comprobaciones.
+La fuente de datos no configura red, IAM/política del dominio, FGAC ni entrega. Mantén separada la administración de la ingesta, evita contraseñas maestras en el código/estado y revisa cualquier migración de recursos/direcciones. Las consultas y pruebas de acceso requieren el entorno real; la validación de Terraform no las realiza.
 
-**Por qué las otras opciones son incorrectas:** La inspección manual de archivos es útil para el diagnóstico, pero no constituye una canalización centralizada completa. El ciclo de vida del contenedor/nodo y los tipos de volumen determinan qué archivos sobreviven. Los lectores duplicados pueden duplicar datos/costos y aun así fallar; el almacenamiento en búfer y los reintentos necesitan capacidad medida y pruebas de fallos.
+**Por qué las otras opciones son incorrectas:** La inspección manual de archivos es útil para diagnóstico, pero no es una canalización centralizada completa. El ciclo de vida de contenedores/nodos y los tipos de volumen determinan qué archivos sobreviven. Los lectores duplicados pueden duplicar datos/costos y aun así fallar; los búferes y reintentos requieren capacidad medida y pruebas de fallo.
 
-Referencias: [componentes de ADOT](https://github.com/aws-observability/aws-otel-collector/tree/v0.50.0), [analizador de contenedores](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.158.0/pkg/stanza/docs/operators/container.md), [exportador de CloudWatch Logs](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.158.0/exporter/awscloudwatchlogsexporter), [complemento de OpenSearch para Fluentd](https://github.com/fluent/fluent-plugin-opensearch).
+Referencias: [componentes ADOT](https://github.com/aws-observability/aws-otel-collector/tree/v0.50.0), [parser de contenedor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.158.0/pkg/stanza/docs/operators/container.md), [exporter CloudWatch Logs](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.158.0/exporter/awscloudwatchlogsexporter), [plugin OpenSearch de Fluentd](https://github.com/fluent/fluent-plugin-opensearch).
 
 </details>
 
-### 3. ¿Qué enfoque crea una ruta de alertas eficaz y verificable para EKS?
+### 3. ¿Qué enfoque crea una ruta de alertas efectiva y verificable para EKS?
 
-- A. Suponer que la revisión manual de registros garantiza una detección inmediata.
-- B. Crear una alarma de CloudWatch y suponer que cubre todos los fallos de Kubernetes/aplicaciones.
-- C. Crear un ConfigMap arbitrario de alertmanager-config y suponer que el Operator lo consume.
-- D. Seleccionar las señales necesarias, conectar las reglas de métricas/eventos con receptores autorizados y probar cada ruta de entrega.
+- A. Suponer que la revisión manual de logs garantiza una detección inmediata.
+- B. Crear una sola alarma de CloudWatch y suponer que cubre todos los fallos de Kubernetes/aplicaciones.
+- C. Crear un ConfigMap arbitrario alertmanager-config y suponer que el Operator lo consume.
+- D. Seleccionar las señales necesarias, conectar reglas de métricas/eventos con receptores autorizados y probar cada ruta de entrega.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D. Conectar y verificar las rutas de alertas necesarias.**
+**Respuesta: D. Conectar y verificar las rutas de alerta necesarias.**
 
 **Explicación:**
 
-Las alarmas de CloudWatch, Prometheus/Alertmanager y EventBridge cubren distintas necesidades de señales/enrutamiento y pueden combinarse de forma deliberada. CloudWatch también admite métricas de aplicaciones/personalizadas, mientras que Prometheus puede consumir los exportadores de AWS adecuados; no debe descartarse ninguno con una afirmación genérica de que solo cubren la infraestructura. La instalación por sí sola no establece la cobertura de métricas, los umbrales correctos, los permisos de publicación ni una entrega correcta.
+Las alarmas de CloudWatch, Prometheus/Alertmanager y EventBridge cubren necesidades distintas de señales/enrutamiento y pueden combinarse de forma deliberada. CloudWatch también admite métricas personalizadas/de aplicaciones, mientras Prometheus puede consumir exporters apropiados de AWS; no debe descartarse ninguno con una afirmación genérica de que solo sirve para infraestructura. La instalación por sí sola no establece cobertura de métricas, umbrales correctos, permisos de publicación ni entrega satisfactoria.
 
 **Las reglas de métricas deben coincidir con series y unidades reales:**
 
-El siguiente PrometheusRule usa los selectores KPS de la fuente y series reales de node-exporter/kube-state-metrics. Los cálculos de CPU y memoria disponible producen explícitamente porcentajes, por lo que un umbral de 80 tiene sentido. CrashLoopBackOff usa el motivo de espera, no cualquier reinicio; se incluye Ready=false en un Pod en estado Running, mientras que se excluyen los Pod terminales. Añade una identidad de clúster estable al combinar clústeres y comprueba si ya hay reglas equivalentes incluidas antes de desplegar duplicados:
+La PrometheusRule siguiente usa los selectores KPS de la fuente y series reales de node-exporter/kube-state-metrics. Los cálculos de CPU y memoria disponible producen explícitamente porcentajes, por lo que un umbral de 80 tiene sentido. CrashLoopBackOff usa el motivo de espera y no cualquier reinicio; se incluye Ready=false en un Pod Running, pero se excluyen los Pods terminales. Al combinar clústeres, agrega una identidad estable de clúster y antes de desplegar reglas duplicadas comprueba si ya hay reglas equivalentes incluidas en el paquete:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -464,13 +464,13 @@ spec:
         description: Inspect Ready conditions and probes; terminal Succeeded/Failed Pods are excluded from this example.
 ```
 
-Estos umbrales y tiempos de espera son ilustrativos. MemAvailable estima la disponibilidad de memoria recuperable; no es la condición MemoryPressure de kubelet ni un porcentaje de las solicitudes de los Pod. Que falten series o estén desactualizadas no significa que todo esté bien o que el uso sea cero. Supervisa por separado los fallos de scrape y la evaluación de reglas.
+Estos umbrales y tiempos de espera son ilustrativos. MemAvailable estima la memoria recuperable disponible; no es la condición MemoryPressure de kubelet ni un porcentaje de las solicitudes de los Pods. Las series ausentes u obsoletas no significan un estado saludable ni un uso de cero. Supervisa por separado los fallos de scrape y de evaluación de reglas.
 
 **Conecta la configuración real de Alertmanager:**
 
-Usa el Secret alertmanager-routing de la fuente, con la clave alertmanager.yaml, su alertmanager-values.yaml y el montaje notification-credentials. Prepara el webhook real de Slack y la clave de enrutamiento de PagerDuty Events API v2 en ese Secret. Para SNS nativo, prepara la identidad AWS del ServiceAccount real de Alertmanager con permisos de publicación limitados al topic y los permisos KMS aplicables; el rol IRSA de otro componente no se comparte automáticamente.
+Usa el Secret alertmanager-routing de la fuente, con la clave alertmanager.yaml, su alertmanager-values.yaml y el montaje notification-credentials. Prepara en ese Secret el webhook real de Slack y la clave de enrutamiento de PagerDuty Events API v2. Para SNS nativo, prepara la identidad AWS de la ServiceAccount real de Alertmanager con permiso de publicación limitado al tema y los permisos KMS aplicables; el rol IRSA de otro componente no se comparte automáticamente.
 
-Sustituye la cuenta/Región/topic SNS de ejemplo antes de usarlo. Este ejemplo completo de enrutamiento envía las alertas críticas a PagerDuty, las de advertencia a Slack y las alertas sin coincidencia a SNS; la ruta de ejemplo Watchdog se descarta a la espera de configurar por separado un monitor de heartbeat:
+Sustituye la cuenta/Región/tema SNS del ejemplo antes de usarlo. Este ejemplo de enrutamiento completo envía las alertas críticas a PagerDuty, las advertencias a Slack y las alertas sin coincidencia a SNS; la ruta Watchdog de ejemplo se descarta mientras no haya un monitor de heartbeat configurado por separado:
 
 ```yaml
 global:
@@ -518,18 +518,18 @@ receivers:
     description: '{{ .CommonLabels.alertname }}'
 ```
 
-El receptor predeterminado es una alternativa, no una distribución automática cuando coincide una ruta secundaria. Configura continue/rutas hermanas explícitas solo cuando se necesite una distribución intencionada. Valida el archivo completo con el amtool correspondiente y prueba las etiquetas de las rutas. No se necesita ningún servicio sns-forwarder indefinido ni un ConfigMap con credenciales.
+El receptor predeterminado es una alternativa, no un fan-out automático cuando coincide una ruta hija. Configura `continue`/rutas hermanas explícitas solo si el fan-out intencionado lo requiere. Valida el archivo completo con el amtool correspondiente y prueba las etiquetas de ruta. No hace falta un servicio sns-forwarder no definido ni un ConfigMap que contenga credenciales.
 
-**Permisos de publicación de CloudWatch y EventBridge:**
+**Permisos de publicación para CloudWatch y EventBridge:**
 
-- Para las alarmas de Container Insights, usa la métrica y las dimensiones reales de la fuente. El nombre de un grupo de nodos administrado no es necesariamente el nombre de un grupo de Auto Scaling de EC2; no inventes un valor de dimensión de AWS/EC2.
-- Un publicador de alarmas de CloudWatch necesita la política SNS apropiada para el topic. Si el topic está cifrado, AWS documenta que alias/aws/sns no es suficiente para las alarmas de CloudWatch; usa una clave KMS administrada por el cliente cuya política permita las operaciones de publicador necesarias con las restricciones adecuadas.
-- EventBridge usa eventos publicados sobre el estado de los complementos de EKS o eventos de API de CloudTrail compatibles. EKS Cluster Control Plane Health no está en el catálogo de eventos directos de EKS. Un intento de API no demuestra que la actualización haya finalizado.
-- Para un destino SNS, prepara el rol de ejecución de EventBridge o la alternativa documentada basada en una política de recursos. Comprueba los fallos de PutTargets y las métricas de entrega. La existencia del topic o una respuesta correcta de la API de reglas no demuestra que se haya entregado.
+- Para las alarmas de Container Insights, usa las métricas y dimensiones reales del capítulo fuente. El nombre de un grupo de nodos administrado no tiene por qué ser el nombre de un grupo EC2 Auto Scaling; no inventes un valor de dimensión AWS/EC2.
+- Quien publica una alarma de CloudWatch necesita la política adecuada para el tema SNS. Si el tema está cifrado, AWS documenta que alias/aws/sns no basta para las alarmas de CloudWatch; usa una clave KMS administrada por el cliente cuya política permita las operaciones de publicación requeridas con las restricciones apropiadas.
+- EventBridge usa eventos publicados de estado de complementos de EKS o eventos de API de CloudTrail compatibles. EKS Cluster Control Plane Health no está en el catálogo de eventos directos de EKS. Un intento de API no demuestra que la actualización se haya completado.
+- Para un destino SNS, prepara el rol de ejecución de EventBridge o la alternativa documentada de política de recursos. Comprueba los fallos de PutTargets y las métricas de entrega. La existencia del tema o una respuesta satisfactoria de la API de reglas no demuestra que se haya entregado.
 
 **Ejemplo de planificación con Terraform:**
 
-Este ejemplo independiente hace referencia a un topic SNS estándar existente y administrado por un propietario, y a un rol de destino preparado. Son requisitos previos las políticas del topic/clave, las suscripciones y los datos reales de ContainerInsights. La alarma de CPU de nodo usa Maximum para la serie ClusterName seleccionada, mientras que la regla de eventos del complemento abarca toda la cuenta/Región. Las acciones y la regla empiezan deshabilitadas para su revisión:
+Este ejemplo independiente hace referencia a un tema SNS estándar existente y bajo control del propietario, y a un rol de destino preparado. Las políticas del tema/clave, las suscripciones y los datos reales de ContainerInsights son requisitos previos. La alarma de CPU de nodos usa Maximum en las series ClusterName seleccionadas, mientras la regla de eventos del complemento abarca toda la cuenta/Región. Las acciones y la regla empiezan deshabilitadas para su revisión:
 
 ```hcl
 terraform {
@@ -610,13 +610,13 @@ resource "aws_cloudwatch_event_target" "sns" {
 }
 ```
 
-El ejemplo de CPU requiere dos máximos de cinco minutos que superen el umbral, no un uso continuo del 80 % durante diez minutos. Los datos faltantes no se consideran automáticamente saludables. Revisa la propiedad de los recursos, el acceso del publicador, los datos de métricas y las notificaciones esperadas antes de habilitarlo mediante el cambio controlado del propietario. Este fragmento no crea ni sustituye la política del topic, no configura suscripciones y no se planificó/aplicó en AWS.
+El ejemplo de CPU necesita dos máximos de cinco minutos que excedan el umbral, no un uso continuo del 80 % durante diez minutos. Los datos ausentes no se consideran automáticamente saludables. Antes de habilitarlo mediante el cambio controlado del propietario, revisa la propiedad de recursos, el acceso del publicador, los datos de métricas y las notificaciones esperadas. Este fragmento no crea ni reemplaza la política del tema ni configura sus suscripciones y no se planificó/aplicó en AWS.
 
 **Suscripciones SNS y procesamiento opcional con Lambda:**
 
-Las suscripciones por correo electrónico requieren confirmación. Las suscripciones de Lambda requieren permiso en la función para el topic SNS previsto; una suscripción por sí sola no concede permisos de invocación. SNS invoca Lambda de forma asíncrona para topics estándar y puede haber procesamiento duplicado. Un adaptador personalizado necesita código de entrega real, dependencias empaquetadas, credenciales protegidas, validación de entradas, idempotencia, manejo de fallos/reintentos y resultados observables.
+Las suscripciones por email requieren confirmación. Las suscripciones de Lambda requieren permiso en la función para el tema SNS previsto; la suscripción por sí sola no concede permiso de invocación. SNS invoca Lambda de forma asíncrona para los temas estándar y puede producirse procesamiento duplicado. Un adaptador personalizado necesita código de entrega real, dependencias empaquetadas, credenciales protegidas, validación de entradas, idempotencia, gestión de fallos/reintentos y resultados observables.
 
-No despliegues el antiguo controlador de ejemplo cuyas funciones de envío solo contienen pass y luego devuelven «procesado correctamente». Una respuesta con un statusCode que parece HTTP no es un acuse de recibo de notificación para una invocación asíncrona de SNS. Expón correctamente los fallos de entrega, inspecciona la forma documentada del registro SNS y no deduzcas la gravedad de subcadenas arbitrarias de AlarmName. Configura por separado los fallos de entrega de suscripciones y los fallos de ejecución de Lambda. El almacenamiento en búfer de SQS es otro diseño opcional que requiere una cola/mapa de origen de eventos reales y sus propios controles de fallos; no se deduce de un esquema de arquitectura.
+No despliegues el antiguo handler de marcador de posición, cuyas funciones de envío solo contienen pass y luego devuelven “processed successfully”. Un valor de retorno con statusCode que parece HTTP no es un acuse de recibo de notificación para una invocación asíncrona de SNS. Expón correctamente los fallos de entrega, inspecciona la forma documentada del registro SNS y no infieras la gravedad a partir de subcadenas arbitrarias de AlarmName. Configura por separado los fallos de entrega de la suscripción y los fallos de ejecución de Lambda. El almacenamiento en búfer con SQS es otro diseño opcional que requiere una cola real, un mapeo de origen de eventos y sus propios controles de fallos; nada de eso se desprende de un esquema de arquitectura.
 
 **Rutas correctamente separadas:**
 
@@ -629,39 +629,39 @@ Prometheus -> Alertmanager -- default --------> SNS
 Optional SNS subscriber -> implemented Lambda adapter -> chosen external channel
 ```
 
-Agrupa las alertas relacionadas, limita las repeticiones, define la gravedad y los plazos de respuesta explícitos, incluye evidencia e impacto, y prueba rutas representativas de activación/resolución y de fallos en un destino de prueba aprobado. Ni una cobertura completa ni una entrega correcta se derivan de instalar un conjunto de herramientas. Durante esta auditoría no se creó ni ejecutó ningún topic, suscripción, alarma, invocación de Lambda o notificación.
+Agrupa las alertas relacionadas, limita las repeticiones, define explícitamente la gravedad y los plazos de respuesta, incluye evidencia e impacto y prueba rutas representativas de activación/resolución y fallo en un destino de prueba aprobado. Instalar un conjunto de herramientas no garantiza ni una cobertura completa ni una entrega satisfactoria. En esta auditoría no se crearon ni ejecutaron un tema, una suscripción, una alarma, una invocación de Lambda ni una notificación.
 
-Referencias: [capítulo de referencia](../../eks/06-eks-monitoring-logging.md), [receptores de Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/), [eventos de EKS](https://docs.aws.amazon.com/eventbridge/latest/ref/events-ref-eks.html), [SNS/Lambda](https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html), [SNS cifrado para alarmas de CloudWatch](https://repost.aws/knowledge-center/cloudwatch-configure-alarm-sns).
+Referencias: [capítulo fuente](../../eks/06-eks-monitoring-logging.md), [receptores de Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/), [eventos de EKS](https://docs.aws.amazon.com/eventbridge/latest/ref/events-ref-eks.html), [SNS/Lambda](https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html), [SNS cifrado para alarmas de CloudWatch](https://repost.aws/knowledge-center/cloudwatch-configure-alarm-sns).
 
 </details>
 
 ### 4. ¿Qué diseño de observabilidad de aplicaciones conserva evidencia útil?
 
-- A. Considerar que la CPU del nodo por sí sola demuestra la causa de toda latencia de las aplicaciones.
-- B. Sobrescribir todos los atributos service.name entrantes con un único nombre compartido del recopilador.
-- C. Correlacionar métricas, registros y trazas seleccionados, conservando la identidad del servicio y verificando sus rutas reales.
-- D. Suponer que un muestreador head del 10 % siempre conserva todos los errores y solicitudes lentas.
+- A. Tratar el CPU del nodo por sí solo como prueba de toda causa de latencia de la aplicación.
+- B. Sobrescribir todos los atributos service.name entrantes con el nombre común del Collector.
+- C. Correlacionar métricas, logs y trazas seleccionados sin perder la identidad del servicio, y verificar sus rutas reales.
+- D. Suponer que un muestreador head del 10 % siempre conserva cada error y solicitud lenta.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Correlacionar rutas de señales verificadas sin colapsar la identidad.**
+**Respuesta: C. Correlacionar rutas de señales verificadas sin colapsar identidades.**
 
 **Explicación:**
 
-Las métricas describen tasas/distribuciones/estado de recursos, los registros añaden detalles de eventos y las trazas conectan operaciones instrumentadas. Ayudan a investigar, pero no garantizan una visibilidad completa ni demuestran la causa raíz. La generación de perfiles puede aportar evidencia de CPU/asignaciones/heap si se habilita y revisa explícitamente; no la proporciona automáticamente todo recopilador de trazas.
+Las métricas describen tasas/distribuciones/estado de recursos, los logs agregan detalles de eventos y las trazas conectan operaciones instrumentadas. Ayudan a investigar, pero no garantizan visibilidad completa ni demuestran una causa raíz. El profiling puede aportar evidencia de CPU/asignación/heap cuando se habilita y revisa de forma explícita; no todos los recolectores de trazas lo proporcionan automáticamente.
 
-**Usa el recopilador y las rutas de señales correctos:**
+**Usa el Collector y las rutas de señales correctos:**
 
-Usa la configuración de trazas solo con TLS del Operator0.158/ADOT0.50 administrado por un propietario que aparece en el capítulo de referencia, y la alternativa de registro de Q2, con alcance separado. El manifiesto de Operator proviene de su propia versión, no de un artefacto de versión de Collector. Conserva service.name en el límite de la aplicación; un procesador de recursos compartido no debe aplicar mediante upsert un único valor global por encima de order-service, payment-service y otros servicios de origen.
+Usa la configuración TLS de Operator0.158/ADOT0.50, solo para trazas y bajo control del equipo, del capítulo fuente, y la alternativa de registro de Q2, con alcance separado. El manifiesto de Operator procede de su propio release, no de un recurso del release de Collector. Mantén service.name en el límite de la aplicación; un procesador de recursos compartido no debe sobrescribir con un único valor global order-service, payment-service y otros emisores.
 
-Para las métricas de Prometheus, usa la ruta ServiceMonitor/Service conectada de la fuente o un receptor de Prometheus verificado por separado. El descubrimiento mediante anotaciones por sí solo no configura el puerto/ruta correcto, RBAC ni la distribución entre réplicas de los targets. awsemf exporta a CloudWatch, mientras que AMP requiere un endpoint real de remote-write y una identidad SigV4. No dibujes una ruta a AMP si la configuración solo tiene awsemf.
+Para las métricas de Prometheus, usa la ruta ServiceMonitor/Service conectada de la fuente o un receptor Prometheus verificado por separado. El descubrimiento basado solo en anotaciones no configura el puerto/ruta correctos, RBAC ni la distribución entre réplicas. awsemf exporta a CloudWatch, mientras AMP necesita un endpoint real de remote write y una identidad SigV4. No dibujes una ruta a AMP si la configuración solo tiene awsemf.
 
 **Ejemplo de instrumentación Java:**
 
-Una alternativa a un starter de Spring Boot es el agente Java de OpenTelemetry upstream. La versión inspeccionada es 2.31.1; prepara su JAR revisado y una aplicación/JVM compatible mediante el proceso de compilación de la aplicación. Así se evita mezclar declaraciones de Gradle y application.properties dentro de un bloque de código Java o copiar un starter 1.18-alpha no alineado. No añadas otro agente a un proceso ya instrumentado por CloudWatch Auto Monitor u otro propietario.
+Una alternativa a un starter de Spring Boot es el agente Java upstream de OpenTelemetry. La versión inspeccionada es 2.31.1; prepara su JAR revisado y una aplicación/JVM compatible mediante el proceso de compilación de la aplicación. Así se evita mezclar declaraciones Gradle y application.properties dentro de un bloque de código Java, o copiar un starter alpha 1.18 desalineado. No agregues otro agente a un proceso que ya esté instrumentado por CloudWatch Auto Monitor u otro propietario.
 
-Esta es una configuración de runtime de la aplicación, no un comando de prueba de auditoría. Selecciona trazas OTLP/HTTP para el receptor TLS de la fuente y deja desactivada la exportación de métricas/registros del SDK para estas rutas separadas. Monta la CA de confianza y conserva cualquier otra opción de inicio de JVM necesaria:
+Esta es una configuración del runtime de la aplicación, no un comando de prueba de auditoría. Selecciona trazas OTLP/HTTP para el receptor TLS de la fuente y mantiene deshabilitada la exportación de métricas/logs del SDK en estas rutas separadas. Monta la CA de confianza y conserva cualquier otra opción de inicio JVM necesaria:
 
 ```bash
 set -euo pipefail
@@ -683,11 +683,11 @@ export OTEL_TRACES_SAMPLER_ARG=0.1
 java "-javaagent:$OTEL_JAVA_AGENT_JAR" -jar "$APP_JAR"
 ```
 
-Java agent 2.x usa http/protobuf de forma predeterminada; el ejemplo explicita esa elección. Un endpoint HTTP específico de señal incluye /v1/traces. El endpoint gRPC 4317 usa otro protocolo y no puede sustituirse cambiando únicamente el puerto. Se verificaron los metadatos de versión/configuración; aquí no se ejecutó ningún agente Java, JDK ni aplicación.
+El agente Java 2.x usa http/protobuf de forma predeterminada; el ejemplo lo especifica explícitamente. Un endpoint HTTP específico de señal incluye /v1/traces. El endpoint gRPC 4317 usa otro protocolo y no puede sustituirse cambiando solo el puerto. Se verificaron los metadatos del release/configuración; aquí no se ejecutó ningún agente Java, JDK ni aplicación.
 
 **Ejemplo de instrumentación Python:**
 
-Usa el adaptador RequestTracing de la fuente con Python 3.10+ y SDK/exportador HTTP 1.44.0 alineados. Establece estos valores en el entorno de la aplicación de pagos, sustituye el nombre de clúster de ejemplo y monta la CA de confianza:
+Usa el adaptador RequestTracing de la fuente con Python 3.10+ y el SDK/exporter HTTP alineados en 1.44.0. Configura estos valores en el entorno de la aplicación de pagos, sustituyendo el nombre de clúster de ejemplo y montando la CA de confianza:
 
 ```bash
 export OTEL_SERVICE_NAME=payment-service
@@ -696,7 +696,7 @@ export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://adot-traces-collector.tracing-
 export OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE=/etc/otel/ca.crt
 ```
 
-A continuación se reproduce el adaptador para dejar explícitos el ciclo de vida y el límite de la solicitud:
+El adaptador se reproduce a continuación para explicitar el ciclo de vida y el límite de la solicitud:
 
 ```python
 import os
@@ -744,13 +744,13 @@ class RequestTracing:
         self.provider.shutdown()
 ```
 
-Crea una instancia al iniciar la aplicación, llama a handle_request desde el controlador real del framework con nombres normalizados de encabezados entrantes y la operación de negocio real, y llama a close durante el apagado ordenado. Esto no es un servidor Flask ni una implementación de pagos; no se presupone que existan app/request/jsonify/process_transaction. Propaga el contexto suministrado a las llamadas salientes reales y al trabajo asíncrono usando el mecanismo compatible del framework.
+Crea una instancia al iniciar la aplicación, llama a handle_request desde el handler real del framework con nombres de encabezados entrantes normalizados y la operación de negocio real, y llama a close durante el apagado ordenado. Esto no es un servidor Flask ni una implementación de pagos; no se supone silenciosamente que existan app/request/jsonify/process_transaction. Propaga el contexto suministrado a las llamadas salientes reales y al trabajo asíncrono mediante el mecanismo compatible del framework.
 
-La auditoría ejercitó este adaptador con la exportación del SDK deshabilitada, incluida la conservación de resultados/errores de negocio y las comprobaciones puras de propagación/muestreo. Esto no demuestra que se exportaran trazas activas ni que se desplegara un Collector.
+La auditoría probó este adaptador con la exportación del SDK deshabilitada, incluida la conservación de resultados/errores de negocio y comprobaciones puras de propagación/muestreo. Eso no demuestra exportación de spans en vivo ni un Collector desplegado.
 
-**Alinea la confianza IRSA, los permisos y el ServiceAccount:**
+**Ajusta la confianza IRSA, los permisos y la ServiceAccount:**
 
-El siguiente ejemplo independiente de Terraform coincide con la identidad tracing-demo/adot-traces del Collector de la fuente. Usa entradas declaradas y un proveedor OIDC de IAM ya existente para el emisor real del clúster. Las condiciones de confianza incluyen sub y aud. X-Ray PutTraceSegments no admite un ARN de alcance a nivel de recurso, por lo que la política usa el recurso comodín requerido, con una acción/Región restringidas y la confianza acotada. Esto no concede permisos no relacionados de CloudWatch o AMP:
+El siguiente ejemplo independiente de Terraform coincide con la identidad tracing-demo/adot-traces del Collector fuente. Usa entradas declaradas y un proveedor OIDC IAM que ya existe para el emisor real del clúster. Las condiciones de confianza incluyen sub y aud. X-Ray PutTraceSegments no admite limitar el recurso a un ARN, por lo que la política usa el comodín obligatorio con acción/Región restringidas y la confianza acotada. Esto no concede permisos no relacionados de CloudWatch o AMP:
 
 ```hcl
 terraform {
@@ -840,7 +840,7 @@ output "adot_traces_role_arn" {
 }
 ```
 
-Antes de crear el Collector, se puede crear de forma atómica un ServiceAccount nuevo y administrado por un propietario, con la anotación de su rol, en el namespace ya preparado. Los ServiceAccount/roles existentes requieren el procedimiento de actualización/importación de su propietario; no sobrescribas otra identidad ni combines una asociación de Pod Identity no relacionada:
+Antes de crear el Collector, se puede crear atómicamente una ServiceAccount nueva y bajo control propio, con la anotación de rol, en el namespace ya preparado. Las ServiceAccount/roles existentes requieren el procedimiento de actualización/importación de su propietario; no sobrescribas otra identidad ni combines una asociación de Pod Identity no relacionada:
 
 ```bash
 set -euo pipefail
@@ -860,11 +860,11 @@ print(json.dumps({
 PY
 ```
 
-Un cambio en la anotación no inyecta credenciales retroactivamente en los Pod en ejecución; revisa si es necesario realizar un rollout. Verifica el emisor/proveedor real, la audiencia del token, el rol asumido y la ruta de red. El grupo X-Ray filtra las trazas coincidentes; no instrumenta las aplicaciones ni concede permisos al recopilador. Usa la configuración de workspace/fuente de datos de Q1 en vez de duplicar un comando create de AMG incompleto. En esta auditoría no se creó ningún rol/grupo/ServiceAccount de IAM.
+Un cambio de anotación no inyecta credenciales retroactivamente en los Pods en ejecución; revisa si hace falta un rollout. Verifica el emisor/proveedor real, la audiencia del token, el rol asumido y la ruta de red. El grupo X-Ray filtra las trazas coincidentes; no instrumenta las aplicaciones ni concede permisos al Collector. Usa la configuración de workspace/fuente de datos de Q1 en vez de duplicar un comando incompleto para crear AMG. En esta auditoría no se crearon un rol/grupo IAM ni una ServiceAccount.
 
-**Browser RUM es una ruta distinta:**
+**RUM del navegador es una ruta distinta:**
 
-El cliente web de CloudWatch RUM envía datos PutRumEvents a CloudWatch RUM, no automáticamente a un receptor OTLP de ADOT. Cuando se habilita el trazado de X-Ray, puede añadir X-Amzn-Trace-Id a las solicitudes HTTP permitidas. De forma predeterminada, las trazas de cliente/servidor no están conectadas: revisa la propagación/puenteo del servidor compatible y los encabezados permitidos de CORS. Los ejemplos anteriores, que solo usan W3C, no consumen automáticamente un encabezado de X-Ray. Un cliente de navegador genérico de OpenTelemetry necesitaría su propio diseño compatible de endpoint OTLP/autenticación/CORS.
+El cliente web de CloudWatch RUM envía datos PutRumEvents a CloudWatch RUM, no automáticamente a un receptor OTLP de ADOT. Cuando se habilita el tracing de X-Ray, puede agregar X-Amzn-Trace-Id a las solicitudes HTTP permitidas. Las trazas de cliente/servidor no se conectan de forma predeterminada: revisa la propagación/puente del servidor compatible y los encabezados permitidos por CORS. Los ejemplos anteriores que solo usan W3C no consumen automáticamente un encabezado de X-Ray. Un cliente genérico de OpenTelemetry para navegador necesitaría su propio diseño compatible de endpoint/autenticación/CORS de OTLP.
 
 ```text
 Browser CloudWatch RUM client -----> CloudWatch RUM
@@ -882,21 +882,21 @@ Grafana/AMG         -> queries the configured data sources
 
 **Cobertura, muestreo y privacidad:**
 
-- Mide las distribuciones de latencia, el rendimiento, las tasas de error y la saturación con una población/período definidos. Un conjunto de trazas muestreadas no es automáticamente una distribución métrica imparcial.
-- Usa nombres de servicio acotados, rutas normalizadas, versión/entorno e identidad de clúster/namespace. Los ID de cliente/tenant y las URL de solicitudes sin procesar pueden crear problemas de cardinalidad y privacidad; no son etiquetas de métricas predeterminadas.
-- El muestreo head decide antes de conocer el resultado final de una solicitud. No puede garantizar que se conserven todos los errores/solicitudes lentas, y el muestreo tail no puede recuperar los spans descartados previamente. El muestreo tail necesita enrutamiento con afinidad de traza y búferes/ventanas de tiempo adecuados.
-- Los datos de sesión/usuario de RUM, los registros, las trazas y los perfiles requieren controles de acceso, políticas de consentimiento/recopilación y retención adecuados. Los ID de correlación son metadatos, no autenticación.
-- Las pruebas de rendimiento y la generación de perfiles complementan las señales de runtime. Estos ejemplos no afirman haber obtenido un nuevo benchmark ni resultados de rendimiento en producción.
+- Mide distribuciones de latencia, rendimiento, tasas de error y saturación con una población/ventana definidas. Un conjunto de trazas muestreadas no es automáticamente una distribución de métricas sin sesgo.
+- Usa nombres de servicios acotados, rutas normalizadas, versión/entorno e identidad de clúster/namespace. Los ID de cliente/tenant y las URL sin procesar pueden causar problemas de cardinalidad y privacidad; no son etiquetas de métricas predeterminadas.
+- El muestreo head decide antes del resultado final de la solicitud. No puede garantizar todos los errores/solicitudes lentas, y el muestreo tail no recupera spans ya descartados en etapas anteriores. El muestreo tail necesita enrutamiento afín a las trazas y búferes/ventanas de tiempo adecuados.
+- Los datos de sesión/usuario de RUM, logs, spans y perfiles requieren controles adecuados de acceso, consentimiento/política de recopilación y retención. Los ID de correlación son metadatos, no autenticación.
+- Las pruebas de rendimiento y el profiling complementan las señales de runtime. Estos ejemplos no afirman que se haya obtenido ningún benchmark ni resultado de rendimiento en producción.
 
-Referencias: [configuración del agente Java](https://opentelemetry.io/docs/zero-code/java/agent/configuration/), [configuración del SDK Java](https://opentelemetry.io/docs/languages/java/configuration/), [CloudWatch RUM/X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/xray-services-RUM.html), [capítulo de referencia](../../eks/06-eks-monitoring-logging.md).
+Referencias: [configuración del agente Java](https://opentelemetry.io/docs/zero-code/java/agent/configuration/), [configuración del SDK Java](https://opentelemetry.io/docs/languages/java/configuration/), [CloudWatch RUM/X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/xray-services-RUM.html), [capítulo fuente](../../eks/06-eks-monitoring-logging.md).
 
 </details>
 
-### 5. ¿Cómo se deben monitorear los registros del plano de control de EKS administrado por AWS?
+### 5. ¿Cómo se deben supervisar los registros del plano de control de EKS administrado por AWS?
 
 - A. Conectándose por SSH directamente a los nodos del plano de control administrado por AWS.
-- B. Configurando los tipos de registros de EKS necesarios, verificando su entrega a CloudWatch Logs y aplicando consultas/controles de acceso adecuados.
-- C. Suponiendo que un DaemonSet de nodos de trabajo puede leer el sistema de archivos del plano de control administrado.
+- B. Configurando los tipos de registro necesarios de EKS, verificando su entrega a CloudWatch Logs y aplicando consultas y controles de acceso adecuados.
+- C. Suponiendo que un DaemonSet de los nodos de trabajo puede leer el sistema de archivos del plano de control administrado.
 - D. Creando un panel de registros y suponiendo que publica automáticamente una métrica ErrorCount.
 
 <details>
@@ -906,19 +906,19 @@ Referencias: [configuración del agente Java](https://opentelemetry.io/docs/zero
 
 **Explicación:**
 
-EKS envía directamente a CloudWatch Logs de la cuenta los tipos de registros del plano de control seleccionados. Un recopilador de nodos de trabajo no es la fuente de estos registros administrados. Esto proporciona evidencia diagnóstica/de auditoría sin acceso SSH al plano de control, pero no garantiza un registro de todas las llamadas a la API ni demuestra el cumplimiento. La política de auditoría, las fases, el momento de habilitación, la ingesta y la retención determinan qué está disponible.
+EKS envía los tipos seleccionados de registros del plano de control directamente a CloudWatch Logs en la cuenta. Un recopilador de los nodos de trabajo no es la fuente de estos registros administrados. Esto aporta evidencia de diagnóstico y auditoría sin acceder al plano de control por SSH, pero no garantiza un registro de cada llamada a la API ni demuestra cumplimiento. La política y las etapas de auditoría, el momento de habilitación, la ingesta y la retención determinan qué datos están disponibles.
 
-**Tipos de registros y su alcance:**
+**Tipos de registro y su alcance:**
 
 | Tipo | Uso |
 | --- | --- |
-| api | Diagnóstico y errores del servidor de API; no es un archivo completo de solicitudes/respuestas |
-| audit | Eventos de auditoría registrados de la API de Kubernetes y campos de identidad/recurso/estado |
-| authenticator | Diagnóstico de autenticación/asignación de IAM; distingue la autenticación de la autorización de RBAC |
-| controllerManager | Diagnóstico de conciliación del controlador |
-| scheduler | Decisiones/fallos de programación y diagnósticos relacionados |
+| api | Diagnóstico y errores del servidor de API; no es un archivo completo de solicitudes y respuestas |
+| audit | Eventos de auditoría de la API de Kubernetes registrados y campos de identidad, recurso y estado |
+| authenticator | Diagnóstico de autenticación/mapeo de IAM; distingue la autenticación de la autorización de RBAC |
+| controllerManager | Diagnóstico de reconciliación del controlador |
+| scheduler | Decisiones y fallos de programación, y diagnósticos relacionados |
 
-Inspecciona primero la configuración existente del clúster. Para un cambio aprobado que active los cinco tipos, la actualización del capítulo de referencia captura un ID de actualización y comprueba el estado; sigue comprobándolo hasta que finalice correctamente y después verifica la entrega real de los registros:
+Primero inspecciona la configuración existente del clúster. Para un cambio aprobado que habilite los cinco tipos, la actualización del capítulo fuente captura un ID de actualización y consulta su estado; sigue comprobándolo hasta que finalice correctamente y luego verifica la entrega real de los registros:
 
 ```bash
 set -euo pipefail
@@ -947,11 +947,11 @@ aws eks describe-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query 'update.{ID:id,Status:status,Errors:errors}'
 ```
 
-La llamada final a DescribeUpdate comprueba el estado, no es un waiter ni una prueba de ingesta. Si solo seleccionas algunos tipos, conserva todos los tipos existentes necesarios; no copies un bloque que desactive explícitamente authenticator/controllerManager/scheduler solo para habilitar api/audit. En un clúster nuevo, incluye el registro en su configuración revisada de creación/IaC. No crees otro clúster incompleto solo para configurar el monitoreo. Los registros del controlador de EKS Capabilities usan la ruta de entrega independiente descrita en la fuente.
+La llamada final a DescribeUpdate comprueba el estado; no es una espera automática ni una prueba de ingesta. Si seleccionas solo algunos tipos, conserva todos los tipos existentes que se necesiten; no copies un bloque que deshabilite explícitamente authenticator/controllerManager/scheduler solo para habilitar api/audit. Para un clúster nuevo, incluye el registro en su configuración de creación/IaC revisada. No crees otro clúster incompleto solo para configurar la supervisión. Los registros del controlador EKS Capabilities siguen la ruta de entrega separada que se describe en la fuente.
 
-**Consulta los campos JSON reales:**
+**Consulta campos JSON reales:**
 
-Selecciona el grupo propio /aws/eks/CLUSTER/cluster y un intervalo de tiempo acotado. Ejemplo de respuestas 5xx registradas:
+Selecciona el grupo /aws/eks/CLUSTER/cluster del que eres responsable y un intervalo de tiempo acotado. Ejemplo de respuestas 5xx registradas:
 
 ```
 fields @timestamp, auditID, user.username, verb, objectRef.resource, responseStatus.code
@@ -971,11 +971,11 @@ fields @timestamp, auditID, user.username, verb, objectRef.resource, responseSta
 | limit 100
 ```
 
-Inspecciona los registros del autenticador antes de definir filtros de fallos específicos del formato. Una subcadena de fallo/denegación puede pasar por alto casos reales o coincidir con texto no relacionado, y un mensaje de autenticación de IAM por sí solo no describe todos los resultados de autorización de Kubernetes.
+Inspecciona los registros de authenticator antes de definir filtros de fallo específicos de un formato. Buscar una subcadena failed/denied puede omitir casos reales o coincidir con texto no relacionado; además, un mensaje de autenticación de IAM por sí solo no describe todos los resultados de autorización de Kubernetes.
 
 **Un panel no publica una métrica:**
 
-Un widget de Logs Insights ejecuta una consulta. Una alarma basada en una métrica personalizada necesita un publicador real, como un filtro de métricas. El siguiente ejemplo independiente de Terraform conecta un grupo de registros STANDARD, un filtro, su métrica, una alarma y un panel. Administra/importa el grupo de registros existente mediante su propietario real antes de usar esta configuración; la clave KMS y los permisos del topic SNS/publicador deben estar preparados de antemano. No crea un clúster de EKS ni una clave KMS nuevos.
+Un widget de Logs Insights ejecuta una consulta. Una alarma sobre una métrica personalizada necesita un publicador real, como un filtro de métricas. El ejemplo independiente de Terraform que sigue conecta un grupo de registros STANDARD, un filtro, su métrica, una alarma y un panel. Antes de usar esta configuración, gestiona o importa el grupo de registros existente a través de su propietario real; la clave KMS y los permisos del publicador/tópico de SNS deben estar preparados. No crea un clúster EKS ni una clave KMS nuevos.
 
 ```hcl
 terraform {
@@ -1095,17 +1095,17 @@ resource "aws_cloudwatch_dashboard" "control_plane" {
 }
 ```
 
-El filtro cuenta los nuevos registros de auditoría ResponseComplete ingeridos con responseStatus.code>=500. El nombre de métrica con prefijo del clúster distingue el clúster sin inventar una dimensión ClusterName que no existe en el JSON de auditoría. El filtro, la alarma y el widget de métricas usan exactamente el mismo namespace/nombre y no tienen dimensiones. La consulta del panel puede incluir registros antiguos, pero el filtro de métricas no rellena datos históricos. Son recuentos de eventos registrados, no una tasa de errores de API ni un total de solicitudes deduplicado; pueden producirse entregas duplicadas.
+El filtro cuenta los registros ResponseComplete de auditoría recién ingeridos cuyo responseStatus.code>=500. El nombre de métrica con prefijo del clúster distingue el clúster sin inventar una dimensión ClusterName que no existe en el JSON de auditoría. El filtro, la alarma y el widget de métricas del panel usan exactamente el mismo espacio de nombres y nombre, sin dimensiones. La consulta del panel puede abarcar registros más antiguos, pero el filtro de métricas no rellena el historial. Son recuentos de eventos registrados, no una tasa de error de API ni un total de solicitudes deduplicado; pueden producirse entregas duplicadas.
 
-Un default_value de 0 se emite cuando llegan registros, pero ninguno coincide; si no entran registros, los datos aún pueden faltar. Los filtros de métricas no pueden combinar un valor predeterminado con dimensiones. La alarma empieza intencionadamente con las acciones deshabilitadas, trata explícitamente los datos faltantes y usa un umbral ilustrativo. Verifica los nuevos datapoints de métricas, los permisos, las suscripciones y una prueba de entrega controlada antes de habilitarla.
+Se emite un valor default_value de 0 cuando llegan registros, pero ninguno coincide; si no llega ningún registro, los datos aún pueden faltar. Los filtros de métricas no pueden combinar un valor predeterminado con dimensiones. La alarma empieza intencionadamente con las acciones deshabilitadas, trata explícitamente los datos ausentes y usa un umbral ilustrativo. Antes de habilitarla, verifica nuevos puntos de datos de la métrica, permisos, suscripciones y una prueba de entrega controlada.
 
-jsonencode evita las comillas rotas de shell del comando antiguo del panel. Si usas la CLI, pasa un archivo JSON válido con --dashboard-body file://dashboard.json e inspecciona DashboardValidationMessages. PutDashboard sustituye el contenido existente; conserva los widgets y la configuración de su propietario. La validación local de HCL/JSON no ejecuta el motor de filtros/consultas de AWS.
+jsonencode evita las comillas de shell incorrectas del antiguo comando del panel. Si en su lugar usas la CLI, pasa un archivo JSON válido con --dashboard-body file://dashboard.json e inspecciona DashboardValidationMessages. PutDashboard reemplaza un cuerpo existente; conserva los widgets y la configuración de su propietario. La validación local de HCL/JSON no ejecuta el motor de consultas/filtros de AWS.
 
 **KMS y retención:**
 
-CloudWatch Logs cifra los datos de registro de forma predeterminada. Asociar una clave KMS simétrica administrada por el cliente modifica el cifrado de los datos ingeridos posteriormente; no es la primera capa de cifrado y no vuelve a cifrar los registros antiguos. Usa una clave de la Región del grupo de registros, conserva las claves/permisos antiguos mientras se necesiten los datos antiguos y distingue los permisos de asociación de los de lectura. Al desasociarla, los datos nuevos vuelven al cifrado predeterminado; deshabilitar/eliminar una clave antigua puede hacer que no se puedan leer los datos que conserva.
+CloudWatch Logs cifra los datos de registro de forma predeterminada. Asociar una clave KMS simétrica administrada por el cliente cambia el cifrado de los datos recién ingeridos; no es la primera capa de cifrado ni vuelve a cifrar registros antiguos. Usa una clave de la misma Región que el grupo de registros, conserva las claves/permisos antiguos mientras se necesiten los datos anteriores y distingue los permisos para asociar la clave de los permisos para leer. Al desasociarla, los datos nuevos vuelven al cifrado predeterminado; deshabilitar o eliminar una clave antigua puede volver ilegibles los datos que aún conserva.
 
-El servicio regional de Logs necesita permiso para usar la clave. El siguiente fragmento es solo una sentencia que el propietario de la clave debe integrar en una política existente conservando las sentencias de administración/delegación. Sustituye de manera coherente todos los identificadores de ejemplo; no lo uses como política completa de sustitución de la clave:
+El servicio regional de Logs necesita permiso para usar la clave. Lo siguiente es solo un fragmento de declaración que el propietario de la clave debe combinar con una política existente, conservando las declaraciones de administración/delegación. Sustituye todos los identificadores de ejemplo de forma coherente; no lo uses como política de clave completa de reemplazo:
 
 ```json
 {
@@ -1130,11 +1130,11 @@ El servicio regional de Logs necesita permiso para usar la clave. El siguiente f
 }
 ```
 
-El ARN del grupo de registros en el contexto de cifrado no lleva el sufijo :*. El operador que asocia la clave necesita los permisos documentados de Logs y kms:DescribeKey. Los lectores/escritores necesitan los permisos KMS adecuados para sus operaciones, a través del servicio regional de Logs. La rotación de claves o un período de espera de eliminación breve no elimina la necesidad de conservar el acceso de descifrado para los datos históricos. La retención de 90 días es un ejemplo, no una garantía de cumplimiento o inmutabilidad.
+El ARN del grupo de registros en el contexto de cifrado no lleva :* al final. El operador que asocia la clave necesita los permisos de Logs documentados y kms:DescribeKey. Quienes lean/escriban necesitan los permisos KMS adecuados para sus operaciones, a través del servicio regional de Logs. La rotación de claves o un periodo de espera breve antes de eliminarlas no elimina la necesidad de conservar acceso de descifrado para los datos históricos. La retención de 90 días es un ejemplo, no una garantía de cumplimiento o inmutabilidad.
 
 **Limita correctamente el acceso de lectura:**
 
-Esta política de identidad ilustrativa permite el grupo seleccionado y sus flujos, además del descifrado de una clave a través de Logs. La política de la clave también debe permitir al principal previsto. No concede acciones de administración de registros o claves:
+Esta política de identidad ilustrativa permite acceder al grupo seleccionado y sus flujos, además de descifrar con una clave mediante Logs. La política de clave también debe permitir al principal previsto. No concede acciones de administración de registros ni de claves:
 
 ```json
 {
@@ -1175,31 +1175,31 @@ Esta política de identidad ilustrativa permite el grupo seleccionado y sus fluj
 }
 ```
 
-La documentación actual de autorización de AWS admite limitar StartQuery y GetQueryResults al grupo de registros; no los amplíes a Resource:* basándote en suposiciones antiguas. DescribeLogStreams y FilterLogEvents son acciones de grupo, mientras que GetLogEvents es una acción de flujo. El formato ARN de LogGroup de AWS incluye :* para la mayoría de las acciones de IAM; las formas logGroupArn y el contexto de cifrado/etiquetado lo omiten. Los flujos de consola/detección pueden necesitar acciones de lectura adicionales; DescribeLogGroups es un permiso de alcance independiente que no admite ARN a nivel de recurso, y la política anterior no lo concede implícitamente.
+La documentación actual de autorización de AWS admite limitar StartQuery y GetQueryResults al grupo de registros; no los amplíes a Resource:* basándote en suposiciones antiguas. DescribeLogStreams y FilterLogEvents son acciones de grupo, mientras que GetLogEvents es una acción de flujo. El formato ARN de LogGroup de AWS incluye :* para la mayoría de las acciones IAM; logGroupArn y el contexto de cifrado/etiquetado lo omiten. Los flujos de trabajo de consola/detección pueden necesitar acciones de lectura adicionales; DescribeLogGroups es un permiso separado, con ámbito propio y sin compatibilidad con ARN a nivel de recurso, que la política anterior no concede implícitamente.
 
-Durante esta auditoría no se modificó ni ejecutó la configuración de registro del clúster, la retención, la política de clave, el filtro de métricas, el panel, la alarma ni ninguna consulta en la nube. Referencias: [filtros de métricas de CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html), [formas de ARN de LogGroup](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_LogGroup.html), [acciones IAM de Logs](https://docs.aws.amazon.com/service-authorization/latest/reference/list_logs.html), [cifrado de registros de KMS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/encrypt-log-data-kms.html).
+Durante esta auditoría no se modificó ni ejecutó el registro del clúster, la retención, la política de clave, el filtro de métricas, el panel, la alarma ni ninguna consulta de CloudWatch. Referencias: [filtros de métricas de CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html), [formatos de ARN de LogGroup](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_LogGroup.html), [acciones IAM de Logs](https://docs.aws.amazon.com/service-authorization/latest/reference/list_logs.html), [cifrado KMS de Logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/encrypt-log-data-kms.html).
 
 </details>
 
-### 6. ¿Qué estrategia de monitoreo ayuda más a optimizar los costos de Amazon EKS?
+### 6. ¿Qué estrategia de supervisión ayuda mejor a optimizar los costes en Amazon EKS?
 
-- A. Recopilar todas las métricas disponibles independientemente de su utilidad
-- B. Combinar el uso de recursos, la asignación de costos y los posibles desperdicios revisados por los propietarios
-- C. Supervisar el rendimiento sin examinar el gasto
-- D. Revisar únicamente la factura mensual final
+- A. Recopilar todas las métricas disponibles, independientemente de su utilidad.
+- B. Combinar el uso de recursos, la asignación de costes y los candidatos a desperdicio revisados por sus responsables.
+- C. Supervisar el rendimiento sin examinar el gasto.
+- D. Revisar solo la factura mensual final.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Combinar el uso de recursos, la asignación de costos y los posibles desperdicios revisados por los propietarios**
+**Respuesta: B. Combinar el uso de recursos, la asignación de costes y los candidatos a desperdicio revisados por sus responsables.**
 
-**Explicación:** Compara la CPU, la memoria, el almacenamiento, las solicitudes, los límites y las tendencias de las cargas de trabajo con los costos asignados. Investiga las anomalías y las desviaciones del presupuesto con el propietario del recurso. Estas señales identifican oportunidades; no garantizan ahorros ni demuestran que se pueda eliminar un recurso.
+**Explicación:** Compara la CPU, la memoria, el almacenamiento, las solicitudes, los límites y las tendencias de las cargas de trabajo con los costes asignados. Investiga las anomalías y desviaciones presupuestarias junto con el responsable del recurso. Estas señales ayudan a identificar oportunidades; no garantizan ahorros ni demuestran que se pueda eliminar un recurso.
 
-**Eficiencia de recursos y asignación de costos**
+**Eficiencia de recursos y asignación de costes**
 
-Reutiliza la instalación de kube-prometheus-stack de la guía fuente, kube-state-metrics y ServiceMonitor de kubelet con certificados de servicio verificados. cAdvisor usa `/metrics/cadvisor` en el puerto HTTPS de métricas de kubelet; no es un puerto de Service independiente llamado `cadvisor`. No añadas un monitor duplicado ni desactives la verificación de TLS para que funcione el scrape.
+Reutiliza la instalación kube-prometheus-stack, kube-state-metrics y ServiceMonitor de kubelet de la guía fuente, con certificados de servicio verificados. cAdvisor usa `/metrics/cadvisor` en el puerto HTTPS de métricas de kubelet; no es un puerto de Service independiente llamado `cadvisor`. No añadas un monitor duplicado ni deshabilites la verificación TLS para que funcione el scraping.
 
-Las siguientes expresiones de CPU y memoria devuelven **ratios de uso/solicitud por contenedor**, no utilización de la capacidad del nodo ni costo monetario. Un ratio puede superar 1. Las solicitudes nulas/ausentes no producen ningún ratio; eso no significa que el uso sea cero. `max` elimina copias duplicadas del scrape con la identidad indicada; confirma que las copias representan realmente la misma carga de trabajo. Este ejemplo se dirige al Prometheus local de un clúster. Para un backend compartido, ambas familias de métricas deben llevar una etiqueta de clúster coherente. También hay que tener cuidado al interpretar un intervalo de tiempo, debido a la reutilización de nombres de Pod y a los reinicios de contenedores. Estas métricas de contenedores no describen la reserva completa del scheduler para los recursos a nivel de Pod, los contenedores init ni la sobrecarga de Pod.
+Las siguientes expresiones de CPU y memoria devuelven **ratios de uso/solicitud por contenedor**, no la utilización de capacidad del nodo ni el coste monetario. Un ratio puede superar 1. Las solicitudes cero o ausentes no generan un ratio; tampoco equivalen a un uso cero. `max` elimina copias de scraping duplicadas con la identidad indicada; confirma que las copias representen realmente la misma carga de trabajo. Este ejemplo se dirige al Prometheus local de un clúster. Para un backend compartido, ambas familias de métricas deben incluir una etiqueta de clúster coherente. También hay que tener en cuenta la reutilización de nombres de Pod y los reinicios de contenedores al interpretar un intervalo de tiempo. Estas métricas de contenedor no describen toda la reserva del planificador para recursos a nivel de Pod, contenedores init ni la sobrecarga del Pod.
 
 ```promql
 max by (cluster, namespace, pod, container) (
@@ -1225,11 +1225,11 @@ max by (cluster, namespace, pod, container) (
 )
 ```
 
-Crea dos paneles en Grafana usando la fuente de datos de Prometheus existente y estas consultas; llama al panel **Uso de recursos frente a solicitudes**, usa una unidad de ratio/porcentaje y conserva la identidad del clúster, namespace, Pod y contenedor. Un ConfigMap que contenga un `cost-dashboard.json` no especificado no crea un panel utilizable. Con el sidecar de Grafana de la guía fuente, para aprovisionar un panel JSON revisado también se necesita la etiqueta configurada `grafana_dashboard: "1"`.
+Crea dos paneles en Grafana con la fuente de datos Prometheus existente y estas consultas; llama al panel **Uso de recursos frente a solicitudes**, usa una unidad de ratio/porcentaje y conserva la identidad de clúster, namespace, Pod y contenedor. Un ConfigMap con un `cost-dashboard.json` sin especificar no crea un panel utilizable. Con el sidecar de Grafana de la guía fuente, aprovisionar un JSON de panel revisado también requiere la etiqueta configurada `grafana_dashboard: "1"`.
 
 **OpenCost o Kubecost**
 
-Para evaluar OpenCost por primera vez con el Prometheus existente de la guía fuente, guarda lo siguiente como `opencost-values.yaml`. El chart comprobado es **2.5.31**, aplicación **1.121.2**. Configura el ID real del clúster y la URL de Prometheus. La etiqueta de ServiceMonitor debe coincidir con el selector de Prometheus; permite el namespace `opencost` en la selección de namespaces. Esto no instala otro Prometheus/node exporter.
+Para evaluar OpenCost por primera vez con el Prometheus existente de la guía fuente, guarda esto como `opencost-values.yaml`. El chart verificado es **2.5.31** y la aplicación **1.121.2**. Establece el ID real del clúster y la URL de Prometheus. La etiqueta de ServiceMonitor debe coincidir con el selector de Prometheus; permite el namespace `opencost` en la selección de namespaces. Esto no instala otro Prometheus/node exporter.
 
 ```yaml
 service:
@@ -1269,13 +1269,13 @@ helm install opencost opencost/opencost --version 2.5.31 \
 kubectl -n opencost port-forward --address 127.0.0.1 svc/opencost 9090:9090
 ```
 
-Abre `http://localhost:9090` mientras se ejecuta el reenvío de puertos. Esta configuración básica usa una caché de exportador efímera, desactiva la ingesta de Cloud Cost y MCP, y solo expone un Service ClusterIP. Revisa la persistencia, el dimensionamiento, la autenticación/el acceso de red, RBAC y el estado del scrape antes de compartirlo; ClusterIP no es una frontera de autorización entre tenants. Las estimaciones de precios bajo demanda deben conciliarse con la facturación real, los descuentos, los precios de Spot, los créditos, los costos compartidos, el almacenamiento y los cargos de red. La integración de facturación de AWS es una configuración independiente; la autenticación admitida mediante cuenta de servicio/SDK predeterminado de AWS no requiere incorporar claves de acceso de larga duración.
+Abre `http://localhost:9090` mientras se ejecuta el port-forward. Esta configuración base usa una caché efímera del exporter, deshabilita la ingesta de costes en la nube y MCP, y solo expone un Service ClusterIP. Antes de compartirla, revisa la persistencia, el dimensionamiento, la autenticación/el acceso de red, RBAC y el estado del scraping; ClusterIP no es un límite de autorización entre tenants. Las estimaciones de precios bajo demanda deben reconciliarse con la facturación real, descuentos, precios Spot, créditos, costes compartidos, almacenamiento y cargos de red. La integración de facturación de AWS es una configuración aparte; la autenticación documentada con cuentas de servicio/SDK predeterminadas de AWS no requiere insertar claves de acceso de larga duración.
 
-Kubecost es una opción distinta. Su chart **3.3.1**, verificado, es `kubecost/kubecost` de `https://kubecost.github.io/kubecost/`. El antiguo repositorio `cost-analyzer` y los valores de Prometheus de 2.x no son una receta de instalación para 3.x: 3.x usa ClickHouse y la recopilación directa de finops-agent. Revisa su licencia, almacenamiento, compatibilidad con Kubernetes y la migración documentada de 2.x antes de instalar o actualizar. Consulta la [guía de plataforma FinOps](../../ops/13-finops-cost-platform.md) relacionada y la [documentación del chart de Kubecost](https://github.com/kubecost/cost-analyzer-helm-chart).
+Kubecost es otra opción independiente. Su chart verificado **3.3.1** es `kubecost/kubecost` y procede de `https://kubecost.github.io/kubecost/`. El repositorio antiguo `cost-analyzer` y los valores Prometheus de la versión 2.x no son una receta de instalación para 3.x: 3.x usa ClickHouse y recopila datos directamente con finops-agent. Antes de instalar o actualizar, revisa su licencia, almacenamiento, compatibilidad con Kubernetes y la migración documentada desde 2.x. Consulta la [guía de la plataforma FinOps](../../ops/13-finops-cost-platform.md) y la [documentación del chart de Kubecost](https://github.com/kubecost/cost-analyzer-helm-chart).
 
 **Etiquetas, tags de facturación y categorías**
 
-Las etiquetas de namespace ayudan a agrupar dentro de Kubernetes:
+Las etiquetas de namespace ayudan a agrupar datos en Kubernetes:
 
 ```yaml
 apiVersion: v1
@@ -1288,13 +1288,13 @@ metadata:
     environment: production
 ```
 
-No etiquetan automáticamente los recursos EC2/EBS ni activan tags de facturación de AWS. El responsable de facturación debe aplicar tags reales de recursos de AWS y, después, activar las claves de asignación de costos aptas. Ten en cuenta los retrasos del procesamiento de facturación y verifica que aparezcan en Cost Explorer/CUR. La asignación de costos dividida de AWS es una ruta de suscripción independiente que crea registros a nivel de Pod de EKS y atributos generados por AWS como `aws:eks:namespace`; no convierte todas las etiquetas de namespace en tags de EC2. Revisa sus requisitos previos de fuentes de datos y el mayor volumen de informes.
+No etiquetan automáticamente recursos EC2/EBS ni activan los tags de facturación de AWS. El responsable de facturación debe aplicar tags reales de recursos de AWS y después activar las claves de asignación de costes que cumplan los requisitos. Ten en cuenta los retrasos del procesamiento de facturación y verifica que aparezcan en Cost Explorer/CUR. La asignación dividida de costes de AWS es una ruta de habilitación independiente que crea registros de nivel Pod de EKS y atributos generados por AWS, como `aws:eks:namespace`; no convierte cada etiqueta de namespace en un tag EC2. Revisa sus requisitos previos de fuentes de datos y el mayor volumen de informes.
 
-El retrocompletado de tags de asignación de costos puede abarcar hasta 12 meses **si los recursos ya estaban etiquetados históricamente**; no puede inventar tags históricos que faltan. Una Cost Category clasifica registros de facturación mediante reglas revisadas; no es un panel. La operación CLI para crearla es `aws ce create-cost-category-definition`, no `create-cost-category`. Usa claves y valores que aparezcan realmente en los datos de facturación y configura por separado los informes o paneles guardados de Cost Explorer.
+El relleno retroactivo de tags de asignación de costes puede cubrir hasta 12 meses **si esos recursos ya tenían tags durante ese periodo**; no puede inventar tags históricos ausentes. Una Cost Category clasifica registros de facturación mediante reglas revisadas; no es un panel. Su operación de creación por CLI es `aws ce create-cost-category-definition`, no `create-cost-category`. Usa claves y valores que realmente aparezcan en los datos de facturación y configura por separado los informes o paneles guardados de Cost Explorer.
 
-**Inventario de solo lectura de volúmenes sin adjuntar**
+**Inventario de volúmenes no conectados, de solo lectura**
 
-Ejecuta lo siguiente solo con la cuenta/Región previstas y un tag de propiedad existente. Mantiene habilitada la paginación de AWS CLI e imprime una lista de posibles candidatos en JSON. La sintaxis limitada de tags es intencionada; adapta los filtros JSON si tu tag real contiene otros caracteres.
+Ejecuta lo siguiente solo en la cuenta/Región previstas y con un tag de propiedad existente. Mantiene habilitada la paginación de AWS CLI e imprime una lista de candidatos en JSON. La sintaxis limitada del tag es intencionada; adapta los filtros JSON si tu tag real incluye otros caracteres.
 
 ```bash
 set -euo pipefail
@@ -1319,11 +1319,11 @@ aws ec2 describe-volumes --region "$AWS_REGION" --page-size 100 \
   --output json --no-cli-pager
 ```
 
-`available` significa que ahora no está adjunto, no que no se use o que sea seguro eliminarlo. La fecha de creación no es la última fecha de uso. Verifica con el propietario la propiedad de PV/PVC, la política de recuperación, las cargas de trabajo pendientes, las copias de seguridad, las snapshots y los requisitos de recuperación ante desastres. Del mismo modo, una CPU/memoria baja (incluido un umbral arbitrario del 5 %) no demuestra que un Pod o balanceador de carga sea innecesario. Usa un historial representativo y señales de aplicación/SLO; no sustituyas métricas faltantes por un resultado vacío de «Pod inactivos».
+`available` significa que ahora no está conectado; no significa que no se use ni que sea seguro eliminarlo. La hora de creación no indica el último uso. Consulta con el responsable la propiedad PV/PVC, la política de recuperación, las cargas pendientes, las copias de seguridad, las instantáneas y los requisitos de recuperación ante desastres. Del mismo modo, una CPU/memoria baja (incluso un umbral arbitrario del 5 %) no demuestra que un Pod o balanceador de carga sea innecesario. Usa un historial representativo y señales de aplicación/SLO; no reemplaces métricas ausentes por un resultado vacío de «Pods inactivos».
 
 **Ejemplo de presupuesto**
 
-Este ejemplo independiente de Terraform usa un tag de facturación real y activado, y un destinatario aprobado. El **límite mensual de 1.000 USD y la alerta del 80 %** son valores ilustrativos, no costos observados. Importa/reconcilia un presupuesto existente en vez de crear un propietario en conflicto. Valida la base de costos elegida y la cobertura de tags; un filtro de tags puede omitir cargos sin etiquetar/compartidos. Aplicar este ejemplo crea una configuración de notificación real.
+Este ejemplo independiente de Terraform utiliza un tag de facturación real y activado, y un destinatario aprobado. El **límite mensual de 1.000 USD y la alerta del 80 %** son valores ilustrativos, no costes observados. Importa/reconcilia un presupuesto existente en lugar de crear otro que entre en conflicto con su propietario. Valida la base de costes elegida y la cobertura de tags; un filtro por tag puede omitir cargos compartidos o sin tag. Aplicar este ejemplo crea una configuración real de notificación.
 
 ```hcl
 terraform {
@@ -1389,12 +1389,12 @@ resource "aws_budgets_budget" "eks_monthly" {
 }
 ```
 
-Budgets usan datos de facturación procesados y no imponen un límite de gasto estricto. Budget Actions puede aplicar controles IAM/SCP o dirigirse a instancias EC2/RDS compatibles, pero requiere permisos y revisión operativa independientes. El panel de eficiencia de recursos anterior no es un panel de facturación.
+Budgets usa datos de facturación procesados y no impone un límite máximo de gasto. Budget Actions puede aplicar controles IAM/SCP o dirigirse a instancias EC2/RDS compatibles, pero requiere permisos y revisión operativa separados. El panel de eficiencia de recursos anterior no es un panel de facturación.
 
-Revisa las solicitudes junto con las recomendaciones de VPA y el historial de picos/SLO, y coordina HPA con el escalado de nodos. Karpenter/Cluster Autoscaler y Spot pueden reducir costos solo cuando lo permiten las limitaciones de cargas de trabajo, interrupciones, capacidad y disrupción. Reducir las solicitudes por sí solo no reduce la factura a menos que cambien la capacidad aprovisionada o los precios. Haz seguimiento de las acciones acordadas y los resultados medidos en revisiones periódicas con los propietarios.
+Revisa las solicitudes con las recomendaciones de VPA y el historial de picos/SLO, y coordina HPA con el escalado de nodos. Karpenter/Cluster Autoscaler y Spot pueden reducir los costes solo cuando lo permiten las restricciones de carga, interrupción, capacidad y disrupción. Reducir las solicitudes por sí solo no baja la factura, salvo que cambie la capacidad aprovisionada o el precio. Registra las acciones acordadas y los resultados medidos en revisiones periódicas con los responsables.
 
-Las otras opciones no ofrecen este ciclo de retroalimentación: recopilar todo aumenta el costo/ruido de telemetría; el rendimiento por sí solo no muestra el gasto; esperar a la factura mensual final retrasa demasiado la investigación oportuna.
+Las demás opciones no ofrecen este ciclo de retroalimentación: recopilarlo todo aumenta el coste/ruido de telemetría; el rendimiento por sí solo no muestra el gasto; una factura mensual final llega demasiado tarde para investigar a tiempo.
 
-**Referencias principales:** [instalación de OpenCost](https://opencost.io/docs/installation/helm), [activación de tags de AWS](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html), [retrocompletado de tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-allocation-backfill.html), [asignación de costos dividida](https://docs.aws.amazon.com/cur/latest/userguide/split-cost-allocation-data.html), [acciones de presupuesto](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-controls.html).
+**Referencias principales:** [instalación de OpenCost](https://opencost.io/docs/installation/helm), [activación de tags de AWS](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html), [relleno retroactivo de tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-allocation-backfill.html), [asignación dividida de costes](https://docs.aws.amazon.com/cur/latest/userguide/split-cost-allocation-data.html), [Budget Actions](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-controls.html).
 
 </details>

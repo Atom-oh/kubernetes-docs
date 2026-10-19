@@ -1,15 +1,15 @@
 # Optimización de costos de Amazon EKS
 
-> **Alcance de la verificación**: documentación actual de precios y soporte de AWS; manifiestos de Kubernetes comprobados con la versión 1.36. Seleccione la versión real de EKS y los complementos en el catálogo de soporte de AWS.
+> **Alcance de la verificación**: Documentación actual de precios y soporte de AWS; manifiestos de Kubernetes comprobados con la versión 1.36. Seleccione la versión real de EKS y los complementos del catálogo de soporte de AWS.
 > **Última actualización**: 16 de octubre de 2026
 
-Amazon EKS (Elastic Kubernetes Service) facilita la implementación, administración y escalado de aplicaciones en contenedores, pero es importante gestionar los costos de manera eficaz. Este documento abarca diversas estrategias y prácticas recomendadas para optimizar los costos de su clúster de EKS.
+Amazon EKS (Elastic Kubernetes Service) facilita la implementación, administración y escalado de aplicaciones en contenedores, pero es importante administrar los costos de forma eficaz. Este documento cubre diversas estrategias y prácticas recomendadas para optimizar los costos de su clúster de EKS.
 
-Los comandos son ejemplos de configuración, no implementaciones registradas ni ahorros medidos. Antes de aplicarlos, verifique la cuenta, la región, el propietario de los recursos existentes, los requisitos de las cargas de trabajo y las versiones de las herramientas compatibles. Las suposiciones históricas sobre precios que aparecen a continuación se distinguen explícitamente del comportamiento actual del servicio.
+Los comandos muestran configuraciones de ejemplo; no documentan despliegues ejecutados ni ahorros medidos. Antes de aplicarlos, compruebe la cuenta, la Región, quién gestiona los recursos existentes, los requisitos de las cargas de trabajo y las versiones admitidas de las herramientas. Las suposiciones históricas de precios se distinguen del comportamiento actual de los servicios.
 
 ## Tabla de contenido
 
-1. [Componentes de los costos de EKS](#eks-cost-components)
+1. [Componentes de costos de EKS](#eks-cost-components)
 2. [Principios de FinOps y EKS](#finops-principles-and-eks)
 3. [Optimización de costos de cómputo](#compute-cost-optimization)
 4. [Optimización de costos de almacenamiento](#storage-cost-optimization)
@@ -18,21 +18,21 @@ Los comandos son ejemplos de configuración, no implementaciones registradas ni 
 7. [Supervisión y análisis de costos](#cost-monitoring-and-analysis)
 8. [Prácticas recomendadas para optimizar costos](#cost-optimization-best-practices)
 
-## Componentes de los costos de EKS {#eks-cost-components}
+## Componentes de costos de EKS {#eks-cost-components}
 
-Los costos de usar Amazon EKS constan de los siguientes componentes:
+El costo de usar Amazon EKS se compone de los siguientes elementos:
 
-![Diagrama que desglosa el costo total de EKS en cinco componentes: plano de control ($0.10/hora), cómputo (instancias EC2, Fargate), almacenamiento (EBS, EFS, S3), redes (transferencia de datos, balanceador de carga, NAT gateway) y otros costos (CloudWatch, ECR, otros servicios de AWS).](../.gitbook/assets/en-eks-07-eks-cost-optimization-0.png)
+![Diagrama que desglosa el costo total de EKS en cinco componentes: plano de control ($0.10/hora), cómputo (instancias EC2, Fargate), almacenamiento (EBS, EFS, S3), redes (transferencia de datos, balanceador de carga, NAT gateway) y otros costos (CloudWatch, ECR y otros servicios de AWS).](../.gitbook/assets/en-eks-07-eks-cost-optimization-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-0.html)
 
 ## Principios de FinOps y EKS {#finops-principles-and-eks}
 
-FinOps es un marco operativo y una práctica cultural para maximizar el valor empresarial de la tecnología. Los equipos de ingeniería, finanzas y negocios colaboran tomando decisiones oportunas basadas en datos y asumiendo responsabilidad financiera; este capítulo aplica ese enfoque a EKS.
+FinOps es un marco operativo y una práctica cultural para maximizar el valor empresarial de la tecnología. Los equipos de ingeniería, finanzas y negocio colaboran tomando decisiones oportunas basadas en datos y asumiendo responsabilidad financiera; este capítulo aplica ese enfoque a EKS.
 
-### Principios fundamentales del marco de FinOps
+### Principios fundamentales del marco FinOps
 
-La FinOps Foundation hace hincapié en la colaboración entre equipos, el valor empresarial en la toma de decisiones, la responsabilidad por el uso, los datos oportunos, precisos y accesibles, la habilitación centralizada y el uso deliberado del modelo de costos variables de la nube. Las prácticas de EKS que se describen a continuación aplican esos principios; no constituyen un marco oficial aparte de seis principios.
+La FinOps Foundation destaca la colaboración entre equipos, las decisiones basadas en el valor empresarial, la responsabilidad por el uso, los datos oportunos, precisos y accesibles, el apoyo centralizado y el uso consciente del modelo de costos variables de la nube. Las prácticas de EKS siguientes aplican esos principios; no forman un marco oficial independiente de seis principios.
 
 <!-- Pending parent diagram repair: see /tmp/eks-cost-optimization-audit/diagram-review.json
 ![Diagram mapping six FinOps core principles on the left to five EKS implementation methods on the right, showing which implementation method operationalizes each principle, with cost monitoring tools serving both forecasting and real-time decision making.](../.gitbook/assets/en-eks-07-eks-cost-optimization-1.png)
@@ -43,76 +43,76 @@ La FinOps Foundation hace hincapié en la colaboración entre equipos, el valor 
 ### Aplicación de FinOps a EKS
 
 1. **Lograr visibilidad de los costos**
-   - Asignar costos mediante namespaces, etiquetas y anotaciones de Kubernetes
-   - Realizar análisis detallados de costos mediante la integración de herramientas como AWS Cost Explorer y Kubecost
-   - Analizar los costos por equipo, aplicación y entorno
+   - Asignación de costos mediante namespaces, etiquetas y anotaciones de Kubernetes
+   - Análisis detallado de costos mediante la integración de herramientas como AWS Cost Explorer y Kubecost
+   - Análisis de costos por equipo, aplicación y entorno
 
 2. **Implementar un modelo de responsabilidad compartida**
-   - Asignar costos y elaborar informes por equipo
-   - Establecer y hacer seguimiento de los objetivos de optimización de costos
-   - Ofrecer incentivos por reducir costos
+   - Asignación de costos e informes por equipo
+   - Establecimiento y seguimiento de objetivos de optimización de costos
+   - Incentivos para el ahorro de costos
 
 3. **Automatizar la optimización continua**
-   - Implementar políticas de escalado automático
+   - Implementar políticas de autoescalado
    - Automatizar el uso de instancias Spot
-   - Detectar candidatos al desperdicio y eliminar recursos solo después de revisar con el propietario su retención
+   - Detectar recursos que podrían desperdiciarse y eliminarlos solo después de revisar quién los gestiona y sus requisitos de retención
 
 4. **Previsión y planificación de costos**
-   - Prever los costos mediante el análisis de los patrones de las cargas de trabajo
-   - Utilizar Reserved Instances y Savings Plans
-   - Detectar anomalías en los costos y generar alertas
+   - Previsión de costos mediante el análisis de patrones de carga de trabajo
+   - Uso de Reserved Instances y Savings Plans
+   - Detección de anomalías de costos y generación de alertas
 
 ### Herramientas y tecnologías FinOps más recientes
 
 1. **Kubecost**: herramienta de supervisión y optimización de costos de Kubernetes
-2. **AWS Cost Anomaly Detection**: detección de aumentos anómalos en los costos
+2. **AWS Cost Anomaly Detection**: detección de aumentos anómalos de costos
 3. **Karpenter**: aprovisionamiento eficiente de nodos y optimización de costos
 4. **Goldilocks**: optimización de solicitudes y límites de recursos
 5. **Vertical Pod Autoscaler**: ajuste automático de las solicitudes de recursos de los Pod
 
 ### Costo del clúster de EKS
 
-El cargo publicado por soporte de versiones es:
+El cargo publicado por soporte de versión es:
 
 - **Soporte estándar**: $0.10 por hora de clúster.
-- **Soporte extendido**: **$0.60 en total por hora de clúster** (tarifa base de $0.10 + cargo de $0.50 por soporte extendido); no se trata de un «clúster extendido» aparte a $0.10.
+- **Soporte extendido**: **$0.60 en total por hora de clúster** ($0.10 de base más $0.50 de soporte extendido). No es otro tipo de «clúster extendido» que cueste $0.10.
 
-El soporte estándar dura 14 meses a partir del lanzamiento de la versión de EKS, seguido de 12 meses de soporte extendido. Consulte el [calendario de lanzamientos de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) para conocer las fechas exactas de cada versión y la política de soporte. Los niveles Provisioned Control Plane, Auto Mode, Hybrid Nodes y EKS Capabilities pueden generar cargos aparte; EC2/Fargate, almacenamiento, redes y observabilidad también se cobran por separado. La etiqueta de $0.10 del diagrama general representa únicamente el soporte estándar de versiones. Consulte los [precios actuales de EKS](https://aws.amazon.com/eks/pricing/).
+El soporte estándar dura 14 meses desde la publicación de la versión de EKS, seguido de 12 meses de soporte extendido. Consulte el [calendario de versiones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) para conocer las fechas exactas de cada versión y la política de soporte. Los niveles de plano de control aprovisionado, Auto Mode, Hybrid Nodes y EKS Capabilities pueden generar cargos independientes; EC2/Fargate, almacenamiento, redes y observabilidad se cobran por separado. La etiqueta de $0.10 del diagrama general describe únicamente el soporte estándar de versión. Consulte los [precios actuales de EKS](https://aws.amazon.com/eks/pricing/).
 
 ### Costo de cómputo
 
 Costo de los nodos de trabajo que se ejecutan en el clúster de EKS:
 
-- **Instancias EC2**: costo de las instancias EC2 utilizadas en los grupos de nodos
-- **Fargate**: cargos por las configuraciones de vCPU/memoria aprovisionadas para los Pod y su duración, no por la utilización medida en muestras; incluya los cargos de almacenamiento correspondientes
+- **Instancias EC2**: costo de las instancias utilizadas por los grupos de nodos.
+- **Fargate**: cargos según la configuración aprovisionada de vCPU y memoria de los Pod y su duración, no según muestras de utilización. Incluya los cargos de almacenamiento aplicables.
 
 ### Costo de almacenamiento
 
-Costo del almacenamiento utilizado en el clúster de EKS:
+Costo del almacenamiento que se usa en el clúster de EKS:
 
-- **Volúmenes EBS**: costo de los volúmenes EBS utilizados para los volúmenes persistentes
-- **EFS**: costo de EFS utilizado para sistemas de archivos compartidos
-- **S3**: costo de S3 utilizado para almacenamiento de objetos
+- **Volúmenes EBS**: costo de los volúmenes EBS que se usan para los volúmenes persistentes
+- **EFS**: costo de EFS para los sistemas de archivos compartidos
+- **S3**: costo de S3 para el almacenamiento de objetos
 
 ### Costo de redes
 
 Costos relacionados con las redes del clúster de EKS:
 
-- **Transferencia de datos**: cargos aplicables por transferencia entre zonas de disponibilidad, regiones e Internet; la dirección y la ruta exactas del servicio son importantes
-- **Balanceador de carga**: costo de los balanceadores de carga utilizados para los servicios
-- **NAT gateway**: costo del NAT gateway para el tráfico saliente de las subredes privadas
+- **Transferencia de datos**: cargos aplicables entre zonas de disponibilidad, entre Regiones y con Internet. El sentido del tráfico y el servicio por el que pasa determinan los cargos.
+- **Balanceadores de carga**: costo de los balanceadores utilizados por los servicios.
+- **NAT Gateway**: costo de las puertas de enlace NAT para el tráfico saliente de subredes privadas.
 
 ### Otros costos
 
-- **CloudWatch**: costo de CloudWatch utilizado para supervisión y registro
-- **ECR**: costo de ECR utilizado para almacenar imágenes de contenedor
-- **Otros servicios de AWS**: costo de otros servicios de AWS utilizados con el clúster de EKS
+- **CloudWatch**: costo de CloudWatch para la supervisión y el registro
+- **ECR**: costo de ECR para el almacenamiento de imágenes de contenedores
+- **Otros servicios de AWS**: costo de otros servicios de AWS que se usan con el clúster de EKS
 
 ## Optimización de costos de cómputo {#compute-cost-optimization}
 
-El cómputo suele ser el componente de mayor costo de un clúster de EKS. Puede optimizar los costos de cómputo mediante las siguientes estrategias.
+El cómputo suele representar la mayor parte del costo de un clúster de EKS. Las estrategias siguientes permiten optimizarlo.
 
-![Diagrama en el que la optimización de costos de cómputo para EKS se divide en cinco estrategias: optimización del tipo de instancia, uso de instancias Spot, Savings Plans y Reserved Instances, optimización del escalado automático y comparación de costos entre Fargate y EC2; cada estrategia incluye subelementos como familia, tamaño y generación, MNG, Karpenter y gestión de interrupciones, Compute SP, EC2 Instance SP y RI, y CA, Karpenter, HPA y VPA.](../.gitbook/assets/en-eks-07-eks-cost-optimization-2.png)
+![Diagrama que muestra cinco estrategias de optimización de costos de cómputo para EKS: optimización del tipo de instancia, uso de instancias Spot, Savings Plans y Reserved Instances, optimización del autoescalado y comparación de costos de Fargate frente a EC2; para cada estrategia se muestran elementos secundarios como familia, tamaño y generación, MNG, Karpenter y administración de interrupciones, Compute SP, EC2 Instance SP y RI, y CA, Karpenter, HPA y VPA.](../.gitbook/assets/en-eks-07-eks-cost-optimization-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-2.html)
 
@@ -120,27 +120,27 @@ El cómputo suele ser el componente de mayor costo de un clúster de EKS. Puede 
 
 Es importante seleccionar el tipo de instancia adecuado para la carga de trabajo:
 
-#### Selección de la familia de instancias
+#### Selección de familia de instancias
 
-Seleccione la familia según las características de la carga de trabajo. Las familias que se indican a continuación son ejemplos de generaciones anteriores, no recomendaciones para la generación actual; compruebe la disponibilidad en la región, la arquitectura del procesador, las AMI y los precios.
+Seleccione según las características de la carga de trabajo. Las familias que aparecen a continuación son ejemplos de generaciones anteriores, no recomendaciones de generaciones actuales; compruebe la disponibilidad en la Región, la arquitectura del procesador, las AMI y los precios.
 
-- **Propósito general (T3, M5, M6)**: cargas de trabajo que requieren un equilibrio entre recursos de cómputo, memoria y redes
-- **Optimizada para cómputo (C5, C6)**: cargas de trabajo con gran uso de cómputo que requieren procesadores de alto rendimiento
-- **Optimizada para memoria (R5, R6, X1)**: cargas de trabajo con gran uso de memoria, como bases de datos grandes en memoria y cachés
-- **Optimizada para almacenamiento (I3, D2)**: cargas de trabajo que requieren un alto nivel de E/S de disco
-- **Cómputo acelerado (P3, G4, Inf1)**: cargas de trabajo que requieren GPU o aceleradores de aprendizaje automático
+- **Propósito general (T3, M5, M6)**: cargas de trabajo que requieren recursos equilibrados de cómputo, memoria y redes
+- **Optimizadas para cómputo (C5, C6)**: cargas de trabajo de cómputo intensivo que requieren procesadores de alto rendimiento
+- **Optimizadas para memoria (R5, R6, X1)**: cargas de trabajo con uso intensivo de memoria, como grandes bases de datos en memoria y cachés
+- **Optimizadas para almacenamiento (I3, D2)**: cargas de trabajo que requieren un alto rendimiento de E/S de disco
+- **Cómputo acelerado (P3, G4, Inf1)**: cargas de trabajo que requieren aceleradores de GPU o de aprendizaje automático
 
-#### Optimización del tamaño de las instancias
+#### Optimización del tamaño de instancia
 
-Seleccione el tamaño de instancia adecuado según las necesidades de la carga de trabajo:
+Seleccione el tamaño de instancia adecuado para los requisitos de la carga de trabajo:
 
 - Las instancias demasiado grandes pueden desperdiciar recursos.
-- Las instancias demasiado pequeñas pueden provocar problemas de rendimiento.
-- Use CloudWatch Container Insights o las métricas de Kubernetes para supervisar el uso real de los recursos y seleccionar el tamaño adecuado.
+- Las instancias demasiado pequeñas pueden causar problemas de rendimiento.
+- Use CloudWatch Container Insights o las métricas de Kubernetes para supervisar el uso real de recursos y seleccionar el tamaño adecuado.
 
-#### Consideración de la generación de instancia
+#### Consideraciones sobre la generación de instancias
 
-Compare las generaciones más recientes con las mediciones de sus propias cargas de trabajo y los precios regionales. Estos son ejemplos de rutas de migración anteriores; migrar de x86 (`i`) a Graviton (`g`) también requiere imágenes arm64 y dependencias compatibles:
+Compare las generaciones más recientes según sus propias mediciones de carga de trabajo y los precios de la Región. Estos son ejemplos de rutas de migración anteriores; pasar de x86 (`i`) a Graviton (`g`) también requiere imágenes arm64 y dependencias compatibles:
 
 - Use M6i o M6g en lugar de M5
 - Use C6i o C6g en lugar de C5
@@ -148,18 +148,18 @@ Compare las generaciones más recientes con las mediciones de sus propias cargas
 
 ### Uso de instancias Spot
 
-AWS anuncia descuentos de Spot de hasta el 90 % en comparación con On-Demand; los precios reales, la capacidad disponible y la exposición a interrupciones varían. El hecho de que una aplicación no tenga estado no demuestra por sí solo que tolere interrupciones:
+AWS anuncia descuentos Spot de hasta el 90 % frente a On-Demand; los precios reales, la capacidad disponible y la exposición a interrupciones varían. El hecho de que una aplicación no tenga estado no basta para demostrar que tolera interrupciones:
 
 #### Cargas de trabajo adecuadas para instancias Spot
 
 - **Aplicaciones sin estado**: aplicaciones que no almacenan estado
-- **Aplicaciones tolerantes a fallos**: aplicaciones que pueden soportar interrupciones de instancias
-- **Trabajos de procesamiento por lotes**: trabajos que pueden reiniciarse si se interrumpen
-- **Procesos de CI/CD**: trabajos de compilación y pruebas
+- **Aplicaciones tolerantes a fallos**: aplicaciones que pueden gestionar interrupciones de instancias
+- **Trabajos de procesamiento por lotes**: trabajos que se pueden reiniciar si se interrumpen
+- **Pipelines de CI/CD**: trabajos de compilación y prueba
 
 #### Uso de instancias Spot en grupos de nodos administrados
 
-Esto crea un grupo de nodos administrado en un clúster existente; no instala Cluster Autoscaler. Revise las subredes privadas, el rol de IAM, la AMI y la diversidad de instancias en la configuración responsable. Agregue configuración explícita de escalado/IAM mediante el propietario del controlador, no mediante permisos amplios de complementos en el rol del nodo.
+El comando crea un grupo de nodos administrado en un clúster existente; no instala Cluster Autoscaler. Revise las subredes privadas, el rol IAM, la AMI y la diversidad de instancias en la configuración que gestiona el recurso. Coordine la configuración explícita de escalado e IAM con el responsable del controlador; no conceda permisos amplios de complementos al rol del nodo.
 
 ```bash
 eksctl create nodegroup \
@@ -174,7 +174,7 @@ eksctl create nodegroup \
 
 #### Aprovisionamiento de instancias Spot con Karpenter
 
-Requisitos previos: Karpenter/CRD instalados, IAM del controlador con alcance limitado, un rol de nodo autorizado, subredes/grupos de seguridad con etiquetas de detección y su cola de interrupciones. Para EKS 1.36, la matriz de compatibilidad actual requiere Karpenter >=1.13. Estos recursos no instalan el controlador. Las listas de instancias y los límites son ejemplos, no un tope de costos. Revise las AMI resueltas: `al2023@latest` es un selector dinámico que puede causar desviaciones o reemplazos; los cambios en producción deben fijar una versión de alias o un ID de AMI probados.
+Prepare Karpenter y sus CRD, permisos IAM limitados para el controlador, un rol de nodo autorizado, subredes y grupos de seguridad con etiquetas de descubrimiento, y la cola de interrupciones. Para EKS 1.36, la matriz de compatibilidad actual requiere Karpenter >=1.13. Los recursos siguientes no instalan el controlador. Las listas de instancias y los límites son ejemplos, no topes de gasto. Inspeccione las AMI seleccionadas: `al2023@latest` cambia con el tiempo y puede provocar desviaciones o reemplazos. En producción, fije una versión de alias o un ID de AMI que haya probado.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -221,58 +221,58 @@ spec:
         karpenter.sh/discovery: my-cluster
 ```
 
-#### Gestión de interrupciones de instancias Spot
+#### Administración de interrupciones de instancias Spot
 
-Prácticas recomendadas para gestionar las interrupciones de instancias Spot:
+Prácticas recomendadas para administrar interrupciones de instancias Spot:
 
-1. **Use varios tipos de instancia**: distribuya el riesgo de interrupción utilizando distintos tipos de instancia
-2. **Use varias zonas de disponibilidad**: implemente instancias en varias zonas de disponibilidad
-3. **Elija un responsable de las interrupciones para cada conjunto de nodos**: los grupos de nodos administrados ya gestionan las interrupciones y el reequilibrio de Spot. Configure la cola de interrupciones nativa de Karpenter para los nodos de Karpenter; no instale Node Termination Handler en los mismos nodos. Los ASG autoadministrados pueden usar [AWS Node Termination Handler](https://github.com/aws/aws-node-termination-handler) con un modo IMDS o de cola elegido explícitamente y los permisos/conexiones de eventos correspondientes.
-4. **Diseñe la recuperación de la aplicación**: la capacidad de reemplazo no está garantizada. La terminación ordenada, los reintentos y los puntos de control, así como las réplicas distribuidas entre dominios de fallo, deben ajustarse a la ventana de interrupción disponible. Un PDB no puede impedir que EC2 recupere una instancia Spot.
+1. **Use varios tipos de instancia**: distribuya el riesgo de interrupción entre diferentes tipos.
+2. **Use varias zonas de disponibilidad**: distribuya las instancias entre zonas.
+3. **Elija un solo responsable de interrupciones para cada conjunto de nodos**: los grupos de nodos administrados ya gestionan las interrupciones y el rebalanceo de Spot. Para los nodos de Karpenter, configure su cola nativa de interrupciones y no instale además Node Termination Handler. Los ASG autoadministrados pueden usar [AWS Node Termination Handler](https://github.com/aws/aws-node-termination-handler) con un modo IMDS o de cola elegido explícitamente, sus permisos y sus conexiones de eventos.
+4. **Diseñe la recuperación de la aplicación**: no se garantiza capacidad de reemplazo. La terminación ordenada, los reintentos, los puntos de control y las réplicas en diferentes dominios de fallo deben ajustarse al tiempo disponible antes de la interrupción. Un PDB no impide que EC2 recupere una instancia Spot.
 
 ### Savings Plans y Reserved Instances
 
-Para cargas de trabajo previsibles, puede reducir los costos usando Savings Plans o Reserved Instances:
+Para cargas de trabajo predecibles, puede reducir los costos con Savings Plans o Reserved Instances:
 
 #### Compute Savings Plans
 
 Compute Savings Plans ofrecen descuentos de hasta el 66 % sobre las tarifas On-Demand con un compromiso de 1 o 3 años:
 
-- **Flexibilidad**: se aplican independientemente de la familia y el tamaño de la instancia, el sistema operativo, la tenencia y la región
+- **Flexibilidad**: se aplican independientemente de la familia, el tamaño, el sistema operativo, la tenencia y la Región de la instancia
 - **Incluyen EC2, Fargate y Lambda**: se aplican a varios servicios de cómputo
 
 #### EC2 Instance Savings Plans
 
-EC2 Instance Savings Plans ofrecen descuentos de hasta el 72 % para familias de instancias en una región específica:
+EC2 Instance Savings Plans ofrecen descuentos de hasta el 72 % para familias de instancias en una Región específica:
 
-- **Flexibilidad moderada**: se aplican a todos los tamaños y sistemas operativos de una familia de instancias en una región específica
-- **Mayor descuento**: ofrecen un descuento mayor que Compute Savings Plans
+- **Flexibilidad moderada**: se aplican a distintos tamaños y sistemas operativos dentro de una familia de instancias en una Región específica
+- **Mayor tasa de descuento**: ofrecen una tasa de descuento más alta que Compute Savings Plans
 
 #### Reserved Instances
 
-AWS anuncia actualmente ahorros de RI de hasta el **72 %**. Las RI Standard y Convertible tienen distintas reglas de modificación/intercambio; el alcance Regional y Zonal también varía. Una RI Zonal incluye una reserva de capacidad en su zona de disponibilidad, mientras que una RI Regional no. Las RI son beneficios de facturación que se aplican al uso coincidente, no un planificador de Kubernetes ni una garantía del mayor descuento.
+AWS anuncia actualmente ahorros de hasta el **72 %** con RI. Standard y Convertible tienen reglas diferentes de modificación e intercambio; también difieren los alcances Regional y Zonal. Una RI Zonal incluye una reserva de capacidad en su zona de disponibilidad; una Regional no. Las RI ofrecen beneficios de facturación para el uso que cumpla sus condiciones. No programan cargas de Kubernetes ni garantizan el mayor descuento.
 
-Savings Plans comprometen un gasto elegible por hora durante uno o tres años; las RI comprometen el uso de instancias elegibles. Dimensione los compromisos a partir de la base estable una vez ajustado el tamaño y revise el riesgo de compromisos sin utilizar. Ninguno aplica un descuento adicional al uso de Spot, y los máximos anunciados no son ahorros medidos para este clúster.
+Savings Plans supone comprometer un gasto elegible por hora durante uno o tres años; las RI comprometen uso elegible de instancias. Dimensione el compromiso a partir de una demanda estable, después de ajustar los recursos, y evalúe el riesgo de no utilizarlo. Ninguno añade un descuento al uso Spot. Los máximos anunciados no son ahorros medidos para este clúster.
 
-### Comparación de costos entre Fargate y EC2
+### Comparación de costos de Fargate frente a EC2
 
 Al elegir entre Fargate y EC2, tenga en cuenta los costos:
 
 #### Ventajas de Fargate
 
-- **Menos carga operativa**: no es necesario administrar nodos
+- **Menor carga operativa**: no es necesario administrar nodos
 - **Aprovisionamiento preciso de recursos**: asignación de recursos a nivel de Pod
-- **No requiere administrar por separado nodos de trabajo inactivos**: los cargos siguen dependiendo de la capacidad aprovisionada para los Pod y de su duración, incluidos el redondeo y el mínimo de facturación
+- **Sin nodos de trabajo inactivos administrados por separado**: los cargos siguen dependiendo de la capacidad y duración de los Pod aprovisionados, incluido el redondeo y el mínimo de facturación
 
 #### Ventajas de EC2
 
-- **Más económico para cargas de trabajo grandes**: en casos de alta utilización de recursos
-- **Más opciones de tipos de instancia**: se pueden seleccionar tipos de instancia para distintas cargas de trabajo
-- **Compatibilidad con instancias Spot**: es posible obtener ahorros adicionales utilizando instancias Spot
+- **Más rentable para cargas de trabajo grandes**: en casos de alta utilización de recursos
+- **Más opciones de tipos de instancia**: permite seleccionar tipos de instancia para distintas cargas de trabajo
+- **Compatibilidad con instancias Spot**: permite obtener ahorros adicionales usando instancias Spot
 
 #### Ejemplo de comparación de costos
 
-**Supuestos ilustrativos heredados (no se registraron la fuente del precio ni la región; no es una cotización ni una prueba comparativa actual)**: aplicación que solicita 2 vCPU y 4 GB de memoria. A continuación se conservan los precios unitarios y los cálculos originales; no incluyen reservas específicas de EKS ni la sobrecarga de los nodos.
+**Suposiciones históricas del ejemplo; no son precios actuales ni resultados de una prueba de rendimiento.** No se registró la fuente de precios ni la Región. El ejemplo utiliza una aplicación que solicita 2 vCPU y 4 GB de memoria. Se conservan los precios unitarios y cálculos originales siguientes, que omiten las reservas específicas de EKS y la sobrecarga de los nodos.
 
 **Costo de Fargate**:
 - vCPU: $0.04048 por vCPU-hora × 2 = $0.08096 por hora
@@ -283,17 +283,17 @@ Al elegir entre Fargate y EC2, tenga en cuenta los costos:
 - On-Demand: $0.0416 por hora
 - Spot: ~$0.0125 por hora (suponiendo un descuento del 70 %)
 
-**Corrección de la asignación:** EKS Fargate agrega 256 MB para los componentes de Kubernetes y redondea a una configuración compatible. Con estos supuestos, las solicitudes de 2 vCPU/4 GB requieren **2 vCPU/5 GB** de capacidad aprovisionada: `2 × 0.04048 + 5 × 0.004445 = 0.103185 USD/hour`, utilizando las mismas tarifas históricas. Esto es un cálculo, no una nueva cotización. La facturación de Fargate para Linux comienza con la descarga de la imagen y tiene un mínimo de un minuto. Una instancia EC2 `t3.medium` tiene una capacidad nominal de 2 vCPU/4 GiB, pero los recursos asignables son menores después de las reservas del sistema operativo, Kubernetes y los DaemonSet; no se puede suponer que admita este Pod, y un uso sostenido de CPU puede generar cargos por créditos T3. Compare un plan de capacidad que realmente pueda programar la carga de trabajo e incluya EBS, redes, cargos del clúster, utilización y operaciones. Esta tabla no demuestra que una opción ofrezca un servicio equivalente mejor que la otra.
+**Corrección de capacidad:** EKS Fargate añade 256 MB para los componentes de Kubernetes y redondea a una configuración admitida. Con las mismas suposiciones, solicitar 2 vCPU y 4 GB requiere aprovisionar **2 vCPU/5 GB**. Aplicando las tarifas históricas del ejemplo, `2 × 0.04048 + 5 × 0.004445 = 0.103185 USD/hour`. Es un cálculo, no una cotización actual. Fargate para Linux empieza a facturar al descargar la imagen, con un mínimo de un minuto. Una instancia EC2 `t3.medium` tiene 2 vCPU y 4 GiB nominales, pero menos recursos asignables tras las reservas del sistema operativo, Kubernetes y DaemonSet. No dé por hecho que puede alojar ese Pod; además, la carga sostenida de CPU puede generar cargos por créditos T3. Compare un plan de capacidad que realmente permita programar la carga, incluyendo EBS, redes, cargos del clúster, utilización y operación. La tabla no demuestra cuál es la opción más económica para un servicio equivalente.
 
-### Optimización del escalado automático
+### Optimización del autoescalado
 
-Puede optimizar los costos implementando estrategias eficaces de escalado automático:
+Puede optimizar los costos implementando estrategias de autoescalado eficaces:
 
 #### Cluster Autoscaler
 
-Cluster Autoscaler escala los ASG para los Pod que no se pueden programar y elimina nodos aptos según los recursos solicitados y las comprobaciones de reprogramación/interrupción; no se basa simplemente en una CPU medida baja. Haga coincidir su versión secundaria de Kubernetes con la del clúster; configure etiquetas de detección en los ASG reales y un rol de IAM dedicado a la carga de trabajo. Las etiquetas de EKS o de los grupos de nodos no se propagan automáticamente a todos los recursos subyacentes. Consulte la [configuración de AWS del proyecto ascendente](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/aws) y las [recomendaciones de EKS](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html) para preparar la versión que administra.
+Cluster Autoscaler amplía los ASG para alojar Pod que no se pueden programar. Retira nodos aptos según los recursos solicitados y las comprobaciones de reprogramación e interrupción; no basta con medir poca CPU. Su versión secundaria de Kubernetes debe coincidir con la del clúster. Prepare etiquetas de descubrimiento en los ASG reales y un rol IAM dedicado a la carga de trabajo. Las etiquetas de EKS o del grupo de nodos no se propagan automáticamente a todos los recursos subyacentes. Consulte la [configuración de AWS del proyecto original](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/aws) y las [recomendaciones de EKS](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html) para preparar la versión que gestionará su equipo.
 
-Estos valores del chart se convierten en argumentos de CLI. Definir variables de entorno inventadas como `CLUSTER_AUTOSCALER_*` no las configura, y aplicar sin editar un ejemplo de `master` no proporciona la configuración específica de IAM/detección del clúster. Las duraciones siguientes son parámetros ilustrativos de ajuste; los retrasos más cortos pueden aumentar la rotación de nodos.
+Estos valores del chart se convierten en argumentos de la CLI. Las variables de entorno inventadas `CLUSTER_AUTOSCALER_*` no los configuran. Aplicar un ejemplo de `master` sin adaptar tampoco prepara IAM ni el descubrimiento para el clúster. Los tiempos siguientes son ejemplos de ajuste; acortarlos puede aumentar la frecuencia de cambios de nodos.
 
 ```yaml
 # Values fragment for the upstream cluster-autoscaler Helm chart.
@@ -310,7 +310,7 @@ extraArgs:
 
 #### Karpenter
 
-Karpenter aprovisiona nodos a partir de las restricciones de NodePool/EC2NodeClass, en lugar de redimensionar un ASG fijo. La latencia de aprovisionamiento y el costo dependen de la carga de trabajo y de la capacidad disponible; también se aplican aquí los requisitos previos mencionados para el controlador/IAM/AMI. Mantenga separados sus nodos de los ASG administrados por Cluster Autoscaler:
+Karpenter aprovisiona nodos a partir de las restricciones de NodePool/EC2NodeClass, en lugar de cambiar el tamaño de un ASG fijo. La latencia de aprovisionamiento y el costo dependen de la carga de trabajo y de la capacidad disponible; aquí también se aplican los requisitos previos anteriores del controlador/IAM/AMI. Mantenga separados sus nodos de los ASG administrados por Cluster Autoscaler:
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -356,13 +356,13 @@ spec:
 
 Configuración de optimización de costos de Karpenter:
 
-- **disruption.consolidateAfter**: retraso después de agregar/eliminar Pod antes de considerar la consolidación, sujeto a la política y a las comprobaciones de interrupción (por ejemplo, `30s`; reemplaza a `ttlSecondsAfterEmpty`, obsoleto)
-- **disruption.consolidationPolicy**: política de consolidación de nodos: `WhenEmpty` (eliminar únicamente los nodos vacíos) o `WhenEmptyOrUnderutilized` (consolidar también los nodos infrautilizados; equivalente a `consolidation.enabled: true`, obsoleto)
-- **template.spec.requirements** (`node.kubernetes.io/instance-type`): especifica tipos de instancia económicos
+- **disruption.consolidateAfter**: retraso tras agregar o quitar Pod antes de considerar la consolidación, sujeto a la política y las comprobaciones de interrupción (p. ej., `30s`; reemplaza el `ttlSecondsAfterEmpty` heredado)
+- **disruption.consolidationPolicy**: política de consolidación de nodos, ya sea `WhenEmpty` (elimina solo nodos vacíos) o `WhenEmptyOrUnderutilized` (también consolida nodos infrautilizados; equivalente al `consolidation.enabled: true` heredado)
+- **template.spec.requirements** (`node.kubernetes.io/instance-type`): especifica tipos de instancia rentables
 
 #### Horizontal Pod Autoscaler (HPA)
 
-HPA ajusta automáticamente el número de Pod según la utilización de CPU o métricas personalizadas:
+HPA ajusta automáticamente la cantidad de Pod según la utilización de CPU o métricas personalizadas:
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -391,11 +391,11 @@ spec:
         averageUtilization: 80
 ```
 
-Los objetivos de utilización de CPU/memoria son porcentajes de las solicitudes y requieren la API de métricas de recursos y solicitudes en los contenedores correspondientes. Si se especifican varias métricas, HPA selecciona el mayor número deseado de réplicas; las métricas no disponibles pueden impedir la reducción de escala. Es posible que la memoria no disminuya al agregar réplicas, por lo que debe validar el comportamiento de la aplicación. EKS administra las marcas del controller-manager: configure `spec.behavior.scaleDown.stabilizationWindowSeconds` para cada HPA en lugar de asumir que puede modificar las marcas globales. No cambie automáticamente las mismas solicitudes de CPU/memoria con VPA mientras HPA utilice su denominador de utilización.
+Los objetivos de utilización de CPU y memoria son porcentajes de las solicitudes. Requieren la API de métricas de recursos y solicitudes configuradas en los contenedores pertinentes. Con varias métricas, HPA elige el mayor número de réplicas calculado; una métrica no disponible puede impedir reducirlas. Añadir réplicas no siempre reduce la memoria utilizada, por lo que debe comprobar el comportamiento de la aplicación. EKS gestiona las opciones de controller-manager. Configure `spec.behavior.scaleDown.stabilizationWindowSeconds` en cada HPA; no dé por hecho que puede modificar sus opciones globales. Si HPA utiliza las solicitudes de CPU y memoria como denominador, evite que VPA las cambie automáticamente al mismo tiempo.
 
 #### Vertical Pod Autoscaler (VPA)
 
-VPA ajusta automáticamente las solicitudes de CPU y memoria de los Pod para optimizar el uso de recursos:
+VPA ajusta automáticamente las solicitudes de CPU y memoria de los Pod para optimizar la utilización de recursos:
 
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
@@ -420,46 +420,46 @@ spec:
         memory: 1Gi
 ```
 
-Este ejemplo usa **Off** para recopilar recomendaciones sin entrar en conflicto con el HPA anterior. Primero, instale los componentes/CRD de VPA y las dependencias de métricas.
+Este ejemplo usa **Off** para recopilar recomendaciones sin competir con el HPA anterior. Instale primero los componentes/CRD de VPA y las dependencias de métricas.
 
-- **Off**: solo recomendaciones.
-- **Initial**: la admisión establece solicitudes en los Pod recién creados.
-- **Recreate**: el updater puede desalojar Pod para que los controladores los vuelvan a crear con los recursos recomendados, sujeto a la política de desalojo/PDB.
-- **Auto**: alias obsoleto de Recreate; para las nuevas configuraciones, elija el modo explícito.
-- Los modos in situ requieren una versión compatible de VPA/Kubernetes y las puertas de funcionalidades documentadas. Lea el contrato del modo elegido: `InPlaceOrRecreate` puede recurrir al desalojo, mientras que `InPlace` no usa esa alternativa de recreación. Revise los límites, las interrupciones y la demanda máxima antes de habilitar actualizaciones automáticas.
+- **Off**: solo genera recomendaciones.
+- **Initial**: la admisión configura las solicitudes de los Pod recién creados.
+- **Recreate**: el actualizador puede desalojar Pod para que sus controladores los recreen con los recursos recomendados, según la política de desalojo y los PDB.
+- **Auto**: alias obsoleto de Recreate. Para nuevas configuraciones, elija el modo explícito.
+- Los modos de actualización sin recreación requieren versiones compatibles de VPA y Kubernetes, con las opciones de funciones documentadas. Compruebe el comportamiento del modo elegido: `InPlaceOrRecreate` puede recurrir al desalojo; `InPlace` no utiliza esa alternativa. Revise los límites, las interrupciones y los picos de demanda antes de activar actualizaciones automáticas.
 
 ## Optimización de costos de almacenamiento {#storage-cost-optimization}
 
-El almacenamiento es un componente importante de los costos de los clústeres de EKS. Puede optimizar los costos de almacenamiento mediante las siguientes estrategias.
+El almacenamiento es un componente importante del costo de los clústeres de EKS. Puede optimizar los costos de almacenamiento mediante las siguientes estrategias.
 
-![Diagrama de arquitectura que muestra la optimización de costos de almacenamiento para EKS, dividida en optimización de volúmenes EBS (selección del tipo de volumen con migración a gp3, optimización del tamaño del volumen y administración del ciclo de vida del volumen), optimización de costos de EFS (selección del modo de rendimiento, administración del ciclo de vida y optimización de los patrones de acceso) y optimización de costos de S3 (optimización de la clase de almacenamiento mediante políticas de ciclo de vida y optimización de solicitudes).](../.gitbook/assets/en-eks-07-eks-cost-optimization-3.png)
+![Diagrama de arquitectura que muestra la optimización de costos de almacenamiento para EKS dividida en optimización de volúmenes EBS (selección del tipo de volumen con migración a gp3, optimización del tamaño del volumen y administración del ciclo de vida del volumen), optimización de costos de EFS (selección del modo de rendimiento, administración del ciclo de vida y optimización de patrones de acceso) y optimización de costos de S3 (optimización de la clase de almacenamiento mediante una política de ciclo de vida y optimización de solicitudes).](../.gitbook/assets/en-eks-07-eks-cost-optimization-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-3.html)
 
 ### Optimización de volúmenes EBS
 
-Los volúmenes EBS se utilizan principalmente para el almacenamiento persistente en los clústeres de EKS:
+Los volúmenes EBS se usan principalmente para almacenamiento persistente en los clústeres de EKS:
 
-#### Seleccionar el tipo de volumen adecuado
+#### Selección del tipo de volumen adecuado
 
 Seleccione el tipo de volumen EBS adecuado para la carga de trabajo:
 
-- **gp3**: SSD de propósito general recomendado para la mayoría de las cargas de trabajo
-- **gp2**: SSD de propósito general de una generación anterior; se recomienda migrar a gp3
-- **io1/io2**: SSD de IOPS aprovisionadas para cargas de trabajo de alto rendimiento
-- **st1**: HDD optimizado para rendimiento para cargas de trabajo que requieren un alto rendimiento
-- **sc1**: HDD frío para datos a los que se accede con poca frecuencia
+- **gp3**: SSD de propósito general recomendado para la mayoría de las cargas.
+- **gp2**: SSD de propósito general de una generación anterior; se recomienda migrar a gp3.
+- **io1/io2**: SSD con IOPS aprovisionadas para cargas de alto rendimiento.
+- **st1**: HDD optimizado para cargas que requieren un caudal elevado.
+- **sc1**: HDD para datos consultados con poca frecuencia.
 
-gp3 separa los precios del tamaño, las IOPS y el rendimiento; su base de 3,000 IOPS no supera la de todos los volúmenes gp2. Los límites siguientes son los actuales para volúmenes generales de las regiones de AWS, sujetos a las relaciones entre tamaño/IOPS y a los límites de las instancias. Outposts tiene límites diferentes. Las tarifas de almacenamiento de $0.08/$0.10 se conservan como supuestos ilustrativos sin región ni fecha registradas; obtenga una cotización actual que incluya las IOPS/el rendimiento aprovisionados.
+gp3 cobra por separado la capacidad, las IOPS y el caudal. Sus 3000 IOPS de base no superan las de cualquier volumen gp2. Los límites siguientes corresponden a volúmenes de las Regiones de AWS, sujetos a las relaciones entre tamaño e IOPS y a los límites de la instancia. Outposts tiene otros límites. Las tarifas de $0.08 y $0.10 se conservan como suposiciones ilustrativas sin Región ni fecha registradas. Obtenga precios actuales que incluyan las IOPS y el caudal aprovisionados.
 
-| Tipo de volumen | IOPS de referencia | IOPS máximas | Rendimiento de referencia | Rendimiento máximo | Precio por GB |
+| Tipo de volumen | IOPS de base | IOPS máximas | Caudal de base | Caudal máximo | Precio por GB |
 |------------|--------------|----------|---------------------|----------------|--------------|
 | gp3 | 3,000 | 80,000 | 125 MiB/s | 2,000 MiB/s | $0.08/GB-mes (ilustrativo) |
-| gp2 | 3 IOPS/GiB, mínimo de 100; los volúmenes pequeños aptos pueden usar ráfagas | 16,000 | Depende del tamaño y de las E/S | 250 MiB/s | $0.10/GB-mes (ilustrativo) |
+| gp2 | 3 IOPS/GiB, mínimo 100; los volúmenes pequeños aptos pueden rendir en ráfagas | 16,000 | Depende del tamaño y la E/S | 250 MiB/s | $0.10/GB-mes (ilustrativo) |
 
 #### Migración a gp3
 
-Esta clase crea nuevos volúmenes gp3 mediante el controlador EBS CSI estándar (`ebs.csi.aws.com`); no migra los volúmenes existentes ni cambia la clase predeterminada del clúster. Auto Mode usa otro aprovisionador (`ebs.csi.eks.amazonaws.com`) y requiere una ruta de migración de nodos/almacenamiento adecuada. Verifique el controlador instalado, los permisos de IAM/KMS, quién administra la clase existente y la topología. `Retain` conserva el almacenamiento liberado para que lo revise el propietario, y puede seguir generando cargos:
+Esta clase crea volúmenes gp3 nuevos mediante el controlador EBS CSI estándar (`ebs.csi.aws.com`); no migra volúmenes existentes ni cambia la clase predeterminada del clúster. Auto Mode utiliza otro aprovisionador (`ebs.csi.eks.amazonaws.com`) y necesita un procedimiento de migración adecuado para nodos y almacenamiento. Verifique el controlador instalado, los permisos IAM/KMS, quién gestiona la clase existente y la topología. `Retain` conserva el almacenamiento liberado para su revisión por el responsable y puede mantener los cargos:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -477,43 +477,43 @@ allowVolumeExpansion: true
 
 Migración de un PVC existente a gp3:
 
-1. Obtenga una copia de seguridad o instantánea coherente con la aplicación mediante los componentes CSI de instantáneas instalados y verifique que esté lista y que se pueda acceder a ella para restaurarla.
-2. Restaure un **PVC nuevo** mediante la clase gp3; un PVC vinculado no puede cambiar de StorageClass in situ.
-3. Pruebe la restauración y cambie la carga de trabajo durante una transición revisada; conserve el original hasta verificar la recuperación.
+1. Obtenga una copia o instantánea coherente con la aplicación mediante los componentes CSI instalados y compruebe que esté lista y sea accesible para restaurarla.
+2. Restaure un PVC **nuevo** con la clase gp3. No se puede cambiar directamente la StorageClass de un PVC vinculado.
+3. Pruebe la restauración y cambie la carga durante una transición revisada. Conserve el volumen original hasta verificar la recuperación.
 
-Un cambio in situ del tipo de volumen mediante EBS Elastic Volumes puede ser una alternativa para configuraciones compatibles. Coordínelo con el propietario de CSI/IaC en lugar de generar desviaciones de configuración. Consulte la [guía de almacenamiento](04-eks-storage-part1.md).
+En configuraciones compatibles, EBS Elastic Volumes puede permitir cambiar el tipo de volumen sin sustituirlo. Coordine el cambio con el responsable de CSI o IaC para evitar diferencias entre la configuración y los recursos reales. Consulte la [guía de almacenamiento](04-eks-storage-part1.md).
 
-#### Optimización del tamaño de los volúmenes
+#### Optimización del tamaño del volumen
 
-Aprovisione únicamente el tamaño de volumen que necesite:
+Aprovisione solo el tamaño de volumen necesario:
 
-- Los volúmenes sobredimensionados generan costos innecesarios.
-- Supervise el uso del sistema de archivos y amplíe los volúmenes compatibles cuando sea necesario. Los volúmenes EBS y los PVC de Kubernetes no se pueden reducir in situ; para reducir la capacidad se necesita un nuevo volumen más pequeño y una migración de datos adaptada a la aplicación.
-- `allowVolumeExpansion` permite solicitudes de expansión compatibles; no supervisa el uso ni cambia automáticamente el tamaño. Cualquier expansor automático requiere un controlador configurado por separado, límites y gestión de errores.
+- Aprovisionar más capacidad de la necesaria genera costos evitables.
+- Supervise el uso del sistema de archivos y amplíe los volúmenes compatibles cuando haga falta. No se puede reducir directamente un volumen EBS ni un PVC. Para reducir capacidad, prepare un volumen nuevo más pequeño y una migración de datos compatible con la aplicación.
+- `allowVolumeExpansion` permite solicitar expansiones admitidas; no supervisa el uso ni redimensiona automáticamente. La expansión automática necesita otro controlador configurado, límites y gestión de fallos.
 
 #### Administración del ciclo de vida de los volúmenes
 
 Identifique y elimine los volúmenes innecesarios:
 
-- Revise periódicamente los PVC y PV sin uso.
-- La terminación de un Pod no significa que su PVC/PV se pueda desechar. Compruebe la retención del StatefulSet, los consumidores pendientes, las copias de seguridad y la propiedad antes de eliminar una solicitud o un volumen.
-- Establezca políticas de recuperación de PV adecuadas (Delete o Retain).
+- Revise periódicamente los PVC y PV que no se utilizan.
+- Que termine un Pod no significa que pueda eliminar su PVC o PV. Antes de borrar un claim o volumen, compruebe la retención del StatefulSet, los consumidores pendientes, las copias y quién lo gestiona.
+- Establezca la política adecuada de liberación del PV: Delete o Retain.
 
 ### Optimización de costos de EFS
 
-EFS es útil para las cargas de trabajo que requieren acceso compartido desde varios nodos:
+EFS es útil para cargas de trabajo que requieren acceso compartido entre varios nodos:
 
-#### Seleccionar el modo de rendimiento adecuado
+#### Selección del modo de rendimiento adecuado
 
 Seleccione el modo de rendimiento de EFS adecuado para la carga de trabajo:
 
-- **Rendimiento Bursting**: adecuado para patrones de acceso intermitente
-- **Rendimiento Provisioned**: adecuado para cargas de trabajo que requieren un rendimiento predecible
-- **Rendimiento Elastic**: adecuado para cargas de trabajo muy variables
+- **Bursting Throughput**: adecuado para patrones de acceso intermitentes.
+- **Provisioned Throughput**: adecuado para cargas que necesitan un caudal predecible.
+- **Elastic Throughput**: adecuado para cargas muy variables.
 
 #### Administración del ciclo de vida
 
-Las políticas de ciclo de vida de EFS pueden trasladar los archivos aptos a los que se accede con poca frecuencia a IA/Archive y, opcionalmente, devolverlos al almacenamiento principal cuando se accede a ellos. Los cargos de acceso, los tamaños y duraciones mínimos facturables, el modo de rendimiento y los patrones de acceso afectan los ahorros. El ejemplo exporta la matriz de políticas existente para revisarla. Edite la regla IA dentro de esa matriz y conserve las entradas requeridas de Archive/devolución al almacenamiento principal antes de enviar la configuración deseada completa:
+Las políticas de ciclo de vida de EFS pueden trasladar archivos aptos de acceso infrecuente a IA o Archive y, opcionalmente, devolverlos al almacenamiento principal cuando se consultan. Los ahorros dependen de los cargos de acceso, los tamaños y tiempos mínimos facturables, el modo de caudal y el patrón de acceso. El ejemplo exporta la lista de políticas existente para revisarla. Edite la regla IA y conserve las entradas necesarias de Archive y retorno al almacenamiento principal antes de enviar la configuración completa:
 
 ```bash
 aws efs describe-lifecycle-configuration \
@@ -528,15 +528,15 @@ aws efs put-lifecycle-configuration \
 
 #### Optimización de los patrones de acceso
 
-Optimice los patrones de acceso a EFS para reducir costos:
+Optimice los patrones de acceso a EFS para reducir los costos:
 
-- Use archivos más grandes en lugar de archivos pequeños.
-- Reduzca al mínimo las operaciones de metadatos.
-- Use patrones de acceso secuencial.
+- Use archivos más grandes en lugar de archivos pequeños
+- Reduzca las operaciones de metadatos
+- Use patrones de acceso secuencial
 
 ### Optimización de costos de S3
 
-S3 es una opción económica para almacenar registros, copias de seguridad, contenido estático, etc.:
+S3 es una opción rentable para almacenar registros, copias de seguridad, contenido estático, etc.:
 
 #### Optimización de la clase de almacenamiento
 
@@ -550,7 +550,7 @@ Seleccione la clase de almacenamiento de S3 adecuada para la carga de trabajo:
 
 #### Política de ciclo de vida
 
-Esta regla ilustrativa hace la transición de los objetos actuales a los 30/90 días y los vence a los 365 días. Valide la latencia de recuperación, los requisitos de retención/Object Lock, los cargos de transición/solicitud, las duraciones mínimas de almacenamiento y la exclusión predeterminada de los objetos de menos de 128 KB de las transiciones en las configuraciones nuevas o modificadas. Los buckets con versionado necesitan una administración aparte de las versiones no actuales; el vencimiento de la versión actual puede crear un marcador de eliminación mientras los datos antiguos siguen siendo facturables. Una llamada a put-bucket-lifecycle-configuration reemplaza la configuración del ciclo de vida del bucket, por lo que debe combinarse con las reglas no relacionadas y conservarlas:
+Esta regla de ejemplo cambia la clase de los objetos actuales a los 30 y 90 días y los hace caducar a los 365. Compruebe el tiempo de recuperación, los requisitos de retención y Object Lock, los cargos de transición y solicitudes, los períodos mínimos de almacenamiento y la exclusión predeterminada de objetos menores de 128 KB en las transiciones de configuraciones nuevas o modificadas. Los buckets versionados necesitan gestionar por separado las versiones anteriores: caducar la versión actual puede crear un marcador de borrado mientras los datos antiguos siguen generando cargos. Una llamada a put-bucket-lifecycle-configuration sustituye toda la configuración del bucket. Combine y conserve las demás reglas:
 
 ```json
 {
@@ -577,17 +577,17 @@ Esta regla ilustrativa hace la transición de los objetos actuales a los 30/90 d
 }
 ```
 
-#### Optimización de las solicitudes a S3
+#### Optimización de solicitudes de S3
 
-Optimice los costos de las solicitudes a S3:
+Optimice los costos de solicitudes de S3:
 
-- Combine los objetos pequeños en objetos más grandes.
-- Reduzca al mínimo las operaciones LIST innecesarias.
-- La carga multiparte puede mejorar la transferencia y el comportamiento ante reintentos, pero añade cargos por solicitudes y almacenamiento de partes incompletas; configure la cancelación/limpieza de las cargas abandonadas. Transfer Acceleration puede generar cargos y es una opción de latencia/rendimiento, no un ahorro automático en los costos de solicitudes.
+- Agrupe objetos pequeños en objetos mayores.
+- Reduzca las operaciones LIST innecesarias.
+- La carga multiparte puede mejorar las transferencias y reintentos, pero añade cargos por solicitudes y por almacenar partes incompletas. Configure la cancelación y limpieza de cargas abandonadas. Transfer Acceleration también puede generar cargos: mejora la latencia o el caudal en determinados casos, sin ahorrar automáticamente en solicitudes.
 
 ## Optimización de costos de redes {#networking-cost-optimization}
 
-Los costos de redes pueden ser significativos, especialmente cuando se transfieren grandes volúmenes de datos. Puede optimizarlos mediante las siguientes estrategias.
+Los costos de redes pueden ser significativos, especialmente con grandes transferencias de datos. Puede optimizarlos mediante las siguientes estrategias.
 
 <!-- Pending parent diagram repair: see /tmp/eks-cost-optimization-audit/diagram-review.json
 ![Tree diagram of EKS networking cost optimization branching into data transfer, load balancer, and NAT gateway optimization, each with three tactics such as intra-region communication, AZ-aware routing, compression, load balancer type selection and sharing, idle load balancer removal, NAT gateway sharing, VPC endpoints, and outbound traffic optimization, with the VPC endpoint path emphasized.](../.gitbook/assets/en-eks-07-eks-cost-optimization-4.png)
@@ -597,19 +597,19 @@ Los costos de redes pueden ser significativos, especialmente cuando se transfier
 
 ### Optimización de la transferencia de datos
 
-#### Usar la comunicación dentro de la región
+#### Uso de comunicaciones dentro de la Región
 
-Reduzca los costos de transferencia de datos entre regiones comunicándose dentro de la misma región siempre que sea posible:
+Reduzca los costos de transferencia de datos entre Regiones comunicándose dentro de la misma Región siempre que sea posible:
 
-- Ubique el clúster de EKS y los servicios de AWS relacionados en la misma región.
-- Reduzca al mínimo la transferencia de datos entre regiones cuando abarque varias regiones.
+- Ubique el clúster de EKS y los servicios de AWS relacionados en la misma Región
+- Reduzca al mínimo la transferencia de datos entre Regiones cuando abarque varias Regiones
 
-#### Enrutamiento adaptado a la zona de disponibilidad
+#### Enrutamiento consciente de las zonas de disponibilidad
 
-Implemente un enrutamiento adaptado a las zonas de disponibilidad para reducir los costos de transferencia entre zonas:
+Implemente enrutamiento consciente de las zonas de disponibilidad para reducir los costos de transferencia de datos entre zonas:
 
-- Use el enrutamiento de servicios que tenga en cuenta la topología.
-- Prefiera los endpoints locales cuando sean compatibles y conserve la disponibilidad en varias zonas. `trafficDistribution: PreferSameZone` es estable en Kubernetes 1.35 y versiones posteriores; valide la implementación del clúster/proxy. Es una preferencia, con alternativa cuando no hay endpoints locales disponibles, no una garantía de que no habrá tráfico entre zonas. La afinidad de ubicación por sí sola no enruta el tráfico de Service.
+- Use enrutamiento de servicios basado en la topología.
+- Cuando sea compatible, prefiera endpoints locales y conserve la disponibilidad en varias zonas. `trafficDistribution: PreferSameZone` es estable en Kubernetes 1.35+; compruebe la implementación del clúster y el proxy. Es una preferencia con alternativa cuando faltan endpoints locales, no una garantía de eliminar el tráfico entre zonas. La afinidad de ubicación no enruta por sí sola el tráfico de un Service.
 
 ```yaml
 apiVersion: v1
@@ -626,32 +626,32 @@ spec:
   type: ClusterIP
 ```
 
-#### Usar compresión
+#### Uso de compresión
 
-Reduzca la cantidad de datos transferidos comprimiéndolos antes de la transferencia:
+Reduzca la cantidad de datos transferidos mediante compresión antes de transferirlos:
 
 - Compresión de respuestas de API
 - Compresión de registros y métricas
 - Optimización de imágenes y recursos estáticos
 
-### Optimización de balanceadores de carga
+### Optimización del Load Balancer
 
-#### Seleccionar el tipo de balanceador de carga adecuado
+#### Selección del tipo de Load Balancer adecuado
 
-Seleccione el tipo de balanceador de carga adecuado para la carga de trabajo:
+Seleccione el tipo de Load Balancer adecuado para la carga de trabajo:
 
 - **Network Load Balancer (NLB)**: tráfico TCP/UDP cuando se necesita baja latencia
 - **Application Load Balancer (ALB)**: tráfico HTTP/HTTPS cuando se necesita enrutamiento basado en rutas
 - **Classic Load Balancer (CLB)**: cargas de trabajo heredadas
 
-#### Uso compartido de balanceadores de carga
+#### Uso compartido de Load Balancer
 
-Reduzca los costos compartiendo balanceadores de carga entre varios servicios:
+Reduzca los costos compartiendo los Load Balancer entre varios servicios:
 
-- Use AWS Load Balancer Controller.
-- Exponga varios servicios mediante recursos Ingress.
+- Use AWS Load Balancer Controller
+- Exponga varios servicios mediante recursos Ingress
 
-Use la [guía de redes](03-eks-networking-part1.md) para instalar el AWS Load Balancer Controller estándar con el chart, la cuenta de servicio/IAM, las subredes y los grupos de seguridad correctos. Reutilice el propietario actual del controlador. Auto Mode tiene otra integración integrada; no suponga que se le aplican estos ajustes de instalación/clase. Ambos Service de backend que aparecen a continuación deben existir en el namespace de Ingress y exponer el puerto 80; el modo de destino IP requiere que se pueda acceder a las IP de los Pod. Este es un ejemplo de enrutamiento HTTP; el uso público en producción también requiere TLS, DNS y controles de acceso revisados.
+Siga la [guía de redes](03-eks-networking-part1.md) para instalar AWS Load Balancer Controller estándar con el chart, IAM, la cuenta de servicio, las subredes y los grupos de seguridad adecuados. Coordine los cambios con quien ya gestiona el controlador. Auto Mode incorpora una integración diferente; no dé por hecho que admite estos ajustes de instalación y clases. Ambos Services de destino deben existir en el espacio de nombres del Ingress y exponer el puerto 80. El modo de destinos IP requiere poder acceder a las IP de los Pod. Este ejemplo muestra enrutamiento HTTP; una exposición pública en producción también necesita revisar TLS, DNS y los controles de acceso.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -686,27 +686,27 @@ spec:
               number: 80
 ```
 
-#### Eliminar balanceadores de carga inactivos
+#### Eliminación de Load Balancer inactivos
 
-Identifique y elimine los balanceadores de carga que no se utilizan:
+Identifique y elimine los Load Balancer que no se usan:
 
-- Supervise los balanceadores de carga que no reciben tráfico.
-- Elimine los balanceadores de carga innecesarios de los entornos de prueba o desarrollo.
+- Supervise los Load Balancer sin tráfico
+- Elimine los Load Balancer innecesarios de los entornos de prueba o desarrollo
 
-### Optimización de NAT gateway
+### Optimización de NAT Gateway
 
-Los NAT gateway generan cargos por hora y cargos de procesamiento de datos:
+NAT gateway genera cargos por hora y por procesamiento de datos:
 
-#### Uso compartido de NAT gateway
+#### Uso compartido de NAT Gateway
 
 Reduzca los costos compartiendo NAT gateway entre varias subredes:
 
-- Con los NAT gateway zonales, las subredes privadas de la misma zona de disponibilidad pueden compartir su gateway local. Evalúe la disponibilidad por zona y el costo fijo por hora.
-- Un solo gateway zonal compartido entre zonas agrega una dependencia entre zonas y posibles cargos de transferencia; es una compensación deliberada, no un diseño de alta disponibilidad universalmente más económico. Evalúe por separado la opción actual de NAT regional conforme a su modelo de disponibilidad/precios documentado.
+- Con puertas de enlace NAT zonales, las subredes privadas de una misma zona pueden compartir la puerta de enlace local. Evalúe la disponibilidad por zona y el cargo fijo por hora.
+- Compartir una única puerta de enlace zonal entre varias zonas añade dependencias entre ellas y puede generar cargos de transferencia. Es una decisión con ventajas e inconvenientes, no una configuración de alta disponibilidad que siempre cueste menos. Evalúe por separado la opción regional actual de NAT según su modelo documentado de disponibilidad y precios.
 
-#### Usar VPC endpoints
+#### Uso de VPC endpoints
 
-Compare los cargos de los endpoints con la ruta NAT para el tráfico real. Los gateway endpoints de S3/DynamoDB no tienen cargos adicionales por hora ni por procesamiento de datos; los interface endpoints (como ECR/Logs/STS) tienen sus propios cargos y requieren configuración de DNS/grupos de seguridad. El siguiente ejemplo crea gateway endpoints en las tablas de rutas existentes ya revisadas; aplique una política de endpoint adecuada. Una ruta de extracción de imágenes de ECR suele necesitar tanto los interface endpoints `ecr.api`/`ecr.dkr` como acceso a S3, no solo el endpoint de la API de ECR:
+Compare los cargos de los endpoints y de la ruta NAT utilizando el tráfico real. Los endpoints de puerta de enlace para S3 y DynamoDB no tienen cargos adicionales por hora ni por procesamiento de datos. Los endpoints de interfaz, como ECR, Logs y STS, tienen sus propios cargos y requieren configurar DNS y grupos de seguridad. El ejemplo crea endpoints de puerta de enlace en tablas de rutas existentes y revisadas; aplique una política de endpoint adecuada. Descargar imágenes de ECR suele requerir los endpoints de interfaz `ecr.api`/`ecr.dkr` y acceso a S3. El endpoint de la API de ECR por sí solo no basta:
 
 ```bash
 # Create S3 VPC Endpoint
@@ -734,27 +734,27 @@ VPC endpoints de uso común:
 
 Optimice el tráfico saliente que pasa por NAT gateway:
 
-- Reduzca al mínimo las llamadas innecesarias a API externas.
-- La programación puede reducir la contención, pero los precios normales de NAT/transferencia de datos no tienen un descuento general fuera de las horas pico; reduzca los bytes facturables o la duración del aprovisionamiento.
-- Use compresión de datos.
+- Reduzca las llamadas innecesarias a API externas.
+- Programar las operaciones puede reducir la contención, pero NAT y transferencia de datos no suelen ofrecer un descuento general fuera de las horas punta. Para reducir cargos, disminuya los bytes facturados o el tiempo aprovisionado.
+- Comprima los datos.
 
 ## Administración y gobernanza de recursos {#resource-management-and-governance}
 
-La administración y gobernanza eficaces de los recursos son importantes para controlar los costos de los clústeres de EKS. Puede administrar los recursos eficazmente mediante las siguientes estrategias.
+La administración y gobernanza eficaces de recursos son importantes para controlar los costos del clúster de EKS. Puede administrar los recursos eficazmente con las siguientes estrategias.
 
-![Diagrama de árbol de la administración y gobernanza de recursos de EKS, dividida en optimización de solicitudes y límites de recursos, namespaces y cuotas de recursos, y asignación de costos y etiquetado; cada rama enumera prácticas como configurar solicitudes/límites, separar namespaces con ResourceQuota y LimitRange, y usar etiquetas de recursos, etiquetas de Kubernetes y Kubecost.](../.gitbook/assets/en-eks-07-eks-cost-optimization-5.png)
+![Diagrama de árbol de la administración y gobernanza de recursos de EKS, dividido en optimización de solicitudes y límites de recursos, namespaces y cuotas de recursos, y asignación de costos y etiquetado; cada rama enumera prácticas como establecer solicitudes/límites, separar namespaces con ResourceQuota y LimitRange, y usar etiquetas de recursos, etiquetas de Kubernetes y Kubecost.](../.gitbook/assets/en-eks-07-eks-cost-optimization-5.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-5.html)
 
 ### Optimización de solicitudes y límites de recursos
 
-#### Establecer solicitudes de recursos adecuadas
+#### Establecimiento de solicitudes de recursos adecuadas
 
-Establezca solicitudes de recursos que correspondan a las necesidades reales de la aplicación:
+Establezca solicitudes de recursos que coincidan con los requisitos reales de recursos de la aplicación:
 
 - Las solicitudes demasiado altas desperdician recursos.
-- Las solicitudes demasiado bajas pueden provocar problemas de rendimiento.
-- Use VPA (Vertical Pod Autoscaler) para optimizar las solicitudes de recursos.
+- Las solicitudes demasiado bajas pueden causar problemas de rendimiento.
+- Use VPA (Vertical Pod Autoscaler) para optimizar las solicitudes de recursos
 
 ```yaml
 apiVersion: v1
@@ -774,37 +774,37 @@ spec:
         memory: 512Mi
 ```
 
-#### Establecer límites de recursos
+#### Establecimiento de límites de recursos
 
-Establezca límites de recursos para impedir que los contenedores consuman recursos excesivos:
+Establezca límites de recursos para evitar que los contenedores usen recursos en exceso:
 
-- Los límites de CPU normalmente imponen throttling; los límites excesivamente bajos pueden perjudicar la latencia incluso cuando al nodo le sobra CPU.
-- Los límites de memoria se aplican de forma reactiva y pueden provocar la terminación por OOM; no garantizan que el uso nunca supere brevemente un valor. Dimensione las solicitudes/límites según el comportamiento medido de la carga de trabajo, no con una proporción universal.
+- Los límites de CPU normalmente restringen el tiempo de ejecución (throttling). Un límite demasiado bajo puede aumentar la latencia aunque el nodo tenga CPU disponible.
+- Los límites de memoria actúan de forma reactiva y pueden terminar el contenedor por OOM. No garantizan que el uso nunca supere momentáneamente el valor. Dimensione solicitudes y límites según mediciones de la carga, no mediante una proporción universal.
 
-#### Comprender las clases QoS
+#### Comprensión de las clases QoS
 
-Comprenda y utilice las clases QoS (calidad de servicio) de Kubernetes:
+Comprenda y utilice las clases QoS (Quality of Service) de Kubernetes:
 
 Para la configuración de recursos a nivel de contenedor que se muestra aquí:
 
-- **Guaranteed**: todos los contenedores tienen solicitudes distintas de cero de CPU y memoria, iguales a sus límites correspondientes.
-- **Burstable**: se configura alguna solicitud o límite de CPU/memoria, pero no se cumplen los criterios de Guaranteed.
+- **Guaranteed**: todos los contenedores tienen solicitudes de CPU y memoria distintas de cero, iguales a sus límites correspondientes.
+- **Burstable**: se configura alguna solicitud o algún límite de CPU/memoria, pero no se cumplen los criterios de Guaranteed.
 - **BestEffort**: ningún contenedor tiene solicitudes ni límites de CPU/memoria.
 
-QoS no es lo mismo que la prioridad de los Pod y no establece un orden absoluto de desalojo. Cuando el nodo está bajo presión, kubelet considera si el uso supera las solicitudes, la prioridad del Pod y el exceso de uso relativo. El desalojo por presión del disco también es distinto porque QoS de CPU/memoria no clasifica las solicitudes de almacenamiento efímero. Consulte las [reglas QoS actuales](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/) cuando use recursos a nivel de Pod.
+QoS es diferente de Pod Priority y no establece un orden absoluto de desalojo. Ante presión en el nodo, kubelet considera si el uso supera las solicitudes, la prioridad del Pod y cuánto las excede. El desalojo por presión de disco también tiene reglas diferentes, ya que las clases QoS de CPU y memoria no clasifican las solicitudes de almacenamiento efímero. Si utiliza recursos a nivel de Pod, consulte las [reglas QoS actuales](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/).
 
 ### Namespaces y cuotas de recursos
 
 #### Separación basada en namespaces
 
-Use namespaces para separar lógicamente los recursos:
+Use namespaces para separar recursos de forma lógica:
 
-- Cree namespaces por equipo, entorno o aplicación.
-- Supervise el uso de recursos por namespace.
+- Cree namespaces por equipo, entorno o aplicación
+- Supervise el uso de recursos por namespace
 
-#### Establecer cuotas de recursos
+#### Establecimiento de cuotas de recursos
 
-ResourceQuota limita las solicitudes/límites de recursos admitidos y la cantidad de objetos dentro de un namespace existente; no es un límite de gasto ni un medidor de CPU en tiempo de ejecución. Cree primero el namespace `team-a`. La cuota de CPU/memoria puede requerir solicitudes/límites en los contenedores entrantes, así que coordine los valores predeterminados de LimitRange con las cargas de trabajo:
+ResourceQuota limita las solicitudes y límites admitidos, y el número de objetos, dentro de un espacio de nombres existente. No limita el gasto ni mide la CPU durante la ejecución. Cree primero el espacio de nombres `team-a`. Una cuota de CPU y memoria puede exigir que los contenedores nuevos declaren solicitudes y límites; coordine los valores predeterminados de LimitRange con las cargas.
 
 ```yaml
 apiVersion: v1
@@ -823,7 +823,7 @@ spec:
     persistentvolumeclaims: "5"
 ```
 
-#### Establecer LimitRange
+#### Establecimiento de LimitRange
 
 Use LimitRange para establecer límites de recursos predeterminados para los contenedores de un namespace:
 
@@ -848,10 +848,10 @@ spec:
 
 #### Etiquetado de recursos
 
-Aplique etiquetas a los recursos de AWS y active las claves de facturación aptas mediante el responsable de facturación. La etiqueta de un clúster de EKS no se propaga automáticamente a sus instancias EC2, ASG, volúmenes EBS ni balanceadores de carga. Verifique la cobertura real de las etiquetas y los retrasos del procesamiento de facturación; estos ejemplos de etiquetado explícito no garantizan una atribución completa de los costos del clúster:
+Aplique etiquetas a los recursos AWS y coordine con el responsable de facturación la activación de las claves aptas. Las etiquetas del clúster EKS no se propagan automáticamente a instancias EC2, ASG, volúmenes EBS ni balanceadores. Compruebe la cobertura real y los retrasos del procesamiento de facturación. Los ejemplos de etiquetado siguientes no garantizan atribuir todos los costos del clúster:
 
 - Etiquete por equipo, proyecto, entorno, centro de costos, etc.
-- Implemente una estrategia de etiquetado coherente.
+- Implemente una estrategia de etiquetado coherente
 
 ```bash
 # Tag EKS cluster
@@ -867,7 +867,7 @@ aws ec2 create-tags \
 
 #### Etiquetas y anotaciones de Kubernetes
 
-Las etiquetas/anotaciones de Kubernetes constituyen un sistema de metadatos independiente. Las herramientas de costos pueden agrupar por etiquetas seleccionadas de las cargas de trabajo; si se desea agrupar a nivel de Pod, las etiquetas del Deployment también deben aparecer en su plantilla de Pod. Las etiquetas del namespace no se heredan automáticamente en los Pod ni en los recursos de AWS. La asignación de costos divididos de AWS y los atributos de costos de Pod de EKS generados requieren una configuración de facturación aparte:
+Las etiquetas y anotaciones de Kubernetes forman otro sistema de metadatos. Las herramientas de costos pueden agrupar por determinadas etiquetas de las cargas. Para agrupar a nivel de Pod, incluya las etiquetas del Deployment también en su plantilla de Pod. Los Pod y los recursos AWS no heredan automáticamente las etiquetas del espacio de nombres. La asignación dividida de costos de AWS y los atributos de costo generados para Pod de EKS requieren configurar la facturación por separado:
 
 ```yaml
 apiVersion: apps/v1
@@ -899,21 +899,21 @@ spec:
 
 #### Uso de Kubecost
 
-Use Kubecost para realizar un seguimiento de los costos de los recursos de Kubernetes y optimizarlos:
+Use Kubecost para hacer seguimiento y optimizar los costos de recursos de Kubernetes:
 
-Siga la sección de instalación que aparece a continuación; elija una implementación administrada de Kubecost/OpenCost en lugar de instalar recopiladores duplicados. La asignación basada en recursos sigue siendo una estimación hasta que se reconcilia con el conjunto de datos de facturación y la política acordada de costos compartidos.
+Siga la sección de instalación siguiente. Elija una sola implementación de Kubecost u OpenCost y defina quién la gestiona; evite recopiladores duplicados. La asignación basada en recursos es una estimación hasta conciliarla con los datos de facturación y la política acordada para costos compartidos.
 
 Kubecost ofrece las siguientes funciones:
 
-- Análisis de costos por namespace, Deployment, Service y etiqueta
+- Análisis de costos por espacio de nombres, Deployment, Service y etiqueta
 - Recomendaciones para optimizar costos
-- Informes de asignación de costos y devolución de cargos
+- Informes de asignación e imputación de costos
 
 ## Supervisión y análisis de costos {#cost-monitoring-and-analysis}
 
-Para optimizar los costos de forma eficaz, debe supervisarlos y analizarlos continuamente. Puede hacerlo mediante las siguientes herramientas y estrategias.
+Para optimizar los costos de forma eficaz, debe supervisarlos y analizarlos continuamente. Puede supervisar y analizar los costos del clúster de EKS con las siguientes herramientas y estrategias.
 
-![Diagrama de supervisión y análisis de costos para EKS dividido en cuatro herramientas: AWS Cost Explorer, Kubecost, CloudWatch Container Insights y un panel de costos personalizado; cada una está vinculada a capacidades clave como análisis de costos, detección de anomalías, presupuestos, panel y alertas de Kubecost, supervisión del uso de recursos, información para optimizar, panel de Grafana y puntuación de optimización de costos.](../.gitbook/assets/en-eks-07-eks-cost-optimization-6.png)
+![Diagrama de supervisión y análisis de costos de EKS con cuatro ramas: AWS Cost Explorer, Kubecost, CloudWatch Container Insights y un panel de costos personalizado; cada rama se vincula con funciones clave como análisis de costos, detección de anomalías, presupuestos, panel y alertas de Kubecost, supervisión del uso de recursos, información para optimizar, panel de Grafana y puntuación de optimización de costos.](../.gitbook/assets/en-eks-07-eks-cost-optimization-6.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-6.html)
 
@@ -923,7 +923,7 @@ AWS Cost Explorer es una herramienta que ayuda a visualizar, comprender y admini
 
 #### Análisis de costos
 
-Analice los costos del clúster de EKS mediante AWS Cost Explorer:
+Analice los costos del clúster de EKS con AWS Cost Explorer:
 
 - Análisis de costos por servicio
 - Análisis de costos por etiqueta
@@ -938,21 +938,21 @@ aws ce get-cost-and-usage \
   --group-by Type=DIMENSION,Key=SERVICE Type=TAG,Key=Environment
 ```
 
-Las fechas de 2025 son ejemplos históricos de sintaxis, no un informe de costos actual; elija un período de facturación UTC disponible con una fecha de finalización exclusiva. Respete cualquier `NextPageToken` en lugar de considerar completa la primera respuesta. Compare por separado las bases de costos; no sume bases distintas ni agregue `UsageQuantity` entre unidades incompatibles. La agrupación por servicio/etiqueta incluye los valores sin etiqueta y no es específica del clúster automáticamente.
+Las fechas de 2025 ilustran la sintaxis de una consulta histórica; no generan un informe actual. Elija un período de facturación UTC disponible, con fecha final exclusiva. Si recibe `NextPageToken`, continúe la paginación. Compare por separado las distintas bases de costo; no las sume ni agregue `UsageQuantity` para unidades incompatibles. La agrupación por servicio y etiqueta incluye valores sin etiqueta y no limita automáticamente los resultados al clúster.
 
-#### Detección de anomalías en los costos
+#### Detección de anomalías de costos
 
-Use AWS Cost Anomaly Detection para detectar aumentos anómalos en los costos:
+Use AWS Cost Anomaly Detection para detectar aumentos anómalos de costos:
 
-1. Inicie sesión en AWS Management Console.
-2. Vaya al servicio AWS Cost Management.
-3. Seleccione «Cost Anomaly Detection».
-4. Haga clic en «Create anomaly monitor».
-5. Configure el tipo de monitor y las preferencias de notificación.
+1. Inicie sesión en AWS Management Console
+2. Vaya al servicio AWS Cost Management
+3. Seleccione «Cost Anomaly Detection»
+4. Haga clic en «Create anomaly monitor»
+5. Configure el tipo de monitor y las preferencias de notificación
 
-#### Configuración de un presupuesto de costos
+#### Configuración de presupuestos de costos
 
-Este ejemplo de 1,000 USD/80 % crea una notificación de presupuesto mensual real; sustituya la cuenta y el correo electrónico por valores aprobados. Verifique el filtro canónico de etiquetas de Budgets (por ejemplo, `user:Environment$Production`) con la configuración de facturación. El filtro selecciona los costos etiquetados de todos los servicios; limitar Service a EKS excluiría EC2, almacenamiento y otros costos del clúster. Los costos sin etiqueta o compartidos siguen necesitando una asignación aparte. Budgets procesa datos de facturación con retraso y no es un límite de gasto estricto. Los presupuestos existentes deben reconciliarse con su propietario; aquí no se establece una fecha de vencimiento fija pasada:
+El ejemplo de 1000 USD y 80 % crea una notificación real de presupuesto mensual. Sustituya la cuenta y el correo por valores aprobados. Compruebe el filtro canónico de etiquetas de Budgets, como `user:Environment$Production`, con su configuración de facturación. El filtro selecciona costos etiquetados de distintos servicios; limitar Service a EKS excluiría EC2, almacenamiento y otros costos del clúster. Los costos sin etiqueta y compartidos necesitan otra asignación. Budgets procesa facturación con retraso y no impone un tope estricto de gasto. Coordine los presupuestos existentes con su responsable. El ejemplo no fija una fecha de vencimiento en el pasado:
 
 ```bash
 # Create budget using AWS CLI
@@ -1006,7 +1006,7 @@ Kubecost es una herramienta dedicada a supervisar y optimizar los costos de los 
 
 #### Instalación de Kubecost
 
-El chart/la aplicación comprobados corresponden a la versión **3.3.1** del repositorio actual que aparece a continuación. Kubecost 3.x usa ClickHouse y recopilación directa mediante finops-agent; no reutilice una instalación 2.x de `cost-analyzer` ni sus valores incluidos para Prometheus/node-exporter. Antes de aplicarlo, revise la licencia, la compatibilidad con Kubernetes, las clases de almacenamiento/el tamaño de PVC, el ID del clúster, la recopilación de redes y el control de acceso en la [documentación del chart](https://github.com/kubecost/cost-analyzer-helm-chart). Siga el procedimiento de migración documentado para una versión 2.x existente; esto no es un procedimiento de actualización in situ. No se afirma que haya una instalación activa ni que esté listo para producción. La [guía de la plataforma FinOps](../ops/13-finops-cost-platform.md) también abarca OpenCost y la conciliación de facturación.
+El chart y la aplicación revisados son la versión **3.3.1** del repositorio siguiente. Kubecost 3.x utiliza ClickHouse y recopilación directa con finops-agent. No reutilice una instalación 2.x de `cost-analyzer` ni sus valores incluidos para Prometheus y node-exporter. Antes de aplicar, revise licencia, compatibilidad con Kubernetes, clases de almacenamiento, capacidad de PVC, ID del clúster, recopilación de datos de red y acceso en la [documentación del chart](https://github.com/kubecost/cost-analyzer-helm-chart). Para una instalación 2.x existente, siga la migración documentada: este ejemplo no es una actualización directa. No se afirma haber instalado el sistema ni validado su preparación para producción. La [guía de la plataforma FinOps](../ops/13-finops-cost-platform.md) también explica OpenCost y la conciliación de facturación.
 
 ```bash
 helm repo add kubecost https://kubecost.github.io/kubecost/
@@ -1024,22 +1024,22 @@ helm install kubecost kubecost/kubecost --version 3.3.1 \
 
 El panel de Kubecost proporciona la siguiente información:
 
-- Costos por namespace, Deployment, Service y nodo
+- Costos por espacio de nombres, Deployment, Service y nodo
 - Eficiencia y utilización de recursos
-- Recomendaciones para optimizar costos
-- Informes de asignación de costos y devolución de cargos
+- Recomendaciones de optimización
+- Informes de asignación e imputación de costos
 
 #### Alertas de Kubecost
 
-Use el mecanismo de alertas documentado para la edición/versión instalada de Kubecost y configure explícitamente los destinatarios, las credenciales, el período presupuestario, la agregación y la entrega. Un ConfigMap arbitrario como `cost-analyzer-alerts` con `alerts.json` no se consume automáticamente, y el ejemplo anterior no establecía un esquema válido ni un montaje. El ejemplo de AWS Budgets anterior es una alerta de facturación independiente y concreta; la [guía de FinOps](../ops/13-finops-cost-platform.md) ofrece un flujo de trabajo explícito para elaborar informes de asignación. Valide la entrega con una prueba sintética antes de depender de las alertas y supervise también los datos faltantes/obsoletos, además de los umbrales excedidos.
+Utilice las alertas documentadas para la edición y versión de Kubecost instaladas. Configure destinatarios, credenciales, período presupuestario, agregación y entrega. Un ConfigMap arbitrario `cost-analyzer-alerts` con `alerts.json` no se utiliza automáticamente; el ejemplo anterior no definía un esquema ni montaje válidos. El ejemplo previo de AWS Budgets es una alerta concreta e independiente basada en facturación. La [guía de FinOps](../ops/13-finops-cost-platform.md) describe un procedimiento explícito para informar asignaciones. Compruebe la entrega con una prueba sintética antes de depender de las alertas. Supervise los datos ausentes o desactualizados, además de los umbrales superados.
 
 ### CloudWatch Container Insights
 
 Use CloudWatch Container Insights para supervisar el uso de recursos del clúster de EKS:
 
-#### Habilitar Container Insights
+#### Habilitación de Container Insights
 
-Container Insights es telemetría de nodos/cargas de trabajo recopilada por el agente de CloudWatch o el complemento de observabilidad; `containerinsights` no es un tipo de registro del plano de control de EKS para `eksctl utils update-cluster-logging`. Siga la [guía de supervisión](06-eks-monitoring-logging.md) para elegir el complemento compatible, la asociación de IAM, la configuración y la ruta de recopilación específica de la plataforma. Mantenga un único responsable del recopilador y verifique la entrega real de métricas/registros. La telemetría del complemento/agente puede generar cargos.
+Container Insights recopila telemetría de nodos y cargas mediante el agente CloudWatch o el complemento de observabilidad. `containerinsights` no es un tipo de registro del plano de control EKS para `eksctl utils update-cluster-logging`. Siga la [guía de supervisión](06-eks-monitoring-logging.md) para elegir un complemento compatible, su asociación IAM, la configuración y el método de recopilación de cada plataforma. Mantenga un único responsable de los recopiladores y compruebe la entrega real de métricas y registros. Esa telemetría también puede generar cargos.
 
 #### Supervisión del uso de recursos
 
@@ -1054,9 +1054,9 @@ El panel de CloudWatch permite supervisar las siguientes métricas:
 
 Analice los datos de CloudWatch Container Insights para identificar oportunidades de optimización de costos:
 
-- Identifique los recursos sobredimensionados.
-- Identifique los nodos con baja utilización de recursos.
-- Analice las diferencias entre las solicitudes de recursos y el uso real.
+- Identifique los recursos sobredimensionados
+- Identifique los nodos con baja utilización de recursos
+- Analice las diferencias entre las solicitudes de recursos y el uso real
 
 ### Panel de costos personalizado
 
@@ -1068,22 +1068,22 @@ Cree paneles de costos personalizados con Prometheus y Grafana:
 
 1. Recopile métricas de uso de recursos en Prometheus.
 2. Cree un panel de costos en Grafana.
-3. Use una canalización de datos de facturación autenticada e implementada por separado, o una fuente de datos compatible para los resultados de Cost Explorer/CUR; añadir un panel no convierte las métricas de uso de Prometheus en datos reales de facturación. No exponga credenciales de facturación en el JSON del panel del navegador.
+3. Prepare por separado un proceso autenticado de datos de facturación, o use una fuente compatible con Cost Explorer y CUR. Añadir un panel no convierte las métricas de uso de Prometheus en facturación real. No incluya credenciales de facturación en el JSON enviado al navegador.
 
 #### Puntuación de optimización de costos
 
-Realice un seguimiento de estos indicadores por separado, con fórmulas, cobertura y períodos claramente documentados. No existe una puntuación universal de optimización de costos, y ninguno de estos cocientes por sí solo demuestra desperdicio ni ahorro monetario:
+Mantenga estos indicadores por separado y documente las fórmulas, la cobertura y los períodos de cálculo. No existe una puntuación universal de optimización. Ninguna de estas proporciones demuestra por sí sola desperdicio o ahorro monetario:
 
-- Cociente entre solicitudes de recursos y uso
+- Relación entre solicitud de recursos y uso
 - Utilización de nodos
-- Cociente de uso de instancias Spot
-- Cociente de recursos inactivos
+- Relación de uso de instancias Spot
+- Relación de recursos inactivos
 
 ## Prácticas recomendadas para optimizar costos {#cost-optimization-best-practices}
 
-Veamos las prácticas recomendadas para optimizar los costos de un clúster de EKS.
+Veamos las prácticas recomendadas para optimizar los costos del clúster de EKS.
 
-![Diagrama de prácticas recomendadas para la optimización de costos de EKS, dividido en prácticas generales, optimización específica de las cargas de trabajo y optimización de costos para servicios financieros; bajo las prácticas generales aparece un ciclo continuo de optimización de costos: medir, analizar, optimizar, supervisar e iterar.](../.gitbook/assets/en-eks-07-eks-cost-optimization-7.png)
+![Diagrama de prácticas recomendadas para optimizar costos de EKS, dividido en prácticas generales, optimización específica de cargas de trabajo y optimización de costos para servicios financieros; bajo las prácticas generales se muestra un ciclo continuo de optimización de costos: medir, analizar, optimizar, supervisar e iterar.](../.gitbook/assets/en-eks-07-eks-cost-optimization-7.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-7.html)
 
@@ -1093,40 +1093,40 @@ Veamos las prácticas recomendadas para optimizar los costos de un clúster de E
 
 La optimización de costos es un proceso continuo, no una tarea que se realiza una sola vez:
 
-1. **Medir**: mida los costos y el uso de recursos actuales.
-2. **Analizar**: analice los factores que impulsan los costos y las oportunidades de optimización.
-3. **Optimizar**: implemente estrategias de optimización de costos.
-4. **Supervisar**: supervise los resultados y haga ajustes según sea necesario.
-5. **Iterar**: repita el proceso.
+1. **Medir**: mida los costos actuales y el uso de recursos
+2. **Analizar**: analice los factores que generan costos y las oportunidades de optimización
+3. **Optimizar**: implemente estrategias de optimización de costos
+4. **Supervisar**: supervise los resultados y ajuste según sea necesario
+5. **Iterar**: repita el proceso
 
-#### Fomentar una cultura consciente de los costos
+#### Desarrollo de una cultura consciente de los costos
 
-Fomente una cultura consciente de los costos en la organización:
+Desarrolle una cultura consciente de los costos dentro de la organización:
 
-- Ofrezca visibilidad de los costos a los equipos.
-- Establezca objetivos de optimización de costos.
-- Reconozca y premie los logros en la optimización de costos.
-- Comparta prácticas recomendadas para optimizar costos.
+- Proporcione a los equipos visibilidad de los costos
+- Establezca objetivos de optimización de costos
+- Reconozca y recompense los logros en la optimización de costos
+- Comparta prácticas recomendadas para optimizar costos
 
-#### Uso de la automatización
+#### Uso de automatización
 
 Use la automatización para optimizar los costos:
 
-- Implemente el escalado automático.
+- Implemente autoescalado.
 - Aprovisione recursos según el uso.
-- Automatice la detección de anomalías en los costos y las alertas.
-- Identifique automáticamente posibles candidatos; elimínelos solo después de comprobar la propiedad, la retención, las dependencias y la recuperación.
+- Automatice la detección de anomalías de costos y las alertas.
+- Identifique automáticamente recursos candidatos a revisión. Elimínelos solo después de comprobar quién los gestiona, su retención, dependencias y recuperación.
 
-### Optimización específica de las cargas de trabajo
+### Optimización específica de cargas de trabajo
 
-#### Entornos de desarrollo y pruebas
+#### Entornos de desarrollo y prueba
 
-Optimice los costos de los entornos de desarrollo y pruebas:
+Optimice los costos de los entornos de desarrollo y prueba:
 
-- Apague automáticamente los entornos cuando no se utilicen.
-- Use instancias Spot.
-- Establezca límites de recursos.
-- Considere usar entornos compartidos.
+- Apague automáticamente los entornos cuando no se usen
+- Use instancias Spot
+- Establezca límites de recursos
+- Considere el uso de entornos compartidos
 
 ```yaml
 apiVersion: v1
@@ -1217,16 +1217,16 @@ spec:
             emptyDir: {}
 ```
 
-El CronJob está **suspendido de forma predeterminada**, se dirige únicamente al Deployment `dev/dev-app` existente y espera que haya tres réplicas. Use una versión de kubectl que se encuentre dentro de la asimetría de versiones compatible con el servidor. Acuerde el horario UTC y un procedimiento de restauración antes de habilitarlo; ajuste deliberadamente el nombre y la precondición. Si HPA o GitOps administra las réplicas, coordine el horario con ese responsable en lugar de competir con él. Reducir directamente la escala de un Deployment no usa la admisión de desalojos de PDB; reserve este método para el apagado de desarrollo aprobado. Detener los Pod no detiene el cargo del plano de control de EKS, el almacenamiento retenido ni los nodos que no puedan reducir su escala.
+El CronJob está **suspendido de forma predeterminada**, actúa únicamente sobre el Deployment existente `dev/dev-app` y exige que tenga tres réplicas. Utilice una versión de kubectl dentro del margen admitido respecto al servidor. Antes de habilitarlo, acuerde el horario UTC y un procedimiento de restauración. Adapte expresamente el nombre y la condición previa. Si HPA o GitOps gestiona las réplicas, coordine el horario con ese responsable. Reducir directamente las réplicas de un Deployment no pasa por la admisión de desalojo de PDB; reserve este procedimiento para la parada de desarrollo aprobada. Detener Pod no elimina los cargos del plano de control EKS, el almacenamiento retenido ni los nodos que no puedan retirarse.
 
 #### Cargas de trabajo por lotes
 
 Optimice los costos de las cargas de trabajo por lotes:
 
 - Use instancias Spot.
-- Programe la ejecución dentro de los plazos de los trabajos y según la capacidad disponible; no hay un descuento general por hora del día para el cómputo On-Demand.
+- Programe los trabajos según sus plazos y la capacidad disponible. On-Demand no tiene un descuento general según la hora del día.
 - Optimice las solicitudes de recursos.
-- Libere los recursos al finalizar los trabajos.
+- Libere los recursos cuando termine el trabajo.
 
 ```yaml
 apiVersion: batch/v1
@@ -1252,16 +1252,16 @@ spec:
   backoffLimit: 4
 ```
 
-Este Job selecciona **nodos Spot de grupos de nodos administrados**. Karpenter usa `karpenter.sh/capacity-type: spot`; seleccione la etiqueta que realmente tengan los nodos previstos. La imagen de la aplicación es un marcador de posición. Implemente reintentos idempotentes/puntos de control y asegúrese de tolerar cualquier taint de los nodos. La finalización del Job o el TTL limpia los objetos de Kubernetes, pero no necesariamente los PVC, los volúmenes ni los nodos facturables.
+Este Job selecciona **nodos Spot de grupos de nodos administrados**. Karpenter utiliza `karpenter.sh/capacity-type: spot`; elija la etiqueta realmente presente en los nodos previstos. La imagen es un marcador de posición. Implemente reintentos idempotentes y puntos de control, y prepare las tolerancias necesarias para las taints de los nodos. La finalización o el TTL del Job limpia objetos Kubernetes, pero no necesariamente PVC, volúmenes ni nodos facturables.
 
 #### Aplicaciones web
 
 Optimice los costos de las aplicaciones web:
 
-- Implemente el escalado automático.
-- Use una CDN para reducir el tráfico.
-- Implemente una estrategia de almacenamiento en caché.
-- Considere una arquitectura sin servidor.
+- Implemente el autoescalado
+- Use una CDN para reducir el tráfico
+- Implemente una estrategia de almacenamiento en caché
+- Considere una arquitectura sin servidor
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -1294,54 +1294,54 @@ spec:
 
 Optimice los costos de las cargas de trabajo de bases de datos:
 
-- Seleccione un tipo de instancia adecuado.
-- Configure el escalado automático del almacenamiento.
-- Considere usar réplicas de lectura.
-- Considere agregar una capa de caché.
+- Seleccione el tipo de instancia adecuado
+- Configure el escalado automático del almacenamiento
+- Considere el uso de réplicas de lectura
+- Considere agregar una capa de almacenamiento en caché
 
 ### Optimización de costos para servicios financieros
 
-Estrategias adicionales de optimización de costos que se deben tener en cuenta al usar EKS en el sector de los servicios financieros:
+Estrategias adicionales de optimización de costos que debe tener en cuenta al usar EKS en el sector de servicios financieros:
 
-#### Administración de costos del cumplimiento normativo
+#### Administración de costos de cumplimiento normativo
 
-Optimice los costos sin dejar de cumplir los requisitos normativos:
+Optimice los costos mientras cumple los requisitos normativos:
 
-- Aprovisione los recursos mínimos necesarios para cumplir los requisitos normativos.
-- Reduzca los costos operativos mediante la automatización del cumplimiento.
-- Separe los entornos regulados de los no regulados.
+- Aprovisione los recursos mínimos necesarios para cumplir los requisitos normativos
+- Reduzca los costos operativos mediante la automatización del cumplimiento
+- Separe los entornos regulados y no regulados
 
-#### Equilibrio entre alta disponibilidad y costo
+#### Equilibrio entre alta disponibilidad y costos
 
-Mantenga un equilibrio entre los requisitos de alta disponibilidad y los costos:
+Mantenga el equilibrio entre los requisitos de alta disponibilidad y los costos:
 
-- Implemente en varias zonas de disponibilidad las cargas de trabajo críticas.
-- Considere una implementación en una sola zona de disponibilidad para las cargas de trabajo no críticas.
-- Implemente un enfoque económico para los entornos de recuperación ante desastres.
+- Implemente en varias zonas de disponibilidad las cargas de trabajo críticas
+- Considere una implementación en una sola zona de disponibilidad para las cargas de trabajo no críticas
+- Implemente un enfoque rentable para los entornos de recuperación ante desastres
 
-#### Equilibrio entre los requisitos de seguridad y el costo
+#### Equilibrio entre los requisitos de seguridad y los costos
 
-Mantenga un equilibrio entre los requisitos de seguridad y los costos:
+Mantenga el equilibrio entre los requisitos de seguridad y los costos:
 
-- Implemente controles de seguridad con un enfoque basado en el riesgo.
-- Reduzca los costos operativos mediante la automatización de la seguridad.
-- Seleccione herramientas y servicios de seguridad económicos.
+- Implemente controles de seguridad basados en el riesgo
+- Reduzca los costos operativos mediante la automatización de la seguridad
+- Seleccione herramientas y servicios de seguridad rentables
 
 ## Conclusión
 
-La optimización eficaz de los costos de un clúster de Amazon EKS requiere un enfoque integral que abarque el cómputo, el almacenamiento, las redes y los costos operativos. Evalúe cada cambio comparándolo con la facturación medida y los SLO de las cargas de trabajo; no se garantizan ahorros ni un rendimiento/estabilidad sin cambios.
+Optimizar los costos de Amazon EKS requiere revisar conjuntamente cómputo, almacenamiento, redes y operación. Evalúe cada cambio con datos de facturación y los SLO de la carga. Los ahorros, el rendimiento y la estabilidad deben comprobarse; no están garantizados.
 
 Puntos clave:
 
-1. **Componentes de los costos de EKS**: costo del clúster de EKS, costo de cómputo, costo de almacenamiento, costo de redes y otros costos
-2. **Optimización de costos de cómputo**: selección de tipos de instancia adecuados, uso de instancias Spot, uso de Savings Plans y Reserved Instances y optimización del escalado automático
+1. **Componentes de costos de EKS**: costo del clúster de EKS, costo de cómputo, costo de almacenamiento, costo de redes y otros costos
+2. **Optimización de costos de cómputo**: selección de tipos de instancia adecuados, uso de instancias Spot, uso de Savings Plans y Reserved Instances, optimización del autoescalado
 3. **Optimización de costos de almacenamiento**: optimización de volúmenes EBS, optimización de costos de EFS y optimización de costos de S3
-4. **Optimización de costos de redes**: optimización de la transferencia de datos, optimización de balanceadores de carga y optimización de NAT gateway
-5. **Administración y gobernanza de recursos**: optimización de solicitudes y límites de recursos, namespaces y cuotas de recursos, y asignación de costos y etiquetado
+4. **Optimización de costos de redes**: optimización de la transferencia de datos, optimización del Load Balancer y optimización de NAT gateway
+5. **Administración y gobernanza de recursos**: optimización de solicitudes y límites de recursos, namespaces y cuotas de recursos, asignación de costos y etiquetado
 6. **Supervisión y análisis de costos**: AWS Cost Explorer, Kubecost, CloudWatch Container Insights y paneles de costos personalizados
-7. **Prácticas recomendadas para optimizar costos**: prácticas recomendadas generales, optimización específica de las cargas de trabajo y optimización de costos para servicios financieros
+7. **Prácticas recomendadas para optimizar costos**: prácticas recomendadas generales, optimización específica de cargas de trabajo y optimización de costos para servicios financieros
 
-La optimización de costos es un proceso continuo. Debe revisar y ajustar periódicamente las estrategias de optimización a medida que evolucionen el clúster y las cargas de trabajo.
+La optimización de costos es un proceso continuo; debe revisar y ajustar periódicamente las estrategias de optimización a medida que evolucionan el clúster y las cargas de trabajo.
 
 ## Referencias
 
@@ -1360,4 +1360,4 @@ La optimización de costos es un proceso continuo. Debe revisar y ajustar perió
 
 ## Cuestionario
 
-Para poner a prueba lo que ha aprendido en este capítulo, pruebe el [cuestionario del tema](../quizzes/eks/07-eks-cost-optimization-quiz.md).
+Para comprobar lo que ha aprendido en este capítulo, pruebe el [cuestionario del tema](../quizzes/eks/07-eks-cost-optimization-quiz.md).

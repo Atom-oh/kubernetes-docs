@@ -1456,6 +1456,7 @@ Kubernetes Event 是短期运维信号，不是持久审计记录。所有来源
 自行管理的 Kubernetes audit-policy 文件用于配置 API server，并不是可直接 apply 的普通资源。在 EKS 上，请使用受支持的控制平面审计日志。根据团队策略选择保留期和访问权限。`evaluator: json` 或 `logFormat: json` 不保证每次求值都会留下审计记录。
 
 请使用[ArgoCD 通知](./argocd/08-notifications.md)中经过验证的服务、触发器和模板。不要用单独的简略示例覆盖已有 notifications ConfigMap。
+
 ---
 
 ## 生产最佳实践 {#production-best-practices}

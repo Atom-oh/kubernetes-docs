@@ -3,41 +3,41 @@
 > **Versiones compatibles**: Istio 1.31
 > **Última actualización**: 11 de septiembre de 2026
 
-> **Alcance de validación**: Configuraciones de laboratorio verificadas con referencias oficiales y validadores offline, sin desplegar clúster. Los supuestos de namespace, identidad, almacenamiento, backend y carga se indican por ejemplo y deben verificarse para el destino.
+> **Alcance de la validación**: Estas configuraciones de laboratorio se comprobaron con referencias oficiales y validadores locales, sin desplegar un clúster. Cada ejemplo indica sus supuestos sobre namespaces, identidad, almacenamiento, backend y carga; compruébelos en el entorno de destino.
 
-Los logs de acceso configurados registran metadatos de solicitudes/conexiones observadas. Son distintos de diagnósticos Envoy/istiod y logs de aplicación; no capturan toda actividad de malla ni cuerpos completos. Los ejemplos usan sidecars; logs L7 ambient necesitan waypoint, mientras ztunnel tiene logs L4 separados.
+Los logs de acceso configurados registran metadatos de las solicitudes o conexiones observadas. Son distintos de los diagnósticos de Envoy/istiod y de los logs de la aplicación; no capturan toda la actividad de la malla ni los cuerpos completos de las solicitudes y respuestas. Estos ejemplos utilizan sidecars. En ambient, los logs L7 requieren asociar un waypoint, mientras que ztunnel proporciona logs L4 independientes.
 
 ## Índice
 
-1. [Descripción de logs](#logging-overview)
-2. [Configuración de acceso](#access-log-configuration)
+1. [Descripción general de los logs](#logging-overview)
+2. [Configuración de logs de acceso](#access-log-configuration)
 3. [Personalización con Telemetry API](#log-customization-with-telemetry-api)
 4. [Filtrado y muestreo](#log-filtering-and-sampling)
-5. [Ajustar nivel Envoy](#envoy-log-level-adjustment)
-6. [Integración Alloy + Loki](#alloy--loki-integration)
-7. [Dashboard de logs Grafana](#grafana-log-dashboard)
-8. [Integración con métricas/trazas](#log-integration-with-metricstraces)
-9. [Optimización](#performance-optimization)
+5. [Ajuste del nivel de log de Envoy](#envoy-log-level-adjustment)
+6. [Integración de Alloy + Loki](#alloy--loki-integration)
+7. [Dashboard de logs en Grafana](#grafana-log-dashboard)
+8. [Integración de logs con métricas y trazas](#log-integration-with-metricstraces)
+9. [Optimización del rendimiento](#performance-optimization)
 10. [Resolución de problemas](#troubleshooting)
 
-## Descripción de logs {#logging-overview}
+## Descripción general de los logs {#logging-overview}
 
-### Capas de logs Istio
+### Capas de logs de Istio
 
-Envoy → stdout estructurado → recogida Kubernetes Alloy → Loki → Grafana. Como alternativa, un proveedor OTLP de acceso Envoy envía a OpenTelemetry Collector. Elija una ruta de entrega por log para evitar duplicados. Istiod distribuye ajustes Telemetry/proveedor seleccionados.
+Envoy → stdout estructurado → recopilación de logs de Kubernetes con Alloy → Loki → Grafana. Como alternativa, un proveedor de logs de acceso OTLP de Envoy puede enviar los registros a un OpenTelemetry Collector. Elija una sola vía de entrega para los mismos logs y evite duplicarlos. Istiod distribuye la configuración de Telemetry y de los proveedores seleccionados.
 
 ### Tipos de logs
 
-1. **Acceso**: Metadatos HTTP o de conexión TCP configurados
-2. **Proxy Envoy**: Operación interna de Envoy
-3. **Istiod**: Logs del plano de control
-4. **Aplicación**: Logs propios de la aplicación
+1. **Log de acceso**: Metadatos configurados de solicitudes HTTP o conexiones TCP
+2. **Log del proxy Envoy**: Registros del funcionamiento interno de Envoy
+3. **Log de Istiod**: Registros del plano de control
+4. **Log de la aplicación**: Registros propios de la aplicación
 
-## Configuración de acceso {#access-log-configuration}
+## Configuración de logs de acceso {#access-log-configuration}
 
 ### 1. Definir un proveedor de logs de acceso
 
-Combine una definición de proveedor siguiente con la instalación existente mediante `istioctl install -f logging-install.yaml`. Conserve otros ajustes/proveedores. Son entradas de instalación, no recursos Kubernetes IstioOperator. Seleccione el proveedor instalado con Telemetry; texto y JSON son alternativas.
+Integre una de las siguientes definiciones de proveedor en la configuración de instalación existente de Istio mediante `istioctl install -f logging-install.yaml`. Conserve los demás ajustes y proveedores de la malla. Son datos de entrada para la instalación, no recursos Kubernetes IstioOperator. Seleccione después el proveedor instalado mediante Telemetry; los formatos de texto y JSON son alternativas.
 
 #### Formato de texto básico
 
@@ -93,15 +93,15 @@ spec:
             peer_uri_san: '%DOWNSTREAM_PEER_URI_SAN%'
 ```
 
-El formato crea campos JSON; el filtro Telemetry selecciona eventos. `duration` es milisegundos en el log, mientras CEL `request.duration` es un valor de duración. `trace_id` es el ID activo real cuando hay trazado; `request_id` correlaciona solicitudes separadamente. Se omiten query strings; revise cabeceras adicionales antes de registrarlas.
+El formato del proveedor genera los campos JSON; el filtro de Telemetry selecciona qué eventos se escriben. `duration` se expresa en milisegundos en el log, mientras que `request.duration` en CEL es un valor de tipo duración. `trace_id` contiene el ID de la traza activa cuando el sistema de tracing lo proporciona; `request_id` es un valor independiente para correlacionar solicitudes. Se omiten los parámetros de consulta de la URL; revise cualquier encabezado adicional antes de registrarlo.
 
-Las actualizaciones se entregan en configuración de proxy; reiniciar todo istiod/cargas no es el paso normal. Revise listeners efectivos y una solicitud de prueba. Los cambios bootstrap de nivel de log posteriores necesitan rollout de proxies seleccionados.
+Los cambios de logging se distribuyen mediante la configuración del proxy. Reiniciar todos los componentes istiod y las cargas de trabajo no es el procedimiento habitual para activarlos. Compruebe los listeners efectivos y envíe una solicitud de prueba. Los cambios de nivel de log en la configuración de arranque, descritos más adelante, requieren renovar los proxies seleccionados.
 
-### 2. Control fino con Telemetry API
+### 2. Control detallado con Telemetry API
 
-Telemetry selecciona logs por namespace/carga. Los ejemplos son alternativas: combine ajustes en un solo recurso sin selector por namespace. Se usa SERVER para acceso entrante, evitando duplicar saltos cliente/servidor. Gateway/salida pueden usar CLIENT aparte y no deben mezclarse en tasas de servicio. Con `mesh-text`, selecciónelo en vez de `mesh-json`.
+Telemetry selecciona los logs por namespace o carga de trabajo. Estos ejemplos son alternativas: integre los ajustes de modo que exista un solo recurso sin selector por namespace. La guía utiliza el modo SERVER para los logs de entrada del servicio y evita contar dos veces un salto por sus registros de cliente y servidor. Los diagnósticos de gateways o tráfico saliente pueden usar políticas CLIENT independientes; sepárelos del cálculo de la tasa de solicitudes del servicio. Si instala `mesh-text`, seleccione ese proveedor en lugar de `mesh-json`.
 
-#### Habilitar acceso JSON en toda la malla
+#### Habilitar logs de acceso JSON en toda la malla
 
 ```yaml
 apiVersion: telemetry.istio.io/v1
@@ -138,7 +138,7 @@ spec:
         request.duration > duration("1s")
 ```
 
-#### Logs detallados por carga
+#### Logs detallados por carga de trabajo
 
 ```yaml
 apiVersion: telemetry.istio.io/v1
@@ -162,11 +162,11 @@ spec:
 
 ## Personalización con Telemetry API {#log-customization-with-telemetry-api}
 
-### Proveedor personalizado
+### Proveedor personalizado de logs
 
 #### 1. Enviar logs por OpenTelemetry
 
-Alternativa a recoger los mismos logs stdout con Alloy. Instale el proveedor y selecciónelo en Telemetry de namespace:
+Esta opción es una alternativa a recopilar los mismos logs de stdout con Alloy. Instale el proveedor y selecciónelo después mediante un recurso Telemetry del namespace:
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -218,7 +218,7 @@ spec:
     - name: otel-logging
 ```
 
-El Collector de la [guía de trazas](02-tracing.md) ya define receptor OTLP, limitador de memoria y batch. Combine este pipeline/exporter de logs y recargue/redespliegue. Loki 3.7.7 acepta OTLP/HTTP en `/otlp/v1/logs`; el exporter añade `/v1/logs`. TSDB v13 soporta metadatos estructurados. Los atributos OTLP pasan a metadatos, no cuerpo JSON stdout, así que adapte consultas en vez de copiar `| json` ciegamente.
+El Collector de la [guía de trazas](02-tracing.md) ya define el receptor OTLP, el limitador de memoria y el procesador de lotes. Integre este pipeline de logs y su exportador en la configuración, y recargue o vuelva a desplegar el Collector. Loki 3.7.7 acepta logs OTLP/HTTP en `/otlp/v1/logs`; el exportador añade `/v1/logs` al endpoint configurado. El esquema TSDB v13 admite metadatos estructurados. Los atributos OTLP se convierten en metadatos, en vez de formar el cuerpo JSON de stdout; adapte las consultas en lugar de reutilizar sin comprobar los ejemplos con `| json`.
 
 ```yaml
 exporters:
@@ -238,7 +238,7 @@ service:
 
 #### 2. Logs en archivo y volumen compartido
 
-Una ruta de archivo del proveedor no crea ni monta un volumen. El Pod opcional monta `emptyDir` acotado en el proxy inyectado; sustituya la imagen de aplicación. Otro lector debe montar el mismo volumen y gestionar rotación/envío. `kubectl logs` no devuelve esos archivos y `emptyDir` desaparece con el Pod. El ejemplo principal usa stdout.
+Indicar una ruta de archivo en el proveedor no crea ni monta un volumen. Este ejemplo opcional de Pod monta un `emptyDir` de tamaño limitado en el proxy inyectado; sustituya la imagen de la aplicación. Un lector independiente debe montar el mismo volumen y gestionar la rotación y el envío de los archivos. `kubectl logs` no devuelve esos archivos y el `emptyDir` desaparece al eliminar el Pod. El ejemplo principal de recopilación utiliza stdout.
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -312,7 +312,7 @@ spec:
     - name: envoy-file-logger
 ```
 
-### Personalizar formato
+### Personalización del formato de logs
 
 #### Filtrado de eventos con CEL
 
@@ -337,16 +337,16 @@ spec:
 | Variable | Descripción | Ejemplo |
 |----------|-------------|---------|
 | `request.method` | Método HTTP | GET, POST |
-| `request.path` | Ruta de solicitud | /api/v1/users |
-| `request.url_path` | Ruta sin query | /api/v1/users |
-| `request.headers` | Cabeceras de solicitud | `request.headers['user-agent']` |
-| `response.code` | Código HTTP | 200, 404, 500 |
-| `response.headers` | Cabeceras de respuesta | `response.headers['content-type']` |
-| `response.flags` | Máscara de bits entera | `response.flags != 0` |
-| `request.duration` | Valor de duración | `duration("1s")` |
+| `request.path` | Ruta de la solicitud | /api/v1/users |
+| `request.url_path` | Ruta de la URL sin parámetros de consulta | /api/v1/users |
+| `request.headers` | Encabezados de la solicitud | `request.headers['user-agent']` |
+| `response.code` | Código de estado HTTP | 200, 404, 500 |
+| `response.headers` | Encabezados de la respuesta | `response.headers['content-type']` |
+| `response.flags` | Máscara de bits representada como entero | `response.flags != 0` |
+| `request.duration` | Valor de tipo duración de la solicitud | `duration("1s")` |
 | `connection.mtls` | Uso de mTLS | true, false |
-| `connection.uri_san_peer_certificate` | URI SAN del peer downstream, si existe | spiffe://... |
-| `connection.uri_san_local_certificate` | URI SAN del certificado local downstream | spiffe://... |
+| `connection.uri_san_peer_certificate` | URI SAN del peer downstream, cuando está presente | spiffe://... |
+| `connection.uri_san_local_certificate` | URI SAN del certificado local de la conexión downstream | spiffe://... |
 
 ## Filtrado y muestreo {#log-filtering-and-sampling}
 
@@ -354,7 +354,7 @@ spec:
 
 #### Solo errores y solicitudes lentas
 
-Los filtros HTTP aplican a HTTP. Para TCP use atributos de conexión o una expresión protegida ante campos HTTP ausentes. CEL selecciona eventos; no define formato de campos JSON.
+Los filtros de atributos HTTP se aplican al tráfico HTTP. Para logs TCP, use atributos de conexión o una expresión que compruebe explícitamente la posible ausencia de campos HTTP. CEL selecciona eventos; no define el formato de los campos JSON.
 
 ```yaml
 apiVersion: telemetry.istio.io/v1
@@ -437,7 +437,7 @@ spec:
 
 ### 2. Muestreo en el collector
 
-Use `stage.sampling` admitido por Alloy; Telemetry CEL no documenta una función `random()` de muestreo. Añada esta etapa dentro de `loki.process` para retener uniformemente 10%:
+Use la etapa `stage.sampling` que admite Alloy; la interfaz CEL de Telemetry no documenta una función `random()` para muestreo. Añada la etapa siguiente dentro de `loki.process` para conservar de forma uniforme el 10 % de los registros:
 
 ```alloy
 stage.sampling {
@@ -446,7 +446,7 @@ stage.sampling {
 }
 ```
 
-Para conservar 1% de accesos exitosos inferiores a un segundo, manteniendo errores/lentos/no clasificados, analice enteros JSON, clasifique con etiquetas temporales, muestree y quite etiquetas antes de escribir. Sustituya las etapas principales por esta alternativa conservando `forward_to`:
+Para conservar el 1 % de los logs de acceso de solicitudes correctas de menos de un segundo, y mantener los errores y los registros lentos o sin clasificar, extraiga los campos enteros del proveedor JSON, clasifique con etiquetas temporales, aplique el muestreo y retire esas etiquetas antes de escribir. Sustituya las etapas del proceso principal por esta alternativa y conserve su `forward_to`:
 
 ```alloy
 stage.json {
@@ -467,7 +467,7 @@ stage.label_drop {
 }
 ```
 
-`stage.match` admite selectores de flujo y filtros de línea, no un pipeline completo LogQL de etiquetas. La etiqueta temporal duration nunca llega a Loki. Muestrear en collector reduce ingesta/almacenamiento, no generación en proxy. Conteos, cuantiles y ratios retenidos están sesgados; use métricas Istio sin muestrear para SLI totales. Los dashboards/alertas siguientes requieren acceso sin muestreo.
+`stage.match` admite selectores de flujo y filtros de línea, pero no un pipeline completo de filtros de etiquetas de LogQL. La etiqueta temporal de duración nunca llega a Loki. El muestreo en el Collector reduce la ingesta y el almacenamiento, sin reducir el coste de generar logs en el proxy. Los recuentos, cuantiles y proporciones de errores calculados con esos registros están sesgados; use las métricas de Istio sin muestreo para los SLI de todo el tráfico. Los ejemplos siguientes de dashboards y alertas requieren logs de acceso sin muestreo.
 
 ### 3. Logs diferenciados por namespace
 
@@ -513,11 +513,11 @@ spec:
   - disabled: true
 ```
 
-## Ajustar nivel de log Envoy {#envoy-log-level-adjustment}
+## Ajuste del nivel de log de Envoy {#envoy-log-level-adjustment}
 
-### Cambiar nivel dinámicamente
+### Cambiar el nivel de log dinámicamente
 
-#### Nivel global Envoy
+#### Nivel global de log de Envoy
 
 ```bash
 # Change to Debug level
@@ -544,34 +544,34 @@ istioctl proxy-config log <pod-name> -n <namespace> \
   --level http:debug,router:info,upstream:debug,connection:trace
 ```
 
-Use `istioctl proxy-config log <pod-name> -n <namespace>` para listar componentes de esa versión; no todo build expone todos los ejemplos.
+Use `istioctl proxy-config log <pod-name> -n <namespace>` para consultar los componentes disponibles en esa versión del proxy. Cada compilación puede exponer un conjunto diferente de los componentes del ejemplo.
 
-### Componentes de log Envoy
+### Componentes principales de los logs de Envoy
 
-| Componente | Descripción | Uso |
+| Componente | Descripción | Caso de uso |
 |-----------|-------------|----------|
-| `admin` | Interfaz administrativa | Depuración API admin |
-| `aws` | Integración AWS | Problemas de servicios AWS |
-| `connection` | Conexiones TCP | Diagnóstico de conexiones |
-| `filter` | Filtros HTTP | Análisis de cadena |
-| `forward_proxy` | Proxy directo | Seguimiento de comportamiento |
-| `grpc` | gRPC | Problemas de comunicación |
-| `hc` | Comprobaciones de salud | Fallos de probes |
-| `http` | HTTP | Seguimiento de solicitudes/respuestas |
-| `http2` | HTTP/2 | Problemas de protocolo |
-| `jwt` | Autenticación JWT | Verificación de tokens |
-| `lua` | Scripts Lua | Depuración de filtros |
-| `main` | Lógica principal | Operación general Envoy |
-| `router` | Enrutamiento | Decisiones de ruta |
-| `runtime` | Configuración runtime | Cambios dinámicos |
-| `upstream` | Clústeres upstream | Conexión backend |
-| `client` | Cliente HTTP | Solicitudes salientes |
-| `pool` | Pool de conexiones | Gestión del pool |
-| `rbac` | Filtro RBAC | Problemas de permisos |
+| `admin` | Interfaz de administración | Depurar la API de administración |
+| `aws` | Integración con AWS | Investigar problemas con servicios AWS |
+| `connection` | Conexiones TCP | Depurar problemas de conexión |
+| `filter` | Filtros HTTP | Analizar la cadena de filtros |
+| `forward_proxy` | Proxy de salida | Seguir el comportamiento del proxy |
+| `grpc` | gRPC | Investigar problemas de comunicación gRPC |
+| `hc` | Comprobaciones de salud | Investigar fallos en las comprobaciones de salud |
+| `http` | HTTP | Seguir solicitudes y respuestas HTTP |
+| `http2` | HTTP/2 | Investigar problemas del protocolo HTTP/2 |
+| `jwt` | Autenticación JWT | Verificar tokens JWT |
+| `lua` | Scripts Lua | Depurar filtros Lua |
+| `main` | Lógica principal | Examinar el funcionamiento general de Envoy |
+| `router` | Enrutamiento | Seguir las decisiones de enrutamiento |
+| `runtime` | Configuración en ejecución | Examinar cambios dinámicos de configuración |
+| `upstream` | Clústeres upstream | Investigar problemas de conexión con el backend |
+| `client` | Cliente HTTP | Examinar solicitudes salientes |
+| `pool` | Pool de conexiones | Examinar la gestión del pool de conexiones |
+| `rbac` | Filtro RBAC | Depurar problemas de permisos |
 
-### Configuración persistente de nivel
+### Configuración persistente del nivel de log
 
-Combine values de instalación y despliegue proxies seleccionados; antes de cambios temporales inspeccione niveles existentes y restáurelos después. Los niveles no activan logs de acceso.
+Integre estos valores en la configuración de instalación y renueve los proxies seleccionados. Antes de un cambio temporal, consulte los niveles actuales de cada componente y restáurelos al terminar. Cambiar el nivel de log no activa los logs de acceso.
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -586,7 +586,7 @@ spec:
         componentLogLevel: http:debug,router:info,upstream:debug
 ```
 
-### Debug solo para una carga
+### Activar logs de depuración solo para una carga de trabajo
 
 ```yaml
 apiVersion: v1
@@ -602,17 +602,17 @@ spec:
     image: registry.example.com/team/my-app:REPLACE_WITH_TESTED_TAG
 ```
 
+<span id="alloy--loki-integration"></span>
 
+## Integración de Alloy + Loki
 
-## Integración Alloy + Loki {#alloy--loki-integration}
+Promtail llegó al final de su vida útil el **2 de marzo de 2026**. Use Alloy u otro cliente con soporte para los nuevos despliegues. Este ejemplo sustituye la lectura de archivos de Promtail por la recopilación de logs mediante la API de Kubernetes con Alloy; no necesita rutas de Docker, contenedores privilegiados ni montajes del sistema de archivos del nodo.
 
-Promtail llegó al fin de vida el **2 de marzo de 2026**. Use Alloy u otro cliente admitido en despliegues nuevos. El ejemplo sustituye file-tail Promtail por recogida API Kubernetes de Alloy; no necesita rutas Docker, contenedores privilegiados ni montajes del sistema de archivos del nodo.
+### 1. Instalar Loki en modo de binario único
 
-### 1. Instalar Loki en binario único
+El siguiente ejemplo corresponde a una instalación nueva con una réplica y un tenant, Loki 3.7.7, TSDB v13 y almacenamiento en el sistema de archivos. Utiliza el modo de **binario único**, no Simple Scalable. Cree primero el namespace `observability`. En EKS debe existir la StorageClass `gp3` con un controlador EBS CSI operativo; en otras plataformas, utilice la clase de almacenamiento persistente correspondiente. Fargate no puede montar volúmenes EBS: ejecute Loki en nodos EC2 adecuados o use un servicio Loki externo con soporte.
 
-Es un ejemplo nuevo, de una réplica y tenant, con Loki 3.7.7, TSDB v13 y filesystem. Es **binario único**, no Simple Scalable. Cree `observability` primero. En EKS debe existir StorageClass `gp3` con EBS CSI funcional; en otras plataformas use su clase persistente. Fargate no monta EBS: ejecute Loki en nodos EC2 adecuados o use servicio externo compatible.
-
-Con `auth_enabled: false`, acceso de red da acceso a logs del tenant. Mantenga endpoints privados y configure gateway de autenticación/TLS admitido en producción. Conserve entradas históricas del esquema al actualizar; la fecha inicial 2024 siguiente es válida, no fecha de release. La retención Compactor exige estado persistente y `delete_request_store`.
+Con `auth_enabled: false`, tener acceso de red permite acceder a los logs del tenant. Mantenga los endpoints privados y configure un gateway de autenticación y TLS compatible para producción. Al actualizar una instalación existente, conserve las entradas históricas del esquema; la fecha de inicio de 2024 que aparece abajo es válida y no corresponde a una fecha de lanzamiento. La retención mediante Compactor requiere estado persistente y `delete_request_store`.
 
 ```yaml
 apiVersion: v1
@@ -762,11 +762,11 @@ spec:
     targetPort: http
 ```
 
-### 2. Recoger logs Pod con Alloy
+### 2. Recopilar logs de Pods con Alloy
 
-Cree namespaces de aplicación antes de aplicar RoleBindings, o limite descubrimiento y bindings a existentes. Alloy solo lee metadatos y `pods/log` en esos namespaces. La fuente API ya recibe contenido sin envoltura CRI/Docker; una fuente de archivos necesita parsing runtime y rutas locales de nodo.
+Cree los namespaces de las aplicaciones indicados antes de aplicar sus RoleBindings, o limite tanto el descubrimiento como los bindings a namespaces existentes. Alloy solo lee los metadatos de Pods y `pods/log` en esos namespaces. La fuente basada en la API ya recibe el contenido de los logs sin el formato envolvente CRI/Docker; una fuente basada en archivos necesita interpretar el formato del runtime y usar rutas de archivos locales de cada nodo.
 
-Una réplica recoge logs sidecar, istiod y aplicación excluyendo init containers. Solo etiqueta namespace/pod/container/app/version y `log_type` acotado; request IDs, trace IDs, rutas y duración son campos, no índices Loki. El proveedor JSON emite `log_type="access"`, distinguiendo accesos de diagnósticos en el mismo contenedor.
+El ejemplo de una réplica recopila logs de sidecars, istiod y aplicaciones, y excluye los contenedores de inicialización. Solo usa como etiquetas namespace/pod/container/app/version y un `log_type` de valores limitados; los ID de solicitudes y trazas, las rutas y la duración permanecen como campos, no como etiquetas del índice de Loki. El proveedor JSON anterior emite `log_type="access"` para distinguir los logs de acceso de los diagnósticos del proxy en el mismo contenedor.
 
 ```yaml
 apiVersion: v1
@@ -990,11 +990,11 @@ spec:
           sizeLimit: 256Mi
 ```
 
-La ruta API evita restricciones DaemonSet para Pods Fargate, pero no recoge logs de nodo. Aumenta trabajo API/kubelet; instalaciones grandes deben evaluar recogida local o clustering Alloy con propiedad de targets coordinada. No añada simplemente réplicas idénticas que lean cada Pod. `emptyDir` y reintentos acotados no garantizan entrega sin pérdidas en reinicios/caídas; configure buffers/WAL persistentes y pruebe recuperación productiva.
+Esta recopilación mediante la API evita las restricciones de DaemonSet para Pods de aplicaciones en Fargate, pero no recopila logs de los nodos. Aumenta el trabajo de la API de Kubernetes y de kubelet. En instalaciones grandes, evalúe la recopilación local por nodo o un clúster de Alloy con la responsabilidad sobre cada destino coordinada. Añadir réplicas idénticas que lean todos los Pods duplicaría la recopilación. El estado en `emptyDir` y los reintentos limitados no garantizan una entrega sin pérdidas durante reinicios o interrupciones; configure buffers o WAL persistentes y pruebe la recuperación para producción.
 
 ### 3. Consultas LogQL
 
-Usan proveedor JSON stdout y logs SERVER sin muestreo. Un selector de contenedor incluye diagnósticos; `log_type="access"` selecciona accesos. Las estadísticas HTTP excluyen métodos vacíos/`-`, pues logs de conexión TCP no son solicitudes HTTP. Compare números como números y use `__error__=""` para excluir errores de parsing/conversión antes de agregar.
+Los ejemplos siguientes usan el proveedor JSON de stdout y logs de acceso SERVER sin muestreo. Un selector de contenedor por sí solo también incluye diagnósticos del proxy; `log_type="access"` selecciona los registros de acceso. Las estadísticas HTTP excluyen además los métodos vacíos o `-`, porque un log de conexión TCP no representa una solicitud HTTP. Use números en las comparaciones numéricas y `__error__=""` para excluir errores de interpretación o conversión antes de agregar métricas.
 
 #### Consultas básicas
 
@@ -1026,7 +1026,7 @@ Usan proveedor JSON stdout y logs SERVER sin muestreo. Un selector de contenedor
 {container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | path=~"/api/v1/.*" | __error__=""
 ```
 
-`UO` significa overflow upstream; `URX`, agotamiento de retry/intentos de conexión. `downstream_tls_version` distingue texto plano/TLS; `peer_uri_san` aporta identidad autenticada cuando existe. Ninguno es contador universal de fallos de handshake, que pueden ocurrir antes de un log HTTP. La consulta antigua `connection_security_policy` referenciaba una etiqueta métrica ausente de estos logs.
+`UO` indica desbordamiento upstream; `URX` significa que se agotaron los reintentos o los intentos de conexión. `downstream_tls_version` distingue entre texto sin cifrar y TLS en la conexión registrada; `peer_uri_san` aporta información del peer autenticado cuando está disponible. Ninguno es un contador universal de fallos de negociación TLS, que pueden ocurrir antes de que exista un registro de acceso HTTP. La antigua consulta con `connection_security_policy` utilizaba una etiqueta de métricas ausente de estos logs.
 
 #### Agregación y estadísticas
 
@@ -1042,13 +1042,13 @@ sum by (namespace, app) (rate({container="istio-proxy",log_type="access"} | json
 avg_over_time({container="istio-proxy",log_type="access"} | json | method!="" | method!="-" | unwrap duration | __error__="" [5m]) by (namespace, app)
 ```
 
-Describen entradas retenidas. Logging selectivo, muestreo, pérdidas, rutas distintas y logs gateway afectan al resultado; para SLO de todo el servicio use métricas estándar del capítulo correspondiente.
+Estos resultados describen los registros conservados. El logging selectivo, el muestreo, las pérdidas de entrega, las distintas rutas de llamadas y los logs de gateways afectan al resultado. Use las métricas estándar del capítulo de métricas para evaluar los SLO del servicio completo.
 
-## Dashboard de logs Grafana {#grafana-log-dashboard}
+## Dashboard de logs en Grafana {#grafana-log-dashboard}
 
-### 1. Añadir datasource Loki
+### 1. Añadir una fuente de datos Loki
 
-Monte el archivo bajo `provisioning/datasources` de Grafana o use provisioning admitido del chart. ConfigMap solo no se consume automáticamente. UID `tempo` debe referir a datasource existente. Se correlaciona con `trace_id` JSON; los UUID de solicitud no son trace IDs. IDs vacíos no crean enlaces.
+Monte el archivo de la fuente de datos en `provisioning/datasources` de Grafana o utilice la configuración de aprovisionamiento compatible del chart. Grafana no consume automáticamente un ConfigMap por el mero hecho de existir. El UID `tempo` debe identificar una fuente de datos Tempo existente. La correlación utiliza el `trace_id` del proveedor JSON; los UUID de solicitudes no son ID de trazas y los ID vacíos no generan enlaces.
 
 ```yaml
 apiVersion: v1
@@ -1075,11 +1075,11 @@ data:
           urlDisplayLabel: View trace
 ```
 
-### 2. Dashboard de acceso Istio
+### 2. Dashboard de logs de acceso de Istio
 
 #### JSON del dashboard
 
-Importe el objeto o móntelo con un proveedor. Es archivo dashboard, no wrapper HTTP API. Deben existir UID `loki` y `prometheus`; alinee etiqueta log `app` con canonical-service de métricas. El heatmap usa buckets Prometheus reales; duraciones brutas de logs no contienen etiqueta bucket `le`.
+Importe el objeto de dashboard siguiente o móntelo mediante un proveedor de dashboards. Es un archivo de dashboard, no un objeto envolvente para la API HTTP. Deben existir los UID de fuentes de datos `loki` y `prometheus`; haga corresponder la etiqueta `app` del log con el valor canonical-service de las métricas. El mapa de calor usa buckets reales del histograma de Prometheus; las duraciones sin procesar de los logs no contienen una etiqueta de bucket `le`.
 
 ```json
 {
@@ -1337,9 +1337,9 @@ Importe el objeto o móntelo con un proveedor. Es archivo dashboard, no wrapper 
 }
 ```
 
-### 3. Alertas Loki Ruler
+### 3. Alertas con Loki Ruler
 
-YAML `groups`/`alert`/`expr` de estilo Prometheus configura Loki ruler. Alertas gestionadas por Grafana usan su UID, condición y formato query-data; expórtelas desde Grafana si elige esa vía. Para ruler, cree ConfigMap, combine ajustes en `loki.yaml` y volúmenes en StatefulSet existente conservando montajes de configuración/almacenamiento. Debe existir Alertmanager en la dirección configurada.
+El YAML con `groups`/`alert`/`expr`, de estilo Prometheus, configura Loki Ruler. El aprovisionamiento de alertas administradas por Grafana utiliza otro formato documentado, con UID, condición y datos de consulta; exporte las reglas desde Grafana si elige esa vía. Para evaluar reglas con Loki Ruler, cree este ConfigMap, integre sus ajustes en `loki.yaml` y añada el fragmento de volúmenes al StatefulSet existente, preservando los montajes de configuración y almacenamiento. Debe existir un Alertmanager en la dirección configurada.
 
 ```yaml
 apiVersion: v1
@@ -1422,23 +1422,23 @@ spec:
             path: fake/istio-logging-alerts.yaml
 ```
 
-Loki de tenant único usa `fake`, por eso el archivo local se coloca bajo `fake/`. El almacenamiento local de reglas es de solo lectura mediante la API ruler. Las alertas requieren todo el flujo de acceso; solo errores o muestras no dan fracción de errores ni cuantil de latencia sin sesgo. Planifique monitorización de no-data y fallos de entrega aparte.
+Loki con un único tenant utiliza el ID `fake`; por eso el archivo local de reglas se coloca bajo `fake/`. El almacenamiento local de reglas es de solo lectura mediante la API de Ruler. Estas alertas requieren el flujo completo de logs de acceso: registrar solo errores o aplicar muestreo impide obtener proporciones de errores o cuantiles de latencia sin sesgo. Planifique por separado cómo detectar la ausencia de datos y los fallos de entrega.
 
+<span id="log-integration-with-metricstraces"></span>
 
+## Integración de logs con métricas y trazas
 
-## Integración con métricas/trazas {#log-integration-with-metricstraces}
+### 1. Ir de los logs a las trazas
 
-### 1. Saltar de logs a trazas
-
-Use el campo derivado `trace_id` del datasource. Solo enlaza si hay trazado, ID y la misma traza retenida en Tempo. `x-request-id` no es intercambiable con W3C trace ID. Muestreo y retención pueden dejar un log válido sin traza recuperable.
+Use el campo derivado `trace_id` de la fuente de datos Loki anterior. Solo genera un enlace si el tracing está habilitado, el ID está presente y Tempo ha conservado esa misma traza. El `x-request-id` de una solicitud no es intercambiable con un ID de traza W3C. El muestreo y la retención del backend pueden dejar un log válido cuya traza ya no sea recuperable.
 
 ### 2. Correlación de métricas
 
-Los exemplars Prometheus vinculan **métricas con trazas** cuando hay una etiqueta trace ID real; no crean enlace a logs. Configure `exemplarTraceIdDestinations.name` con la etiqueta observada, normalmente `trace_id`, no un `TraceID` inventado. Para métricas→logs, configure correlaciones/data links Grafana con etiquetas namespace/servicio coincidentes. Datasources no fabrican exemplars.
+Los exemplars de Prometheus vinculan **métricas con trazas** cuando contienen una etiqueta real con el ID de traza; no crean un enlace de métricas a logs. Configure `exemplarTraceIdDestinations.name` con el nombre de etiqueta observado, normalmente `trace_id`, en lugar de inventar un campo `TraceID`. Para navegar de métricas a logs, configure correlaciones o enlaces de datos en Grafana con etiquetas coincidentes de namespace y servicio. La configuración de la fuente de datos no genera exemplars por sí sola.
 
 ### 3. Consultas integradas
 
-Use un panel Prometheus para tasa de todo el tráfico y uno Loki para accesos de la carga elegida. Configure variables coherentes; Istio usa `destination_canonical_service`/namespace de carga, no una etiqueta métrica `app` universal.
+Use un panel de Prometheus para la tasa de solicitudes de todo el tráfico y uno de Loki para los logs de acceso de la carga seleccionada. Configure las variables del dashboard de forma coherente: Istio utiliza `destination_canonical_service` y el namespace de la carga, en vez de una etiqueta de métricas `app` universal.
 
 ```promql
 sum(rate(istio_requests_total{reporter="destination",destination_workload_namespace="$namespace",destination_canonical_service="$service"}[5m]))
@@ -1448,15 +1448,15 @@ sum(rate(istio_requests_total{reporter="destination",destination_workload_namesp
 {container="istio-proxy",log_type="access",namespace="$namespace",app="$service"} | json | __error__=""
 ```
 
-Use enlaces Explore generados por Grafana o correlaciones, no JSON sin codificar en una URL. Asegure que app de Loki y service de métricas identifiquen la misma carga.
+Use enlaces de Explore generados por Grafana o correlaciones, en lugar de insertar JSON sin codificar en una URL. Compruebe que la etiqueta app de Loki y la etiqueta de servicio de las métricas identifiquen la misma carga de trabajo.
 
-## Optimización {#performance-optimization}
+## Optimización del rendimiento {#performance-optimization}
 
-### 1. Reducir volumen de logs
+### 1. Reducir el volumen de logs
 
-Mida proporciones reales de health checks, errores y tráfico normal antes de filtrar/muestrear. No hay reducción universal 50–90% o 30–50%. Filtrar en proxy reduce generación; muestrear en collector reduce ingesta/almacenamiento posterior. Mantenga métricas completas y auditoría crítica independientes de muestras de logs.
+Mida la proporción real de comprobaciones de salud, errores y tráfico habitual antes de elegir filtros o muestreo en Alloy. No existe una reducción universal del 50–90 % o del 30–50 %. Los filtros en el proxy reducen los logs generados; el muestreo en el Collector reduce la ingesta y el almacenamiento posteriores. Mantenga las métricas de todo el tráfico y los eventos de auditoría críticos independientes de un flujo de logs muestreado.
 
-Puede combinar una exclusión HTTP de salud con el filtro Telemetry existente; considere campos HTTP ausentes en TCP:
+Puede integrar la exclusión de rutas HTTP de comprobación de salud en el filtro Telemetry existente; tenga en cuenta que los logs de conexiones TCP pueden carecer de campos HTTP:
 
 ```yaml
 filter:
@@ -1464,7 +1464,7 @@ filter:
     || request.url_path.startsWith("/live") || request.url_path == "/metrics" || request.url_path == "/favicon.ico")'
 ```
 
-### 2. Rendimiento Loki
+### 2. Ajustar el rendimiento de Loki
 
 ```yaml
 limits_config:
@@ -1487,7 +1487,7 @@ limits_config:
   max_label_value_length: 2048
 ```
 
-### 3. Lotes y reintentos Alloy
+### 3. Lotes y reintentos de Alloy
 
 ```alloy
 // loki.write endpoint fragment: merge with the endpoint's existing URL.
@@ -1503,7 +1503,7 @@ remote_timeout = "10s"
 
 ### Logs de acceso no visibles
 
-Inspeccione listeners dinámicos efectivos, proveedores y una solicitud conocida. Los logs internos no prueban configuración de acceso, y la primera línea de contenedor no tiene por qué ser JSON:
+Inspeccione los listeners dinámicos efectivos, los proveedores seleccionados y una solicitud de prueba conocida. Los logs internos del proxy no demuestran que los logs de acceso estén configurados, y la primera línea del log de un contenedor no tiene por qué ser JSON:
 
 ```bash
 kubectl get telemetry -A
@@ -1513,9 +1513,9 @@ kubectl logs <pod-name> -n <namespace> -c istio-proxy --tail=100 | \
   jq -R 'fromjson? | select(.log_type == "access")'
 ```
 
-### Fallo de entrega del collector o almacenamiento
+### Fallos de entrega en el Collector o el almacenamiento
 
-Revise descubrimiento Alloy, RoleBindings y permiso de logs Pod. La fuente API no necesita archivos de host. Examine logs/métricas de Alloy para lotes descartados/reintentados y consulte flujos Loki con range-query. Ejecute port-forwards en terminales separados:
+Compruebe el descubrimiento de destinos de Alloy, los RoleBindings y el permiso para leer logs de Pods. La fuente basada en la API no requiere archivos de logs del host. Examine los logs y las métricas de Alloy para detectar lotes descartados o reintentados; después, consulte los flujos de logs de Loki mediante su endpoint de consulta de rangos. Ejecute cada port-forward en una terminal independiente:
 
 ```bash
 kubectl logs -n observability deployment/alloy --tail=100
@@ -1534,7 +1534,7 @@ curl -fsSG http://localhost:3100/loki/api/v1/query_range \
 
 ### Volumen y cardinalidad
 
-`kubectl top` mide consumo de recursos, no logs. Calcule tasa de bytes desde registros retenidos e inspeccione conjuntos de flujos en un intervalo acotado. `/labels` cuenta nombres de etiquetas, no flujos; evite consultas `/series` ilimitadas de alta cardinalidad en instalaciones grandes.
+`kubectl top` mide el consumo de recursos, no el volumen de logs. Mida la tasa de bytes de los logs conservados e inspeccione los conjuntos de flujos reales durante un intervalo limitado. `/labels` cuenta nombres de etiquetas, no flujos. Evite consultas `/series` sin límites y de alta cardinalidad en instalaciones grandes.
 
 ```logql
 topk(10, sum by (namespace, app) (bytes_rate({container="istio-proxy"} [5m])))
@@ -1542,7 +1542,7 @@ topk(10, sum by (namespace, app) (bytes_rate({container="istio-proxy"} [5m])))
 topk(10, sum by (namespace, app) (count_over_time({container="istio-proxy"} [1h])))
 ```
 
-Inspeccione campos parseados antes de filtrar números. Tras `unwrap`, excluya `__error__` antes de agregar. Entradas muestreadas/filtradas/perdidas no pueden reconstruirse de lo retenido.
+Inspeccione los campos interpretados antes de aplicar filtros numéricos. Después de `unwrap`, excluya `__error__` antes de agregar. Las entradas descartadas por muestreo o filtrado, o perdidas durante la entrega, no se pueden reconstruir a partir de los logs conservados.
 
 ## Referencias
 

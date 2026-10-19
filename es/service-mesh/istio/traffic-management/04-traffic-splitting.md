@@ -1,26 +1,26 @@
-# División del tráfico
+# Distribución del tráfico
 
-La división del tráfico es una de las funciones más potentes de Istio: permite realizar despliegues Canary, pruebas A/B y despliegues Blue/Green sin modificar el código.
+La distribución del tráfico es una de las funciones más potentes de Istio: permite realizar despliegues Canary, pruebas A/B y despliegues Blue/Green sin modificar el código de la aplicación.
 
-## Tabla de contenido
+## Contenido
 
-1. [Descripción general de la división del tráfico](#traffic-splitting-overview)
+1. [Descripción general de la distribución del tráfico](#traffic-splitting-overview)
 2. [Despliegue Canary](#canary-deployment)
 3. [Despliegue Blue/Green](#bluegreen-deployment)
 4. [Pruebas A/B](#ab-testing)
-5. [Lanzamiento progresivo](#progressive-rollout)
-6. [Uso con la duplicación del tráfico](#using-with-traffic-mirroring)
+5. [Despliegue progresivo](#progressive-rollout)
+6. [Combinación con la duplicación del tráfico](#using-with-traffic-mirroring)
 7. [Ejemplos prácticos](#practical-examples)
-8. [Supervisión y reversión](#monitoring-and-rollback)
-9. [Solución de problemas](#troubleshooting)
+8. [Monitorización y reversión](#monitoring-and-rollback)
+9. [Resolución de problemas](#troubleshooting)
 
-## Descripción general de la división del tráfico {#traffic-splitting-overview}
+## Descripción general de la distribución del tráfico {#traffic-splitting-overview}
 
-Revisado con Istio 1.31.0 y Argo Rollouts 1.10.1. Estos son ejemplos alternativos para un espacio de nombres de prueba desechable; no ejecutes varios Rollouts con el mismo selector ni permitas que scripts manuales o GitOps sobrescriban los pesos y los hashes de subconjuntos administrados por Rollouts. Instala los Services, DestinationRules, AnalysisTemplates, la gateway y Prometheus mencionados antes del rollout. El primer despliegue establece un ReplicaSet estable; los pasos y el análisis Canary ejercitan una actualización posterior. El peso controla la distribución de solicitudes, no un porcentaje estable de usuarios.
+Los ejemplos se revisaron con Istio 1.31.0 y Argo Rollouts 1.10.1. Son alternativas para un namespace de pruebas desechable. No ejecute varios recursos Rollout con el mismo selector ni permita que scripts manuales o GitOps sobrescriban los pesos y los hashes de los subconjuntos que administra Rollouts. Antes del despliegue, instale los Services, DestinationRules, AnalysisTemplates, gateway y Prometheus a los que hacen referencia los ejemplos. El primer despliegue establece un ReplicaSet estable; los pasos Canary y los análisis se ponen a prueba con una actualización posterior. Los pesos controlan la distribución de solicitudes, no un porcentaje fijo de usuarios.
 
-La división del tráfico usa el campo `weight` de VirtualService para distribuir el tráfico entre varias versiones de un servicio según una proporción.
+La distribución del tráfico utiliza el campo `weight` de VirtualService para repartir las solicitudes entre varias versiones del servicio según una proporción.
 
-![Un VirtualService divide las solicitudes entrantes de los usuarios según su peso: envía el 90 % a la versión 1 y el 10 % a la versión 2.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-0.png)
+![Un VirtualService distribuye las solicitudes de los usuarios según los pesos configurados: envía el 90 % a la versión 1 y el 10 % a la versión 2.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-0.html)
 
@@ -48,17 +48,17 @@ spec:
 
 ## Despliegue Canary {#canary-deployment}
 
-Un despliegue Canary es una estrategia que valida de forma segura una versión nueva al desplegarla primero solo para un pequeño subconjunto de usuarios. Usar Argo Rollouts con Istio permite automatizar el despliegue progresivo y la reversión automática basada en métricas.
+Un despliegue Canary valida una nueva versión exponiéndola primero a un grupo reducido de usuarios. La integración de Argo Rollouts con Istio permite avanzar de forma progresiva y revertir automáticamente según las métricas.
 
-### Arquitectura de Argo Rollouts + Istio
+### Arquitectura de Argo Rollouts con Istio
 
-![Argo Rollouts administra el VirtualService, el DestinationRule y las versiones de los Pods, mientras que AnalysisTemplate consulta las métricas de Prometheus para aprobar o rechazar el rollout Canary.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-1.png)
+![Argo Rollouts administra el VirtualService, el DestinationRule y las versiones de los Pods; AnalysisTemplate consulta las métricas de Prometheus para aprobar o rechazar el despliegue Canary.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-1.html)
 
-### Flujo del despliegue Canary
+### Flujo de un despliegue Canary
 
-![Un rollout Canary aumenta por etapas el tráfico a la nueva versión, del 10 al 75 por ciento. Cualquier etapa que no supere la comprobación de tasa de errores, latencia o métricas revierte automáticamente al 100 por ciento de la versión estable.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-2.png)
+![El despliegue incrementa el tráfico hacia la nueva versión por etapas, del 10 % al 75 %. Si una etapa falla por su tasa de errores, latencia o comprobación de métricas, se revierte al 100 % de la versión estable.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-2.html)
 
@@ -192,7 +192,7 @@ spec:
 
 ### Paso 3: Crear el Service
 
-Primero, crea el Service de Kubernetes:
+Primero, cree el Service de Kubernetes:
 
 ```yaml
 apiVersion: v1
@@ -210,7 +210,7 @@ spec:
 
 ### Paso 4: Definir el VirtualService
 
-**Importante**: Argo Rollouts actualiza los pesos de las rutas del VirtualService al que se hace referencia. No crea ese VirtualService; debes crearlo primero.
+**Importante**: Argo Rollouts actualiza los pesos de las rutas del VirtualService al que hace referencia. No crea ese VirtualService; debe crearlo previamente.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -235,13 +235,13 @@ spec:
 ```
 
 **Puntos clave**:
-- Las rutas enumeradas explícitamente en Rollout necesitan valores coincidentes de `http[].name`; se puede omitir la lista de rutas si hay exactamente una ruta
-- Rollout solo actualiza automáticamente los valores de `weight` de este VirtualService
-- Se necesitan dos destinos: stable y canary
+- Las rutas que se enumeran explícitamente en el Rollout deben tener valores de `http[].name` que coincidan con las referencias. Puede omitirse la lista de rutas cuando solo existe una.
+- El Rollout actualiza automáticamente solo los valores de `weight` de este VirtualService.
+- Se necesitan dos destinos: stable y canary.
 
 ### Paso 5: Definir el DestinationRule
 
-**Importante**: Argo Rollouts **NO** crea automáticamente el DestinationRule. Debes crearlo de antemano.
+**Importante**: Argo Rollouts **no crea** el DestinationRule automáticamente. Debe crearlo previamente.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -261,14 +261,14 @@ spec:
 ```
 
 **Puntos clave**:
-- Los nombres de los subconjuntos (`stable`, `canary`) deben coincidir con `stableSubsetName` y `canarySubsetName` de Rollout
-- Rollout agrega automáticamente la etiqueta `rollouts-pod-template-hash` a los Pods
-- Los subconjuntos de DestinationRule seleccionan los Pods según esta etiqueta
-- Conserva las etiquetas de aplicación estables si las necesitas; Rollout agrega y actualiza el hash de la plantilla del Pod en cada subconjunto. Espera a que estén listos esos selectores antes de enviar tráfico.
+- Los nombres de los subconjuntos (`stable`, `canary`) deben coincidir con `stableSubsetName` y `canarySubsetName` del Rollout.
+- El Rollout añade automáticamente la etiqueta `rollouts-pod-template-hash` a los Pods.
+- Los subconjuntos de DestinationRule seleccionan los Pods mediante esta etiqueta.
+- Conserve las etiquetas estables de la aplicación cuando sean necesarias. El Rollout añade y actualiza el hash de la plantilla de Pods en cada subconjunto; espere a que existan esos selectores antes de enviar tráfico.
 
-### Paso 6: Definir AnalysisTemplate
+### Paso 6: Definir el AnalysisTemplate
 
-Antes de usar estas condiciones Canary, agrega esta regla de reetiquetado al **trabajo de scrape de Pods de Prometheus que recopila las métricas de Istio de las cargas de trabajo**. Confirma que `rollout_hash` y `reporter="destination"` aparezcan en las series recopiladas. La regla identifica el ReplicaSet Canary real indicado por `podTemplateHashValue: Latest`; los promedios de todo el servicio ocultarían los errores de una Canary pequeña. Proporciona tráfico de solicitudes representativo; las mediciones ausentes o NaN no deben promover una versión.
+Antes de utilizar estos criterios de aprobación del Canary, añada la siguiente regla de reetiquetado al **trabajo de recopilación de métricas de Pods de Prometheus que recoge las métricas de Istio de las cargas de trabajo**. Compruebe que las series recopiladas incluyen `rollout_hash` y `reporter="destination"`. Así se identifica el ReplicaSet Canary que recibe `podTemplateHashValue: Latest`; los promedios de todo el servicio podrían ocultar los fallos de un Canary pequeño. Genere tráfico de solicitudes representativo: la ausencia de mediciones o los valores NaN no deben permitir promover una versión.
 
 ```yaml
 # Add to the existing pod scrape job's relabel_configs
@@ -354,9 +354,9 @@ spec:
           )
 ```
 
-### Ejecución y supervisión del despliegue
+### Ejecución y monitorización del despliegue
 
-#### Desplegar una versión nueva
+#### Desplegar una nueva versión
 
 ```bash
 # Start Canary deployment with image update
@@ -370,7 +370,7 @@ kubectl argo rollouts get rollout reviews --watch
 kubectl argo rollouts dashboard
 ```
 
-#### Aprobación/rechazo manual
+#### Aprobación y rechazo manuales
 
 ```bash
 # Manual approval to proceed to next step
@@ -383,7 +383,7 @@ kubectl argo rollouts abort reviews
 kubectl argo rollouts undo reviews
 ```
 
-#### Supervisar el progreso del despliegue
+#### Monitorizar el progreso del despliegue
 
 ```bash
 # Check Rollout status
@@ -399,9 +399,9 @@ kubectl get virtualservice reviews-vsvc -o yaml
 kubectl get pods -l app=reviews --show-labels
 ```
 
-### Configuración avanzada: progresión automática basada en métricas
+### Configuración avanzada: avance automático basado en métricas
 
-Combina esta estrategia con el Rollout completo anterior y conserva su selector y plantilla. Los demás ejemplos abreviados de Rollout que aparecen a continuación también son superposiciones, no manifiestos independientes.
+Integre esta estrategia en el Rollout completo anterior y conserve su selector y su plantilla. Los demás ejemplos abreviados de Rollout que aparecen a continuación también son fragmentos que se integran en un recurso completo, no manifiestos independientes.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -486,11 +486,11 @@ spec:
               podTemplateHashValue: Latest
 ```
 
-### Consideraciones clave
+### Consideraciones principales
 
-#### 1. VirtualService y DestinationRule deben crearse de antemano
+#### 1. Crear previamente el VirtualService y el DestinationRule
 
-Argo Rollouts no crea estos recursos. Deben crearse antes de desplegar Rollout:
+Argo Rollouts no crea estos recursos. Deben existir antes de desplegar el Rollout:
 
 ```bash
 # Order is important
@@ -501,20 +501,20 @@ kubectl apply -f analysis-templates.yaml
 kubectl apply -f rollout.yaml
 ```
 
-#### 2. Etiquetas administradas por Rollout
+#### 2. Etiquetas administradas por el Rollout
 
-Argo Rollouts agrega y administra automáticamente las siguientes etiquetas:
+Argo Rollouts añade y administra automáticamente las siguientes etiquetas:
 
 ```yaml
 # Labels automatically added by Rollout
 rollouts-pod-template-hash: <hash>  # For ReplicaSet identification
 ```
 
-Estas etiquetas se usan para seleccionar subconjuntos en DestinationRule.
+Estas etiquetas se utilizan para seleccionar los subconjuntos en DestinationRule.
 
-#### 3. Se requiere el nombre de la ruta HTTP
+#### 3. Nombres de las rutas HTTP
 
-Solo las rutas seleccionadas explícitamente necesitan el nombre indicado. No hace falta asignar un nombre a las rutas de encabezado no administradas; este ejemplo selecciona `primary`:
+Solo las rutas seleccionadas explícitamente necesitan el nombre al que se hace referencia. Las rutas basadas en encabezados que el Rollout no administra no necesitan nombre; este ejemplo selecciona `primary`:
 
 ```yaml
 # Wrong example
@@ -535,7 +535,7 @@ http:
 
 #### 4. Habilitar la inyección de Istio
 
-Se debe inyectar un sidecar de Istio en los Pods de Rollout:
+Debe inyectarse un sidecar de Istio en los Pods del Rollout:
 
 ```bash
 # Method 1: Namespace level
@@ -550,13 +550,13 @@ template:
       sidecar.istio.io/inject: "true"
 ```
 
-### Uso con condiciones match de VirtualService
+### Combinación con condiciones de coincidencia de VirtualService
 
-Los encabezados de tester, región o nivel de usuario deben ser proporcionados por una capa de confianza si controlan el acceso privilegiado. Las rutas no administradas que siempre seleccionan `canary` no cambian cuando se revierte un peso y pueden seguir apuntando a una Canary cuya escala se haya reducido; elimínalas o modifícalas al abortar o limpiar.
+Si los encabezados de probador, región o nivel de usuario controlan el acceso a funciones privilegiadas, deben proceder de una capa de confianza. Una reversión de los pesos no modifica las rutas no administradas que seleccionan siempre `canary`: estas pueden seguir apuntando a un Canary al que se ha reducido el número de réplicas. Elimínelas o ajústelas al abortar el despliegue o limpiar los recursos.
 
-Argo Rollouts se puede usar con condiciones match de VirtualService. Esto permite dirigir a Canary solo el tráfico que cumpla condiciones específicas.
+Argo Rollouts puede combinarse con condiciones de coincidencia de VirtualService para enviar al Canary solo el tráfico que cumple determinados criterios.
 
-#### Ejemplo 1: Canary basada en encabezados (para testers internos)
+#### Ejemplo 1: Canary basado en encabezados para probadores internos
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -591,6 +591,7 @@ spec:
 ```
 
 **Escenario de uso**:
+
 ```bash
 # Internal testers always access Canary version
 curl -H "x-canary-tester: true" http://reviews:9080/
@@ -644,7 +645,8 @@ spec:
         subset: stable
 ```
 
-**Configuración de Rollout**:
+**Configuración del Rollout**:
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
@@ -671,7 +673,7 @@ spec:
       - pause: {duration: 2m}
 ```
 
-#### Ejemplo 3: Despliegue por nivel de usuario
+#### Ejemplo 3: Despliegue según el nivel del usuario
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -751,9 +753,9 @@ spec:
         subset: stable
 ```
 
-### Ejemplo completo de despliegue
+### Ejemplo de despliegue completo
 
-Manifiesto de referencia combinado para una instalación nueva de laboratorio. Los despliegues existentes requieren cambios ordenados y comprobaciones de propagación; esta aplicación no es atómica:
+El siguiente manifiesto reúne los recursos de referencia para una instalación nueva de laboratorio. En un despliegue existente, aplique los cambios en el orden adecuado y compruebe su propagación: esta aplicación del manifiesto no es atómica.
 
 ```yaml
 ---
@@ -850,11 +852,11 @@ spec:
       - pause: {duration: 1m}
 ```
 
-### Consideraciones al usar match
+### Consideraciones sobre las condiciones de coincidencia
 
 #### 1. El orden de las rutas importa
 
-Las rutas HTTP de VirtualService se **evalúan en orden**. Las rutas con match deben colocarse antes de las rutas administradas por Rollout:
+Las rutas HTTP de VirtualService se **evalúan en orden**. Coloque las rutas con condiciones de coincidencia antes de las rutas administradas por el Rollout:
 
 ```yaml
 # Correct example
@@ -883,9 +885,9 @@ http:
   route: [...]
 ```
 
-#### 2. Rollout solo administra las rutas especificadas
+#### 2. El Rollout solo administra las rutas indicadas
 
-Rollout solo modifica los pesos de las rutas especificadas en el campo `routes`:
+El Rollout solo modifica los pesos de las rutas enumeradas en el campo `routes`:
 
 ```yaml
 strategy:
@@ -899,9 +901,9 @@ strategy:
           # Other routes with match are not modified
 ```
 
-#### 3. Administrar varias rutas a la vez
+#### 3. Administrar varias rutas simultáneamente
 
-Si es necesario, se pueden administrar varias rutas a la vez:
+Si es necesario, puede administrar varias rutas al mismo tiempo:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -955,9 +957,9 @@ spec:
       - pause: {duration: 2m}
 ```
 
-### Solución de problemas {#troubleshooting}
+### Resolución de problemas {#troubleshooting}
 
-#### Rollout atascado en el estado Progressing
+#### Rollout bloqueado en el estado Progressing
 
 ```bash
 # Check Rollout status
@@ -978,7 +980,7 @@ kubectl get virtualservice reviews-vsvc -o yaml | grep "name:"
 kubectl get pods -l app=reviews -o jsonpath='{.items[*].spec.containers[*].name}'
 ```
 
-#### El tráfico no se dirige a Canary
+#### El tráfico no llega al Canary
 
 ```bash
 # Check VirtualService weight
@@ -994,7 +996,7 @@ kubectl get pods -l app=reviews --show-labels
 istioctl proxy-config routes <pod-name>
 ```
 
-#### Reversión de Rollout
+#### Revertir el Rollout
 
 ```bash
 # Rollback to previous revision
@@ -1053,25 +1055,25 @@ spec:
 
 ## Despliegue Blue/Green
 
-Un despliegue Blue/Green mantiene dos entornos de producción idénticos y cambia el tráfico de uno a otro al instante. Usar Argo Rollouts con Istio permite hacer el cambio de forma segura y revertirlo automáticamente.
+Un despliegue Blue/Green mantiene dos entornos de producción idénticos y cambia el destino del tráfico. La integración de Argo Rollouts con Istio permite controlar el cambio y revertir automáticamente.
 
-Los cambios en los selectores de Service se propagan de forma asíncrona y las conexiones existentes pueden continuar usando el ReplicaSet anterior. Una pausa manual no equivale a una aprobación fallida. Si falla la comprobación previa a la promoción, la producción permanece en la versión anterior; el análisis posterior a la promoción puede volver a ella mientras se conserva el ReplicaSet anterior.
+Los cambios de selector de Service se propagan de forma asíncrona y las conexiones existentes pueden seguir utilizando el ReplicaSet anterior. Una pausa manual no equivale a una aprobación fallida. Si falla el análisis previo a la promoción, producción conserva la versión anterior; si falla el análisis posterior, el tráfico puede volver a ella mientras se mantenga el ReplicaSet anterior.
 
 ### Arquitectura Blue/Green de Argo Rollouts
 
-![Argo Rollouts administra los Services Active y Preview, envía el 100 % del tráfico de producción a los Pods Blue y solo el tráfico de prueba a los Pods Green, y verifica ambos lados con análisis previos y posteriores a la promoción.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-3.png)
+![Argo Rollouts administra los Services Active y Preview: envía todo el tráfico de producción a los Pods Blue y el tráfico de prueba a los Pods Green. Los análisis PrePromotion y PostPromotion verifican cada entorno.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-3.html)
 
-### Flujo del despliegue Blue/Green
+### Flujo de un despliegue Blue/Green
 
-![Un despliegue Blue/Green implementa la versión Green, la prueba previamente mediante el Service Preview, exige aprobación antes de cambiar el tráfico de producción y vuelve automáticamente a Blue si falla algún paso de prueba previa, aprobación o verificación posterior.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-4.png)
+![El despliegue crea la versión Green, la prueba mediante el Service Preview y solicita aprobación antes de cambiar el tráfico de producción. El flujo contempla la reversión a Blue si fallan las comprobaciones previas, la aprobación o la verificación posterior.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-4.html)
 
 ### Paso 1: Definir los Services
 
-El despliegue Blue/Green requiere dos Services:
+El despliegue Blue/Green necesita dos Services:
 
 ```yaml
 ---
@@ -1103,7 +1105,7 @@ spec:
     # Rollout automatically updates selector
 ```
 
-### Paso 2: Gateway y VirtualService de Istio
+### Paso 2: Definir el Gateway y el VirtualService de Istio
 
 ```yaml
 ---
@@ -1226,11 +1228,11 @@ spec:
         requiredDuringSchedulingIgnoredDuringExecution: {}
 ```
 
-### Paso 4: Definir AnalysisTemplate
+### Paso 4: Definir el AnalysisTemplate
 
-#### Prueba previa (pruebas de humo)
+#### Pruebas previas de funcionamiento
 
-El proveedor Job se considera exitoso cuando el Job termina con el código de salida 0; no interpreta un estado HTTP impreso como `result`. Estas pruebas usan los endpoints Bookinfo `/health` y `/reviews/0`. La anotación explícita de sidecar nativo permite que el Job termine mientras se conserva mTLS de la malla; requiere compatibilidad con el comportamiento de sidecar nativo de Kubernetes e Istio. Prueba esto en la versión de EKS seleccionada.
+El proveedor Job considera satisfactoria la prueba cuando el Job termina con código de salida 0; no interpreta un código HTTP impreso como `result`. Estas pruebas utilizan los endpoints `/health` y `/reviews/0` de Bookinfo. La anotación explícita de sidecar nativo permite terminar el Job y conservar mTLS en la malla, pero requiere que las versiones de Kubernetes e Istio admitan ese comportamiento. Compruébelo con la versión de EKS elegida.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -1297,7 +1299,7 @@ spec:
           backoffLimit: 1
 ```
 
-#### Pruebas de verificación posterior
+#### Pruebas de verificación posteriores
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -1355,9 +1357,9 @@ spec:
           )
 ```
 
-### Ejecución y administración del despliegue
+### Ejecución y gestión del despliegue
 
-#### Desplegar una versión nueva
+#### Desplegar una nueva versión
 
 ```bash
 # Start Blue/Green deployment with image update
@@ -1371,7 +1373,7 @@ kubectl argo rollouts get rollout reviews --watch
 curl http://reviews-preview.example.com/
 ```
 
-#### Aprobación manual (promoción)
+#### Aprobación manual de la promoción
 
 ```bash
 # Manually approve after pre-tests succeed
@@ -1397,7 +1399,7 @@ kubectl get pods -l app=reviews --show-labels
 kubectl get analysisrun
 ```
 
-#### Reversión
+#### Revertir el despliegue
 
 ```bash
 # Immediate rollback (switch to Blue)
@@ -1414,9 +1416,9 @@ kubectl argo rollouts undo reviews --to-revision=3
 
 ## Pruebas A/B
 
-Las pruebas A/B ejecutan dos versiones al mismo tiempo y clasifican a los usuarios según criterios específicos para medir la eficacia.
+Las pruebas A/B ejecutan dos versiones simultáneamente y agrupan a los usuarios según criterios específicos para medir la eficacia de cada versión.
 
-![Los usuarios se dividen por igual entre las versiones A y B, sus métricas de participación alimentan un análisis compartido y se elige la versión ganadora para conservarla o adoptarla.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-5.png)
+![Los usuarios se reparten por igual entre las versiones A y B. Las métricas de interacción de ambas alimentan un análisis común, que decide qué versión conservar o adoptar.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-5.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-5.html)
 
@@ -1509,7 +1511,7 @@ spec:
         subset: version-a
 ```
 
-### Pruebas A/B geográficas
+### Pruebas A/B según la ubicación geográfica
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1542,13 +1544,13 @@ spec:
         subset: version-a
 ```
 
-## Lanzamiento progresivo {#progressive-rollout}
+## Despliegue progresivo {#progressive-rollout}
 
-El lanzamiento progresivo aumenta automáticamente con el tiempo la proporción de tráfico. Usar la estrategia Canary de Argo Rollouts permite automatizar el despliegue progresivo.
+El despliegue progresivo aumenta la proporción de tráfico de forma automática a lo largo del tiempo. La estrategia Canary de Argo Rollouts permite automatizar ese avance.
 
-### Lanzamiento progresivo manual
+### Avance manual del despliegue progresivo
 
-Para la operación manual, configura pausas explícitas y avanza una sola etapa después de revisar AnalysisRun y el tráfico real. Un temporizador y una búsqueda de un contador sin procesar no constituyen una condición para la tasa de errores. En este ejemplo administrado por el controlador, usa lo siguiente:
+Para avanzar manualmente, configure pausas explícitas y pase a la siguiente etapa solo después de revisar el AnalysisRun y el tráfico real. Un temporizador combinado con una búsqueda de contadores sin procesar no constituye un criterio de aprobación basado en la tasa de errores. En este ejemplo administrado por el controlador, utilice:
 
 ```bash
 kubectl argo rollouts get rollout reviews
@@ -1558,9 +1560,9 @@ kubectl argo rollouts promote reviews
 kubectl argo rollouts abort reviews
 ```
 
-## Uso con la duplicación del tráfico {#using-with-traffic-mirroring}
+## Combinación con la duplicación del tráfico {#using-with-traffic-mirroring}
 
-Combinar la división del tráfico con la duplicación permite realizar despliegues con mayor seguridad.
+Combinar la distribución del tráfico con su duplicación permite validar los despliegues con mayor seguridad.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1591,7 +1593,7 @@ spec:
 
 ## Ejemplos prácticos {#practical-examples}
 
-### Ejemplo 1: Despliegue por segmento de usuario
+### Ejemplo 1: Despliegue según el segmento de usuarios
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1694,7 +1696,7 @@ spec:
         subset: v1
 ```
 
-### Ejemplo 3: Canary para una cadena de microservicios
+### Ejemplo 3: Canary en una cadena de microservicios
 
 ```yaml
 # Frontend Canary
@@ -1742,7 +1744,7 @@ spec:
         subset: v1
 ```
 
-## Supervisión y reversión {#monitoring-and-rollback}
+## Monitorización y reversión {#monitoring-and-rollback}
 
 ### Consultas de Prometheus
 
@@ -1766,7 +1768,7 @@ scalar(sum(rate(istio_requests_total{reporter="destination",destination_service=
 
 ### Reversión automática
 
-Usa los AnalysisTemplates anteriores como condición del rollout. Los totales de los contadores de Prometheus no son tasas, y una consulta vacía o fallida no demuestra que el sistema esté en buen estado. Comprueba las mediciones del ReplicaSet más reciente, el tráfico mínimo y la fase de AnalysisRun. Deja que Argo Rollouts administre los cambios de enrutamiento; no apliques un VirtualService que compita con él ni des por sentado que `abort` revierte la imagen deseada. `undo` revierte la plantilla deseada, mientras que `abort` detiene un rollout activo y dirige el tráfico según el estado estable de la estrategia. Después de completar la promoción, valida el procedimiento adecuado para `undo` o volver a desplegar.
+Utilice los AnalysisTemplates anteriores como criterios de aprobación del despliegue. Los totales de los contadores de Prometheus no son tasas; una consulta vacía o fallida tampoco demuestra que el servicio funcione correctamente. Compruebe las mediciones del ReplicaSet más reciente, el tráfico mínimo y la fase del AnalysisRun. Deje que Argo Rollouts administre los cambios de enrutamiento: no aplique un VirtualService que compita con él ni suponga que `abort` restaura la imagen deseada. `undo` revierte la plantilla deseada; `abort` detiene un despliegue activo y dirige el tráfico según el estado estable de la estrategia. Después de completar una promoción, valide el procedimiento de reversión o nuevo despliegue que corresponda.
 
 ```bash
 kubectl get analysisruns
@@ -1774,9 +1776,9 @@ kubectl describe analysisrun <analysis-run>
 kubectl argo rollouts get rollout reviews
 ```
 
-## Solución de problemas
+## Resolución de problemas
 
-### La división del tráfico no funciona
+### La distribución del tráfico no funciona
 
 ```bash
 # 1. Check DestinationRule
@@ -1793,7 +1795,7 @@ istioctl proxy-config routes <pod-name> -n <namespace> -o json
 istioctl proxy-config routes <pod-name> -n <namespace> -o json
 ```
 
-### Los pesos no se comportan como se esperaba
+### Los pesos no producen el comportamiento esperado
 
 ```bash
 # Check Envoy cluster weights
@@ -1808,7 +1810,7 @@ kubectl get pods -n <namespace> -l version=v2
 
 ## Prácticas recomendadas
 
-### 1. Rollout por etapas
+### 1. Desplegar por etapas
 
 ```yaml
 # Good example: Gradual increase
@@ -1842,15 +1844,15 @@ EOF
 kubectl apply -f rollback-v1.yaml
 ```
 
-### 3. La supervisión es esencial
+### 3. Monitorizar el despliegue
 
-- Supervisión de **señales doradas**: latencia, tráfico, errores y saturación
-- **Decisiones basadas en SLO**: reversión automática si no se cumple el SLO objetivo
-- **Alertas en tiempo real**: configura notificaciones mediante Slack, PagerDuty, etc.
+- **Monitorización de las señales principales**: latencia, tráfico, errores y saturación.
+- **Decisiones basadas en SLO**: revertir automáticamente si no se cumple el SLO objetivo.
+- **Alertas en tiempo real**: configurar notificaciones mediante Slack, PagerDuty u otros sistemas.
 
-### 4. Automatización de pruebas
+### 4. Automatizar las pruebas
 
-Usa AnalysisTemplate de Argo Rollouts para implementar pruebas y verificaciones automatizadas:
+Utilice AnalysisTemplate de Argo Rollouts para automatizar las pruebas y la verificación:
 
 ```yaml
 # AnalysisTemplate for automated testing and verification
@@ -1911,7 +1913,7 @@ spec:
               podTemplateHashValue: Latest
 ```
 
-### 5. Documentación
+### 5. Documentar el despliegue
 
 ```yaml
 # Annotation excerpt to merge into an existing VirtualService
@@ -1928,7 +1930,7 @@ metadata:
 ## Referencias
 
 ### Referencias de Istio
-- [Desvío del tráfico de Istio](https://istio.io/latest/docs/tasks/traffic-management/traffic-shifting/)
+- [Distribución del tráfico con Istio](https://istio.io/latest/docs/tasks/traffic-management/traffic-shifting/)
 - [Despliegues Canary](https://istio.io/latest/blog/2017/0.1-canary/)
 
 ### Referencias de Argo Rollouts
@@ -1938,16 +1940,16 @@ metadata:
 - [Ejemplos de Argo Rollouts](https://github.com/argoproj/argo-rollouts/tree/master/examples)
 
 ### Entrega progresiva
-- [Entrega progresiva](https://www.weave.works/blog/what-is-progressive-delivery-all-about)
+- [Qué es la entrega progresiva](https://www.weave.works/blog/what-is-progressive-delivery-all-about)
 - [Conceptos de entrega progresiva de Argo Rollouts](https://github.com/argoproj/argo-rollouts/blob/v1.10.1/docs/concepts.md)
 
-- [Referencia principal 1](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/traffic-management/istio.md)
-- [Referencia principal 2](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/analysis/prometheus.md)
-- [Referencia principal 3](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/analysis/job.md)
-- [Referencia principal 4](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/analysis.md)
-- [Referencia principal 5](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/bluegreen.md)
-- [Referencia principal 6](https://raw.githubusercontent.com/istio/istio/1.31.0/samples/bookinfo/platform/kube/bookinfo.yaml)
-- [Referencia principal 7](https://raw.githubusercontent.com/istio/istio/1.31.0/samples/curl/curl.yaml)
-- [Referencia principal 8](https://istio.io/latest/docs/reference/config/annotations/)
-- [Referencia principal 9](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
-- [Referencia principal 10](https://prometheus.io/docs/prometheus/latest/configuration/configuration/)
+- [Referencia primaria 1](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/traffic-management/istio.md)
+- [Referencia primaria 2](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/analysis/prometheus.md)
+- [Referencia primaria 3](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/analysis/job.md)
+- [Referencia primaria 4](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/analysis.md)
+- [Referencia primaria 5](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/bluegreen.md)
+- [Referencia primaria 6](https://raw.githubusercontent.com/istio/istio/1.31.0/samples/bookinfo/platform/kube/bookinfo.yaml)
+- [Referencia primaria 7](https://raw.githubusercontent.com/istio/istio/1.31.0/samples/curl/curl.yaml)
+- [Referencia primaria 8](https://istio.io/latest/docs/reference/config/annotations/)
+- [Referencia primaria 9](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+- [Referencia primaria 10](https://prometheus.io/docs/prometheus/latest/configuration/configuration/)

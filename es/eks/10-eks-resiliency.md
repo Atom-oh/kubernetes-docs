@@ -1,37 +1,37 @@
-# Resiliencia y alta disponibilidad de EKS
+# Resiliencia y alta disponibilidad en EKS
 
-> **Línea base de la API de ejemplo**: Kubernetes 1.36; elija versiones compatibles de EKS y de los controladores que tengan soporte actualmente
+> **Versión de referencia de las API de los ejemplos**: Kubernetes 1.36; elija versiones de EKS con soporte vigente y controladores compatibles
 > **Última actualización**: 12 de septiembre de 2026
 
-Estos son patrones de configuración, no una plataforma de producción probada. Use un ámbito de pruebas propio y sustituya las imágenes de aplicación, las rutas de comprobación de estado y las referencias a IAM e infraestructura por entradas revisadas. En esta auditoría no se ejecutaron clústeres, conmutaciones por error ni experimentos de caos.
+Estos ejemplos muestran patrones de configuración; no constituyen una plataforma de producción probada. Úselos en un entorno de pruebas bajo su control y sustituya las imágenes, las rutas de comprobación de estado y las referencias de IAM e infraestructura por valores revisados. En esta auditoría no se ejecutaron clústeres, conmutaciones por error ni experimentos de caos.
 
-RTO es el objetivo aceptable de tiempo de recuperación, incluidos la detección y el restablecimiento; RPO es la ventana aceptable de punto de recuperación/pérdida de datos. Multi-AZ, la replicación y un SLA del plano de control no garantizan automáticamente que no se pierdan datos ni un tiempo de recuperación determinado para las cargas de trabajo.
+RTO es el objetivo de tiempo de recuperación aceptable, incluida la detección y el restablecimiento del servicio. RPO es la ventana aceptable de pérdida de datos respecto al punto de recuperación. Usar varias AZ, replicar datos o contar con un SLA del plano de control no garantiza por sí solo una pérdida de datos nula ni un tiempo concreto de recuperación de la carga de trabajo.
 
-## Descripción general de la resiliencia
+## Visión general de la resiliencia
 
-La resiliencia es **la capacidad de minimizar el impacto durante los fallos mientras se recupera un estado normal o se mantiene el servicio**. Va más allá de la alta disponibilidad (HA) simple y representa una filosofía de diseño que anticipa y prepara la respuesta a los fallos.
+La resiliencia es **la capacidad de reducir el impacto de los fallos mientras se recupera el funcionamiento normal o se mantiene el servicio**. Va más allá de la alta disponibilidad (HA): implica diseñar el sistema anticipando fallos y preparándose para responder a ellos.
 
-### Modelo de madurez de resiliencia
+### Modelo de madurez de la resiliencia
 
-| Nivel | Ámbito | Ejemplos de controles | Tiempos de recuperación ilustrativos anteriores, no mediciones |
+| Nivel | Ámbito | Ejemplos de controles | Tiempos orientativos de ediciones anteriores, sin mediciones |
 | --- | --- | --- | --- |
-| 1. Básico | Pod/carga de trabajo | Sondeos, recursos, presupuesto de interrupciones, apagado | Segundos–minutos |
-| 2. Multi-AZ | Pérdida de AZ | Ubicación, capacidad restante, recuperación del tráfico/datos | Segundos–minutos |
-| 3. Celda | Partición de servicio | Enrutamiento y dependencias/capacidad acotadas | Segundos para impacto parcial–minutos |
-| 4. Multi-Región | Pérdida regional | Conmutación por error del tráfico/datos regionales y operaciones | Objetivos cercanos a cero hasta minutos/horas, según el diseño |
+| 1. Básico | Pod/carga de trabajo | Probes, recursos, presupuesto de evicciones y cierre | Segundos–minutos |
+| 2. Multi-AZ | Pérdida de una AZ | Distribución, capacidad disponible en otras AZ y recuperación del tráfico y los datos | Segundos–minutos |
+| 3. Celdas | Partición del servicio | Enrutamiento y límites de dependencias y capacidad | Segundos para un impacto parcial–minutos |
+| 4. Multirregión | Pérdida de una región | Conmutación regional del tráfico y los datos y procedimientos operativos | Desde objetivos próximos a cero hasta minutos u horas, según el diseño |
 
-Las ediciones anteriores en otros idiomas usaban distintos intervalos de tiempo ilustrativos. Este modelo organiza las decisiones de diseño; no es una certificación ni una garantía de que un nivel superior se recupere más rápido. Defina y mida objetivos para cada recorrido de usuario y sus dependencias.
+Las ediciones anteriores en distintos idiomas usaban intervalos orientativos diferentes. Este modelo ayuda a organizar las decisiones de diseño; no certifica el sistema ni garantiza que un nivel superior se recupere antes. Defina y mida objetivos para cada recorrido del usuario y sus dependencias.
 
-EKS regional administra su plano de control en tres AZ. El SLA actual del endpoint es de un 99,95 % de tiempo de actividad mensual para Standard Control Plane (intervalos de medición de cinco minutos) y de un 99,99 % para Provisioned Control Plane (intervalos de un minuto). Se trata de compromisos de créditos de servicio sujetos a condiciones, no de garantías de SLO/RTO/RPO de la aplicación. [SLA de AWS EKS](https://aws.amazon.com/eks/sla/)
+EKS regional gestiona el plano de control en tres AZ. El SLA actual del endpoint establece una disponibilidad mensual del 99.95% para Standard Control Plane, medida en intervalos de cinco minutos, y del 99.99% para Provisioned Control Plane, en intervalos de un minuto. Estos compromisos dan derecho a créditos de servicio bajo determinadas condiciones; no garantizan los SLO, el RTO o el RPO de la aplicación. [SLA de AWS EKS](https://aws.amazon.com/eks/sla/)
 
 
-> No todos los servicios requieren el nivel 4. Elija el nivel adecuado según los requisitos de SLA, la normativa y el presupuesto.
+> No todos los servicios requieren el nivel 4. Elija el nivel según los requisitos del SLA, la normativa y el presupuesto.
 
 ***
 
-## Nivel 1: resiliencia básica (nivel de Pod)
+## Nivel 1: resiliencia básica en los Pods
 
-### Sondeos de actividad, disponibilidad e inicio
+### Probes de liveness, readiness y startup
 
 ```yaml
 apiVersion: apps/v1
@@ -89,11 +89,11 @@ spec:
             memory: 512Mi
 ```
 
-La imagen anterior es un marcador de posición explícito de la aplicación, no un artefacto publicado. Sustitúyala por un resumen criptográfico verificado e implementa el contrato de estado antes del despliegue. El sondeo de inicio bloquea los de actividad y disponibilidad; el sondeo de actividad no debería fallar solo porque un servicio descendente responda lentamente. Los valores de recursos y sondeos son ilustrativos. Los Jobs y los contenedores de inicialización no necesitan necesariamente esos mismos sondeos.
+La imagen anterior es un marcador de posición para la aplicación, no un artefacto publicado. Sustitúyala por un digest verificado e implemente las comprobaciones de estado previstas antes del despliegue. La probe de startup condiciona el inicio de las de liveness y readiness; liveness no debe fallar solo porque un servicio dependiente responda lentamente. Los valores de recursos y probes son orientativos. Los Jobs y los contenedores init no necesitan siempre estas mismas probes.
 
 ### PodDisruptionBudget (PDB)
 
-Un PDB limita las expulsiones voluntarias admitidas para los Pods que coinciden con la selección. No conserva el número de Pods ante un fallo de AZ/hardware, la eliminación directa de un Pod ni una actualización gradual/reducción de escala propias de un Deployment. La estrategia del controlador, la ubicación y la capacidad de reserva son controles independientes.
+Un PDB limita las evicciones voluntarias compatibles de los Pods que coinciden con su selector. No mantiene un número de Pods ante el fallo de una AZ o del hardware, la eliminación directa de Pods ni las actualizaciones progresivas o reducciones de réplicas del propio Deployment. La estrategia del controlador, la distribución y la capacidad de reserva requieren controles separados.
 
 ```yaml
 apiVersion: policy/v1
@@ -115,7 +115,7 @@ kubectl --context "$KUBE_CONTEXT" -n resilience-demo get pdb web-app-pdb
 # Illustrative only: three Ready replicas and no ongoing/unhealthy deductions permit one eviction.
 ```
 
-### Apagado ordenado
+### Cierre ordenado
 
 ```yaml
 spec:
@@ -128,17 +128,17 @@ spec:
           seconds: 5
 ```
 
-Este es un fragmento de la especificación de Pod para la aplicación propia. El sleep nativo de preStop tiene disponibilidad general desde Kubernetes 1.34 y es válido en la línea base 1.36. Una espera de cinco segundos solo introduce una demora; no garantiza la propagación a los endpoints ni al balanceador de carga. El período de gracia incluye el hook, y las actualizaciones de terminación de EndpointSlice se ejecutan en paralelo con el apagado del nodo. Los endpoints en terminación pueden seguir apareciendo con `ready=false` y una condición `serving` para permitir el drenaje.
+Este fragmento de la especificación de un Pod está destinado a una aplicación bajo su control. La acción nativa sleep de preStop es GA desde Kubernetes 1.34 y es válida para la versión de referencia 1.36. Esperar cinco segundos solo introduce una demora; no garantiza que se propaguen los cambios de endpoints o del balanceador. El periodo de gracia incluye el hook, y las actualizaciones de terminación de EndpointSlice se producen en paralelo al cierre del nodo. Los endpoints en terminación pueden seguir apareciendo con ready=false y una condición serving que permita drenar conexiones.
 
-A continuación, el tiempo de ejecución envía la señal de detención configurada (normalmente SIGTERM; la configuración de la imagen/tiempo de ejecución puede variar). La aplicación debe gestionarla y finalizar o rechazar el trabajo antes de la terminación forzada. No elimine manualmente el PID 1 en preStop dando por sentado que los endpoints se quitarán en un orden estricto. Pruebe las conexiones de larga duración, la baja de registro y el vaciado reales.
+A continuación, el runtime envía la señal de parada configurada, normalmente SIGTERM, aunque la imagen y el runtime pueden cambiarla. La aplicación debe procesarla y completar o rechazar el trabajo antes de la terminación forzosa. No elimine manualmente PID 1 en preStop ni suponga una secuencia estricta de retirada de endpoints. Pruebe las conexiones de larga duración, la retirada del registro y el vaciado de los datos pendientes.
 
 ***
 
 ## Nivel 2: estrategia Multi-AZ
 
-### Restricciones de distribución de topología de Pods
+### Restricciones de distribución topológica de Pods
 
-La distribución de topología influye en la ubicación; no crea capacidad en buen estado ni reubica automáticamente los Pods existentes tras un fallo.
+La distribución topológica influye en la ubicación de los Pods. No crea capacidad disponible ni traslada automáticamente los Pods existentes después de un fallo.
 
 ```yaml
 apiVersion: apps/v1
@@ -176,14 +176,14 @@ spec:
         image: web-app:1.0
 ```
 
-| Parámetro           | Descripción                                              |
-| ------------------- | -------------------------------------------------------- |
-| `maxSkew` | Con DoNotSchedule, diferencia entre el recuento del dominio candidato y el mínimo global |
-| `topologyKey`       | Base de distribución (zona, nombre de host, etc.)                |
-| `whenUnsatisfiable` | `DoNotSchedule` (estricto) o `ScheduleAnyway` (flexible)        |
-| `minDomains` | Si quedan menos dominios aptos, el mínimo global pasa a ser cero |
+| Parámetro | Descripción |
+| --- | --- |
+| `maxSkew` | Con DoNotSchedule, diferencia entre el número de Pods del dominio candidato y el mínimo global |
+| `topologyKey` | Criterio de distribución, como zona o nombre de host |
+| `whenUnsatisfiable` | `DoNotSchedule` impone una restricción obligatoria; `ScheduleAnyway` expresa una preferencia |
+| `minDomains` | Si quedan menos dominios elegibles, el mínimo global pasa a ser cero |
 
-Por ejemplo, si quedan dos zonas aptas con dos Pods coincidentes cada una, `minDomains=3` establece en cero el mínimo global y puede impedir Pods de reemplazo con `maxSkew=1`. `minDomains=2` permite calcular la distribución de otro Pod si las demás restricciones y la capacidad lo permiten. No exige que haya exactamente dos o tres AZ ocupadas. Establezca por separado las condiciones para la ubicación inicial en tres AZ y la capacidad adicional en las AZ restantes. ScheduleAnyway es una preferencia; siguen aplicándose las demás restricciones del planificador.
+Por ejemplo, si quedan dos zonas elegibles con dos Pods coincidentes en cada una, minDomains=3 establece un mínimo global de cero y puede bloquear los Pods de reemplazo con maxSkew=1. minDomains=2 permite calcular la distribución de otro Pod si las demás restricciones y la capacidad lo permiten. No exige que estén ocupadas exactamente dos o tres AZ. Verifique por separado la distribución inicial en tres AZ y la capacidad de reserva en las AZ que seguirían disponibles. ScheduleAnyway es una preferencia; siguen aplicándose las demás restricciones del scheduler.
 
 ### NodePool Multi-AZ de Karpenter
 
@@ -219,13 +219,13 @@ spec:
       duration: 9h
 ```
 
-Los requisitos de Karpenter permiten zonas; no aprovisionan nodos de manera uniforme por adelantado ni reservan capacidad para fallos. Use una versión compatible con EKS; la línea base del esquema es la versión mantenida 1.14.1, no un mínimo histórico incondicional de 1.0+. Ya deben haberse revisado EC2NodeClass, las AMI, el rol, las subredes y la capacidad a los que se hace referencia.
+Los requisitos de Karpenter permiten determinadas zonas, pero no crean de antemano una distribución uniforme de nodos ni reservan capacidad para fallos. Use una versión compatible con EKS. El esquema toma como referencia la versión mantenida 1.14.1, no un requisito mínimo incondicional basado en el antiguo 1.0+. El EC2NodeClass referenciado, las AMI, el rol, las subredes y la capacidad deben haberse revisado previamente.
 
-Los presupuestos porcentuales usan ceil(total × porcentaje), menos los nodos en proceso de eliminación y los nodos NotReady; se aplica el presupuesto correspondiente más restrictivo. No limitan la frecuencia de todas las interrupciones, expiraciones, reparaciones o eliminaciones manuales. Los horarios están en UTC; el ejemplo corresponde a un único intervalo entre semana, de 09:00 a 18:00 en Corea/Japón. Un presupuesto de cero no impide todos los fallos.
+Los presupuestos porcentuales calculan ceil(total × porcentaje) y restan los nodos en eliminación y NotReady; prevalece el presupuesto aplicable más restrictivo. No limitan todas las interrupciones, caducidades, reparaciones o eliminaciones manuales. Los horarios están en UTC; el ejemplo bloquea las interrupciones de lunes a viernes entre las 09:00 y las 18:00 de Corea y Japón. Un presupuesto de cero no evita todos los fallos.
 
-Los grupos de Spot y On-Demand separados pueden usar ponderaciones de 100/50, pero estas son preferencias de aprovisionamiento, no una garantía de que el grupo de menor ponderación solo se use cuando Spot no esté disponible. También influyen la capacidad existente, las restricciones y el procesamiento por lotes. Los límites de NodePool limitan el aprovisionamiento, no realizan el escalado previo.
+Los pools separados para Spot y On-Demand pueden usar pesos 100/50. Esos pesos son preferencias de aprovisionamiento y no garantizan que el pool de menor peso solo se utilice cuando Spot no esté disponible. También influyen la capacidad existente, las restricciones y la agrupación de solicitudes. Los límites de NodePool acotan el aprovisionamiento; no crean capacidad de antemano.
 
-### Preferencia del Service por la misma zona
+### Preferencia de Service por la misma zona
 
 ```yaml
 apiVersion: v1
@@ -243,15 +243,15 @@ spec:
   trafficDistribution: PreferSameZone
 ```
 
-PreferSameZone/PreferSameNode tienen disponibilidad general desde Kubernetes 1.35 y son válidos para esta línea base 1.36; PreferClose es el alias anterior de PreferSameZone. Se trata de una preferencia, no de una garantía estricta de localidad, latencia o costo. Compruebe el comportamiento real del proxy/EndpointSlice y las políticas de tráfico Local. La anotación anterior `topology-mode=Auto` usa una heurística distinta para asignar sugerencias; la orientación sobre topology-aware-hints es obsoleta.
+PreferSameZone y PreferSameNode son GA desde Kubernetes 1.35 y son válidos para esta versión de referencia 1.36. PreferClose es el alias anterior de PreferSameZone. Se trata de una preferencia, no de una restricción estricta de localidad ni de una garantía de latencia o coste. Compruebe el comportamiento real del proxy y de EndpointSlice y las políticas de tráfico Local. La anotación anterior topology-mode=Auto usa otra heurística de asignación de indicaciones; topology-aware-hints corresponde a la orientación antigua.
 
-Fuentes: [PDB](https://kubernetes.io/docs/tasks/run-application/configure-pdb/), [terminación de Pod](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/), [distribución de topología](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/), [distribución del tráfico de Service](https://kubernetes.io/docs/concepts/services-networking/service/#traffic-distribution), [interrupciones de Karpenter](https://karpenter.sh/docs/concepts/disruption/).
+Fuentes: [PDB](https://kubernetes.io/docs/tasks/run-application/configure-pdb/), [terminación de Pods](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/), [distribución topológica](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/), [distribución del tráfico de Service](https://kubernetes.io/docs/concepts/services-networking/service/#traffic-distribution) e [interrupciones de Karpenter](https://karpenter.sh/docs/concepts/disruption/).
 
 ### ARC Zonal Shift
 
-La conmutación zonal manual y la conmutación zonal automática son operaciones distintas. La integración de EKS pone en estado cordon los nodos de la zona afectada y elimina sus endpoints de EndpointSlices; no expulsa los Pods ni termina esos nodos. Auto Mode evita crear nodos y suspende las interrupciones voluntarias pertinentes en la AZ afectada; los grupos de nodos administrados suspenden el reequilibrio de AZ y evitan lanzar nuevos nodos allí. La integración actual de Karpenter requiere la versión/configuración/IAM indicados en su documentación. La conmutación de un balanceador de carga es una operación independiente del recurso.
+El cambio zonal manual y el cambio zonal automático son operaciones distintas. La integración con EKS marca como no programables los nodos de la zona afectada y retira sus endpoints de EndpointSlices; no expulsa los Pods ni termina esos nodos. Auto Mode evita crear nodos y suspende las interrupciones voluntarias pertinentes en la AZ afectada. Los grupos de nodos administrados suspenden el reequilibrio entre AZ y evitan nuevos lanzamientos allí. La integración actual con Karpenter requiere las versiones, los ajustes y la configuración de IAM documentados. El cambio zonal de un balanceador es una operación sobre otro recurso.
 
-Primero verifique la cuenta, el recurso administrado exacto, la integración habilitada, la configuración de práctica existente y el comportamiento de las alarmas. Pruebe la aplicación, el DNS, los datos y la capacidad de nodos en las zonas restantes. La conmutación zonal no es un aislamiento absoluto de la red: EKS tiene un mecanismo de seguridad si todos los endpoints del servicio están en la zona afectada. No puede mover un volumen EBS zonal existente. Auto Mode puro usa CoreDNS del sistema de nodos; los nodos mixtos/no pertenecientes a Auto Mode siguen necesitando el Deployment y su capacidad.
+Primero compruebe la cuenta, el recurso administrado exacto, la integración habilitada, la configuración de práctica existente y el comportamiento de las alarmas. Pruebe la capacidad de la aplicación, DNS, los datos y los nodos en las zonas que seguirían disponibles. El cambio zonal no aísla por completo la red: EKS dispone de una salvaguarda cuando todos los endpoints del servicio están en la zona afectada. Tampoco puede trasladar un volumen EBS zonal existente. Un entorno exclusivamente Auto Mode usa CoreDNS del sistema de nodos; los nodos mixtos o ajenos a Auto Mode siguen necesitando el Deployment y su capacidad.
 
 ```bash
 set -euo pipefail
@@ -261,7 +261,7 @@ aws sts get-caller-identity
 aws arc-zonal-shift get-managed-resource \
   --region "$AWS_REGION" --resource-identifier "$ARC_RESOURCE_ARN"
 ```
-Los siguientes bloques son pasos operativos separados, no un único script de configuración. La configuración de práctica inicia cambios de tráfico recurrentes; inspeccione una configuración existente en lugar de volver a crearla. El identificador de una alarma de resultado es una cadena ARN, no un objeto alarmName/region. Habilite la conmutación automática por separado cuando esté listo.
+Los siguientes bloques son pasos operativos independientes, no un único script de instalación. Crear la configuración de práctica inicia cambios de tráfico periódicos; inspeccione la configuración existente en lugar de recrearla. El identificador de la alarma de resultados es una cadena ARN, no un objeto alarmName/region. Habilite autoshift por separado cuando el entorno esté preparado.
 
 ```bash
 # MUTATION: authorizes recurring weekly traffic-shifting practice runs.
@@ -293,11 +293,11 @@ printf '%s\n' "$SHIFT_ID" > owned-zonal-shift-id.txt
 aws arc-zonal-shift cancel-zonal-shift \
   --region "$AWS_REGION" --zonal-shift-id "$SHIFT_ID"
 ```
-[Comportamiento y requisitos previos de EKS ARC](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html) · [Integración con Auto Mode/Karpenter](https://aws.amazon.com/blogs/containers/arc-zonal-shift-support-for-eks-auto-mode-and-karpenter/)
+[Comportamiento y requisitos de ARC en EKS](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html) · [Integración con Auto Mode y Karpenter](https://aws.amazon.com/blogs/containers/arc-zonal-shift-support-for-eks-auto-mode-and-karpenter/)
 
-### Consideraciones sobre el almacenamiento
+### Consideraciones de almacenamiento
 
-WaitForFirstConsumer demora el aprovisionamiento/vinculación inicial hasta que se pueda tener en cuenta la ubicación del planificador. **EBS sigue vinculado a una AZ.** Tras la pérdida de una AZ, un Pod de reemplazo en otra AZ no puede conectar ese mismo volumen. Restaure o migre los datos mediante un plan revisado de copia de seguridad/replicación y pruebe el RPO/RTO.
+WaitForFirstConsumer retrasa el aprovisionamiento y la vinculación iniciales hasta que se pueda considerar la ubicación decidida por el scheduler. **EBS sigue vinculado a una AZ.** Si se pierde esa AZ, un Pod de reemplazo en otra no puede adjuntar el mismo volumen. Restaure o migre los datos mediante un plan de copias de seguridad o replicación revisado y pruebe el RPO y el RTO.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -312,9 +312,9 @@ parameters:
 allowVolumeExpansion: true
 reclaimPolicy: Retain
 ```
-Este StorageClass usa el controlador EBS CSI estándar. Auto Mode usa `ebs.csi.eks.amazonaws.com` y sus propios requisitos compatibles de nodos/IAM/migración. Establezca explícitamente `encrypted: "true"` en cualquiera de los dos diseños e inspeccione el volumen EBS/la clave KMS creados. El cifrado del disco raíz/de datos del nodo de Auto Mode no demuestra que todos los PVC de las cargas de trabajo estén cifrados; el valor predeterminado actual del parámetro de StorageClass de Auto Mode es false. Retain conserva un volumen liberado para una recuperación/eliminación controlada; no es una copia de seguridad y puede conservar recursos facturables.
+Esta StorageClass usa el controlador EBS CSI estándar. Auto Mode usa ebs.csi.eks.amazonaws.com y tiene sus propios requisitos de nodos, IAM y migración. Establezca encrypted: "true" explícitamente en ambos diseños e inspeccione el volumen EBS y la clave KMS creados. El cifrado de los discos raíz y de datos de los nodos de Auto Mode no demuestra que todos los PVC de las cargas de trabajo estén cifrados; el valor predeterminado actual de ese parámetro de StorageClass en Auto Mode es false. Retain conserva un volumen liberado para una recuperación o limpieza controladas; no es una copia de seguridad y puede mantener recursos facturables.
 
-Para el acceso compartido al sistema de archivos entre AZ, use un sistema de archivos EFS **Regional** existente, puntos de montaje accesibles, reglas de seguridad TCP 2049, permisos revisados de puntos de acceso e IAM compatible con CSI. EFS One Zone no ofrece el mismo diseño de resiliencia. Estos ID son marcadores de posición; aquí no se crea ningún sistema de archivos.
+Para compartir un sistema de archivos entre AZ, use un EFS **Regional** existente, destinos de montaje accesibles, reglas de seguridad para TCP 2049, permisos de puntos de acceso revisados e IAM compatible con CSI. EFS One Zone ofrece un diseño de resiliencia distinto. Los identificadores son marcadores de posición; aquí no se crea ningún sistema de archivos.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -345,13 +345,13 @@ spec:
     requests:
       storage: 5Gi
 ```
-La solicitud de 5Gi del PVC no es una cuota de almacenamiento de EFS aplicada. El cifrado TLS del montaje y el cifrado en reposo del sistema de archivos son configuraciones independientes. Retain también requiere un proceso documentado para limpiar los datos y los puntos de acceso.
+La solicitud de 5Gi del PVC no impone una cuota de almacenamiento de EFS. El cifrado TLS del montaje y el cifrado en reposo del sistema de archivos son ajustes separados. Retain también requiere documentar la limpieza de los puntos de acceso y los datos.
 
-[EBS CSI de EKS](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html) · [Parámetros de StorageClass de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html) · [EFS CSI](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
+[EBS CSI en EKS](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html) · [Parámetros de StorageClass en Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html) · [EFS CSI](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
 
-### Enrutamiento con reconocimiento de localidad de Istio
+### Enrutamiento de Istio según la localidad
 
-En el ejemplo de modo sidecar de Istio, Istio obtiene la localidad del nodo que ejecuta el Pod, salvo que se configure la anulación de localidad documentada; las etiquetas de zona habituales del Pod no la definen automáticamente. Verifique los endpoints/localidades reales del proxy y la capacidad en buen estado accesible. Para el comportamiento documentado de conmutación por error de localidad se requiere la detección de valores atípicos.
+En este ejemplo de Istio con sidecars, Istio obtiene la localidad del nodo donde se ejecuta el Pod, salvo que se configure la sustitución de localidad documentada. Las etiquetas de zona ordinarias del Pod no la definen automáticamente. Verifique los endpoints y las localidades reales del proxy y la capacidad disponible y accesible. El comportamiento documentado de conmutación por localidad requiere detección de valores atípicos.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -375,7 +375,7 @@ spec:
       baseEjectionTime: 30s
       maxEjectionPercent: 50
 ```
-Como **configuración alternativa de distribución ponderada**, sustituya `localityLbSetting` de `loadBalancer` por el siguiente fragmento. Incluye las tres zonas de origen; 80/10/10 son ponderaciones configuradas, no mediciones de localidad ni una garantía de capacidad de conmutación por error. No combine una regla distribute con una política failover incompatible.
+Como **configuración alternativa de distribución ponderada**, sustituya localityLbSetting de loadBalancer por el siguiente fragmento. Incluye las tres zonas de origen. Los valores 80/10/10 son pesos configurados, no mediciones de localidad ni garantías de capacidad para la conmutación. No combine una regla distribute con una política de failover incompatible.
 
 ```yaml
 localityLbSetting:
@@ -397,9 +397,9 @@ localityLbSetting:
       ap-northeast-2/ap-northeast-2b/*: 10
       ap-northeast-2/ap-northeast-2c/*: 80
 ```
-Las cifras originales de más del 80 % de tráfico local, reducción de costos del 60–80 % y latencia inferior a 1 ms en la misma AZ se conservan únicamente como ilustraciones no verificadas. No se dispone de las fuentes de medición; el estado, la reutilización de conexiones, la mezcla de endpoints, los bytes de las solicitudes y los precios modifican el resultado.
+El documento original citaba más del 80% de tráfico local, una reducción de costes del 60–80% y una latencia inferior a 1 ms dentro de la misma AZ. Son cifras orientativas cuya fuente de medición no está disponible. El estado de los endpoints, la reutilización de conexiones, la composición del conjunto de endpoints, los bytes por solicitud y los precios pueden cambiar el resultado.
 
-[Conmutación por error de localidad](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/) · [Distribución ponderada](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/distribute/)
+[Conmutación por localidad](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/) · [Distribución ponderada](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/distribute/)
 
 ---
 
@@ -407,20 +407,20 @@ Las cifras originales de más del 80 % de tráfico local, reducción de costos d
 
 ### Concepto de celda
 
-Una celda es **una unidad de servicio autónoma con su propio almacén de datos, caché y cola**. Su objetivo es acotar el impacto de los fallos cuando el enrutamiento, la capacidad y las dependencias hacen cumplir el límite de la celda.
+Una celda es **una unidad de servicio autónoma con su propio almacén de datos, caché y cola**. Busca limitar el impacto de los fallos cuando el enrutamiento, la capacidad y las dependencias hacen efectiva la separación entre celdas.
 
 ### Estrategias de partición en celdas
 
-| Estrategia       | Descripción                       | Adecuada para                     |
-| -------------- | --------------------------------- | -------------------------------- |
-| Basada en clientes | Asignar una celda según el hash del ID del cliente   | SaaS multiinquilino                |
-| Basada en regiones   | Particionar por ubicación geográfica  | Servicios globales                  |
-| Basada en capacidad | Crear una nueva celda al alcanzar la capacidad | Distribución uniforme de la carga           |
-| Basada en niveles     | Asignar una celda según el nivel de servicio              | Diferenciación Premium/Standard |
+| Estrategia | Descripción | Uso adecuado |
+| --- | --- | --- |
+| Por cliente | Asignar una celda mediante un hash del ID del cliente | SaaS multiinquilino |
+| Por región | Dividir según la ubicación geográfica | Servicios globales |
+| Por capacidad | Crear otra celda al alcanzar la capacidad | Distribución uniforme de la carga |
+| Por nivel de servicio | Asignar celdas según el nivel contratado | Diferenciación entre Premium y Standard |
 
-### Implementación de celdas basadas en namespaces
+### Implementación de celdas mediante namespaces
 
-Los namespaces, las cuotas y NetworkPolicy proporcionan límites lógicos, no dominios de fallo independientes. Los nodos compartidos, el plano de control, CNI, DNS, los enrutadores y los servicios de datos siguen siendo dependencias. Verifique que el complemento de red aplique las políticas; el tráfico permitido es la unión de todas las políticas aplicables. El namespace/la carga de trabajo del enrutador que aparece a continuación debe existir con las etiquetas exactas.
+Los namespaces, las cuotas y NetworkPolicy establecen límites lógicos, no dominios de fallo independientes. Los nodos compartidos, el plano de control, el CNI, DNS, los routers y los servicios de datos siguen siendo dependencias. Verifique que el plugin de red aplica las políticas; el tráfico permitido es la unión de todas las políticas aplicables. El namespace y la carga de trabajo del router del ejemplo deben existir con las etiquetas exactas.
 
 ```yaml
 apiVersion: v1
@@ -503,13 +503,13 @@ spec:
     - protocol: TCP
       port: 53
 ```
-DNS permite tráfico TCP y UDP a los Pods de CoreDNS coincidentes en kube-system. El DNS del sistema local al nodo/Auto Mode sigue una ruta distinta y requiere una verificación específica para cada modo. Esta política no permite deliberadamente el tráfico externo arbitrario: añada reglas revisadas para los endpoints o la puerta de enlace de salida que necesiten los servicios. Excluir solo 10.0.0.0/8 de 0.0.0.0/0 no aísla todas las redes privadas ni todas las celdas.
+La regla de DNS permite TCP y UDP hacia los Pods CoreDNS coincidentes de kube-system. DNS local del nodo y DNS del sistema de Auto Mode siguen otra ruta y requieren una comprobación específica del modo. Esta política no permite tráfico externo arbitrario: añada reglas revisadas de endpoints o de una pasarela de salida para los servicios necesarios. Excluir únicamente 10.0.0.0/8 de 0.0.0.0/0 no aísla todas las redes privadas ni todas las celdas.
 
 [Semántica de NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 
-### Fragmentación por barajado (Shuffle Sharding)
+### Shuffle Sharding
 
-La asignación estable a un subconjunto de celdas puede reducir el solapamiento entre clientes, si el enrutamiento, los límites de admisión y la disponibilidad de los datos implementan ese diseño.
+Asignar de forma estable cada cliente a un subconjunto de celdas puede reducir el solapamiento entre clientes, siempre que el enrutamiento, los límites de admisión y la disponibilidad de los datos implementen ese diseño.
 
 ```
 With 2 Cell combinations from a pool of 8 Cells:
@@ -523,24 +523,24 @@ When Cell 1 fails:
 - Customer C → Can use Cell 3 if failover routing/data/capacity are ready
 ```
 
-C(8,2)=28. Una asignación uniforme e independiente da una probabilidad exacta de colisión de pares de 1/28 (aproximadamente 3,6 %). Un fallo de una celda fija afecta a 2/8=25 % de las asignaciones en promedio, no a un máximo del 25 % de los clientes ni de la carga. Un ConfigMap o un hash, por sí solos, no implementan ni la conmutación por error ni la replicación de datos.
+C(8,2)=28. Una asignación uniforme e independiente da una probabilidad de coincidencia del mismo par de 1/28, aproximadamente el 3.6%. El fallo de una celda concreta afecta, en promedio, a 2/8=25% de las asignaciones; no establece un máximo del 25% de los clientes o de la carga. Un ConfigMap o un hash, por sí solos, no implementan conmutación por error ni replicación de datos.
 
 ***
 
-## Nivel 4: varios clústeres / varias regiones
+## Nivel 4: varios clústeres y regiones
 
-Elija un patrón para cada recorrido de usuario y sus requisitos de coherencia de datos. Un segundo clúster o región, por sí solo, no garantiza un RTO/RPO cercano a cero. Los valores de tiempo/costo que aparecen a continuación son ilustraciones de diseño no verificadas, no resultados medidos ni compromisos de AWS.
+Elija un patrón para cada recorrido del usuario y sus requisitos de consistencia de datos. Añadir un segundo clúster o región no garantiza un RTO o RPO próximo a cero. Los tiempos y costes originales de la tabla son estimaciones de diseño sin mediciones, no resultados obtenidos ni compromisos de AWS.
 
-| Patrón | Ilustración anterior de RTO | Ilustración anterior de RPO | Ilustración anterior de costo | Condición de diseño |
+| Patrón | RTO orientativo anterior | RPO orientativo anterior | Coste orientativo anterior | Condición del diseño |
 | --- | --- | --- | --- | --- |
-| Activo-Activo | Objetivo ~0 | Objetivo ~0 | 2x+ | Enrutamiento, coherencia, gestión de conflictos y capacidad |
-| Activo-Pasivo | Minutos–horas | Minutos | 1,5x | Preparación del entorno en espera, retraso de replicación y promoción |
-| Aislamiento regional | No especificado | No especificado | 1x por región | Servicio regional independiente; no implica conmutación por error regional automática |
-| Concentrador-radial | Minutos | Minutos | 1,3x | El concentrador es una dependencia compartida, salvo que se proteja por separado |
+| Activo-activo | Objetivo ~0 | Objetivo ~0 | 2x+ | Enrutamiento, consistencia, resolución de conflictos y capacidad |
+| Activo-pasivo | Minutos–horas | Minutos | 1.5x | Preparación del sistema en espera, retraso de replicación y promoción |
+| Aislamiento regional | Sin especificar | Sin especificar | 1x por región | Servicio regional independiente; no implica conmutación regional automática |
+| Hub-Spoke | Minutos | Minutos | 1.3x | El hub es una dependencia compartida, salvo que se proteja por separado |
 
-### ApplicationSet de Argo CD
+### Argo CD ApplicationSet
 
-Estas tres alternativas requieren un controlador de Argo CD/ApplicationSet existente, clústeres registrados explícitamente y accesibles con las etiquetas documentadas, credenciales del repositorio y un AppProject creado previamente y restringido al repositorio/destinos/tipos de recursos revisados. Sustituya el repositorio y la revisión de ejemplo por datos propios. Los Applications generados tienen sincronización manual: revise los destinos/manifiestos renderizados antes de habilitar cualquier política automatizada de sincronización/poda. Ningún generador aprovisiona un clúster de EKS.
+Estas tres alternativas requieren un controlador Argo CD/ApplicationSet existente, clústeres accesibles registrados explícitamente con las etiquetas documentadas, credenciales del repositorio y un AppProject creado previamente y limitado al repositorio, los destinos y los tipos de recursos revisados. Sustituya el repositorio y la revisión de ejemplo por valores bajo su control. Las Applications generadas usan sincronización manual: revise los destinos y manifiestos renderizados antes de habilitar la sincronización automática o la eliminación automática de recursos. Ningún generador aprovisiona un clúster EKS.
 
 #### Generador de clústeres
 
@@ -572,7 +572,7 @@ spec:
         server: '{{.server}}'
         namespace: resilience-demo
 ```
-#### Directorios de Git × clústeres registrados
+#### Directorios Git × clústeres registrados
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -610,7 +610,7 @@ spec:
         server: '{{.server}}'
         namespace: resilience-demo
 ```
-El segundo elemento hijo de matrix compara el nombre base del directorio con la etiqueta del clúster registrado y usa el valor real del servidor. Los nombres de región no se pueden convertir en URL de la API de EKS. Si falta la etiqueta o no hay coincidencias, puede que no se genere ningún Application; inspeccione el conjunto generado, no solo la validez del esquema.
+El segundo componente de la matriz hace coincidir el nombre base del directorio con una etiqueta del clúster registrado y utiliza el valor real de server. Los nombres de región no se pueden convertir en URL de la API de EKS. Si falta una etiqueta o no hay coincidencias, puede que no se genere ninguna Application. Inspeccione el conjunto generado, además de validar el esquema.
 
 #### Clúster × lista de aplicaciones
 
@@ -658,11 +658,11 @@ spec:
         server: '{{.server}}'
         namespace: resilience-demo
 ```
-[Parámetros de matrix de ApplicationSet](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Matrix/)
+[Parámetros de la matriz de ApplicationSet](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Matrix/)
 
 ### Global Accelerator
 
-Use endpoints ALB/NLB existentes y aptos, con TLS probado, comprobaciones de estado y suficiente capacidad regional. Lo siguiente es un ejemplo opcional de aprovisionamiento; no se ha ejecutado aquí. Guarde los ID de recursos devueltos y un plan propio para su limpieza; un fallo a mitad del proceso no elimina los recursos creados previamente. Deshabilitar un acelerador no elimina los cargos por sus recursos.
+Use endpoints ALB/NLB existentes y elegibles, con TLS y comprobaciones de estado probados y suficiente capacidad regional. El siguiente ejemplo de aprovisionamiento es opcional y no se ejecutó aquí. Guarde los ID de recursos devueltos y prepare un plan de limpieza bajo su control; un fallo a mitad del proceso no elimina los recursos ya creados. Deshabilitar un acelerador no elimina los cargos asociados al recurso.
 
 ```bash
 # MUTATIONS: creates a disabled, billable accelerator and its configuration.
@@ -698,15 +698,15 @@ aws globalaccelerator create-endpoint-group \
 aws globalaccelerator update-accelerator \
   --region "$GA_API_REGION" --accelerator-arn "$ACCELERATOR_ARN" --enabled
 ```
-Un dial de tráfico es el porcentaje del tráfico que ya se dirige a ese grupo regional de endpoints para las conexiones nuevas; dos diales del 50 % no establecen un reparto global 50/50. El ejemplo deja ambos al 100 %. Un cambio del dial no mueve por la fuerza las conexiones existentes y las reglas de conmutación por error pueden ignorar un dial de cero. Las ponderaciones de los endpoints y los diales de tráfico son controles distintos. El estado de los endpoints ALB/NLB depende de las comprobaciones de estado de Elastic Load Balancing; definir una anulación de Global Accelerator `/healthz` no configura esas comprobaciones de los grupos de destino.
+El traffic dial establece, para las conexiones nuevas, el porcentaje del tráfico que ya se dirige a ese grupo regional de endpoints. Dos ajustes del 50% no crean un reparto global 50/50. El ejemplo deja ambos al 100%. Cambiar el dial no traslada de forma forzosa las conexiones existentes, y las reglas de failover pueden ignorar un dial de cero. Los pesos de los endpoints y los traffic dials son controles distintos. El estado de los endpoints ALB/NLB sigue las comprobaciones de Elastic Load Balancing; configurar /healthz en Global Accelerator no cambia las comprobaciones de sus grupos de destino.
 
-[Semántica del dial de tráfico](https://docs.aws.amazon.com/global-accelerator/latest/dg/about-endpoint-groups-traffic-dial.html) · [Estado de los endpoints](https://repost.aws/knowledge-center/global-accelerator-unhealthy-endpoints) · [Reglas de conmutación por error](https://repost.aws/knowledge-center/global-accelerator-failover-different-region)
+[Semántica de traffic dial](https://docs.aws.amazon.com/global-accelerator/latest/dg/about-endpoint-groups-traffic-dial.html) · [Estado de los endpoints](https://repost.aws/knowledge-center/global-accelerator-unhealthy-endpoints) · [Reglas de conmutación por error](https://repost.aws/knowledge-center/global-accelerator-failover-different-region)
 
-### Federación multi-primary de Istio
+### Federación Istio multi-primary
 
-El diseño sidecar multi-primary/múltiples redes requiere un modelo de identidad de confianza compartido, nombres distintos de clúster/red, API de Kubernetes remotas accesibles, puertas de enlace este-oeste, servicios/namespaces compatibles y un comportamiento de datos adecuado. Un ServiceEntry por sí solo no establece la federación. Limite el acceso a la puerta de enlace a las redes previstas; un balanceador de carga TLS de capa 7 que termina TLS no es compatible con AUTO_PASSTHROUGH.
+El diseño con sidecars, varios planos de control primarios y varias redes requiere un modelo de identidad con confianza compartida, nombres distintos para cada clúster y red, acceso a las API remotas de Kubernetes y a las pasarelas este-oeste, servicios y namespaces compatibles y un comportamiento coherente de los datos. Un ServiceEntry por sí solo no establece la federación. Limite el acceso a las pasarelas a las redes previstas; un balanceador de capa 7 que termina TLS es incompatible con AUTO_PASSTHROUGH.
 
-El siguiente IstioOperator es una **entrada de instalación de istioctl**, no un operador dentro del clúster para aplicar con kubectl. Prepare la configuración correspondiente de Tokio y la configuración completa oficial de puerta de enlace/detección. Los indicadores de captura/asignación automática de DNS no sustituyen esa configuración.
+El siguiente IstioOperator es **una entrada para la instalación mediante istioctl**, no un operador dentro del clúster que se deba aplicar con kubectl. Prepare la configuración equivalente para Tokio y toda la configuración oficial de pasarelas y descubrimiento. Las opciones de captura y asignación automática de DNS no sustituyen esos pasos.
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -733,9 +733,9 @@ istioctl create-remote-secret --context "$SEOUL_CONTEXT" --name cluster-seoul > 
 kubectl --context "$SEOUL_CONTEXT" -n istio-system apply -f tokyo-remote-secret.yaml
 kubectl --context "$TOKYO_CONTEXT" -n istio-system apply -f seoul-remote-secret.yaml
 ```
-Los archivos de remote-secret contienen credenciales: manténgalos en privado, exclúyalos del control de versiones y elimine las copias locales según la política de gestión de credenciales tras la instalación. Los comandos anteriores son un paso que modifica el estado después de configurar la confianza/red, no un diagnóstico de solo lectura.
+Los archivos remote-secret contienen credenciales: manténgalos privados, exclúyalos del control de versiones y elimine las copias locales después de la instalación conforme a la política de gestión de credenciales. Los comandos anteriores modifican el entorno después de preparar la confianza y la red; no son un diagnóstico de solo lectura.
 
-El enrutamiento explícito puede usar las etiquetas de región de la carga de trabajo en las **plantillas de Pod que configure en cada clúster**. Las etiquetas de topología de los nodos no se copian automáticamente a los Pods. Trate `x-region` como entrada de enrutamiento, no como autorización. Estas ponderaciones 80/20 no implementan un protocolo de conmutación por error de datos.
+Después, el enrutamiento explícito puede usar las **etiquetas workload-region que configure en las plantillas de Pods de cada clúster**. Las etiquetas topológicas del nodo no se copian automáticamente a los Pods. Trate x-region como una entrada de enrutamiento, no como autorización. Los pesos 80/20 no implementan un protocolo de conmutación de datos.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -781,7 +781,7 @@ spec:
     labels:
       workload-region: ap-northeast-1
 ```
-Para un servicio DNS externo no relacionado, se puede describir una entrada en su registro mediante un ServiceEntry independiente, como se muestra a continuación. Se trata de un patrón alternativo para servicios externos, con sus propios requisitos de DNS/TLS/aplicación, no de un mecanismo para descubrir el servicio de Kubernetes en un segundo clúster.
+Para un servicio DNS externo independiente, otro ServiceEntry puede describir su entrada de registro, como muestra el siguiente ejemplo. Es un patrón alternativo para servicios externos, con sus propios requisitos de DNS, TLS y aplicación; no descubre el servicio Kubernetes de un segundo clúster.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -799,15 +799,15 @@ spec:
     protocol: TLS
   resolution: DNS
 ```
-[Requisitos previos y pasos completos para Istio multi-primary](https://istio.io/latest/docs/setup/install/multicluster/multi-primary_multi-network/)
+[Requisitos y pasos completos de Istio multi-primary](https://istio.io/latest/docs/setup/install/multicluster/multi-primary_multi-network/)
 
 ---
 
 ## Patrones de resiliencia de aplicaciones
 
-Los ejemplos anteriores de PDB y apagado solo se aplican a las cargas de trabajo propias correspondientes. Para los porcentajes, tanto minAvailable como maxUnavailable se redondean hacia arriba: el 75 % de tres significa que se requieren tres Pods Ready, mientras que un maxUnavailable del 25 % permite uno. Las actualizaciones graduales de los controladores y la eliminación directa son controles independientes.
+Los ejemplos anteriores de PDB y cierre solo se aplican a las cargas de trabajo bajo su control que coinciden con sus selectores. Tanto minAvailable como maxUnavailable redondean los porcentajes hacia arriba: el 75% de tres exige tres Pods Ready, mientras que un maxUnavailable del 25% permite uno no disponible. Los despliegues progresivos del controlador y la eliminación directa necesitan controles separados.
 
-### Disyuntor mediante Istio
+### Circuit breaker con Istio
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -836,9 +836,9 @@ spec:
       minHealthPercent: 30
       splitExternalLocalOriginErrors: true
 ```
-Estos límites se aplican al proxy/grupo de destino configurado, no a un límite de concurrencia para todo el clúster. `http2MaxRequests` limita las solicitudes HTTP activas; `maxRetries` limita los **reintentos pendientes simultáneamente**, no el número de intentos por solicitud. `minHealthPercent` controla cuándo está activa la detección de valores atípicos; no reserva ese porcentaje de capacidad en buen estado. La expulsión por errores, los límites de conexiones y los reintentos requieren ajustes basados en mediciones.
+Estos límites se aplican al pool de proxy/destino configurado, no establecen un máximo de concurrencia para todo el clúster. http2MaxRequests limita las solicitudes HTTP activas; maxRetries limita los **reintentos pendientes simultáneos**, no el número de intentos por solicitud. minHealthPercent controla cuándo está activa la detección de valores atípicos; no reserva ese porcentaje de capacidad en buen estado. Ajuste la expulsión por errores, los límites de conexiones y los reintentos a partir de mediciones.
 
-### Reintentos/tiempos de espera
+### Reintentos y tiempos de espera
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -863,7 +863,7 @@ spec:
       retryOn: 5xx,reset,connect-failure
       retryRemoteLocalities: true
 ```
-La ruta solo para GET presupone que la aplicación realmente realiza estas solicitudes de forma segura para reintentar. Los tres reintentos se suman al intento original, pero el presupuesto total de 10 s, el límite de 3 s por intento, la espera entre reintentos y el límite de concurrencia pueden impedir que se ejecuten todos los intentos. Los reintentos pueden agravar la sobrecarga o duplicar efectos secundarios; las escrituras requieren un contrato explícito de idempotencia. retryRemoteLocalities permite alternativas, pero no garantiza capacidad remota en buen estado. Actualmente, retriable-4xx de Envoy significa **solo 409**, no 408; los conflictos de bloqueo optimista pueden requerir volver a leer el estado en lugar de repetir la solicitud.
+La ruta exclusiva para GET presupone que la aplicación hace que esas solicitudes sean realmente seguras de reintentar. Los tres reintentos se añaden al intento original, pero el presupuesto total de 10s, el límite de 3s por intento, las esperas entre reintentos y el límite de concurrencia pueden impedir que se ejecuten todos. Los reintentos pueden agravar la sobrecarga o repetir efectos secundarios; las escrituras requieren un contrato de idempotencia explícito. retryRemoteLocalities permite usar alternativas, pero no garantiza capacidad remota disponible. En Envoy, retriable-4xx significa actualmente **solo 409**, no 408. Los conflictos de bloqueo optimista pueden exigir volver a leer el estado en lugar de repetir la solicitud.
 
 [DestinationRule de Istio](https://istio.io/latest/docs/reference/config/networking/destination-rule/) · [Condiciones de reintento de Envoy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter)
 
@@ -871,7 +871,7 @@ La ruta solo para GET presupone que la aplicación realmente realiza estas solic
 
 ## Ingeniería del caos
 
-La ingeniería del caos prueba una hipótesis refutable sobre el estado estable mediante fallos controlados. Empiece en un entorno de pruebas representativo y propio; los experimentos en producción requieren una revisión independiente del radio de impacto, la autoridad, la telemetría, las condiciones de detención y la recuperación. Aplicar un CR puede provocar un fallo. Las configuraciones de aquí se comprobaron sin conexión, no se ejecutaron, y no demuestran que estén listas para producción.
+La ingeniería del caos pone a prueba una hipótesis de estado estable que pueda refutarse mediante fallos controlados. Empiece en un entorno de pruebas representativo bajo su control. Los experimentos en producción requieren revisar por separado el alcance del impacto, la autorización, la telemetría, las condiciones de parada y la recuperación. Aplicar un recurso personalizado puede activar un fallo. Estas configuraciones se comprobaron sin conexión, no se ejecutaron y no demuestran que el entorno esté preparado para producción.
 
 ```bash
 # Read-only: verify the exact cluster/namespace and opt-in test workload.
@@ -882,9 +882,9 @@ kubectl --context "$KUBE_CONTEXT" -n resilience-demo get pdb
 ```
 ### AWS Fault Injection Service (FIS)
 
-Prepare el rol de experimento de IAM/la política de confianza, la entrada de acceso de EKS requerida (o la asignación heredada documentada), la ServiceAccount/Role/RoleBinding de Kubernetes con ámbito de namespace y los permisos de EC2/red específicos de la acción, según la guía oficial. El rol y los ARN de alarmas siguientes son marcadores de posición de una región/cuenta de ejemplo: sustitúyalos todos de forma coherente. La alarma debe existir, recibir datos relevantes y haberse probado; una condición de detención no restaura los datos ni garantiza que no haya impacto.
+Prepare el rol IAM del experimento y su política de confianza, la entrada de acceso de EKS necesaria o el mapeo antiguo documentado, los recursos Kubernetes ServiceAccount/Role/RoleBinding del namespace y los permisos EC2 y de red específicos de la acción según la guía oficial. Los ARN de rol y alarma siguientes son marcadores de posición de una misma región y cuenta; sustitúyalos todos de forma coherente. La alarma debe existir, recibir datos útiles y haberse probado. Una condición de parada no restaura datos ni garantiza un impacto nulo.
 
-Los objetivos de Pod usan clusterIdentifier/namespace/selectors; **no se pueden proporcionar ARN de clúster como resourceArns para aws:eks:pod**. `kubernetesServiceAccount` es obligatorio en la acción. La eliminación de Pod usa la ruta de eliminación directa, por lo que un PDB no la impide. COUNT(1) selecciona un objetivo del conjunto habilitado y no simula una interrupción de AZ.
+Los destinos de Pods usan clusterIdentifier, namespace y selectores; **no se pueden proporcionar ARN de clúster como resourceArns de aws:eks:pod**. La acción requiere kubernetesServiceAccount. La eliminación de Pods usa la ruta de eliminación directa, por lo que un PDB no la impide. COUNT(1) selecciona un destino del conjunto que se ha habilitado para la prueba; no simula una caída de AZ.
 
 #### Eliminación de un Pod
 
@@ -966,7 +966,7 @@ Los objetivos de Pod usan clusterIdentifier/namespace/selectors; **no se pueden 
   "roleArn": "arn:aws:iam::123456789012:role/owned-fis-test"
 }
 ```
-Sustituya el CIDR de destino ilustrativo por la dependencia de pruebas revisada. Esta acción de red requiere una inyección de fallos con privilegios/root y no es compatible con Fargate ni con redes bridge. Afecta a IPv4; ALL o un CIDR IPv4 no afecta a IPv6. Revise las restricciones actuales del sistema de archivos de solo lectura y la seguridad de los contenedores. No debilite el perfil de seguridad de la carga de trabajo de producción solo para ejecutar este ejemplo. FIS usa un Pod inyector y, para las acciones distintas de pod-delete, contenedores efímeros; terminar un proceso no elimina del Pod spec el registro inmutable del contenedor efímero.
+Sustituya el CIDR de destino orientativo por el de la dependencia de pruebas revisada. Esta acción de red requiere inyección de fallos con privilegios de root y no admite Fargate ni redes bridge. Afecta a IPv4; ALL o un CIDR IPv4 no afecta a IPv6. Revise las restricciones actuales de sistema de archivos raíz de solo lectura y de seguridad del contenedor. No reduzca la seguridad de la carga de producción para ejecutar este ejemplo. FIS usa un Pod inyector y, salvo para pod-delete, contenedores efímeros. Terminar un proceso no elimina de la especificación del Pod el registro inmutable del contenedor efímero.
 
 #### Interrupción de red en una subred
 
@@ -1003,7 +1003,7 @@ Sustituya el CIDR de destino ilustrativo por la dependencia de pruebas revisada.
   "roleArn": "arn:aws:iam::123456789012:role/owned-fis-test"
 }
 ```
-La subred debe ser una subred de pruebas propia, dedicada y sin cargas de trabajo ajenas al experimento. Esta acción clona su NACL, añade reglas de denegación y restaura la asociación original al completarse; el tráfico dentro de la subred sigue funcionando incluso con `scope=all`. No equivale a una pérdida total de energía de una AZ. Compruebe las cuotas de NACL, IAM, la subred exacta y el acceso de administración/telemetría antes de empezar. La detención y la recuperación son asíncronas; confirme el estado final del experimento y la recuperación real de la red/carga de trabajo.
+La subred debe ser una subred de pruebas dedicada bajo su control, sin cargas de trabajo ajenas. La acción clona su NACL, añade reglas de denegación y restaura la asociación original al finalizar. El tráfico interno de la subred sigue funcionando incluso con scope=all. No equivale a un corte de energía de toda una AZ. Antes de iniciar la prueba, verifique las cuotas de NACL, IAM, la subred exacta y el acceso de administración y telemetría. La parada y la recuperación son asíncronas; confirme el estado final del experimento y la recuperación real de la red y las cargas de trabajo.
 
 ```bash
 # MUTATION: stop only the recorded experiment ID, not all account experiments.
@@ -1011,15 +1011,15 @@ La subred debe ser una subred de pruebas propia, dedicada y sin cargas de trabaj
 : "${EXPERIMENT_ID:?Set the exact running FIS experiment ID}"
 aws fis stop-experiment --region "$AWS_REGION" --id "$EXPERIMENT_ID"
 ```
-[Requisitos previos/RBAC de FIS para Pods de EKS](https://docs.aws.amazon.com/fis/latest/userguide/eks-pod-actions.html) · [Parámetros de acciones y comportamiento de subredes](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html)
+[Requisitos y RBAC de FIS para Pods EKS](https://docs.aws.amazon.com/fis/latest/userguide/eks-pod-actions.html) · [Parámetros de acciones y comportamiento de subredes](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html)
 
-### Litmus Chaos (incubación de CNCF)
+### Litmus Chaos (proyecto CNCF en incubación)
 
-El operador revisado 3.31.0 define ChaosEngine, ChaosExperiment y ChaosResult. No define ChaosHub ni ChaosSchedule. Instale una versión revisada y cada ChaosExperiment requerido con RBAC de ámbito restringido e imágenes verificadas de runner/helper antes de usar estos ejemplos de engine. Los archivos de fallos actuales del catálogo incluyen valores predeterminados de imagen CI/latest; no los aplique sin revisarlos. La verificación del esquema no demuestra la compatibilidad con su clúster/tiempo de ejecución.
+El operador 3.31.0 revisado define ChaosEngine, ChaosExperiment y ChaosResult. No define ChaosHub ni ChaosSchedule. Antes de usar estos ejemplos de motores, instale una versión revisada y cada ChaosExperiment requerido, con RBAC de alcance limitado e imágenes verificadas para los ejecutores y auxiliares. Los archivos actuales de fallos del catálogo incluyen imágenes predeterminadas de CI/latest; no los aplique sin revisarlos. Validar el esquema no demuestra la compatibilidad con su clúster y runtime.
 
-Estos ejemplos empiezan con `engineState: stop`. Después de preparar los objetivos indicados, evalúe un experimento a la vez con el workflow de la versión instalada. Un engine activo puede eliminar Pods repetidamente durante su duración; una duración de 30 segundos no promete una sola eliminación exacta. El valor fijo TARGET_PODS queda deliberadamente sin resolver hasta que seleccione un Pod por su nombre/UID actuales. No debe dejarse vacío ni ampliarse a un selector de producción completo.
+Estos ejemplos empiezan con engineState: stop. Una vez preparados los destinos indicados, evalúe un experimento cada vez siguiendo el flujo de la versión instalada. Un motor activo puede eliminar Pods repetidamente durante el experimento; una duración de 30 segundos no garantiza una única eliminación. TARGET_PODS queda sin resolver de forma deliberada hasta que seleccione un Pod por su nombre y UID actuales. No lo deje vacío ni amplíe la selección a todos los Pods de producción.
 
-#### Eliminación de Pod
+#### Eliminación de Pods
 
 ```yaml
 apiVersion: litmuschaos.io/v1alpha1
@@ -1050,7 +1050,7 @@ spec:
         - name: PODS_AFFECTED_PERC
           value: '100'
 ```
-#### Drenaje de nodo, no terminación de instancia
+#### Drenaje de nodos sin terminar la instancia
 
 ```yaml
 apiVersion: litmuschaos.io/v1alpha1
@@ -1075,7 +1075,7 @@ spec:
         - name: TARGET_NODE
           value: REPLACE_WITH_ONE_OWNED_TEST_NODE
 ```
-El drenaje afecta a las cargas de trabajo del nodo, además de a las que coinciden con el selector de la aplicación. Use un nodo de pruebas dedicado, un nombre explícito no vacío, un comportamiento de expulsión que tenga en cuenta los PDB y un plan de recuperación/descordonamiento. Nunca sustituya la propiedad por un selector genérico `kubernetes.io/os=linux`. Este experimento no termina el nodo EC2.
+El drenaje afecta a otras cargas de trabajo del nodo además de las que coinciden con el selector de aplicación. Use un nodo de pruebas dedicado, un nombre explícito no vacío, evicciones que respeten el PDB y un plan de recuperación que vuelva a permitir la programación en el nodo. Un selector genérico kubernetes.io/os=linux no identifica un nodo bajo su control. Este experimento no termina el nodo EC2.
 
 #### Error de DNS
 
@@ -1110,18 +1110,18 @@ spec:
         - name: PODS_AFFECTED_PERC
           value: '100'
 ```
-TARGET_HOSTNAMES es una cadena que contiene una matriz JSON. Las suposiciones sobre el tiempo de ejecución/socket/privilegios deben coincidir con los nodos Linux de pruebas seleccionados; el ejemplo no es portátil a todos los tipos de nodo de EKS. Restrinja la carga de trabajo seleccionada para que este porcentaje no pueda afectar a Pods ajenos al experimento. Observe ChaosResult y el estado de la aplicación; que exista un recurso no demuestra que el experimento haya tenido éxito.
+TARGET_HOSTNAMES es una cadena que contiene un array JSON. Los requisitos de runtime, socket y privilegios deben coincidir con los nodos Linux de pruebas seleccionados; el ejemplo no es portable a todos los tipos de nodos EKS. Limite la carga seleccionada para que el porcentaje no pueda afectar a Pods ajenos. Observe ChaosResult y el estado de la aplicación: que exista un recurso no demuestra que el experimento se haya completado correctamente.
 
 ```bash
 kubectl --context "$KUBE_CONTEXT" -n resilience-demo get chaosengine,chaosresult
 ```
-[Operador Litmus 3.31.0](https://github.com/litmuschaos/chaos-operator/releases/tag/3.31.0) · [Catálogo oficial de fallos](https://github.com/litmuschaos/chaos-charts/tree/master/faults/kubernetes) · [Estado del proyecto CNCF](https://www.cncf.io/projects/litmus/)
+[Operador Litmus 3.31.0](https://github.com/litmuschaos/chaos-operator/releases/tag/3.31.0) · [Catálogo oficial de fallos](https://github.com/litmuschaos/chaos-charts/tree/master/faults/kubernetes) · [Estado del proyecto en CNCF](https://www.cncf.io/projects/litmus/)
 
 ### Chaos Mesh
 
-Los ejemplos usan las formas CRD de la versión publicada 2.8.4. Revise la compatibilidad del clúster, el runtime/socket, la selección de nodos, los privilegios del daemon y el acceso al dashboard del Helm Chart antes de la instalación. La inyección de fallos privilegiada en el host debe usar una clase de nodo de pruebas aprobada explícitamente; no dé por sentado que es compatible con Auto Mode/Fargate/Hybrid Nodes solo porque el esquema sea válido.
+Los ejemplos usan los esquemas de CRD de la versión publicada 2.8.4. Antes de instalar el chart Helm, revise el runtime y el socket, la selección de nodos, los privilegios del daemon, el acceso al panel y la compatibilidad del clúster. La inyección privilegiada de fallos del host debe usar una clase de nodos de pruebas aprobada explícitamente. Validar el esquema no demuestra que sea compatible con Auto Mode, Fargate o Hybrid Nodes.
 
-NetworkChaos/IOChaos/TimeChaos se pausan con la anotación `experiment.chaos-mesh.org/pause` de esta versión. Aplicar un manifiesto en pausa sigue siendo una escritura en el clúster. Revise los objetivos y el estado antes de quitar la pausa por separado; al detenerlo, espere al estado de recuperación. La pausa no revierte los datos eliminados y los fallos de una sola ejecución tienen una semántica de pausa distinta.
+Los NetworkChaos, IOChaos y TimeChaos siguientes están pausados mediante la anotación experiment.chaos-mesh.org/pause de esta versión. Aplicar un manifiesto pausado sigue siendo una escritura en el clúster. Revise los destinos y el estado antes de quitar la pausa por separado; al detenerlo, espere al estado de recuperación. Pausar no recupera datos eliminados, y los fallos de una sola ejecución tienen una semántica de pausa distinta.
 
 #### Latencia de red
 
@@ -1206,9 +1206,9 @@ spec:
   percent: 50
   duration: 1m
 ```
-Use un volumen de pruebas desechable montado en `/audit-data`. En este ejemplo no se configura el filtro opcional de rutas; confirme los archivos seleccionados antes de activarlo. percent es el porcentaje de operaciones de inyección, no un límite de capacidad. No apunte este ejemplo al directorio de datos de PostgreSQL de producción original. Verifique la recuperación y la integridad de los datos a partir de una línea base conocida.
+Use un volumen de pruebas desechable montado en /audit-data. Este ejemplo no establece el filtro de ruta opcional; confirme los archivos seleccionados antes de activarlo. percent indica el porcentaje de operaciones en que se inyecta el fallo, no un límite de capacidad. No dirija el ejemplo al directorio de datos de PostgreSQL de producción del documento original. Verifique la recuperación y la integridad de los datos frente a una referencia conocida.
 
-#### Desfase horario
+#### Desfase de tiempo
 
 ```yaml
 apiVersion: chaos-mesh.org/v1alpha1
@@ -1232,25 +1232,25 @@ spec:
   - CLOCK_REALTIME
   duration: 1m
 ```
-El desfase de -2h se aplica al comportamiento de CLOCK_REALTIME del programa inyectado seleccionado, no a un cambio universal de dos horas en el nodo y todos sus relojes. Compruebe el mecanismo de inyección y el uso del reloj de la aplicación antes de inferir el comportamiento de los tokens, el planificador o las concesiones. La duración limita la ventana prevista del fallo, no el tiempo de recuperación garantizado de la aplicación.
+El desfase -2h afecta al comportamiento de CLOCK_REALTIME del programa seleccionado para la inyección; no cambia universalmente dos horas el nodo y todos sus relojes. Compruebe el mecanismo de inyección y el uso del reloj por la aplicación antes de sacar conclusiones sobre tokens, el scheduler o los leases. La duración acota la ventana de fallo prevista, no garantiza el tiempo de recuperación de la aplicación.
 
 ```bash
 kubectl --context "$KUBE_CONTEXT" -n resilience-demo \
   get networkchaos,iochaos,timechaos -o yaml
 ```
-[Helm Chart de Chaos Mesh 2.8.4](https://github.com/chaos-mesh/chaos-mesh/tree/v2.8.4/helm/chaos-mesh) · [Controlador de pausa](https://github.com/chaos-mesh/chaos-mesh/blob/v2.8.4/controllers/common/desiredphase/controller.go)
+[Chart de Chaos Mesh 2.8.4](https://github.com/chaos-mesh/chaos-mesh/tree/v2.8.4/helm/chaos-mesh) · [Controlador de pausa](https://github.com/chaos-mesh/chaos-mesh/blob/v2.8.4/controllers/common/desiredphase/controller.go)
 
-### Marco para días de juego
+### Marco de Game Day
 
-Defina los umbrales de interrupción, un observador independiente y un responsable concreto de la recuperación antes de inyectar fallos. Registre por separado la detección y el restablecimiento, incluidas las observaciones fallidas o sin datos. Detenga un experimento antes de comenzar el siguiente y verifique el restablecimiento en lugar de declarar el éxito solo porque haya transcurrido el tiempo del fallo.
+Antes de inyectar el fallo, defina los umbrales para abortar, un observador independiente y un responsable concreto de la recuperación. Registre por separado la detección y el restablecimiento, incluidas las observaciones fallidas o sin datos. Detenga un experimento antes de empezar el siguiente y verifique el restablecimiento; que termine la duración del fallo no basta para declarar la prueba satisfactoria.
 
-| Fase                  | Actividad                            | Entregable               |
-| ---------------------- | ----------------------------------- | ------------------------- |
-| 1. Registrar el estado estable | Recopilar líneas base de métricas            | Captura del dashboard        |
-| 2. Inyectar el fallo      | Ejecutar experimentos de FIS/Litmus          | Registros del experimento           |
-| 3. Observar la recuperación    | Supervisar el proceso de recuperación automática  | Medición del tiempo de recuperación |
-| 4. Analizar el impacto      | Analizar la tasa de errores y los cambios de latencia | Informe de impacto             |
-| 5. Revisar el análisis posterior al incidente  | Identificar mejoras y elementos de acción | Plan de mejora          |
+| Fase | Actividad | Entregable |
+| --- | --- | --- |
+| 1. Registrar el estado estable | Recoger métricas de referencia | Captura del panel |
+| 2. Inyectar el fallo | Ejecutar experimentos FIS/Litmus | Registros del experimento |
+| 3. Observar la recuperación | Supervisar el proceso de recuperación automática | Medición del tiempo de recuperación |
+| 4. Analizar el impacto | Analizar los cambios en errores y latencia | Informe de impacto |
+| 5. Revisión posterior | Identificar mejoras y acciones | Plan de mejora |
 
 ***
 
@@ -1258,54 +1258,54 @@ Defina los umbrales de interrupción, un observador independiente y un responsab
 
 ### Nivel 1: básico
 
-* [ ] Elegir sondeos de estado adecuados para cada aplicación de larga duración
-* [ ] Establecer solicitudes/límites de recursos
+* [ ] Elegir probes de estado adecuadas para cada aplicación de larga duración
+* [ ] Establecer las solicitudes y los límites de recursos
 * [ ] Configurar PodDisruptionBudget
-* [ ] Implementar un apagado ordenado (hook preStop)
-* [ ] Establecer un valor adecuado para terminationGracePeriodSeconds
+* [ ] Implementar el cierre ordenado con un hook preStop
+* [ ] Establecer un terminationGracePeriodSeconds adecuado
 
 ### Nivel 2: Multi-AZ
 
-* [ ] Aplicar restricciones de distribución de topología de Pods
-* [ ] Verificar la distribución real de Pods/nodos y la capacidad adicional en las AZ restantes
-* [ ] Planificar la recuperación del almacenamiento zonal; usar WaitForFirstConsumer para aprovisionar recursos nuevos
-* [ ] Revisar la aptitud para ARC, la preparación N-1, las alarmas y la autorización independiente para la conmutación automática
-* [ ] Supervisar los costos del tráfico entre AZ
+* [ ] Aplicar restricciones de distribución topológica de Pods
+* [ ] Verificar la distribución real de Pods y nodos y la capacidad de reserva de las AZ que seguirían disponibles
+* [ ] Planificar la recuperación del almacenamiento zonal; usar WaitForFirstConsumer para el nuevo aprovisionamiento
+* [ ] Revisar los requisitos de ARC, la preparación N-1, las alarmas y la autorización independiente de autoshift
+* [ ] Supervisar los costes de tráfico entre AZ
 
 ### Nivel 3: basado en celdas
 
-* [ ] Definir los límites de las celdas (Namespace o clúster)
-* [ ] Implementar un enrutador de celdas
-* [ ] Verificar los límites de las celdas y que el complemento de red aplique las políticas
+* [ ] Definir los límites de las celdas mediante namespaces o clústeres
+* [ ] Implementar el router de celdas
+* [ ] Verificar los límites de las celdas y la aplicación de políticas del plugin de red
 * [ ] Implementar Shuffle Sharding
-* [ ] Establecer ResourceQuota por celda
+* [ ] Establecer ResourceQuota para cada celda
 
-### Nivel 4: Multi-Región
+### Nivel 4: multirregión
 
-* [ ] Decidir el patrón de arquitectura Multi-Región
+* [ ] Elegir el patrón de arquitectura multirregión
 * [ ] Configurar Global Accelerator
-* [ ] Desplegar varios clústeres con ArgoCD ApplicationSet
-* [ ] Establecer una estrategia de replicación de datos
-* [ ] Mantener la coherencia con GitOps
+* [ ] Desplegar en varios clústeres con ArgoCD ApplicationSet
+* [ ] Establecer la estrategia de replicación de datos
+* [ ] Mantener la coherencia mediante GitOps
 
 ***
 
-## Consideraciones sobre los costos
+## Consideraciones de costes
 
-A continuación se conservan las ilustraciones de costos originales no verificadas; no son precios actuales ni ahorros medidos. Los cargos entre AZ dependen del servicio, la ruta/dirección del tráfico y la región; $0,01/GB no es una tarifa universal e integral de EKS. Calcule el precio real de los recursos y la capacidad de reserva para fallos con las páginas de precios actuales de los servicios. No se volvieron a ejecutar pruebas de costos/caos.
+La tabla conserva las estimaciones orientativas del documento original; no son precios actuales ni ahorros medidos. Los cargos entre AZ dependen del servicio, la ruta y dirección del tráfico y la región. $0.01/GB no es una tarifa universal de EKS que incluya todos los costes. Calcule el coste de los recursos reales y de la capacidad de reserva para fallos usando las páginas de precios actuales de cada servicio. No se repitieron las pruebas de costes o caos.
 
-| Elemento                       | Impacto en los costos                          | Estrategia de reducción de costos                      |
-| -------------------------- | ------------------------------------ | -------------------------------------------- |
-| Multi-Región Activo-Activo | 2x+ en comparación con una sola región        | Reducir el costo pasivo entre un 50 y un 70 % con Activo-Pasivo |
-| Tráfico entre AZ           | $0,01/GB (dentro de la misma región)        | Reducirlo entre un 60 y un 80 % con enrutamiento con reconocimiento de localidad    |
-| Instancia Spot              | Ahorro del 60–90 % en comparación con On-Demand | Aplicarlo a cargas de trabajo sin estado                 |
-| Ingeniería del caos | Ilustración anterior de $100–500/mes; se aplican los costos reales de uso de FIS/recursos | Limitar los recursos y la duración del experimento |
-| Arquitectura basada en celdas | Ilustración anterior de un aumento del 10–20 % | Medir el costo de aislamiento y el valor operativo |
+| Elemento | Impacto en el coste | Estrategia de reducción |
+| --- | --- | --- |
+| Multirregión activo-activo | 2x+ respecto a una sola región | Reducir un 50–70% la parte pasiva con activo-pasivo |
+| Tráfico entre AZ | $0.01/GB dentro de la misma región | Reducir un 60–80% mediante enrutamiento por localidad |
+| Instancias Spot | Ahorro del 60–90% respecto a On-Demand | Usarlas en cargas sin estado |
+| Ingeniería del caos | Estimación anterior de $100–500/mes; se factura el uso real de FIS y los recursos | Limitar los recursos y la duración de los experimentos |
+| Arquitectura de celdas | Estimación anterior de un incremento del 10–20% | Medir el coste del aislamiento y su valor operativo |
 
 ***
 
 ## Próximos pasos
 
 * [Depuración avanzada y respuesta a incidentes en EKS](11-eks-advanced-debugging.md)
-* [Cuestionario sobre alta disponibilidad de EKS](../quizzes/eks/10-eks-resiliency-quiz.md)
-* [Service Mesh de Istio](../service-mesh/02-istio.md) - Análisis detallado de disyuntores y reintentos
+* [Cuestionario de alta disponibilidad en EKS](../quizzes/eks/10-eks-resiliency-quiz.md)
+* [Malla de servicios Istio](../service-mesh/02-istio.md): circuit breaker y reintentos en profundidad

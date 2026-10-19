@@ -1,91 +1,91 @@
 # Entrega progresiva con Flagger
 
-> **Referencia de revisión**: Flagger/Chart 1.45.0, Loadtester 0.39.0, Flux 2.9.5 (actualizado a la versión de parche 2.9.6 tras revisar las notas de la versión; no se volvieron a ejecutar los ejemplos), Podinfo 6.15.0
+> **Versiones de referencia revisadas**: Flagger/Chart 1.45.0, Loadtester 0.39.0, Flux 2.9.5 (actualizado al parche 2.9.6 tras revisar las notas de la versión; los ejemplos no se volvieron a ejecutar), Podinfo 6.15.0
 > **Última actualización**: 12 de octubre de 2026
 
-Flagger administra la entrega progresiva de cargas de trabajo de Kubernetes mediante el CRD Canary. Controla el tráfico y las revisiones, pero no revierte transaccionalmente las bases de datos ni los efectos secundarios externos. Estos ejemplos de laboratorio requieren redes, instrumentación, autorización y SLO de servicio compatibles.
+Flagger gestiona la entrega progresiva de cargas de trabajo de Kubernetes mediante el CRD Canary. Controla el tráfico y las revisiones, pero no revierte transacciones de bases de datos ni efectos secundarios en sistemas externos. Para usar estos ejemplos de laboratorio, adapte la red, la instrumentación y la autorización a su entorno, y defina los SLO del servicio.
 
-El código incluye manifiestos completos y fragmentos de spec/valores de Helm. Intégralos en el recurso propietario indicado; los ejemplos de estrategias con el mismo nombre son alternativas, no una secuencia de bloques que se deban aplicar.
+Los ejemplos incluyen tanto manifiestos completos como fragmentos de especificaciones y valores de Helm. Integre cada fragmento en el recurso que se indica. Las estrategias que usan el mismo nombre de recurso son alternativas; elija una en lugar de aplicar todos los bloques en secuencia.
 
-## Tabla de contenidos
+## Tabla de contenido
 
 - [Descripción general y objetivos de aprendizaje](#overview-and-learning-objectives)
 - [Arquitectura de Flagger](#flagger-architecture)
-- [Instalación y configuración en EKS](#eks-installation-and-configuration)
+- [Instalación y configuración de EKS](#eks-installation-and-configuration)
 - [Estrategia de despliegue Canary](#canary-deployment-strategy)
 - [Estrategia de despliegue Blue-Green](#blue-green-deployment-strategy)
 - [Estrategia de pruebas A/B](#ab-testing-strategy)
-- [Métricas personalizadas y webhooks](#custom-metrics-and-webhooks)
-- [Integración con GitOps (Flux + Flagger)](#gitops-integration-flux--flagger)
+- [Métricas personalizadas y Webhooks](#custom-metrics-and-webhooks)
+- [Integración de GitOps (Flux + Flagger)](#gitops-integration-flux--flagger)
 - [Observabilidad y alertas](#observability-and-alerting)
 - [Prácticas recomendadas para producción](#production-best-practices)
 
 ## Descripción general y objetivos de aprendizaje {#overview-and-learning-objectives}
 
-RollingUpdate de un Deployment de Kubernetes ya reemplaza los Pods gradualmente. Flagger añade control explícito del tráfico entre revisiones y promoción basada en métricas y pruebas. Este capítulo abarca la propiedad de los recursos, tres estrategias, métricas y controles, GitOps y observabilidad.
+La estrategia RollingUpdate de un Deployment de Kubernetes ya sustituye los Pods de forma gradual. Flagger añade un control explícito del tráfico entre revisiones y decide la promoción a partir de métricas y pruebas. Este capítulo explica quién gestiona cada recurso, tres estrategias de despliegue, las métricas y los controles de aprobación, la integración con GitOps y la observabilidad.
 
-| Estrategia | Control | Comprobación |
+| Estrategia | Control | Qué comprobar |
 |---|---|---|
-| Canary | Pesos incrementales | Réplicas adicionales, tráfico mínimo, criterios de fallo |
-| Blue-Green | Validar una revisión independiente y, después, cambiar | Ambas cargas de trabajo más el excedente, compatibilidad con la base de datos |
-| A/B | Coincidencia admitida de encabezados y cookies | Asignación de cohortes, estadísticas, autorización independiente |
+| Canary | Incrementos del peso de tráfico | Réplicas adicionales, tráfico mínimo y criterios de fallo |
+| Blue-Green | Validar una revisión independiente y después cambiar el tráfico | Capacidad para ambas cargas de trabajo y las réplicas temporales adicionales, y compatibilidad de la base de datos |
+| A/B | Coincidencias de encabezados o cookies admitidas por el proveedor | Asignación de cohortes, análisis estadístico y autorización independiente |
 
-Blue-Green no garantiza exactamente el doble de recursos, una reversión instantánea ni tiempo de inactividad cero. Flagger actualiza primary a la nueva revisión; después no conserva una instancia de reserva completa de la versión anterior.
+Blue-Green no garantiza que se necesite exactamente el doble de recursos, que la reversión sea instantánea ni que el servicio funcione sin interrupciones. Flagger actualiza la carga de trabajo primary a la nueva revisión; después no mantiene una copia completa de la versión anterior en espera.
 
 ### Flagger y Argo Rollouts
 
 | Aspecto | Flagger | Argo Rollouts |
 |---|---|---|
-| Recursos | Canary hace referencia a una carga de trabajo existente | CRD Rollout, incluido Deployment workloadRef |
-| GitOps | Flux y otras herramientas de GitOps | Argo CD y otras herramientas de GitOps |
+| Recursos | Canary referencia una carga de trabajo existente | Rollout CRD, incluido Deployment workloadRef |
+| GitOps | Flux y otras herramientas GitOps | Argo CD y otras herramientas GitOps |
 | Análisis | MetricTemplate, umbrales, webhooks | AnalysisTemplate/AnalysisRun y proveedores Web/Job |
-| Familia del proyecto | Flux Graduated de CNCF | Argo Graduated de CNCF |
+| Familia de proyecto | Flux graduado de CNCF | Argo graduado de CNCF |
 
-La integración con un ecosistema no implica una dependencia exclusiva. No permitas que dos controladores de entrega progresiva administren la misma carga de trabajo.
+La integración con un ecosistema no obliga a usar exclusivamente sus herramientas. Evite que dos controladores de entrega progresiva gestionen la misma carga de trabajo.
 
 ## Arquitectura de Flagger {#flagger-architecture}
 
-![Flagger observa los recursos Canary y de carga de trabajo, y se conecta con el enrutamiento, las métricas y las notificaciones.](../.gitbook/assets/en-gitops-04-flagger-1.png)
+![Flagger observa los recursos Canary/carga de trabajo y conecta enrutamiento, métricas y notificaciones.](../.gitbook/assets/en-gitops-04-flagger-1.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-1.html)
 
-En el ejemplo con Deployment, podinfo es el recurso original y la carga de trabajo canary. La nueva carga de trabajo estable es podinfo-primary. podinfo-canary es el nombre de un Service, no un Deployment ni un CloneSet adicional.
+En el ejemplo de Deployment, podinfo es el recurso original y la carga de trabajo canary. La nueva carga de trabajo estable es podinfo-primary. podinfo-canary es un nombre de Service, no un Deployment o CloneSet adicional.
 
-| Recurso | Propiedad/propósito |
+| Recurso | Propiedad/finalidad |
 |---|---|
-| Deployment podinfo | Plantilla de Pod de Git/Helm, control de Canary por parte de Flagger |
-| Deployment podinfo-primary | Carga de trabajo estable creada/promovida por Flagger |
-| Services podinfo / podinfo-primary / podinfo-canary | Selección de punto de entrada/destino administrada por Flagger |
-| Autoscaler de primary | Autoscaler correspondiente cuando se usa autoscalerRef |
+| podinfo Deployment | Plantilla de Pod de Git/Helm, control canary de Flagger |
+| podinfo-primary Deployment | Carga de trabajo estable creada/promovida por Flagger |
+| podinfo / podinfo-primary / podinfo-canary Services | Selección de entrada/destino administrada por Flagger |
+| Autoscaler primary | Autoscaler correspondiente cuando se usa autoscalerRef |
 | VirtualService/DestinationRule/HTTPRoute, etc. | Enrutamiento para el proveedor seleccionado |
 
-![Los cambios dan paso al análisis canary, las actualizaciones de primary y las transiciones del tráfico.](../.gitbook/assets/en-gitops-04-flagger-2.png)
+![Los cambios conducen al análisis canary, actualizaciones de primary y transiciones de tráfico.](../.gitbook/assets/en-gitops-04-flagger-2.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-2.html)
 
-Después de la configuración inicial de primary, los cambios en la plantilla de Pod o en un ConfigMap/Secret cuyo seguimiento esté habilitado preparan canary. Tras las comprobaciones previas al rollout, el análisis y el enrutamiento, la promoción sirve tráfico a través de canary cuando está lista, mientras primary adopta la nueva spec. Cuando primary está lista, el tráfico vuelve a ella y canary reduce su escala.
+Tras configurar inicialmente primary, los cambios en la plantilla de Pod o en los ConfigMap y Secret supervisados preparan la revisión canary. Después de las comprobaciones previas, el análisis y el ajuste del enrutamiento, la promoción envía tráfico al canary que está listo mientras primary adopta la nueva especificación. Cuando primary está listo, el tráfico vuelve a él y se reducen las réplicas del canary.
 
-**Un fallo en el análisis** normalmente restablece una primary en buen estado. **Un fallo durante la actualización de primary** es distinto: durante Promoting/Finalising, la versión 1.45.0 puede mantener/devolver el tráfico a canary, que sigue en buen estado, a la vez que informa del fallo. El estado Failed por sí solo no demuestra que primary, la versión anterior, esté sirviendo el tráfico.
+Un **fallo durante el análisis** suele devolver el tráfico a un primary que funciona correctamente. Un **fallo al actualizar primary** requiere otro tratamiento: durante Promoting/Finalising, la versión 1.45.0 puede mantener o devolver el tráfico al canary que funciona correctamente mientras informa del fallo. El estado Failed, por sí solo, no demuestra que el primary anterior esté recibiendo tráfico.
 
 ### Proveedores y ciclo de vida
 
 | Proveedor | Comprobación |
 |---|---|
 | Istio | VirtualService/DestinationRule y métricas HTTP de sidecar |
-| gatewayapi:v1 | Funcionalidades de HTTPRoute de Gateway y MetricTemplate |
+| gatewayapi:v1 | Características de Gateway HTTPRoute y MetricTemplate |
 | Linkerd/Contour/Gloo/Traefik/Kuma, etc. | Capacidades de la versión instalada y contrato de métricas |
-| kubernetes | Cambio de Service para Blue-Green, no enrutamiento ponderado de L7 ni A/B |
-| App Mesh / ingress-nginx / OSM | Limitaciones del ciclo de vida heredado que se indican a continuación |
+| kubernetes | Blue-Green con cambio de Service, no enrutamiento L7 ponderado/A/B |
+| App Mesh / ingress-nginx / OSM | Límites de ciclo de vida heredado a continuación |
 
-La compatibilidad con AWS App Mesh **finalizó el 30-09-2026**; AWS indica que la consola y los recursos ya no están accesibles después de esa fecha. ingress-nginx de la comunidad se retiró en marzo de 2026 y el repositorio de OSM está archivado.
+El soporte de AWS App Mesh **finalizó el 2026-09-30**; AWS indica que su consola y sus recursos ya no son accesibles después de esa fecha. El ingress-nginx de la comunidad se retiró en marzo de 2026 y el repositorio de OSM está archivado.
 
-La disponibilidad de un adaptador no garantiza el mantenimiento para nuevos usos en producción. Verifica la compatibilidad con A/B, la duplicación de tráfico y la afinidad de sesión para cada implementación.
+Que exista un adaptador no garantiza que reciba mantenimiento suficiente para una nueva instalación en producción. Compruebe en cada implementación la compatibilidad con A/B, duplicación de tráfico y afinidad de sesión.
 
-## Instalación y configuración en EKS {#eks-installation-and-configuration}
+## Instalación y configuración de EKS {#eks-installation-and-configuration}
 
-La configuración de referencia requiere una versión compatible de EKS/Kubernetes, un entorno de sidecars de Istio instalado y Prometheus recopilando las métricas necesarias. Sustituye su URL por el Service real. Flagger no instala Istio ni la instrumentación. La imagen de Prometheus incluida en el chart usa la versión antigua 2.41.0, por lo que se deshabilita.
+La base requiere EKS/Kubernetes admitidos, un entorno de sidecar Istio instalado y Prometheus recopilando las métricas requeridas. Reemplace su URL por el Service real. Flagger no instala Istio ni la instrumentación. La imagen de Prometheus incluida en el chart es la antigua 2.41.0, por lo que está deshabilitada.
 
-Elige un único método de lanzamiento/administración. Instalar instancias de Flagger independientes en distintos namespaces puede hacer que ambas controlen el mismo Canary. Los ejemplos usan flagger-system para los controladores y flagger-demo para las cargas de trabajo. Adapta las etiquetas de inyección a la revisión real de Istio.
+Elija un único método para instalar y gestionar la versión de Flagger. Si instala instancias independientes en distintos namespaces, ambas podrían controlar el mismo Canary. Los ejemplos usan flagger-system para los controladores y flagger-demo para las cargas de trabajo. Adapte las etiquetas de inyección a la revisión de Istio que tenga instalada.
 
 ```yaml
 apiVersion: v1
@@ -142,7 +142,7 @@ helm upgrade --install flagger flagger/flagger --version 1.45.0 \
   --namespace flagger-system -f flagger-values.yaml --wait --timeout 5m
 ```
 
-namespace limita lo que se observa, no los permisos de ClusterRole del chart. Restringe por separado el RBAC de los tenants. leaderElection.replicaCount es un valor real del chart. Las actualizaciones normales de Helm no actualizan crds/ como lo hace la instalación inicial; aplica por separado los CRD revisados o usa la política de CRD de Flux.
+namespace limita los recursos que Flagger observa, pero no los permisos del ClusterRole del chart. Restrinja por separado el RBAC de cada tenant. leaderElection.replicaCount es un valor admitido por el chart. A diferencia de la instalación inicial, una actualización ordinaria con Helm no actualiza crds/. Aplique por separado los CRD revisados o utilice la política de CRD de Flux.
 
 ```bash
 kubectl apply --server-side -f https://raw.githubusercontent.com/fluxcd/flagger/v1.45.0/artifacts/flagger/crd.yaml
@@ -192,7 +192,7 @@ helm upgrade --install flagger-loadtester flagger/loadtester --version 0.39.0 \
   --namespace flagger-system -f loadtester-values.yaml --wait --timeout 5m
 ```
 
-Loadtester ejecuta comandos recibidos en solicitudes HTTP. namespaceRegexp filtra una cadena del cuerpo; no autentica a quien realiza la solicitud. No lo expongas a Internet y restringe la entrada a los Pods del controlador mediante una política de CNI. Controla con RBAC el uso de exec/port-forward por parte de los operadores. Usa una réplica para los laboratorios de controles de aprobación con estado en memoria.
+Loadtester ejecuta comandos recibidos mediante solicitudes HTTP. namespaceRegexp filtra una cadena del cuerpo de la solicitud; no autentica al solicitante. Evite exponerlo a Internet y limite mediante una política del CNI las conexiones entrantes a las procedentes de los Pods del controlador. Use RBAC para controlar quién puede ejecutar exec o port-forward. En los laboratorios con controles de aprobación en memoria, use una sola réplica.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -219,11 +219,11 @@ spec:
       port: 8080
 ```
 
-Permite las rutas de mTLS de Istio y de scrape necesarias. Este Loadtester no realiza operaciones de API, por lo que se deshabilita el montaje automático del token de ServiceAccount. Para añadir pruebas con Helm/kubectl se necesitan permisos explícitos y rutas con acceso de escritura.
+Permita el tráfico necesario para el mTLS de Istio y la recopilación de métricas. Este loadtester no realiza operaciones de API, por lo que se deshabilita el montaje automático del token de ServiceAccount. Si añade pruebas con Helm o kubectl, configure explícitamente los permisos y las rutas donde deban escribir.
 
-### Alternativa con Gateway API
+### Alternativa de Gateway API
 
-Se presupone que ya existe un GatewayClass de Istio y que los CRD de Gateway API son compatibles. No los sobrescribas con un bundle antiguo. Otras implementaciones requieren instrumentación/consultas compatibles. Configura la exposición del Service/LB, el DNS y TLS para el entorno.
+El ejemplo requiere una GatewayClass de Istio existente y CRD de Gateway API compatibles. No los sustituya por un paquete antiguo. Si usa otra implementación, adapte la instrumentación y las consultas. Configure para su entorno la exposición mediante Service o balanceador de carga, el DNS y el TLS.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -242,7 +242,7 @@ spec:
         from: Same
 ```
 
-Usa **gatewayapi:v1** y Canary service.gatewayRefs, no un valor de Helm inventado como gatewayApi.gateway. Prepara los tres MetricTemplate que aparecen a continuación y usa este Canary como **alternativa** al enfoque de Istio.
+Use **gatewayapi:v1** y Canary service.gatewayRefs, no un valor Helm gatewayApi.gateway inventado. Prepare los tres MetricTemplates de abajo y use este Canary como una **alternativa** al enfoque de Istio.
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -323,7 +323,7 @@ helm upgrade --install flagger flagger/flagger --version 1.45.0 \
 
 ## Estrategia de despliegue Canary {#canary-deployment-strategy}
 
-Estos son la carga de trabajo Istio y el HPA de referencia; se requiere Metrics Server. Omite del repositorio las réplicas del Deployment para que HPA/Flagger puedan administrar el escalado, y no crees un Service que compita con ellos. Elige estos manifiestos o la alternativa posterior con HelmRelease.
+Estos son la carga de trabajo de Istio y el HPA base; Metrics Server es obligatorio. Omita las réplicas de Deployment de Git para que HPA/Flagger puedan controlar el escalado, y no cree un Service que compita. Elija estos manifiestos o la alternativa HelmRelease posterior.
 
 ```yaml
 apiVersion: apps/v1
@@ -383,7 +383,7 @@ spec:
         averageUtilization: 80
 ```
 
-![Canary ponderado avanza tras el análisis y evalúa los fallos acumulados.](../.gitbook/assets/en-gitops-04-flagger-3.png)
+![El Canary ponderado avanza después del análisis y evalúa fallos acumulados.](../.gitbook/assets/en-gitops-04-flagger-3.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-3.html)
 
@@ -451,11 +451,11 @@ spec:
         cmd: hey -z 1m -q 10 -c 2 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/
 ```
 
-Las iteraciones eligen Blue-Green o A/B cuando hay una coincidencia; no las combines con un Canary ponderado. StepWeight 10 y maxWeight 50 describen el análisis en incrementos de 10→20→30→40→50 % antes de la promoción. El tiempo total depende de la disponibilidad, la latencia de las comprobaciones, los fallos/aprobaciones y el rollout de primary.
+Iterations selecciona Blue-Green, o A/B si también se define match; no combine estos ajustes con un Canary ponderado. StepWeight 10 y maxWeight 50 indican que se analiza el tráfico en los pasos 10→20→30→40→50 % antes de la promoción. La duración total depende de cuándo estén listas las cargas de trabajo, de la latencia de las comprobaciones, de los fallos o aprobaciones y del despliegue de primary.
 
-Analysis.interval programa el análisis; el intervalo de la métrica establece la ventana de consulta/agregación. Threshold 5 se aplica a las comprobaciones fallidas acumuladas para una revisión, no a un recuento de fallos consecutivos que se restablezca con cada éxito. Al llegar a cinco, se produce una reversión en la reconciliación posterior. Los fallos de las comprobaciones previas al rollout y los del rollout/métricas siguen esta ruta. ProgressDeadlineSeconds limita el progreso/la disponibilidad de la carga de trabajo, no el doble del tiempo total del rollout.
+Analysis.interval establece la frecuencia del análisis; el intervalo de cada métrica determina la ventana de consulta y agregación. Threshold 5 cuenta los fallos acumulados de las comprobaciones para una revisión. No es un contador de fallos consecutivos que se reinicie tras cada éxito. Al alcanzar cinco, la siguiente reconciliación inicia la reversión. Se incluyen los fallos de las comprobaciones previas al despliegue, del despliegue y de las métricas. ProgressDeadlineSeconds limita el tiempo de progreso y preparación de la carga de trabajo; no equivale al doble de la duración total del despliegue.
 
-Para pesos no lineales, usa stepWeights y elimina los stepWeight/maxWeight existentes. Las conexiones y la convergencia del enrutamiento hacen que los pesos configurados no garanticen una proporción exacta de solicitudes en cada instante.
+Para pesos no lineales, use stepWeights y elimine stepWeight/maxWeight existentes. Las conexiones y la convergencia de enrutamiento significan que los pesos configurados no garantizan una proporción exacta de solicitudes en cada instante.
 
 ```yaml
 spec:
@@ -475,11 +475,11 @@ kubectl describe canary podinfo -n flagger-demo
 kubectl logs -n flagger-system -l app.kubernetes.io/name=flagger -c flagger --prefix --tail=100
 ```
 
-Después de la configuración inicial estable, aplica mediante Git un cambio revisado de imagen/etiqueta/digest o de plantilla de Pod para iniciar el análisis. Sustituir el contenido remoto detrás de la misma etiqueta no reemplaza un cambio en Git. No edites directamente los recursos generados primary, Service ni de enrutamiento.
+Después de la configuración estable inicial, aplique mediante Git un cambio revisado de imagen/tag/digest o de plantilla de Pod para iniciar el análisis. Reemplazar contenido remoto tras la misma etiqueta no sustituye un cambio de Git. No edite directamente los recursos generados de primary, Service o enrutamiento.
 
 ## Estrategia de despliegue Blue-Green {#blue-green-deployment-strategy}
 
-![Blue-Green valida canary, actualiza primary y luego reduce la escala de canary.](../.gitbook/assets/en-gitops-04-flagger-4.png)
+![Blue-Green valida canary, actualiza primary y luego reduce canary.](../.gitbook/assets/en-gitops-04-flagger-4.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-4.html)
 
@@ -546,9 +546,9 @@ spec:
     iterations: 10
 ```
 
-Este ejemplo analiza tráfico sintético mientras el tráfico en vivo sigue yendo a primary. Tras superar las comprobaciones, el tráfico pasa a canary mientras primary se actualiza; luego vuelve cuando primary está lista. Se siguen aplicando los umbrales de fallo; una medición fallida no siempre provoca una reversión inmediata. No se trata de un entorno independiente que conserve una instancia de reserva completa de la versión anterior.
+Este ejemplo analiza tráfico sintético mientras el tráfico real sigue llegando a primary. Si el análisis se supera, el tráfico pasa al canary mientras primary se actualiza y vuelve a primary cuando está listo. Los umbrales de fallo siguen vigentes: una única medición fallida no siempre inicia una reversión inmediata. Al terminar, no se conserva un entorno independiente con una copia completa de la versión anterior.
 
-### Duplicación opcional del tráfico
+### Duplicación opcional de tráfico
 
 ```yaml
 spec:
@@ -557,7 +557,7 @@ spec:
     mirrorWeight: 10
 ```
 
-Los proveedores compatibles pueden duplicar el tráfico como etapa previa de Canary o para Blue-Green. Verifica la compatibilidad con RequestMirror para Gateway API. Descartar las respuestas no evita escrituras en bases de datos, pagos, mensajes ni carga; usa solicitudes de solo lectura verificadas o aislamiento. La duplicación no equivale a replicación ni a reversión de una base de datos.
+Los proveedores compatibles pueden duplicar tráfico como fase previa de Canary o en un despliegue Blue-Green. En Gateway API, compruebe la compatibilidad con RequestMirror. Descartar las respuestas de la copia no evita escrituras en bases de datos, pagos, mensajes ni carga adicional. Use solicitudes cuya condición de solo lectura haya verificado o aísle el entorno receptor. Duplicar tráfico no replica bases de datos ni permite revertirlas.
 
 <span id="ab-testing-strategy"></span>
 
@@ -633,11 +633,11 @@ spec:
           regex: (^|.*;\s*)canary=always(;.*|$)
 ```
 
-Las entradas de match son alternativas unidas por OR; las condiciones dentro de una entrada siguen las reglas del proveedor. La expresión regular de la cookie maneja los espacios después de los puntos y coma. sourceLabels de Istio describe etiquetas de la carga de trabajo, no direcciones IP de origen. Verifica la compatibilidad con el comparador para cada implementación/versión de Gateway.
+Las entradas match se combinan como alternativas OR; las condiciones de una misma entrada siguen las reglas del proveedor. La expresión regular de la cookie admite espacios después de los puntos y coma. En Istio, sourceLabels identifica etiquetas de la carga de trabajo, no direcciones IP de origen. Compruebe qué criterios de coincidencia admite la implementación y versión de Gateway que utiliza.
 
-El enrutamiento no es autorización ni un experimento estadístico completo. No confíes en marcadores controlados por el cliente como permisos de empleados. Asigna cohortes en un punto de entrada de confianza y autoriza en el servidor; las conclusiones A/B significativas también requieren muestras, un diseño de asignación y pruebas estadísticas.
+El enrutamiento no es autorización ni un experimento estadístico completo. No confíe en marcadores controlados por el cliente como permisos de empleados. Asigne cohortes en un borde de confianza y autorice en el lado del servidor; las conclusiones A/B significativas también requieren muestras, diseño de asignación y pruebas estadísticas.
 
-Verifica la ruta de malla de referencia desde el Pod loadtester con inyección. Prueba las rutas de Gateway externas a través del host/TLS/ingress real. Llamar directamente a -canary no valida las coincidencias de enrutamiento.
+Verifique la ruta de la malla desde el Pod de loadtester con el sidecar inyectado. Para las rutas externas de Gateway, pruebe el host, TLS y acceso de entrada que se utilizarán realmente. Una llamada directa a -canary no valida las reglas de coincidencia del enrutamiento.
 
 ```bash
 kubectl exec -n flagger-system deployment/flagger-loadtester -- \
@@ -648,11 +648,11 @@ kubectl exec -n flagger-system deployment/flagger-loadtester -- \
   curl -fsS -b 'canary=always' http://podinfo.flagger-demo.svc.cluster.local:9898/
 ```
 
-## Métricas personalizadas y webhooks {#custom-metrics-and-webhooks}
+## Métricas personalizadas y Webhooks {#custom-metrics-and-webhooks}
 
-### MetricTemplate de Prometheus
+### Prometheus MetricTemplate
 
-Estas consultas usan un contrato de métricas de sidecar de Istio. Verifica las etiquetas de namespace/carga de trabajo, reporter y el scrape. Si falta la serie 5xx, el numerador se convierte en cero; la ausencia de tráfico o un denominador cero no se convierten en éxito. El mínimo de 100 solicitudes y los demás límites son ejemplos; elige valores basados en los SLO y los requisitos de muestreo.
+Estas consultas dependen de las métricas del sidecar de Istio. Compruebe las etiquetas de namespace y carga de trabajo, el valor de reporter y la recopilación de datos. Si falta una serie 5xx, el numerador se considera cero; si no hay tráfico o el denominador es cero, el resultado no se considera satisfactorio. El mínimo de 100 solicitudes y los demás límites son ejemplos: ajústelos a los SLO y al tamaño de muestra necesario.
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -716,7 +716,7 @@ spec:
       interval: 1m
 ```
 
-MetricTemplate debe devolver un valor numérico. El proveedor de Prometheus rechaza los resultados vacíos/NaN. Limita los porcentajes a rangos finitos de 0–100 y haz coincidir las unidades de latencia personalizadas. Los límites son inclusivos. Las mediciones con ventanas de consulta superpuestas no son muestras independientes.
+MetricTemplate debe devolver un valor numérico. El proveedor Prometheus rechaza resultados vacíos/NaN. Limite los porcentajes a rangos finitos de 0–100 y alinee las unidades de latencia personalizadas. Los límites son inclusivos. Las mediciones con ventanas de consulta superpuestas no son muestras independientes.
 
 ### Unidades de Datadog y punto de datos seleccionado
 
@@ -746,9 +746,9 @@ stringData:
   datadog_application_key: REPLACE_WITH_APPLICATION_KEY
 ```
 
-myapp.request_duration_ms es una latencia media personalizada en ms que debes publicar; no es P99. Selecciona el sitio con provider.address. El cliente lee las dos claves Secret mostradas, no datadog_site. Consulta diez veces el intervalo de la métrica y devuelve el punto más antiguo de la primera serie. No la uses como única prueba del estado actual de canary; acompáñala de mediciones recientes específicas de la revisión.
+myapp.request_duration_ms es una latencia media personalizada en ms que debe publicar; no es P99. Seleccione el sitio con provider.address. El cliente lee las dos claves de Secret mostradas, no datadog_site. Consulta diez veces el intervalo de métrica y devuelve el punto más antiguo de la primera serie. No lo use por sí solo como prueba de la salud actual del canary; combínelo con mediciones recientes específicas de la revisión.
 
-Las pruebas locales con respuestas simuladas del cliente original también confirmaron que un primer punto de datos null se decodifica como cero. Por tanto, un control de latencia que acepta cero milisegundos puede resultar engañoso. Usa un puente que valide las marcas de tiempo/valores faltantes o mediciones recientes de Prometheus.
+Las pruebas locales con respuestas simuladas del cliente original también confirmaron que un primer punto de datos nulo se interpreta como cero. Por ello, un control de latencia que acepte cero milisegundos puede dar una señal engañosa. Use un componente intermediario que valide las marcas de tiempo y los valores ausentes, o mediciones recientes de Prometheus.
 
 ### Campos y límites de CloudWatch
 
@@ -828,9 +828,9 @@ spec:
       interval: 1m
 ```
 
-Provider.region es compatible y obligatorio. Publica por separado las métricas MyApp y las dimensiones Service/Namespace. La expresión devuelve -1 para periodos con datos ausentes o poco volumen, lo que incumple el límite de 0–1 %. Los retrasos de ingesta pueden rechazar un rollout; verifica la publicación real y las ventanas de agregación/consulta.
+Provider.region es un campo admitido y obligatorio. Publique por separado las métricas MyApp y sus dimensiones Service/Namespace. La expresión devuelve -1 para períodos sin datos o con poco tráfico, por lo que el resultado queda fuera del intervalo permitido de 0–1 %. Los retrasos de ingestión pueden hacer que se rechace un despliegue; compruebe la publicación efectiva de las métricas y las ventanas de agregación y consulta.
 
-El proveedor nativo consulta diez veces el intervalo de la métrica y selecciona el primer valor del primer resultado, sin validar por separado la marca de tiempo/StatusCode. Complétalo con comprobaciones actuales de solicitudes/salud de Prometheus para la revisión actual, de modo que no se confundan puntos antiguos ni métricas agregadas de ALB con el estado actual de canary. Su permiso de API de AWS es GetMetricData.
+El proveedor nativo consulta diez veces el intervalo de métrica y selecciona el primer valor del primer resultado sin validar por separado timestamp/StatusCode. Complételo con comprobaciones actuales de solicitudes/salud de Prometheus específicas de la revisión para que puntos antiguos o métricas ALB agregadas no se confundan con la salud actual del canary. Su permiso de API de AWS es GetMetricData.
 
 ```json
 {
@@ -850,22 +850,22 @@ El proveedor nativo consulta diez veces el intervalo de la métrica y selecciona
 }
 ```
 
-Configura la autenticación de ServiceAccount de Flagger y la relación de confianza del rol cuando se use CloudWatch, y haz coincidir la condición de región. Esta revisión no realizó llamadas a las API de AWS ni desplegó un rol.
+Configure la autenticación de ServiceAccount y la confianza de rol de Flagger cuando se use CloudWatch, y haga coincidir la condición de región. Esta revisión no llamó a API de AWS ni desplegó un rol.
 
-### Contrato de webhook
+### Contrato de Webhook
 
-| Tipo | Significado / comportamiento de rechazo |
+| Tipo | Función y comportamiento ante el rechazo |
 |---|---|
-| confirm-rollout | Espera la aprobación para iniciar |
-| pre-rollout | Comprobación antes del cambio inicial de tráfico; incrementa los fallos |
-| rollout | Se invoca durante el análisis; incrementa los fallos |
-| confirm-traffic-increase | Espera antes de aumentar el peso |
-| confirm-promotion | Espera antes de la promoción |
-| post-rollout | Notifica/limpia después de Succeeded o Failed; no revierte el resultado |
-| rollback | El éxito durante el análisis/la espera de aprobación solicita una reversión |
-| event | Reenvía eventos relacionados con el estado |
+| confirm-rollout | Esperar la aprobación para iniciar |
+| pre-rollout | Comprobar antes del primer cambio de tráfico; acumula fallos |
+| rollout | Ejecutar durante el análisis; acumula fallos |
+| confirm-traffic-increase | Esperar antes de aumentar el peso de tráfico |
+| confirm-promotion | Esperar antes de la promoción |
+| post-rollout | Notificar o limpiar después de Succeeded o Failed; no revierte el resultado |
+| rollback | Una respuesta satisfactoria durante el análisis o la espera de aprobación solicita una reversión |
+| event | Reenviar eventos relacionados con el estado |
 
-Normalmente debe responder con HTTP 200. La versión 1.45.0 trata los códigos superiores a 202 como errores, así que no des por hecho que 204 tiene éxito. Los metadatos se copian literalmente; `{{ .Version }}` no se interpola. Usa name/namespace/phase/checksum de la carga útil. Los cuerpos de las respuestas que no indiquen éxito pueden incluirse en registros/eventos, así que no devuelvas valores sensibles.
+Normalmente devuelva HTTP 200. La versión 1.45.0 trata los códigos superiores a 202 como errores, por lo que no suponga que 204 tiene éxito. Los metadatos se copian literalmente; `{{ .Version }}` no se interpola. Use name/namespace/phase/checksum de la carga útil. Los cuerpos no exitosos pueden llegar a logs/events, así que no devuelva valores sensibles.
 
 ```yaml
 name: podinfo
@@ -876,11 +876,11 @@ metadata:
   gate: promotion
 ```
 
-La configuración del webhook no permite definir encabezados Authorization arbitrarios. Implementa la autenticación necesaria mediante un límite de mTLS/proxy interno revisado; no pongas secretos en URL de Git pública/metadatos ni deshabilites la verificación de TLS de forma predeterminada.
+La configuración de Webhook no proporciona encabezados Authorization arbitrarios. Implemente la autenticación requerida mediante un límite de mTLS/proxy interno revisado; no coloque secretos en URL/metadatos públicos de Git ni deshabilite la verificación de TLS de forma predeterminada.
 
-Las pruebas de carga cmd se aceptan de forma asíncrona; el éxito de HTTP no determina la calidad de la prueba de carga. Bash espera hasta que finalice y debe ajustarse a su timeout. La imagen 0.39.0 incluye curl/jq/hey/wrk/bash, pero no k6. k6 requiere una imagen y unos umbrales verificados por separado, porque check() por sí solo no garantiza un estado de salida fallido.
+Las pruebas de carga de tipo cmd se aceptan de forma asíncrona; una respuesta HTTP satisfactoria no demuestra que la prueba haya cumplido sus objetivos. Bash espera a que termine el comando, que debe completarse dentro de su tiempo de espera. La imagen 0.39.0 incluye curl/jq/hey/wrk/bash, pero no k6. Para usar k6, verifique otra imagen y defina umbrales: check() por sí solo no hace que el proceso termine con un código de error.
 
-Este script es para una imagen de prueba dedicada que tenga k6 instalado; no es un comando que funcione en la imagen predeterminada de loadtester.
+Este script es para una imagen de prueba dedicada con k6 instalado, no un comando que funcione en la imagen loadtester predeterminada.
 
 ```javascript
 import http from 'k6/http';
@@ -902,7 +902,7 @@ export default function () {
 }
 ```
 
-### Control manual
+### Controles de aprobación manual
 
 ```yaml
 spec:
@@ -916,7 +916,7 @@ spec:
         gate: promotion
 ```
 
-Integra esta entrada en la lista de webhooks del Canary existente. /gate/approve siempre aprueba; no es un control manual. /gate/check lee el estado en memoria name.namespace. Envía el mismo cuerpo JSON para abrir/cerrar/comprobar. Cerrarlo detiene la promoción, no provoca una reversión.
+Integre esta entrada en la lista de webhooks del Canary existente. /gate/approve aprueba siempre; no sirve como control de aprobación manual. /gate/check consulta el estado en memoria identificado por name.namespace. Envíe el mismo cuerpo JSON a los endpoints open, close y check. Cerrar el control deja la promoción en espera; no inicia una reversión.
 
 ```bash
 # Close before starting a new revision.
@@ -933,9 +933,9 @@ kubectl exec -n flagger-system deployment/flagger-loadtester -- \
   -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/gate/check
 ```
 
-El control integrado no es específico de un checksum, se restablece al reiniciar el Pod y no se comparte entre réplicas. Ciérralo antes de la siguiente revisión. La aprobación de producción necesita autenticación, auditoría, caducidad y estado indexado por name/namespace/checksum/gate. Un único control de aprobación con estado en memoria compartido por el inicio y la promoción no equivale a dos aprobaciones independientes.
+El control integrado no distingue revisiones por checksum, pierde su estado al reiniciar el Pod y no comparte el estado entre réplicas. Ciérrelo antes de la siguiente revisión. En producción, la aprobación necesita autenticación, auditoría, caducidad y un estado identificado por name/namespace/checksum/gate. Compartir un único control en memoria entre el inicio y la promoción no equivale a obtener dos aprobaciones independientes.
 
-### Reversión manual y suspensión
+### Rollback manual y suspensión
 
 ```yaml
 spec:
@@ -947,7 +947,7 @@ spec:
       timeout: 5s
 ```
 
-El endpoint de rollback normalmente devuelve 403 si no hay ninguna señal y 200 cuando se solicita una reversión. Una respuesta de éxito de un receptor de notificaciones puede provocar una reversión involuntaria. Las siguientes solicitudes piden una reversión durante la reconciliación normal, durante el análisis o mientras se espera la aprobación de la promoción; no son un interruptor de recuperación instantánea para todas las fases.
+El endpoint de rollback suele devolver 403 si no hay una solicitud de reversión y 200 cuando la hay. Si usa aquí un receptor de notificaciones que devuelve éxito, podría iniciar una reversión involuntaria. Las solicitudes siguientes piden la reversión durante la reconciliación normal, mientras se realiza el análisis o se espera la aprobación de la promoción. No son un mecanismo de recuperación instantánea válido para todas las fases.
 
 ```bash
 kubectl get canary podinfo -n flagger-demo -o jsonpath='{.status.phase}{"\n"}'
@@ -961,9 +961,9 @@ kubectl exec -n flagger-system deployment/flagger-loadtester -- \
   -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/rollback/close
 ```
 
-Los fallos del controlador/de disponibilidad o un control confirm-rollout cerrado pueden detener la reconciliación antes de este hook. Los fallos de primary durante Promoting/Finalising requieren el mecanismo de recuperación independiente descrito antes. Si se deja abierta la solicitud de reversión después de completar la operación, puede afectar a la siguiente revisión.
+Un fallo del controlador, una carga de trabajo que no esté lista o un control confirm-rollout cerrado pueden interrumpir la reconciliación antes de que se ejecute este hook. Los fallos de primary durante Promoting/Finalising requieren el procedimiento de recuperación descrito anteriormente. Si deja abierta la solicitud de rollback al finalizar, podría afectar a la siguiente revisión.
 
-No trates las anotaciones flagger.app/rollback, flagger.app/suspend ni flagger.app/skipAnalysis como API de control. Suspend/skipAnalysis son campos de spec. Suspend detiene la reconciliación, incluidos los hooks de reversión, sin devolver el tráfico a primary. SkipAnalysis promueve sin análisis; no es una reversión. Actualiza también el recurso propietario en Git.
+Las anotaciones flagger.app/rollback, flagger.app/suspend y flagger.app/skipAnalysis no son API de control. Suspend y skipAnalysis son campos de la especificación. Suspend detiene la reconciliación, incluidos los hooks de rollback, sin devolver el tráfico a primary. SkipAnalysis promueve la revisión sin analizarla; no la revierte. Actualice también la configuración en Git que gestiona el recurso.
 
 ```yaml
 spec:
@@ -972,17 +972,17 @@ spec:
 
 <span id="gitops-integration-flux--flagger"></span>
 
-## Integración con GitOps (Flux + Flagger)
+## Integración de GitOps (Flux + Flagger)
 
 ![Flux aplica las cargas de trabajo deseadas; Flagger administra la entrega progresiva por separado.](../.gitbook/assets/en-gitops-04-flagger-0.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-0.html)
 
-![Flux aplica las cargas de trabajo deseadas mientras Flagger controla el análisis de Canary.](../.gitbook/assets/en-gitops-04-flagger-5.png)
+![Flux aplica las cargas de trabajo deseadas mientras Flagger controla el análisis Canary.](../.gitbook/assets/en-gitops-04-flagger-5.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-5.html)
 
-El bootstrap de Flux no instala Flagger como controlador integrado. Instálalo por separado mediante HelmRelease o Kustomization. No administres simultáneamente la misma versión mediante la CLI de Helm. Administra también en Git los namespaces, el ServiceAccount y el NetworkPolicy anteriores.
+El bootstrap de Flux no instala Flagger como controlador integrado. Instálelo por separado mediante HelmRelease o Kustomization. Evite gestionar simultáneamente la misma instalación con la CLI de Helm. Incluya también en Git los namespaces, ServiceAccount y NetworkPolicy descritos anteriormente.
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -1087,9 +1087,9 @@ spec:
       mountPath: /tmp
 ```
 
-El manejo de CRD CreateReplace de Flux no garantiza que la migración sea segura. Revisa los cambios de los CRD y los objetos almacenados antes de las actualizaciones. Aplica los objetos Canary después de que las fuentes y la instalación del proveedor estén listas.
+El manejo CreateReplace de CRD de Flux no es una garantía de migración segura. Revise los cambios de CRD y los objetos almacenados antes de las actualizaciones. Aplique objetos Canary después de que las fuentes y la instalación del proveedor estén listas.
 
-### Alternativa con HelmRelease de la aplicación
+### Alternativa HelmRelease de aplicación
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -1132,11 +1132,11 @@ spec:
         memory: 256Mi
 ```
 
-Podinfo 6.15.0 service.enabled=false evita la propiedad de un Service que compita con otra. Con hpa.enabled=true, el chart no fija las réplicas del Deployment. No apliques este HelmRelease junto con los manifiestos de carga de trabajo nativos. Comprueba mediante la renderización el comportamiento equivalente de otros charts, en lugar de presuponer que usan los mismos nombres de valores.
+Podinfo 6.15.0 service.enabled=false evita la propiedad de Service en competencia. Con hpa.enabled=true el chart no fija las réplicas de Deployment. No aplique este HelmRelease junto con los manifiestos de carga de trabajo nativos. Verifique el comportamiento equivalente renderizando otros charts, en lugar de asumir nombres de valores idénticos.
 
-Administra el Canary anterior junto con la aplicación. Ready de Flux/Helm se refiere a la aplicación/disponibilidad de los recursos; no demuestra automáticamente que Flagger haya promovido la revisión actual. Condiciona el siguiente entorno al estado/checksum de Canary y a que la versión desplegada coincida con el cambio previsto.
+Gestione el Canary anterior junto con la aplicación. El estado Ready de Flux/Helm indica que los recursos se han aplicado y están listos; no demuestra por sí solo que Flagger haya promovido la revisión actual. Antes de avanzar al siguiente entorno, compruebe el estado y checksum del Canary y que la versión desplegada corresponda al cambio previsto.
 
-### Alternativa con Kustomization
+### Alternativa Kustomization
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -1165,9 +1165,9 @@ resources:
 - canary.yaml
 ```
 
-sourceRef usa el nombre predeterminado del GitRepository de bootstrap. Guarda los manifiestos nativos en apps/podinfo y omite los Services/recursos primary propiedad de Flagger. Que Kustomization se aplique correctamente no significa que la promoción se haya completado.
+El sourceRef usa el nombre predeterminado de GitRepository del bootstrap. Almacene los manifiestos nativos bajo apps/podinfo y omita los recursos de Service/primary propiedad de Flagger. El éxito de la aplicación Kustomization no es la finalización de la promoción.
 
-Un overlay de entorno puede modificar explícitamente la configuración escalar. Son opciones ilustrativas, no un estándar universal de producción. Comprueba también el comportamiento de reemplazo de arrays al modificar CRD.
+Una superposición de entorno puede aplicar parches explícitos a configuraciones escalares. Estas son elecciones ilustrativas, no un estándar universal de producción. Compruebe también el comportamiento de reemplazo de arrays al aplicar parches a CRD.
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -1194,7 +1194,7 @@ patches:
 
 ### Automatización de imágenes y ramas de promoción
 
-![Las imágenes seleccionadas llegan a Git mediante una rama/PR dedicada antes del análisis de Canary.](../.gitbook/assets/en-gitops-04-flagger-6.png)
+![Las imágenes seleccionadas llegan a Git mediante una rama/PR dedicada antes del análisis Canary.](../.gitbook/assets/en-gitops-04-flagger-6.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-6.html)
 
@@ -1255,7 +1255,7 @@ spec:
     strategy: Setters
 ```
 
-Esto requiere los controladores image-reflector/image-automation, marcadores de políticas y acceso de escritura a Git. Empuja los cambios a una rama dedicada, así que la creación de PR, las comprobaciones y la fusión se realizan por separado. Adapta el repositorio/las rutas y reserva la rama para la automatización. Usa el modelo actual de plantilla de confirmación .Changed, no un campo .NewTag inexistente.
+Este flujo requiere los controladores image-reflector/image-automation, marcadores de política y acceso de escritura a Git. Los cambios se envían a una rama dedicada; la creación del PR, sus comprobaciones y la fusión se realizan por separado. Adapte el repositorio y las rutas, y reserve la rama para la automatización. Use el modelo actual .Changed en la plantilla del mensaje de commit; .NewTag no es un campo válido.
 
 ```yaml
 # Native Deployment Pod-template fragment.
@@ -1274,11 +1274,11 @@ image:
   tag: "6.15.0" # {"$imagepolicy": "flux-system:podinfo:tag"}
 ```
 
-Un marcador que solo fija la etiqueta no fija un digest. Comprueba la compatibilidad del chart con digest o la inmutabilidad de las etiquetas del registro y su validación. No sobrescribas una imagen de forma incoherente con Kustomize images y un marcador de Deployment a la vez. ECR requiere una autenticación independiente de image-reflector con AWS y la autorización real para extraer imágenes del Pod.
+Un marcador solo de tag no fija un digest. Verifique la compatibilidad de digest del chart o la inmutabilidad y validación de etiquetas del registro. No sobrescriba una imagen de forma inconsistente mediante Kustomize images y un marcador de Deployment. ECR necesita autenticación AWS independiente de image-reflector y autorización real para extraer imágenes de Pod.
 
 ## Observabilidad y alertas {#observability-and-alerting}
 
-Las métricas de Flagger y las métricas de Istio/aplicación tienen distintos destinos de scrape. Las anotaciones no hacen que todas las instalaciones de Prometheus recopilen métricas automáticamente. Para Prometheus Operator, ajusta serviceMonitor.enabled del chart a los selectores, namespaces y acceso mTLS reales.
+Las métricas de Flagger y las métricas de Istio/aplicación son destinos de recopilación diferentes. Las anotaciones no hacen que cada instalación de Prometheus recopile automáticamente. Para Prometheus Operator, alinee el serviceMonitor.enabled del chart con los selectores, namespaces y acceso mTLS reales.
 
 ```yaml
 serviceMonitor:
@@ -1287,23 +1287,23 @@ serviceMonitor:
     release: prometheus
 ```
 
-La etiqueta release es un ejemplo y debe coincidir con serviceMonitorSelector de Prometheus. Los CRD de Operator deben estar instalados.
+La etiqueta release es ilustrativa y debe coincidir con el serviceMonitorSelector de Prometheus. Los CRD del Operator instalados son un requisito previo.
 
-| Métrica | Tipo / significado real |
+| Métrica | Tipo/significado real |
 |---|---|
 | flagger_info | Gauge, versión/mesh_provider |
-| flagger_canary_total | Gauge, recuento de objetos Canary por namespace |
+| flagger_canary_total | Gauge, conteo de objetos Canary por namespace |
 | flagger_canary_status | Gauge, 0=Progressing, 2=Failed, otras fases se asignan a 1 |
-| flagger_canary_weight | Gauge, peso del tráfico por carga de trabajo/namespace |
-| flagger_canary_metric_analysis | Gauge, valor real de la métrica, no un booleano genérico de aprobado/reprobado |
-| flagger_canary_duration_seconds | Histograma, tiempo de procesamiento de la reconciliación del análisis, no duración total del rollout |
+| flagger_canary_weight | Gauge, peso de tráfico por carga de trabajo/namespace |
+| flagger_canary_metric_analysis | Gauge, valor de métrica real, no un booleano genérico de éxito/fallo |
+| flagger_canary_duration_seconds | Histogram, tiempo de procesamiento de reconciliación de análisis, no duración total de rollout |
 | flagger_canary_successes_total / failures_total | Counter, resultados con etiquetas strategy/analysis_status |
 
-No deduzcas que el estado es Succeeded a partir del valor 1; las fases de aprobación/promoción y otras pueden compartirlo. Comprueba Canary.status.phase y la revisión prevista. La etiqueta name es targetRef.name, que no necesariamente coincide con el nombre del objeto Canary. Weight usa workload en lugar de name. Consulta status.iterations en vez de presuponer que existe una métrica iterations exportada.
+No infiera Succeeded del valor de estado 1; las fases de aprobación/promoción y otras pueden compartirlo. Compruebe Canary.status.phase y la revisión prevista. La etiqueta name es targetRef.name, no necesariamente el nombre del objeto Canary. Weight usa workload en lugar de name. Lea status.iterations en vez de asumir que existe una métrica iterations exportada.
 
-### Panel de Grafana
+### Dashboard de Grafana
 
-Usa las siguientes consultas en paneles actuales de Grafana Stat/Time series. Filtra una etiqueta de clúster externa al agregar datos de forma centralizada. clusterName de Flagger afecta las alertas; no añade automáticamente una etiqueta cluster a las métricas de Prometheus.
+Use las siguientes consultas en paneles actuales Stat/Time series de Grafana. Filtre una etiqueta externa de cluster al agregar centralmente. Flagger clusterName afecta a las alertas; no añade automáticamente una etiqueta de cluster a las métricas de Prometheus.
 
 ```promql
 flagger_canary_status{namespace="flagger-demo"}
@@ -1313,7 +1313,7 @@ increase(flagger_canary_successes_total{namespace="flagger-demo",analysis_status
 increase(flagger_canary_failures_total{namespace="flagger-demo",analysis_status="completed"}[7d])
 ```
 
-El JSON del panel oficial de Istio es una referencia; valida los nombres de las fuentes de datos y la compatibilidad del panel/esquema con la versión actual de Grafana y, después, expórtalo. El JSON del panel no es un manifiesto de Kubernetes. Aprovisiona el modelo del panel exportado, no un envoltorio de la API HTTP {"dashboard": ...}.
+El JSON del dashboard oficial de Istio es una referencia; valide sus nombres de datasource y la compatibilidad de panel/esquema en Grafana actual, y luego expórtelo. El JSON de dashboard no es un manifiesto de Kubernetes. Aprovisione el modelo de dashboard exportado, no un sobre de API HTTP {"dashboard": ...}.
 
 ```bash
 curl -fsSL -o flagger-istio-reference.json \
@@ -1327,7 +1327,7 @@ kubectl label --local -f flagger-dashboard-cm.yaml grafana_dashboard=1 \
   -o yaml > flagger-dashboard-ready.yaml
 ```
 
-Revisa el ConfigMap generado e inclúyelo en GitOps. Configura el sidecar/provisioner de Grafana para que observe su etiqueta y namespace. No te bases en un ID de panel no verificado como instrucción de instalación.
+Revise el ConfigMap generado y colóquelo bajo GitOps. Configure el sidecar/provisioner de Grafana para que observe su etiqueta y namespace. No se base en un ID de dashboard no verificado como guía de instalación.
 
 ### Alertas de Prometheus
 
@@ -1361,9 +1361,9 @@ spec:
           duration.
 ```
 
-Estas reglas presuponen un Prometheus local al clúster. La condición ==0 con for:1h mide una condición Progressing observada continuamente, no todas las fases activas ni la marca de tiempo de inicio del rollout. Evalúa aparte las esperas intencionadas en controles. Los buckets del histograma representan tiempos cortos de procesamiento de la reconciliación; no uses time()-duration ni una alerta de P99 de rollout de 600 segundos.
+Estas reglas presuponen un Prometheus local al clúster. La condición ==0 con for:1h detecta un estado Progressing observado de forma continua; no cubre todas las fases activas ni calcula el tiempo desde el inicio del despliegue. Evalúe por separado las esperas de aprobación intencionales. Los buckets del histograma miden tiempos breves de procesamiento de la reconciliación. No use time()-duration ni un umbral de 600 segundos como alerta de P99 de duración del despliegue.
 
-### Notificaciones a Slack, Teams y externas
+### Slack, Teams y notificaciones externas
 
 ```yaml
 apiVersion: flagger.app/v1beta1
@@ -1397,15 +1397,15 @@ spec:
         name: slack
 ```
 
-Los valores del Secret son marcadores de posición; no guardes los tokens reales en Git. En esta versión, secretRef de AlertProvider requiere address y también token para la API de Slack Bot. Configura chat:write y la pertenencia al canal, y sustituye channel por el ID real. Para Incoming Webhooks, verifica el canal asociado y las sobrescrituras permitidas.
+Los valores de Secret son marcadores de posición; mantenga los tokens reales fuera de Git. AlertProvider secretRef requiere address en esta versión, más token para Slack Bot API. Configure chat:write y la pertenencia al canal, y reemplace el canal por el ID real. Para Incoming Webhooks, verifique el canal vinculado y las anulaciones permitidas.
 
-Severity es un nivel mínimo, no un enrutamiento exclusivo: info recibe todos los niveles, warn recibe warn/error y error recibe los errores. Las suscripciones duplicadas pueden duplicar las notificaciones.
+Severity es un nivel mínimo, no enrutamiento exclusivo: info recibe todos los niveles, warn recibe warn/error y error recibe errores. Las suscripciones duplicadas pueden duplicar notificaciones.
 
-msteams nativo de Flagger 1.45.0 sigue emitiendo MessageCard. No presupongas que basta con cambiar su URL por un endpoint de Adaptive Card de Workflows. Configura un convertidor compatible o un receptor de eventos con autenticación y conversión de la carga útil. Esto difiere del comportamiento de Teams de Flux 2.9.6.
+El msteams nativo de Flagger 1.45.0 aún emite MessageCard. No suponga que basta intercambiar su URL por un endpoint de Workflows Adaptive Card. Configure un convertidor compatible o receptor de eventos con autenticación y conversión de carga útil. Esto difiere del comportamiento de Teams de Flux 2.9.6.
 
-No des por hecho que existe un AlertProvider nativo para la API de eventos de PagerDuty. Enviar type: slack directamente a una URL de PagerDuty genera una carga útil incorrecta. Usa una integración establecida con Slack o un adaptador de eventos verificado.
+No suponga un AlertProvider nativo de PagerDuty Events API. Enviar type: slack directamente a una URL de PagerDuty genera una carga útil incorrecta. Use una integración de Slack establecida o un adaptador de eventos verificado.
 
-### Historial de despliegues y eventos
+### Historial y eventos de despliegue
 
 ```yaml
 spec:
@@ -1419,7 +1419,7 @@ spec:
         environment: demo
 ```
 
-deployment-events es un receptor interno que debes proporcionar por separado. Valida/almacena name/namespace/phase/checksum y eventMessage/eventType/timestamp. post-rollout se ejecuta tanto si hay éxito como si hay fallo; no registres siempre la operación como promovida. Los eventSources de Flux Notification Alert no admiten Canary ni recopilan automáticamente eventos arbitrarios de Kubernetes.
+Deployment-events es un receptor interno que debe implementar por separado. Valide y almacene name/namespace/phase/checksum y eventMessage/eventType/timestamp. Post-rollout se ejecuta tanto tras el éxito como tras el fallo, por lo que no registre siempre el resultado como una promoción. eventSources de Flux Notification Alert no admite Canary ni recopila automáticamente eventos arbitrarios de Kubernetes.
 
 ```bash
 kubectl get events -n flagger-demo \
@@ -1429,26 +1429,26 @@ kubectl get canaries -A -o custom-columns=\
 NAME:.metadata.name,NAMESPACE:.metadata.namespace,PHASE:.status.phase,WEIGHT:.status.canaryWeight,LAST:.status.lastTransitionTime
 ```
 
-Los eventos de Kubernetes tienen límites de retención; conserva el historial duradero de forma externa. changes(status[7d]) cuenta transiciones, no despliegues. Interpreta los contadores de resultados teniendo en cuenta los casos omitidos/completados y las revisiones reales.
+Los eventos de Kubernetes tienen límites de retención; conserve el historial duradero externamente. changes(status[7d]) cuenta transiciones, no despliegues. Interprete los contadores de resultados considerando skipped/completed y las revisiones reales.
 
 ## Prácticas recomendadas para producción {#production-best-practices}
 
-Empieza con cargas de trabajo de laboratorio y no críticas, y prueba el éxito, los fallos, los datos ausentes, las esperas de aprobación y los fallos de promoción de primary. Un umbral de fallos más alto puede retrasar la reversión en lugar de aumentar la seguridad. Un stepWeight mayor expone a más usuarios; los intervalos de análisis más largos pueden retrasar la detección.
+Comience con cargas de trabajo no críticas/de laboratorio y pruebe éxito, fallo, datos ausentes, espera de aprobación y fallo de promoción de primary. Un umbral de fallo mayor puede retrasar el rollback en lugar de mejorar la seguridad. Un stepWeight mayor expone a más usuarios; intervalos de análisis más largos pueden retrasar la detección.
 
-| Decisión | Evidencia |
+| Decisión | Datos en los que basarla |
 |---|---|
-| Límites de error/latencia | SLO del servicio, unidades reales y distribución normal |
-| Solicitudes mínimas / ventana de consulta | Bajo tráfico, retraso de ingesta, tamaño de muestra |
-| Umbral de fallos | Tiempo de exposición permitido y falsas alarmas |
-| Pasos de peso | Radio de impacto y réplicas/nodos disponibles |
-| Límite de progreso | Inicio de Pod, disponibilidad, progreso de la actualización gradual |
-| Aprobación / reversión | Autenticación, identidad de revisión, procedimiento de recuperación |
+| Límites de error y latencia | SLO del servicio, unidades reales y distribución habitual de los valores |
+| Solicitudes mínimas y ventana de consulta | Tráfico bajo, retraso de ingestión y tamaño de muestra |
+| Umbral de fallo | Tiempo de exposición permitido y falsas alarmas |
+| Incrementos del peso de tráfico | Alcance del impacto y capacidad de réplicas o nodos disponibles |
+| Plazo de progreso | Arranque de los Pods, preparación y avance de la actualización gradual |
+| Aprobación y reversión | Autenticación, identidad de la revisión y procedimiento de recuperación |
 
-No deduzcas porcentajes de 99,9 %, 200 ms ni duraciones exactas del rollout basándote únicamente en etiquetas de entorno/sector. Mide, ajusta y verifica periódicamente el comportamiento ante fallos/recuperación.
+No derive 99.9 %, 200 ms o duraciones exactas de rollout únicamente de etiquetas de entorno/industria. Mida, ajuste y verifique regularmente el comportamiento de fallo/recuperación.
 
-### Seguimiento de la configuración y autoescalado
+### Seguimiento de configuración y escalado automático
 
-El seguimiento de ConfigMap/Secret está habilitado de forma predeterminada, y los cambios en configuraciones referenciadas pueden iniciar un análisis. Excluye un ConfigMap/Secret seleccionado con esta anotación en ese recurso. También se puede usar configTracking.enabled=false globalmente, pero revisa cómo afecta a la detección y a las copias de configuración de primary.
+El seguimiento de ConfigMap/Secret está habilitado de forma predeterminada y los cambios de configuración referenciada pueden activar análisis. Excluya un ConfigMap/Secret seleccionado con esta anotación en dicho recurso. También es posible configTracking.enabled=false globalmente, pero revise su efecto en la detección y las copias de configuración de primary.
 
 ```yaml
 metadata:
@@ -1456,15 +1456,15 @@ metadata:
     flagger.app/config-tracking: disabled
 ```
 
-HPA/escaladores KEDA compatibles necesitan el autoscalerRef correcto y Metrics Server/el proveedor de métricas. Verifica que Flux/Helm no sobrescriba continuamente el escalado/control de Service de Flagger. Los PDB rigen principalmente los desalojos voluntarios, no garantizan la protección frente a la reducción de escala del controlador ni frente a las actualizaciones graduales de Deployment. Configura por separado la estrategia de actualización de la carga de trabajo y la disponibilidad.
+Los escaladores HPA/KEDA compatibles necesitan el autoscalerRef correcto y Metrics Server/proveedor de métricas. Verifique que Flux/Helm no sobrescriba continuamente el control de escalado/Service de Flagger. Los PDB principalmente regulan desalojos voluntarios, no protección garantizada frente a reducción de escala del controlador o actualizaciones continuas de Deployment. Configure por separado la estrategia de rollout y la disponibilidad de la carga de trabajo.
 
-### Flagger en varios clústeres
+### Flagger multicluster
 
-![Un patrón de Flux central requiere autorización explícita para Kustomization remoto; Flagger se ejecuta en cada clúster.](../.gitbook/assets/en-gitops-04-flagger-8.png)
+![Un patrón de Flux central requiere autorización explícita de Kustomization remota; Flagger se ejecuta en cada cluster.](../.gitbook/assets/en-gitops-04-flagger-8.png)
 
 [Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-8.html)
 
-Configura el bootstrap de Flux en cada clúster con rutas de Git distintas, o configura Flux central con kubeConfig/identidad de carga de trabajo explícitos para la reconciliación remota. Compartir un repositorio de Git no concede acceso remoto. Flagger controla las cargas de trabajo localmente en cada clúster.
+Inicie Flux por cluster con rutas de Git distintas, o configure Flux central con kubeConfig/identidad de carga de trabajo explícitos para la reconciliación remota. Compartir un repositorio Git no concede acceso remoto. Flagger controla las cargas de trabajo localmente en cada cluster.
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -1482,25 +1482,25 @@ spec:
   prune: true
 ```
 
-Este objeto se ejecuta en el Flux del clúster de destino. No hagas que dependa de sí mismo ni esperes que dependsOn encuentre un objeto con el mismo nombre en un clúster independiente. Aunque haya Kustomization remotas distintas en un mismo plano de control, Ready no demuestra automáticamente que se haya promovido la revisión actual; condiciona el cambio de Git del siguiente entorno al resultado real del lanzamiento.
+Este objeto se ejecuta en la instancia de Flux del clúster de destino. Evite que dependa de sí mismo y no espere que dependsOn encuentre un objeto del mismo nombre en otro clúster independiente. Incluso con Kustomizations remotas distintas en un mismo plano de control, Ready no demuestra por sí solo la promoción de la revisión actual. Condicione el cambio en Git del siguiente entorno a los resultados reales de la entrega.
 
-Configura etiquetas de clúster y retención para la observabilidad centralizada. Las alertas/MetricTemplate con ámbito de namespace por sí solas no completan el aislamiento entre tenants; también restringe RBAC, referencias entre namespaces, redes y acceso a Secret.
+Configure etiquetas de cluster y retención para la observabilidad centralizada. Las alertas/MetricTemplates con namespace por sí solas no completan el aislamiento de tenants; restrinja también RBAC, referencias entre namespaces, redes y acceso a Secret.
 
 ## Referencias
 
 - [Código fuente de Flagger 1.45.0](https://github.com/fluxcd/flagger/tree/v1.45.0)
 - [Estrategias de despliegue](https://github.com/fluxcd/flagger/blob/v1.45.0/docs/gitbook/usage/deployment-strategies.md)
-- [Contrato de webhook](https://github.com/fluxcd/flagger/blob/v1.45.0/docs/gitbook/usage/webhooks.md)
+- [Contrato de Webhook](https://github.com/fluxcd/flagger/blob/v1.45.0/docs/gitbook/usage/webhooks.md)
 - [Registrador real de métricas](https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/metrics/recorder.go)
-- [Planificador / comportamiento de reversión](https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/controller/scheduler.go)
+- [Comportamiento del controlador y reversión](https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/controller/scheduler.go)
 - [Ejemplos de Gateway API](https://github.com/fluxcd/flagger/blob/v1.45.0/docs/gitbook/tutorials/gatewayapi-progressive-delivery.md)
-- [Fin del soporte de AWS App Mesh](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html)
-- [Interrupciones de Kubernetes / PDB](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
+- [Fin de soporte de AWS App Mesh](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html)
+- [Interrupciones / PDB de Kubernetes](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
 - [FluxCD](02-fluxcd.md)
-- [Administración del tráfico en Argo Rollouts](argocd/05-traffic-management.md)
+- [Gestión de tráfico de Argo Rollouts](argocd/05-traffic-management.md)
 
 [Anterior: Comparación de GitOps](03-gitops-comparison.md) · [Siguiente: Feature Flags](05-feature-flags.md) · [Descripción general](README.md)
 
 ## Cuestionario
 
-Pon a prueba tus conocimientos con el [cuestionario de Flagger](../quizzes/gitops/04-flagger-quiz.md).
+Compruebe sus conocimientos con el [cuestionario de Flagger](../quizzes/gitops/04-flagger-quiz.md).

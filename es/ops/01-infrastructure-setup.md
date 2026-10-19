@@ -1,27 +1,27 @@
 # Configuración de infraestructura
 
-> **Línea base de validación**: Terraform 1.16.6, AWS Provider 6.69.1, módulo EKS 21.29.0, módulo VPC 6.7.3, módulo Pod Identity 2.9.0
-> **Última revisión**: 16 de octubre de 2026. Validación local de esquema y plan simulado; no es el resultado de una implementación en AWS activa.
+> **Base de validación**: Terraform 1.16.6, AWS Provider 6.69.1, módulo EKS 21.29.0, módulo VPC 6.7.3, módulo Pod Identity 2.9.0
+> **Última revisión**: 16 de octubre de 2026. Validación local del esquema y de planes simulados; no es el resultado de un despliegue real en AWS.
 
-< [Tabla de contenido](./README.md) | [Siguiente: Enrutamiento ponderado de NLB y clústeres blue/green](02-infrastructure-advanced.md) >
+< [Tabla de contenido](./README.md) | [Siguiente: Enrutamiento ponderado NLB y clústeres Blue/Green](02-infrastructure-advanced.md) >
 
-Este ejemplo describe **un bucket de estado específico de una cuenta y un entorno, y clústeres blue/green en una región**. Los pools integrados de Auto Mode pueden usar varias AZ configuradas. Los nombres de color o las etiquetas de subred no fijan los workers a una sola AZ. Para celdas de workers de una sola AZ, diseñe por separado la ubicación de NodePool/NodeClass, el enrutamiento y la capacidad de recuperación mediante [Operaciones zonales](15-zonal-operations-guide.md).
+Este ejemplo describe **un bucket de estado específico de una cuenta y un entorno, junto con clústeres blue/green en una misma región**. Los grupos de nodos integrados de Auto Mode pueden utilizar varias zonas de disponibilidad configuradas. Los nombres de colores o las etiquetas de subred no limitan los nodos a una única zona. Para crear celdas de nodos de una sola zona, diseñe por separado la ubicación mediante NodePool/NodeClass, el enrutamiento y la capacidad de recuperación según la guía de [operaciones zonales](15-zonal-operations-guide.md).
 
-Cree los archivos del ejemplo en un proyecto `eks-terraform/` independiente. Terraform no hereda automáticamente los archivos `.tf` de un directorio principal `00-shared`; use las declaraciones de cada raíz y evite copiar variables/locales duplicados junto con ellas. Si ya tiene un estado v20/v5, revise las guías de migración de los módulos y el plan real antes de actualizar. Conserve el `.terraform.lock.hcl` de cada raíz bajo control de versiones y fije también las versiones de los módulos por separado.
+Cree los archivos del ejemplo en un proyecto independiente llamado `eks-terraform/`. Terraform no hereda automáticamente los archivos `.tf` de un directorio padre `00-shared`; utilice las declaraciones de cada módulo raíz y evite copiar junto a ellas variables o valores locales duplicados. Antes de actualizar un estado existente con módulos v20/v5, revise las guías de migración y el plan real. Conserve el archivo `.terraform.lock.hcl` de cada módulo raíz y fije también las versiones de los módulos por separado.
 
-El endpoint de la API es privado de forma predeterminada. La validación con kubectl y los controladores GitOps requieren conectividad real a la API, por ejemplo, mediante un runner de VPC o una VPN. Esta guía no aprovisiona esa vía de acceso.
+El endpoint de la API es privado de forma predeterminada. La validación con kubectl y los controladores GitOps necesitan conectividad real con la API, por ejemplo mediante un runner en la VPC o una VPN. Esta guía no crea esa vía de acceso.
 
 ***
 
 ## Descripción general
 
-Esta guía presenta una arquitectura de referencia de Terraform para implementar clústeres de Amazon EKS con Auto Mode habilitado. El enfoque de 3 capas separa las responsabilidades de la infraestructura según la frecuencia de cambio, la propiedad y el radio de impacto, lo que permite a los equipos trabajar de forma independiente y mantener la seguridad operativa.
+Esta guía presenta una arquitectura de referencia de Terraform para desplegar clústeres de Amazon EKS con Auto Mode habilitado. El enfoque de tres capas separa las responsabilidades de infraestructura según la frecuencia de cambio, los equipos responsables y el alcance del impacto. Así, los equipos pueden trabajar de forma independiente y mantener la seguridad operativa.
 
 **Principios de diseño clave:**
 
-* **Separación de responsabilidades**: cada capa tiene una propiedad y patrones de cambio diferenciados
-* **Minimización del radio de impacto**: la separación de estados reduce el alcance de los cambios; los fallos de dependencias aún pueden afectar a otras capas
-* **Aislamiento del estado**: archivos de estado de Terraform independientes para cada capa
+* **Separación de responsabilidades**: Cada capa tiene responsables y patrones de cambio diferenciados
+* **Reducción del alcance del impacto**: Separar el estado reduce el alcance de los cambios; los fallos en las dependencias aún pueden afectar a otras capas
+* **Aislamiento del estado**: Archivos de estado de Terraform independientes para cada capa
 * **Preparado para GitOps**: Terraform administra la infraestructura de AWS; ArgoCD administra los recursos de Kubernetes
 
 ***
@@ -30,22 +30,22 @@ Esta guía presenta una arquitectura de referencia de Terraform para implementar
 
 ### ¿Por qué separar las capas?
 
-Las configuraciones monolíticas tradicionales de Terraform generan varios desafíos operativos:
+Las configuraciones monolíticas tradicionales de Terraform crean varios desafíos operativos:
 
-1. **Tiempos prolongados de plan y apply**: cada cambio requiere evaluar todos los recursos
-2. **Radio de impacto**: una sola configuración incorrecta puede afectar a toda la infraestructura
-3. **Conflictos entre equipos**: varios equipos compiten por el mismo archivo de estado
-4. **Riesgo de cambios**: agrupar cambios de red con cambios de aplicaciones aumenta el riesgo de implementación
+1. **Tiempos prolongados de Plan/Apply**: Cada cambio requiere evaluar todos los recursos
+2. **Alcance del impacto**: Una sola configuración incorrecta puede afectar a toda la infraestructura
+3. **Conflictos entre equipos**: Varios equipos compiten por el mismo archivo de estado
+4. **Riesgo de cambio**: Agrupar los cambios de red con los de las aplicaciones aumenta el riesgo del despliegue
 
-La arquitectura de 3 capas aborda estos desafíos organizando la infraestructura en niveles diferenciados según su estabilidad y propiedad.
+La arquitectura de tres capas aborda estos desafíos organizando la infraestructura en niveles diferenciados según su estabilidad y los equipos responsables.
 
 ### Características de las capas (frecuencias ilustrativas)
 
-| Capa | Nombre     | Frecuencia de cambio | Responsable principal | Radio de impacto | Dependencias           |
+| Capa | Nombre | Frecuencia de cambio | Responsable principal | Alcance del impacto | Dependencias |
 | ----- | -------- | ---------------- | ------------------- | ------------ | ---------------------- |
-| 01    | Red  | Trimestral        | Equipo de infraestructura | Alto         | Ninguna                   |
-| 02    | Clúster  | Mensual          | Equipo de plataforma       | Medio       | 01-network             |
-| 03 | Plataforma | Semanal | Equipos de plataforma/aplicaciones | Los cambios de DNS/acceso pueden afectar al clúster | 01-network, 02-cluster |
+| 01 | Red | Trimestral | Equipo de infraestructura | Alto | Ninguna |
+| 02 | Clúster | Mensual | Equipo de plataforma | Medio | 01-network |
+| 03 | Plataforma | Semanal | Equipos de plataforma/aplicaciones | Los cambios de DNS o acceso pueden afectar al clúster | 01-network, 02-cluster |
 
 ### Estructura de directorios
 
@@ -77,7 +77,7 @@ eks-terraform/
     └── providers.tf
 ```
 
-Incluya estas rutas en el .gitignore del nuevo proyecto. Mantenga el .terraform.lock.hcl de cada raíz bajo control de versiones.
+Incluya estas rutas en el archivo .gitignore del nuevo proyecto. Mantenga el archivo .terraform.lock.hcl de cada módulo raíz bajo control de versiones.
 
 ```text
 .terraform/
@@ -90,7 +90,7 @@ Incluya estas rutas en el .gitignore del nuevo proyecto. Mantenga el .terraform.
 
 ### Visualización del flujo de cambios
 
-![Propiedad de estados de Terraform separados para la red, el clúster y la plataforma, con dependencias de tiempo de ejecución compartidas y claves de S3 diferenciadas.](../.gitbook/assets/en-ops-01-infrastructure-setup-0.png)
+![Responsabilidades separadas para el estado de Terraform de red, clúster y plataforma, con dependencias compartidas durante la ejecución y claves de S3 distintas.](../.gitbook/assets/en-ops-01-infrastructure-setup-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-01-infrastructure-setup-0.html)
 
@@ -98,13 +98,13 @@ Incluya estas rutas en el .gitignore del nuevo proyecto. Mantenga el .terraform.
 
 ## 2. 00-shared: Configuración común
 
-La capa compartida contiene plantillas de configuración y variables comunes que se usan en todas las capas. Son ejemplos de nomenclatura; la configuración principal no se importa automáticamente.
+La capa compartida contiene plantillas de configuración y variables comunes para todas las capas. Son ejemplos de nomenclatura, no una configuración del directorio padre que se importe automáticamente.
 
 ### Configuración del backend de S3
 
-Primero, cree el bucket de S3 para administrar el estado de Terraform:
+Primero, cree el bucket de S3 para la administración del estado de Terraform:
 
-> **Nota**: Desde Terraform 1.10, el backend de S3 admite el bloqueo nativo del estado mediante `use_lockfile = true`, aprovechando las escrituras condicionales de S3. Esto elimina la necesidad de una tabla de DynamoDB para bloquear el estado.
+> **Nota**: A partir de Terraform 1.10, el backend de S3 admite el bloqueo de estado nativo mediante `use_lockfile = true`, aprovechando las escrituras condicionales de S3. Esto elimina la necesidad de una tabla de DynamoDB para el bloqueo de estado.
 
 ```hcl
 # 00-shared/bootstrap/main.tf
@@ -256,11 +256,11 @@ locals {
 
 ## 3. 01-network: Configuración de VPC
 
-La capa de red establece la infraestructura de VPC fundamental. Esta capa cambia con poca frecuencia y requiere una planificación cuidadosa debido a su alto radio de impacto.
+La capa de red establece la infraestructura básica de la VPC. Cambia con poca frecuencia y requiere una planificación cuidadosa por el amplio alcance de su impacto.
 
 ### Consideraciones de diseño
 
-La disposición usa dos AZ distintas. Blue/green identifica los entornos de implementación; los pools predeterminados de Auto Mode no se limitan a una sola AZ. Dimensione los CIDR para la asignación de pods, los pools de reserva, las ENI de los endpoints, el crecimiento y otros recursos de la VPC. El ejemplo /16 no es una recomendación universal para producción ni garantiza que no se agoten las IP.
+Esta distribución utiliza dos zonas de disponibilidad distintas. Blue/green identifica los entornos de despliegue; los grupos de nodos predeterminados de Auto Mode no están limitados a una sola zona. Dimensione los CIDR teniendo en cuenta la asignación de direcciones a Pods, las reservas de direcciones, las ENI de endpoints, el crecimiento y los demás recursos de la VPC. El /16 del ejemplo no es una recomendación universal de producción ni garantiza que no se agoten las IP.
 
 ### Configuración principal
 
@@ -472,7 +472,7 @@ variable "availability_zones" {
 }
 ```
 
-### Outputs
+### Salidas
 
 ```hcl
 # 01-network/outputs.tf
@@ -572,17 +572,17 @@ terraform {
 
 ## 4. 02-cluster: EKS Auto Mode
 
-La capa de clúster implementa EKS con Auto Mode habilitado. Auto Mode simplifica las operaciones del clúster al automatizar la administración de cómputo, redes y almacenamiento.
+La capa de clúster despliega EKS con Auto Mode habilitado. Auto Mode simplifica las operaciones del clúster al automatizar la gestión del cómputo, las redes y el almacenamiento.
 
-### Comprender EKS Auto Mode
+### Cómo funciona EKS Auto Mode
 
 EKS Auto Mode proporciona:
 
-* **Auto Mode de cómputo**: aprovisionamiento y escalado automáticos de nodos
-* **Auto Mode de red**: VPC CNI administrado con administración automática de IP
-* **Auto Mode de almacenamiento**: integración administrada de almacenamiento en bloques; cree explícitamente la StorageClass
+* **Compute Auto Mode**: Aprovisionamiento y escalado automáticos de nodos
+* **Network Auto Mode**: VPC CNI administrado con gestión automática de IP
+* **Storage Auto Mode**: Integración administrada de almacenamiento en bloques; cree la StorageClass explícitamente
 
-Para obtener más información sobre EKS Auto Mode, consulte [Introducción a EKS Auto Mode](../eks-auto-mode/01-getting-started.md).
+Para más detalles sobre EKS Auto Mode, consulte [Primeros pasos con EKS Auto Mode](../eks-auto-mode/01-getting-started.md).
 
 ### Fuentes de datos
 
@@ -798,7 +798,7 @@ variable "log_retention_days" {
 }
 ```
 
-### Outputs
+### Salidas
 
 ```hcl
 # 02-cluster/outputs.tf
@@ -880,16 +880,16 @@ terraform {
 
 ***
 
-## 5. 03-platform: Add-ons y Pod Identity
+## 5. 03-platform: Complementos y Pod Identity
 
-No duplique el agente Pod Identity integrado de Auto Mode, las redes de nodos ni la integración de almacenamiento en bloques con add-ons ordinarios aws-node/EBS CSI/agente. El [Auto Mode actual](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html) ejecuta **CoreDNS local al nodo como servicio del sistema**. Auto Mode puro no necesita un Deployment de CoreDNS. Los clústeres mixtos que contengan nodos que no sean de Auto Mode deben conservar el Deployment: establezca enable_coredns_addon=true y fije una versión compatible. El ejemplo usa false de forma predeterminada. Cree la StorageClass de Auto Mode mediante GitOps con ebs.csi.eks.amazonaws.com siguiendo las [instrucciones oficiales](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html).
+Evite duplicar el agente Pod Identity, la red de nodos o la integración de almacenamiento en bloques incorporados en Auto Mode mediante los complementos habituales aws-node/EBS CSI/agente. [Auto Mode actual](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html) ejecuta **CoreDNS local en cada nodo como servicio del sistema**. Un clúster compuesto únicamente por nodos Auto Mode no necesita un Deployment de CoreDNS. Los clústeres mixtos que contienen nodos ajenos a Auto Mode deben conservar ese Deployment: establezca enable_coredns_addon=true y fije una versión compatible. El ejemplo utiliza false de forma predeterminada. Cree mediante GitOps la StorageClass de Auto Mode con ebs.csi.eks.amazonaws.com siguiendo las [instrucciones oficiales](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html).
 
-Este ejemplo de Pod Identity permite que el **controlador External Secrets lea valores de Secrets Manager/SSM con nombres explícitos**. Una asociación no instala ESO ni crea su ServiceAccount: configure el mismo espacio de nombres/SA mediante GitOps y use una cadena predeterminada de credenciales del SDK compatible. La detección basada en ListSecrets queda fuera de esta política mínima. Las claves KMS administradas por el cliente también requieren kms:Decrypt en los ARN de clave necesarios y permiso en la política de claves.
+Este ejemplo de Pod Identity permite que el **controlador External Secrets lea valores de Secrets Manager/SSM identificados explícitamente por nombre**. Una asociación no instala ESO ni crea su ServiceAccount: configure mediante GitOps el mismo namespace y la misma cuenta de servicio, y use una cadena de credenciales predeterminada de un SDK compatible. El descubrimiento mediante ListSecrets queda fuera de esta política mínima. Las claves KMS administradas por el cliente también requieren kms:Decrypt sobre los ARN de las claves necesarias y autorización en la política de la clave.
 
-Las extracciones de imágenes usan los permisos de kubelet/rol del nodo, no Pod Identity de la aplicación. Configure por separado la autenticación de ArgoCD al EKS de destino y la actualización del token OCI/ECR mediante [Instalación de ArgoCD](../gitops/argocd/01-installation.md) y [Aplicaciones](../gitops/argocd/02-applications.md). Los administradores de la capa de clúster son responsables de sus entradas de acceso; no vuelva a crear el mismo principal en la capa de plataforma.
+La descarga de imágenes utiliza los permisos del kubelet o del rol del nodo, no el Pod Identity de la aplicación. Configure por separado la autenticación de ArgoCD con el EKS de destino y la renovación de tokens OCI/ECR mediante las guías de [instalación de ArgoCD](../gitops/argocd/01-installation.md) y [aplicaciones](../gitops/argocd/02-applications.md). Los administradores de la capa de clúster son responsables de sus entradas de acceso; no cree de nuevo el mismo principal en la capa de plataforma.
 
 
-La capa de plataforma administra los add-ons de EKS, las asociaciones de Pod Identity y las entradas de acceso para los equipos de aplicaciones. Esta capa cambia con frecuencia a medida que se incorporan equipos y evolucionan los requisitos de las aplicaciones.
+La capa de plataforma administra los complementos de EKS, las asociaciones de Pod Identity y las entradas de acceso de los equipos de aplicaciones. Esta capa cambia con frecuencia a medida que se incorporan equipos y evolucionan los requisitos de las aplicaciones.
 
 ### Fuentes de datos
 
@@ -1169,7 +1169,7 @@ variable "coredns_addon_version" {
 }
 ```
 
-### Outputs
+### Salidas
 
 ```hcl
 # 03-platform/outputs.tf
@@ -1204,7 +1204,7 @@ terraform {
 
 ### Patrón de estado remoto
 
-La fuente de datos terraform_remote_state expone los outputs de la raíz, pero quien la lee puede acceder a la instantánea completa del estado. No es un límite de seguridad que exponga solo los outputs. En límites de confianza, considere publicar únicamente los valores necesarios mediante un canal independiente, como parámetros de SSM.
+La fuente de datos terraform_remote_state expone las salidas del módulo raíz, pero quien la lee puede acceder a la instantánea completa del estado. No constituye un límite de seguridad que permita acceder solo a las salidas. Entre ámbitos con distintos niveles de confianza, considere publicar únicamente los valores necesarios por un canal separado, como los parámetros de SSM.
 
 ```hcl
 # Pattern: Consuming outputs from another layer
@@ -1224,21 +1224,21 @@ locals {
 }
 ```
 
-### Flujo de outputs/datos
+### Flujo de salidas/datos
 
-![Diagrama de cómo los outputs de las capas de Terraform alimentan las entradas de la capa siguiente mediante referencias terraform_remote_state.](../.gitbook/assets/en-ops-01-infrastructure-setup-1.png)
+![Diagrama de cómo las salidas de las capas de Terraform alimentan las entradas de la siguiente capa mediante referencias a terraform_remote_state.](../.gitbook/assets/en-ops-01-infrastructure-setup-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-01-infrastructure-setup-1.html)
 
-### Prácticas recomendadas para administrar el estado
+### Buenas prácticas para gestionar el estado
 
-1. **Use nombres coherentes para los buckets**: `{project}-{env}-{account-id}-tfstate`
+1. **Use nombres de buckets coherentes**: `{project}-{env}-{account-id}-tfstate`
 2. **Organice por capa y color**: `network/`, `cluster/blue/`, `platform/green/`
-3. **Habilite el control de versiones**: recupérese de daños en el estado
-4. **Habilite el cifrado**: proteja los valores confidenciales del estado
-5. **Use el bloqueo nativo de S3** (Terraform 1.10 o posterior): habilite `use_lockfile = true` en la configuración del backend para bloquear el estado mediante escrituras condicionales de S3, sin DynamoDB
+3. **Habilite el versionado**: Permite recuperarse de daños en el estado
+4. **Habilite el cifrado**: Protege los valores sensibles del estado
+5. **Use el bloqueo nativo de S3** (Terraform 1.10+): Habilite `use_lockfile = true` en la configuración del backend para bloquear el estado mediante escrituras condicionales de S3, sin DynamoDB
 
-### Organización de los archivos de estado
+### Organización de archivos de estado
 
 ```
 s3://eks-platform-prod-ACCOUNT_ID-tfstate/
@@ -1260,11 +1260,11 @@ s3://eks-platform-prod-ACCOUNT_ID-tfstate/
 
 ## 7. Validación
 
-### Orden de implementación
+### Orden de despliegue
 
-Esta es una receta para un proyecto nuevo. Requiere AWS CLI, Terraform, jq y permisos de implementación. Primero, establezca DOCS_ADMIN_ARN con un ARN IAM de administrador real. Estos comandos crean recursos; revise y confirme explícitamente cada plan de terraform apply. Auto Mode puro deshabilita el add-on de CoreDNS. Establezca DOCS_ENABLE_COREDNS_ADDON=true solo si amplía esta configuración a clústeres mixtos, para consultar y fijar la versión del add-on. Las entradas generadas contienen solo los valores necesarios; incorpore las etiquetas adicionales o los permisos de equipo que necesite antes de generar el plan.
+Este procedimiento es para un proyecto nuevo. Requiere AWS CLI, Terraform, jq y permisos de despliegue. Establezca primero DOCS_ADMIN_ARN con el ARN IAM de un administrador real. Los comandos crean recursos: revise y confirme explícitamente el plan de cada terraform apply. Un clúster compuesto solo por nodos Auto Mode deshabilita el complemento CoreDNS. Establezca DOCS_ENABLE_COREDNS_ADDON=true únicamente al adaptar el ejemplo a clústeres mixtos, para consultar y fijar la versión del complemento. Los archivos de entrada generados contienen solo los valores obligatorios; incorpore cualquier etiqueta o permiso adicional de los equipos antes de generar el plan.
 
-El bucket y la región se obtienen del JSON de backend generado. TF_DATA_DIR separa la cuenta, el entorno, la raíz y el color del clúster. El ejemplo en inglés administra cada clúster en su propio estado. Proteja y respalde el estado de bootstrap; exclúyalo, junto con .terraform-data/ y los archivos de plan, de Git. No reutilice este procedimiento como proceso de migración para un estado existente.
+El bucket y la región proceden del JSON de backend generado. TF_DATA_DIR separa la cuenta, el entorno, el módulo raíz y el color del clúster. El ejemplo en inglés administra cada clúster en su propio estado. Proteja y respalde el estado de inicialización; exclúyalo de Git junto con .terraform-data/ y los archivos de plan. Evite reutilizar este procedimiento para migrar estados existentes.
 
 ```bash
 set -euo pipefail
@@ -1337,7 +1337,7 @@ done
 
 ### Comandos de verificación
 
-Ejecútelos con credenciales de AWS CLI para el principal administrador configurado. Las políticas de acceso de EKS no sustituyen el permiso IAM eks:DescribeCluster. La administración automática del creador de Terraform está deshabilitada; cuando sea necesario, use un perfil de administrador o una configuración autorizada de AssumeRole. Esto comprueba la implementación predeterminada de dos clústeres; omita los clústeres deshabilitados. Verifique las StorageClass después de configurarlas por separado mediante GitOps.
+Ejecute los comandos con credenciales de AWS CLI del principal administrador configurado. Las políticas de acceso de EKS no sustituyen el permiso IAM eks:DescribeCluster. La administración automática del creador de Terraform está deshabilitada; utilice un perfil de administrador o una configuración autorizada de AssumeRole cuando sea necesario. Estas comprobaciones abarcan el despliegue predeterminado de dos clústeres; omita los clústeres deshabilitados. Verifique las StorageClass después de configurarlas por separado mediante GitOps.
 
 ```bash
 for DOCS_COLOR in blue green; do
@@ -1355,7 +1355,7 @@ done
 
 ### Script de prueba básica
 
-El siguiente script crea un espacio de nombres temporal con nombre único y un Job de DNS en cada kube-context explícito. Valida la programación de cargas de trabajo y el DNS del clúster, pero no el tráfico de LB externo ni todas las dependencias de las aplicaciones. La limpieza comprueba el UID del espacio de nombres y los fallos devuelven un código de salida distinto de cero. Use una imagen reflejada aprobada mediante DOCS_TEST_IMAGE cuando Docker Hub no esté disponible.
+El siguiente script crea un namespace temporal con nombre único y un Job de DNS en cada contexto de Kubernetes seleccionado explícitamente. Comprueba la asignación de cargas de trabajo a nodos y el DNS del clúster, no el tráfico externo del balanceador ni todas las dependencias de las aplicaciones. La limpieza verifica el UID del namespace, y los fallos devuelven un código de salida distinto de cero. Si Docker Hub no está disponible, utilice una imagen replicada aprobada mediante DOCS_TEST_IMAGE.
 
 ```bash
 #!/usr/bin/env bash
@@ -1449,7 +1449,7 @@ bash smoke-test.sh "blue-${DOCS_ENV}" "green-${DOCS_ENV}"
 
 ### Validación de Terraform
 
-Use los mismos directorios de datos inicializados que en la receta de implementación. Un plan puede leer recursos de AWS y el estado remoto, y adquirir un bloqueo de estado; no aplica los cambios de infraestructura propuestos.
+Utilice los mismos directorios de datos inicializados que en el procedimiento de despliegue. Un plan puede leer recursos de AWS y el estado remoto y adquirir un bloqueo del estado; no aplica los cambios de infraestructura propuestos.
 
 ```bash
 export TF_DATA_DIR="$DOCS_ROOT/.terraform-data/$DOCS_ACCOUNT_ID/$DOCS_ENV/network"
@@ -1470,26 +1470,26 @@ done
 
 ## Principios de diseño clave
 
-### Terraform administra únicamente la infraestructura de AWS
+### Terraform administra solo la infraestructura de AWS
 
 Esta arquitectura sigue una separación clara:
 
-| Capa      | Administración de Terraform                  | Administración de GitOps                  |
+| Capa | Terraform administra | GitOps administra |
 | ---------- | ---------------------------------- | ------------------------------- |
-| Red    | VPC, subredes, NAT, endpoints       | -                               |
-| Clúster    | EKS, KMS, CloudWatch               | -                               |
-| Plataforma   | Add-ons, roles IAM, entradas de acceso | -                               |
-| Kubernetes | -                                  | NodePool, Deployments, Services |
+| Red | VPC, subredes, NAT, endpoints | - |
+| Clúster | EKS, KMS, CloudWatch | - |
+| Plataforma | Complementos, roles de IAM, entradas de acceso | - |
+| Kubernetes | - | NodePool, Deployments, Services |
 
-Los recursos de Kubernetes (definiciones de NodePool y Deployments de aplicaciones) se administran con GitOps de ArgoCD. Consulte [Configuración del pipeline de GitOps](04-gitops-multi-cluster.md) para obtener más información.
+ArgoCD GitOps administra los recursos de Kubernetes, como las definiciones de NodePool y los Deployments de aplicaciones. Consulte [Configuración del pipeline de GitOps](04-gitops-multi-cluster.md) para más detalles.
 
 ### Referencias cruzadas
 
-* [Introducción a EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
+* [Primeros pasos con EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
 * [Prácticas recomendadas de seguridad de EKS](../eks/05-eks-security.md)
-* [Enrutamiento ponderado de NLB y clústeres blue/green](02-infrastructure-advanced.md)
+* [Enrutamiento ponderado NLB y clústeres Blue/Green](02-infrastructure-advanced.md)
 * [Configuración del pipeline de GitOps](04-gitops-multi-cluster.md)
 
 ***
 
-< [Tabla de contenido](./README.md) | [Siguiente: Enrutamiento ponderado de NLB y clústeres blue/green](02-infrastructure-advanced.md) >
+< [Tabla de contenido](./README.md) | [Siguiente: Enrutamiento ponderado NLB y clústeres Blue/Green](02-infrastructure-advanced.md) >

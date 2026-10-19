@@ -687,7 +687,7 @@ sudo tcpdump -nni <nic> -vv 'udp port 8472'       # -vv prints the VNI
 | 「Cannot specify IPAM mode eni in tunnel mode」で agent が終了 | ENI IPAM と tunnel の併用 | `routingMode: native` を使う |
 | 別 node 間だけ Pod traffic が失敗し、同一 node 間は動作 | UDP 8472／6081 が遮断、tunnel port 間違い、node SG の自己参照なし | 両 node で `tcpdump -nni <nic> 'udp port 8472'`。SG／NACL と `Routing:` 行を確認 |
 | 大きな転送が停止し、小さな request は成功 | MTU black hole（tunnel overhead、ICMP filter） | Pod の `ip route` MTU と path MTU を比較、`ping -M do -s`。`pmtuDiscovery` 設定を検討 |
-| native Pod から外部へ通信できるが source IP が Pod IP で、返信が戻らない | masquerade 無効（ENI のデフォルト）、または宛先が native-routing CIDR 内 | `cilium-dbg status | grep Masquerading`。意図した方法で masquerade または ip-masq-agent を有効化 |
+| native Pod から外部へ通信できるが source IP が Pod IP で、返信が戻らない | masquerade 無効（ENI のデフォルト）、または宛先が native-routing CIDR 内 | `cilium-dbg status \| grep Masquerading`。意図した方法で masquerade または ip-masq-agent を有効化 |
 | cluster ごとに Pod-to-remote-node の source IP が違う | tunnel mode は masquerade し、native mode はしない（セクション9） | 意図した方式を決める。統一する場合は `enable-remote-node-masquerade` |
 | Agent log に「Falling back to legacy host routing」 | iptables masquerade または KPR 無効 | `bpf.masquerade` と KPR を有効にするか、legacy routing を受け入れる |
 | Istio sidecar traffic を迂回または破損 | Pod namespace の BPF host routing／socket-LB | `socketLB.hostNamespaceOnly=true` または `bpf.hostLegacyRouting=true` |
@@ -696,7 +696,7 @@ sudo tcpdump -nni <nic> -vv 'udp port 8472'       # -vv prints the VNI
 | node 変更後に Service flow が断続的に reset | Agent 間の Maglev seed 不一致 | すべての node で `maglev.hashSeed` を一致させる |
 | NodePort traffic が `tcpdump` に出ない | XDP acceleration | 別の場所で capture するか、debug 中だけ acceleration を無効にする |
 | EKS overlay で webhook timeout | API server から VPC 外の Pod IP に到達できない | webhook backend に `hostNetwork` を使用 |
-| NIC 上に暗号化済み packet がない | Bandwidth manager と IPsec／WireGuard の相互作用、または XDP／非 Geneve DSR 経路 | `cilium-dbg status | grep Encryption` とセクション14の表を確認 |
+| NIC 上に暗号化済み packet がない | Bandwidth manager と IPsec／WireGuard の相互作用、または XDP／非 Geneve DSR 経路 | `cilium-dbg status \| grep Encryption` とセクション14の表を確認 |
 
 一般的な調査手順：(1) `cilium-dbg status --verbose` で実効設定を確認。(2) `cilium-dbg monitor --type drop` で drop 理由（`DROP_INVALID_IDENTITY`、`DROP_INVALID_VNI` など）を確認。(3) `cilium-dbg bpf ipcache list` に宛先と正しい tunnel endpoint があることを確認。(4) 両 node の NIC と `cilium_vxlan`／`cilium_geneve` 上で capture。(5) 起動時 fallback を含め agent log を確認。
 

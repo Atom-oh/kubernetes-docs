@@ -1,11 +1,11 @@
 # クラスターアーキテクチャ
 
 > **サポート対象バージョン**: Kubernetes 1.35, 1.36, 1.37
-> **最終更新**: October 12, 2026
+> **最終更新**: 2026年10月16日
 
-バージョンヘッダーはアップストリーム Kubernetes を指します。このプロジェクトでは、直近 3 つのマイナーリリース（1.35～1.37）のリリースブランチを維持しています。アップストリーム 1.34 はメンテナンスモードであり、EKS での AWS サポート終了日とは別に、**October 27, 2026** のサポート終了までパッチリリースを受け取ります。
+バージョンヘッダーはアップストリーム Kubernetes を指します。このプロジェクトでは、直近 3 つのマイナーリリース（1.35～1.37）のリリースブランチを維持しています。アップストリーム 1.34 はメンテナンスモードであり、EKS での AWS サポート終了日とは別に、**2026年10月27日** のサポート終了までパッチリリースを受け取ります。
 
-October 12, 2026 時点で、EKS の標準サポートは 1.34～1.37 を対象としており、EKS 1.37 は October 1, 2026 に利用可能になりました。バージョンを選択する前に、[Kubernetes release status](https://kubernetes.io/releases/) と [EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) を確認してください。
+2026年10月12日時点で、EKS の標準サポートは 1.34～1.37 を対象としており、EKS 1.37 は 2026年10月1日に利用可能になりました。バージョンを選択する前に、[Kubernetes のリリース状況](https://kubernetes.io/releases/) と [EKS のライフサイクル](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) を確認してください。
 
 以下のコンポーネントコマンドは自己管理クラスターの例です。EKS はそのコントロールプレーンを管理します。イメージタグとインフラストラクチャ ID は例であるため、使用前に互換性があり保守されているイメージを選択し、プレースホルダーを置き換えてください。
 
@@ -794,7 +794,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: web-server
-        image: nginx:1.30.4
+        image: nginx:1.30.6
 ```
 
 **PodDisruptionBudget の例**:
@@ -1235,7 +1235,7 @@ spec:
     spec:
       containers:
       - name: cluster-autoscaler
-        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.36.0
+        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.36.1
         command:
         - ./cluster-autoscaler
         - --cloud-provider=aws
@@ -1523,119 +1523,133 @@ resources:
 
 ### セキュリティのベストプラクティス
 
-Kubernetes クラスターセキュリティに関するベストプラクティス:
+Kubernetes クラスターのセキュリティに関するベストプラクティス:
 
-1. **最小権限の原則**: 必要最小限の権限のみを付与
-2. **定期的な更新**: クラスターとコンポーネントを定期的に更新
-3. **ネットワーク分離**: network policy を通じて Pod 間通信を制限
-4. **イメージセキュリティ**: 信頼できるイメージのみを使用し、脆弱性スキャンを実施
-5. **監査ログ**: クラスターアクティビティ用の監査ログを有効化
-6. **セキュリティベンチマーク**: CIS ベンチマークなどのセキュリティ標準に準拠
+1. **最小権限の原則**: 必要最小限の権限のみを付与する
+2. **定期的な更新**: クラスターとコンポーネントを定期的に更新する
+3. **ネットワーク分離**: NetworkPolicy により Pod 間通信を制限する
+4. **イメージのセキュリティ**: 信頼できるイメージのみを使い、脆弱性スキャンを実施する
+5. **監査ログ**: クラスターのアクティビティに関する監査ログを有効にする
+6. **セキュリティベンチマーク**: CIS ベンチマークなどのセキュリティ標準に準拠する
 
-## クラスターアップグレード
+## クラスターのアップグレード
 
-Kubernetes クラスターのアップグレードは、新機能、セキュリティパッチ、バグ修正を適用するために必要です。アップグレードは慎重に計画し、実行する必要があります。
+Kubernetes クラスターのアップグレードは、新機能、セキュリティパッチ、バグ修正を適用するために必要です。アップグレードは慎重に計画して実行する必要があります。
 
-### 2026 年 8 月の更新: Kubernetes v1.37 "Garhwal" リリース
+### 2026年8月の更新: Kubernetes v1.37「Garhwal」のリリース
 
-[Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/) は、予定どおり 2026 年 8 月 26 日にリリースされました。このリリースは 67 の拡張で構成され、16 が Stable に昇格し、23 が Beta に昇格、残りが Alpha として導入されました。主な変更点:
+[Kubernetes v1.37「Garhwal」](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/) は予定どおり 2026年8月26日にリリースされました。このリリースには 67 件の拡張が含まれ、16 件が Stable、23 件が Beta に昇格し、27 件が Alpha として導入され、1 件が非推奨化または削除となりました。主な内容は次のとおりです。
 
-- **Pod certificates と ClusterTrustBundles が Stable に昇格**: Service Account トークンの代替としてワークロード用 X.509 証明書を自動発行およびローテーションする PodCertificate 機能と、trust anchor を配布する ClusterTrustBundle リソースが標準機能になりました（[detailed post](https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/)）
-- **Metrics API（metrics.k8s.io）が GA に**: `kubectl top` と HPA が使用するリソースメトリクス API が Stable に昇格しました（[detailed post](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/)）
-- その他の **Stable**: 複数の DRA（Dynamic Resource Allocation）機能、回復性のある watchcache 初期化など / **Beta**: HPA の scale-to-zero、manifest ベースの admission control 設定など / **Alpha**: Pod レベルの checkpoint と restore など
-- **非推奨**: kube-dns と `kubectl run --filename/-f` は非推奨です。`ipvs` はすでに v1.35 で非推奨となっており、Static Pod は Secret や ConfigMap を参照できなくなりました。cgroup v1 サポートの削除も引き続き進んでいます。
+- **Pod 証明書と ClusterTrustBundle が Stable に昇格**: Service Account トークンに代わるワークロード向け X.509 証明書を自動発行・ローテーションする PodCertificate 機能と、信頼アンカーを配布する ClusterTrustBundle リソースが標準機能になりました（[詳細](https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/)）。
+- **Metrics API（metrics.k8s.io）が GA に**: `kubectl top` と HPA が使うリソースメトリクス API が Stable に昇格しました（[詳細](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/)）。
+- その他の **Stable** には複数の DRA（Dynamic Resource Allocation）機能や回復性を高めた watchcache 初期化などが含まれます。**Beta** には HPA の scale-to-zero やマニフェストベースの admission control 設定など、**Alpha** には Pod レベルの checkpoint と restore などが含まれます。
+- **非推奨化**: kube-dns と `kubectl run --filename/-f` が非推奨になりました。v1.35 で非推奨となった kube-proxy の `ipvs` モードは、v1.40 でデフォルト無効化、v1.43 で削除される予定です（[KEP-5495](https://kep.k8s.io/5495)）。また、Static Pod から Secret や ConfigMap を参照できなくなり、cgroup v1 サポートの削除も引き続き進んでいます。
 
-アップグレード前に、[official release notes](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md) の非推奨事項と削除事項を必ず確認してください。
+アップグレード前に、[公式リリースノート](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md)で非推奨化および削除の項目を必ず確認してください。
+
+### 2026年9月の更新: v1.37.1 とその他の通常パッチリリース
+
+2026年9月23日、サポート対象のすべてのマイナーバージョン向けにパッチがリリースされました: [v1.37.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.1)、v1.36.5、v1.35.9、v1.34.12。v1.37.1 は通常のバグ修正リリースです。ビルドの Go バージョンが 1.26.8 になり、たとえば `spec.deviceSelector` を持たない DeviceTaintRule によってすべての DRA デバイスがスケジュール不能になる問題や、ポートマッピングのない HNS ロードバランサーを列挙する際に Windows の kube-proxy（winkernel）がパニック終了する問題などが修正されました。
+
+同じ週には、v1.37 の詳細記事 [PersistentVolumeClaim が最後に使用された時刻の追跡（Beta）](https://kubernetes.io/blog/2026/09/21/kubernetes-v1-37-pvc-last-used-time/) も公開されました。`PersistentVolumeClaimUnusedSinceTime` フィーチャーゲートは Beta に昇格し、デフォルトで有効になりました。これにより PVC 保護コントローラーは各 PVC に `Unused` 条件を追加します。実行中の Pod が参照していない孤立 PVC を、独自ツールを作成せずに識別できます。
+
+### 2026年9月の更新: v1.37 の機能詳細記事
+
+2026年9月14日から16日にかけて、Kubernetes ブログで v1.37 の機能に関する詳細記事が公開されました。
+
+- **[Memory QoS が Beta に昇格](https://kubernetes.io/blog/2026/09/14/kubernetes-v1-37-memory-qos-graduates-to-beta/)**: `MemoryQoS` フィーチャーゲートは Beta となり、v1.37 の kubelet でデフォルト有効になりました。cgroup v2 を実行する Linux ノードでは、メモリーコントローラーを使ってコンテナメモリーの扱いをカーネルへ細かく伝えます。kubelet のデフォルト設定では `memory.high`、`memory.min`、`memory.low` の値は書き込まれないため、`memoryThrottlingFactor` などのフィールドを明示的に設定するまでは動作に変化はありません。
+- **[Pod レベルのリソースマネージャーが Beta に昇格](https://kubernetes.io/blog/2026/09/15/kubernetes-v1-37-pod-level-resource-managers-beta/)**（デフォルトでは無効）: kubelet の Topology Manager、CPU Manager、Memory Manager が、NUMA に沿った配置のために Pod レベルのリソース宣言（`.spec.resources`）を直接利用できるようになりました。これにより、主コンテナには専用コアを割り当てつつ、軽量なサイドカーは Pod 単位で分離されたプールを共有するハイブリッド割り当てが可能になります。
+- **[コンテナストレージの強化](https://kubernetes.io/blog/2026/09/16/kubernetes-v1-37-hardening-container-storage/)**: 新しい `emptyDir` 権限モードと `noexec`、`nosuid`、`nodev` のバインドマウントオプションにより、書き込み可能な Volume からの任意バイナリ実行を禁止するなどのセキュリティポリシーを、回避策なしで Kubernetes 内に直接適用できます。
 
 ### アップグレード戦略
 
-Kubernetes クラスターのアップグレード戦略:
+Kubernetes クラスターのアップグレード戦略には次のものがあります。
 
-1. **Blue/Green Upgrade**: 新バージョンのクラスターを別途作成し、ワークロードを移行
-2. **In-Place Upgrade**: 既存クラスターを直接アップグレード
-3. **Canary Upgrade**: 検証のため、最初に一部のノードのみをアップグレード
+1. **Blue/Green アップグレード**: 新しいバージョンのクラスターを別途作成し、ワークロードを移行する
+2. **インプレースアップグレード**: 既存クラスターを直接アップグレードする
+3. **カナリアアップグレード**: 検証のため、まず一部のノードだけをアップグレードする
 
-### アップグレード順序
+### アップグレードの順序
 
-Kubernetes クラスターアップグレードの一般的な順序:
+Kubernetes クラスターの一般的なアップグレード順序:
 
 1. **コントロールプレーンのアップグレード**: kube-apiserver、kube-controller-manager、kube-scheduler、etcd
-2. **DNS および CNI のアップグレード**: CoreDNS、CNI プラグイン、その他の主要アドオン
-3. **ワーカーノードのアップグレード**: ワーカーノードを順次アップグレード
+2. **DNS と CNI のアップグレード**: CoreDNS、CNI プラグイン、その他の主要アドオン
+3. **ワーカーノードのアップグレード**: ワーカーノードを順番にアップグレードする
 
-**kubeadm アップグレードシーケンス**:
+**kubeadm のアップグレード手順**:
 
-[version-specific kubeadm upgrade guide](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/) に従い、対象マイナーの `pkgs.k8s.io` パッケージリポジトリを構成してください。一度にアップグレードするのは 1 マイナーのみです。
+[対象バージョン別の kubeadm アップグレードガイド](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/) に従い、対象マイナーバージョン用の `pkgs.k8s.io` パッケージリポジトリを設定してください。一度にアップグレードするマイナーバージョンは 1 つだけにします。
 
-1. etcd をバックアップし、アドオンの互換性を確認します。最初のコントロールプレーンノードで `kubeadm` をアップグレードし、`kubeadm upgrade plan` を実行してから、`kubeadm upgrade apply <target-version>` を実行します。
-2. 追加のコントロールプレーンノードで `kubeadm` をアップグレードし、`kubeadm upgrade node` を実行します。
-3. 各ノードの kubelet をアップグレードする前に drain します。選択したパッチに kubelet/kubectl パッケージをアップグレードし、systemd をリロードして kubelet を再起動し、Ready を確認してから uncordon します。
-4. ワーカーでは、`kubeadm` をアップグレードし、`kubeadm upgrade node` を実行してから、drain/kubelet/uncordon のシーケンスを実行します。kubelet を API サーバーより新しいバージョンにしないでください。
+1. etcd をバックアップし、アドオンの互換性を確認します。最初のコントロールプレーンノードで `kubeadm` をアップグレードし、`kubeadm upgrade plan` を実行してから `kubeadm upgrade apply <target-version>` を実行します。
+2. 追加のコントロールプレーンノードでは、`kubeadm` をアップグレードして `kubeadm upgrade node` を実行します。
+3. kubelet をアップグレードする前に各ノードを drain します。選択したパッチバージョンの kubelet/kubectl パッケージへ更新し、systemd を再読み込みして kubelet を再起動します。ノードが Ready であることを確認してから uncordon します。
+4. ワーカーノードでは `kubeadm` をアップグレードして `kubeadm upgrade node` を実行し、その後 drain/kubelet/uncordon の手順を行います。kubelet を API サーバーより新しいバージョンにしてはいけません。
 
 ### アップグレード時の考慮事項
 
-Kubernetes クラスターをアップグレードする際の考慮事項:
+Kubernetes クラスターをアップグレードする際は、次の点を考慮してください。
 
-1. **API の変更**: 新バージョンの API 変更を確認
-2. **Feature Gate**: 新しい Feature Gate とデフォルト値の変更を確認
-3. **依存関係**: CNI、CSI などの依存コンポーネントの互換性を確認
-4. **ダウンタイム**: アップグレード中に予想されるダウンタイムを計画
-5. **ロールバック計画**: 問題発生時のロールバック計画を確立
+1. **API の変更**: 新バージョンでの API 変更を確認する
+2. **フィーチャーゲート**: 新しいフィーチャーゲートとデフォルト値の変更を確認する
+3. **依存関係**: CNI、CSI などの依存コンポーネントとの互換性を確認する
+4. **ダウンタイム**: 想定されるダウンタイムを計画する
+5. **ロールバック計画**: 問題に備えてロールバック計画を立てる
 
 ### アップグレードのベストプラクティス
 
-Kubernetes クラスターアップグレードに関するベストプラクティス:
+Kubernetes クラスターをアップグレードする際のベストプラクティス:
 
-1. **まずテスト環境でテスト**: 本番アップグレード前にテスト環境で検証
-2. **段階的なアップグレード**: 一度に 1 マイナーバージョンずつアップグレード
-3. **バックアップ**: アップグレード前に etcd データをバックアップ
-4. **ドキュメント化**: アップグレード手順と結果を記録
-5. **監視**: アップグレード中および後にクラスター状態を監視
-6. **アップグレードウィンドウ**: トラフィックの少ない時間帯にアップグレードを実行
+1. **最初にテスト環境で検証**: 本番環境をアップグレードする前にテスト環境で検証する
+2. **段階的なアップグレード**: 一度に 1 マイナーバージョンずつアップグレードする
+3. **バックアップ**: アップグレード前に etcd データをバックアップする
+4. **記録**: アップグレード手順と結果を文書化する
+5. **監視**: アップグレード中と完了後にクラスター状態を監視する
+6. **アップグレード時間帯**: トラフィックが少ない時間帯に実施する
 
 ## Amazon EKS クラスターアーキテクチャ
 
-Amazon EKS（Elastic Kubernetes Service）は AWS が提供するマネージド Kubernetes サービスです。EKS は Kubernetes のすべての基本機能を提供するとともに、AWS サービスとの統合および管理の利便性を追加します。
+Amazon EKS（Elastic Kubernetes Service）は AWS が提供するマネージド Kubernetes サービスです。EKS は Kubernetes の基本機能に加え、AWS サービスとの統合と運用管理の利便性を提供します。
 
 ### EKS アーキテクチャの概要
 
 EKS クラスターは次のコンポーネントで構成されます。
 
-1. **EKS Control Plane**: AWS が管理する Kubernetes コントロールプレーン
-2. **EKS Nodes**: ユーザーが管理するワーカーノード（EC2 インスタンス）
-3. **EKS Managed Node Groups**: AWS が管理するノードグループ
-4. **EKS Fargate Profiles**: サーバーレスコンテナ実行環境
-5. **VPC と Subnet**: クラスターネットワーキング用の VPC と Subnet
+1. **EKS コントロールプレーン**: AWS が管理する Kubernetes コントロールプレーン
+2. **EKS ノード**: ユーザーが管理するワーカーノード（EC2 インスタンス）
+3. **EKS マネージドノードグループ**: AWS が管理するノードグループ
+4. **EKS Fargate プロファイル**: サーバーレスのコンテナ実行環境
+5. **VPC とサブネット**: クラスターネットワーキング用の VPC とサブネット
 
 **EKS アーキテクチャ図**:
 
-![AWS Cloud が、マネージド EKS コントロールプレーン、顧客が運用するワーカーノード、およびクラスターが依存する AWS サービスと VPC ネットワーキングをホストする様子を示すアーキテクチャ図。](../.gitbook/assets/en-core-01-cluster-architecture-11.png)
+![AWS クラウドが、マネージド EKS コントロールプレーン、顧客が運用するワーカーノード、およびクラスターが依存する AWS サービスと VPC ネットワーキングをホストする様子を示すアーキテクチャ図。](../.gitbook/assets/en-core-01-cluster-architecture-11.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-11.html)
 
-### EKS Control Plane
+### EKS コントロールプレーン
 
-EKS コントロールプレーンは AWS によって管理され、複数の Availability Zone にわたる高可用性を提供します。
+EKS コントロールプレーンは AWS が管理し、複数のアベイラビリティーゾーンにまたがる高可用性を提供します。
 
 **主な機能**:
-1. **マネージドサービス**: AWS がコントロールプレーンの保守とアップグレードを管理
-2. **高可用性**: 複数の Availability Zone にデプロイ
-3. **Auto Scaling**: 負荷に応じて自動的にスケーリング
-4. **セキュリティ**: AWS セキュリティサービスと統合
+1. **マネージドサービス**: AWS がコントロールプレーンの保守とアップグレードを管理する
+2. **高可用性**: 複数のアベイラビリティーゾーンにデプロイされる
+3. **自動スケーリング**: 負荷に応じて自動的にスケールする
+4. **セキュリティ**: AWS のセキュリティサービスと統合される
 
-### EKS ノードタイプ
+### EKS ノードの種類
 
-EKS はさまざまなタイプのノードをサポートします。
+EKS はさまざまな種類のノードをサポートします。
 
-1. **自己管理ノード**: ユーザーが EC2 インスタンスを直接管理
-2. **Managed Node Groups**: AWS がノードのライフサイクルを管理
-3. **Fargate**: サーバーレスコンテナ実行環境
-4. **EKS Auto Mode**: AWS がコンピューティングと統合インフラストラクチャを管理
-5. **EKS Hybrid Nodes**: 顧客管理のオンプレミスノード
+1. **自己管理ノード**: ユーザーが EC2 インスタンスを直接管理する
+2. **マネージドノードグループ**: AWS がノードのライフサイクルを管理する
+3. **Fargate**: サーバーレスのコンテナ実行環境
+4. **EKS Auto Mode**: AWS がコンピューティングと統合インフラストラクチャを管理する
+5. **EKS Hybrid Nodes**: 顧客が管理するオンプレミスノード
 
-Bottlerocket はノードオペレーティングシステムであり、個別のコンピューティング管理タイプではありません。
+Bottlerocket はノード OS であり、独立したコンピューティング管理方式ではありません。
 
-**Managed Node Group の例**:
+**マネージドノードグループの例**:
 ```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
@@ -1754,7 +1768,7 @@ spec:
     spec:
       containers:
       - name: cloudwatch-agent
-        image: amazon/cloudwatch-agent:1.247347.6b250880
+        image: amazon/cloudwatch-agent:1.300073.0b1828
         # ... additional configuration
 ```
 

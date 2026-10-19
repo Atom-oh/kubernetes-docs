@@ -80,6 +80,13 @@ Requirement: surviving replicas >= required surviving replicas
 
 コンテナーレベルのインプレース resize は1.35で GA となり、MutatingAdmissionPolicy (MAP) は1.36で GA となりました。MAP は mutating admission webhook の代替として、API server 内で CEL を使います。この例では外部 webhook server をデプロイしません。[S14]、[S16]
 
+| フェーズ | 担当する動作 | 維持する条件 |
+|---|---|---|
+| 新しい Pod の作成 | workload template で起動時 CPU とメモリーの request/limit を同じ値にする。MAP は opt-in Pod に不足している `resizePolicy` を注入する | 作成時から `Guaranteed` を維持し、明示済みの resize policy は保持する |
+| アプリケーションの初期化 | 起動時の大きな CPU 予算を使い、実際の `startupProbe` で初期化完了を確認する | `Running` だけでは不十分。readiness と LB readiness を別々に確認する |
+| CPU downscale の要求 | 別の resizer が `pods/resize` を使って CPU request と limit の両方を PATCH する | CPU policy は `NotRequired`、メモリーは変更しない。同じ Pod UID と container を維持する |
+| 定常運転 | kubelet が適用した CPU/メモリーと `qosClass` を確認し、代表的な負荷で SLO を測る | downscale 後も `Guaranteed` を維持し、API での受理、実際の適用、サービス品質を区別する |
+
 この方法で短縮を狙う「初期化時間」とは、アプリケーションの**CPU 集約型の初期化または warmup 段階**です。完了済みの通常 `initContainers` のリソースは変更しません。イメージ pull、ノード起動、外部 I/O の待ち時間、単純な `sleep` が支配的なら、CPU 設定を変えても所要時間は比例して短縮しません。roadmap の BusyBox `sleep` 例は状態遷移を示すものであり、起動性能のベンチマークではありません。
 
 次の**比較用プロファイルの例**は roadmap の値を使用します。どのプロファイルも、コンテナーのメモリー request/limit を `64Mi` に揃えています。リソース値を決める前に、実際のアプリケーションの起動、ピーク負荷、メモリー使用量を測定してください。

@@ -1,8 +1,8 @@
 # Amazon EKS のトラブルシューティング
 
-> **最終更新日**: 2026年9月12日
+> **最終更新**: 2026年9月12日
 
-Amazon EKS クラスターの運用中には、さまざまな問題が発生する可能性があります。このドキュメントでは、EKS クラスターで起こり得る一般的な問題とその解決策について説明します。
+Amazon EKS クラスターの運用では、さまざまな問題が発生する可能性があります。このドキュメントでは、EKS クラスターでよく起きる問題と、その解決方法を説明します。
 
 ## 目次
 
@@ -15,28 +15,28 @@ Amazon EKS クラスターの運用中には、さまざまな問題が発生す
 7. [ログとモニタリングに関する問題](#logging-and-monitoring-issues)
 8. [パフォーマンスに関する問題](#performance-issues)
 9. [アップグレードに関する問題](#upgrade-issues)
-10. [一般的なエラーメッセージと解決策](#common-error-messages-and-solutions)
+10. [よくあるエラーメッセージと解決方法](#common-error-messages-and-solutions)
 
 ## トラブルシューティングの基本 {#troubleshooting-basics}
 
-![EKS のトラブルシューティングの基本: 症状を特定し、証拠を収集し、仮説を検証して、修復、確認、記録を行います。](../.gitbook/assets/en-eks-09-eks-troubleshooting-0.png)
+![EKS トラブルシューティングの基本: 症状を特定し、証拠を収集して仮説を検証し、修復、確認、記録を行います。](../.gitbook/assets/en-eks-09-eks-troubleshooting-0.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-0.html)
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-0.html)
 
 ### トラブルシューティングの進め方
 
-1. 症状、影響を受けるユーザーやワークロード、およびインシデントの発生期間を特定します。
+1. 症状、影響を受けるユーザーや workload、発生時間帯を特定します。
 2. リソースを変更する前に、関連する状態、ログ、イベント、メトリクスを収集します。
-3. 証拠と照らし合わせて複数の仮説を比較します。一般的なエラーを、原因が立証されたものとして扱わないでください。
-4. データや可用性への影響が把握できている、担当者が明確な対象を絞った修正を適用します。
-5. コマンドの終了ステータスだけでなく、アプリケーションの動作とメトリクスで復旧を確認します。
-6. 原因、変更内容、結果、残る不確実性、および予防策を記録します。
+3. 複数の仮説を証拠と照らし合わせます。一般的なエラーだけで原因が確定したと判断しないでください。
+4. データや可用性への影響が分かっている、対象を絞った修正を、責任者が管理する経路で適用します。
+5. コマンドの終了コードだけでなく、アプリケーションの動作とメトリクスで復旧を確認します。
+6. 原因、変更、結果、残る不確実性、再発防止策を記録します。
 
-この章のコマンドは、レビュー済み環境向けのテンプレートであり、最初から最後まで一度に実行する単一のスクリプトではありません。リソースの照会、デバッグ用ワークロードの作成、コンポーネントの再起動、インフラストラクチャの削除は、それぞれ影響が異なります。このレビューでは、稼働中の AWS/Kubernetes 操作は実施していません。
+この章のコマンドは、レビュー済み環境に合わせて使うテンプレートであり、上から順に実行する単一スクリプトではありません。リソースの照会、デバッグ workload の作成、コンポーネントの再起動、インフラストラクチャの削除では影響が異なります。このレビューでは、AWS や Kubernetes に対する実操作は行っていません。
 
-### 基本的なツールとコマンド
+### 必要なツールとコマンド
 
-**既存の**クラスターでは、対象のアカウント、リージョン、クラスター、kubectl コンテキストを設定し、それらが一致することを確認します。任意のコンテキスト別名からクラスター名を推測しないでください。使用可能なクラスターが作成前の段階で作成に失敗した場合は、代わりに「作成」セクションにあるアカウント/リージョンと元のリクエスト/スタックの証拠を使用します。
+**既存**クラスターでは、対象のアカウント、リージョン、クラスター、kubectl コンテキストを明示し、それらが一致することを確認します。任意のコンテキスト別名からクラスター名を推測しないでください。有効なクラスターができる前に作成が失敗した場合は、代わりに「クラスターの作成」節のアカウント、リージョン、元のリクエストやスタックの証拠を使います。
 
 ```bash
 set -euo pipefail
@@ -68,7 +68,7 @@ aws eks list-addons --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
 eksctl get nodegroup --cluster "$CLUSTER_NAME" --region "$AWS_REGION"
 ```
 
-これらのコマンドで一覧表示されるのは、マネージドノードグループとインストール済みの EKS アドオンであり、すべてのセルフマネージドコントローラーやコンピューティングリソースではありません。手順を選ぶ前に、実際の所有者とコンピューティングの種類を記録してください。
+これらのコマンドで一覧できるのは、マネージドノードグループとインストール済みの EKS アドオンです。すべてのセルフマネージドコントローラーやコンピューティングリソースが表示されるわけではありません。手順を選ぶ前に、実際の所有者とコンピューティングタイプを記録します。
 
 #### kubectl
 
@@ -81,13 +81,13 @@ kubectl --context "$KUBE_CONTEXT" get events -A --sort-by='.metadata.creationTim
 kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" describe pod "$POD_NAME"
 ```
 
-影響を受ける namespace、Pod、コンテナ、ノードを明示的に指定してください。`describe` の出力やアプリケーションログには、機密性の高い運用情報が含まれる場合があります。`kubectl auth can-i` は特定の操作に対する認可を確認します。`aws sts get-caller-identity` は AWS 認証情報を特定するものであり、どちらのコマンドも単独ではネットワーク接続や Kubernetes のすべての権限を証明しません。
+対象の namespace、Pod、コンテナ、ノードを明示します。`describe` の出力やアプリケーションログには、機微な運用情報が含まれることがあります。`kubectl auth can-i` は特定の操作に対する認可を確認します。`aws sts get-caller-identity` は AWS 資格情報の主体を識別します。どちらも単独ではネットワーク接続や Kubernetes 権限全体を証明しません。
 
 ### ログの収集と分析
 
-#### EKS コントロールプレーンのログ
+#### EKS コントロールプレーンログ
 
-既存のログ記録設定と、範囲を限定したインシデント期間を確認します。
+既存のログ設定と、対象を絞った障害時間帯を確認します。
 
 ```bash
 set -euo pipefail
@@ -102,18 +102,18 @@ aws logs filter-log-events --region "$AWS_REGION" \
   --max-items 200 --output json --no-cli-pager
 ```
 
-コントロールプレーンのログ記録を有効にするには、固有の更新 ID、権限、CloudWatch 料金を伴う別の `UpdateClusterConfig` 変更が必要です。過去のログを復元するものではなく、アプリケーション/ホストログの収集を有効にするものでもありません。ロググループが見つからない、リクエストが拒否された、または対象期間のログが空である場合は、可視性に制限があることを示します。アプリケーション/ホストログには、`/aws/containerinsights/<cluster>/...` または実際のコレクター送信先を使用します。
+コントロールプレーンログの有効化は、独自の update ID、権限、CloudWatch 料金を伴う別個の `UpdateClusterConfig` 変更です。過去のログは復元されず、アプリケーションやホストのログ収集も有効になりません。ロググループがない、リクエストが拒否された、対象時間帯のログが空、といった状態は可視性上の制限を示します。アプリケーションやホストのログには `/aws/containerinsights/<cluster>/...` または実際の collector の保存先を使います。
 
-#### ノードのログ
+#### ノードログ
 
-オペレーターがアクセスできる標準 Linux EC2 ノードでは、セッションを開く前にノードの `spec.providerID`、アカウント/リージョン、SSM の前提条件を確認します。
+オペレーターがアクセスできる標準 Linux EC2 ノードでは、セッションを開始する前にノードの `spec.providerID`、アカウント、リージョン、SSM の前提条件を確認します。
 
 ```bash
 : "${INSTANCE_ID:?Verify the node EC2 ProviderID and account/Region first}"
 aws ssm start-session --target "$INSTANCE_ID" --region "$AWS_REGION"
 ```
 
-次のコマンドはローカル端末ではなく、**ノードのセッション内で**実行します。systemd/containerd の例は、ノードイメージにこれらのツールが含まれていることを前提としています。Bottlerocket、Fargate、Auto Mode では、サポートされている診断方法を使用してください。
+次のコマンドはローカル端末ではなく、**そのノードへのセッション内で**実行します。これらの systemd/containerd の例は、ノードイメージに該当ツールがあることを前提としています。Bottlerocket、Fargate、Auto Mode では、サポートされている診断経路を使ってください。
 
 ```bash
 sudo journalctl -u kubelet --since "15 minutes ago" --no-pager
@@ -123,9 +123,9 @@ df -i
 free -m
 ```
 
-現在の EKS 最適化 Linux ノードでは containerd を使用します。これらのノードでは、Docker デーモンのログは kubelet のランタイムログではありません。イメージの削除、ジャーナルの消去、何らかの再起動を行う前に、ログとディスク/ inode の証拠を保存してください。正常でないノードで `kubectl top` のメトリクスが取得できなくても、それだけで CPU/メモリの枯渇が立証されるわけではありません。
+現在の EKS 最適化 Linux ノードは containerd を使います。そのノードで Docker daemon のログを調べても、kubelet のランタイムログにはなりません。イメージを prune したり、journal を vacuum したり、何かを再起動したりする前に、ログ、ディスク使用量、inode の証拠を保存してください。不健全なノードで `kubectl top` のメトリクスがないことだけでは、CPU やメモリが枯渇したとは判断できません。
 
-#### Pod のログ
+#### Pod ログ
 
 ```bash
 set -euo pipefail
@@ -137,7 +137,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" logs "$POD_NAME" \
   -c "$CONTAINER_NAME" --previous --tail=200 --timestamps=true
 ```
 
-`--previous` が対象とするのは、**同じ Pod 内**にある、指定したコンテナの直前の終了済みインスタンスです。削除済みの前身 Pod のログは取得できません。保持された履歴はログバックエンドを使用してください。通常のコンテナと init コンテナの両方について、ステータス、readiness、終了理由を確認します。
+`--previous` が参照するのは、**同じ Pod 内**で以前に終了した、指定コンテナのインスタンスです。削除済みの前任 Pod のログは取得できません。保持された履歴はログバックエンドで確認します。通常コンテナと init container の状態、readiness、終了理由も調べてください。
 
 ### 診断情報の収集
 
@@ -155,27 +155,27 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
 printf 'Evidence saved to %s; assess the findings before remediation.\n' "$EVIDENCE_DIR"
 ```
 
-照会に失敗すると、この例はそこで停止します。既存のファイルは部分的な証拠です。範囲を絞ったインベントリで十分な場合は、無差別な `cluster-info dump` や全 Pod の詳細表示を避け、共有前に証拠を確認して機密情報をマスキングしてください。
+照会に失敗すると、この例は停止します。既存ファイルは部分的な証拠です。対象を絞った一覧で足りる場合は、無差別に `cluster-info dump` を実行したり、全 Pod の詳細を取得したりしないでください。共有前に証拠を確認し、機微情報を削除します。
 
-リソースの逼迫については、requests/limits、ノードの割り当て可能リソース、Metrics Server を利用できる場合は `kubectl top` を比較します。アクセス可能なノードでは、`df -h` と `df -i` の両方を確認します。空きバイト数があっても inode の枯渇は否定できません。ノードデバッグ Pod には独自のルートファイルシステムがあり、ホストのルートは `/host` にマウントされます。対象パスを指定しない `df -h` では、誤ったファイルシステムを調べる可能性があります。このような Pod の作成には、レビュー済みの namespace、イメージ、デバッグプロファイル、権限、クリーンアップ計画が必要です。
+リソース圧力を調べるときは、requests/limits、ノードの割り当て可能リソース、Metrics Server がある場合は `kubectl top` を比較します。アクセス可能なノードでは `df -h` と `df -i` の両方を確認します。空きバイト数があっても inode 枯渇は起こり得ます。ノードデバッグ Pod に固有の root filesystem があり、ホストの root は `/host` にマウントされています。対象パスを指定せずに `df -h` を実行すると、別の filesystem を調べる場合があります。この種の Pod を作成するには、レビュー済みの namespace、イメージ、debug profile、権限、cleanup が必要です。
 
-ネットワーク診断では、送信元の Pod/namespace/ノード、宛先、プロトコル、ポートを特定します。適用されるポリシーと送信元のリゾルバーを先に確認します。新しく作成したデバッグ Pod は、影響を受けるワークロードとはラベル、ID、DNS、ルーティングが異なる場合があります。ICMP ping では、TCP/UDP アプリケーションへの到達性は証明できません。許可された実際の経路で範囲を限定したテストを行い、所有者とともにツールとクリーンアップを準備してください。一般的な名前で、バージョン固定されていない `dnsutils`/`netshoot` Pod を繰り返し作成するのは避けます。
+ネットワーク診断では、送信元 Pod/namespace/ノード、宛先、protocol、port を特定します。最初に適用対象の policy と送信元の resolver を確認してください。新しく作った debug Pod は、問題の workload と label、identity、DNS、routing が異なる場合があります。ICMP ping の成功は、TCP/UDP アプリケーションに到達できる証明にはなりません。許可された経路で範囲を限定してテストし、名前の衝突する unpinned `dnsutils`/`netshoot` Pod を何度も作らず、所有者と相談してツールと cleanup を準備します。
 
-出典: [EKS のトラブルシューティング](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)、[Kubernetes のログ](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/)、[ノードのデバッグ](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/)。
+参考資料: [EKS トラブルシューティング](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)、[Kubernetes logs](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/)、[ノードデバッグ](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/)。
 
 ## クラスターの作成と管理に関する問題 {#cluster-creation-and-management-issues}
 
-![調査すべき仮説とともに、クラスターの作成、エンドポイントへのアクセス、削除に関する症状を示します。](../.gitbook/assets/en-eks-09-eks-troubleshooting-1.png)
+![クラスターの作成、endpoint アクセス、削除に関する症状と調査すべき仮説。](../.gitbook/assets/en-eks-09-eks-troubleshooting-1.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-1.html)
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-1.html)
 
 ### クラスター作成の失敗
 
 #### よくある原因
 
-失敗したリクエストまたは CloudFormation イベントの詳細を確認し、呼び出し元の権限、クラスターサービスロールの信頼関係/ポリシー、サービスクォータ、サポート対象のサブネット/AZ の選択、IP 容量、名前の競合、サービスの可用性を調べます。これらは仮説であり、可能性の高さは実際のエラーによって異なります。
+正確な失敗リクエストまたは CloudFormation event を調べ、呼び出し元の権限、クラスター service role の信頼関係と policy、service quota、サポートされる subnet/AZ の選択、IP 容量、名前の競合、service の可用性を確認します。これらは仮説であり、実際のエラーによって可能性が異なります。
 
-#### トラブルシューティングの手順
+#### トラブルシューティング手順
 
 ```bash
 set -euo pipefail
@@ -193,23 +193,23 @@ aws cloudtrail lookup-events --region "$AWS_REGION" \
   --max-items 20 --output json
 ```
 
-アタッチされたポリシーだけでは、呼び出し元に実効的に付与される権限は分かりません。インラインポリシー、アクセス許可境界、セッションポリシー、Organizations の制御も含めて確認してください。`AmazonEKSClusterPolicy` は EKS クラスターのサービスロールに適用するものであり、人間のユーザーにアタッチしても、必要な `eks:CreateCluster`/`iam:PassRole` 権限や Kubernetes アクセス権は付与されません。サービスリンクロールの作成にも固有の権限とライフサイクルがあります。
+アタッチされた policy だけでは呼び出し元の実効権限を判断できません。inline policy、permissions boundary、session policy、Organizations の制御も含めて確認してください。`AmazonEKSClusterPolicy` は EKS クラスターの service role に付与するものです。人の IAM user に付けても、必要な `eks:CreateCluster`/`iam:PassRole` 権限や Kubernetes アクセスは与えられません。service-linked role の作成にも、独自の権限とライフサイクルがあります。
 
-ネットワークを確認するときは、選択したクラスターサブネットと、正確なルート/セキュリティグループ/NACL 設定を使用します。クラスターのサブネット要件と、ノード/Pod/LB のアドレス容量は、別々に計画する必要があります。プライベートクラスターは、NAT ゲートウェイや一般的なインターネットアクセスがなくても、必要なサービスエンドポイントを利用できます。`kubernetes.io/cluster/...` サブネットタグは、コントロールプレーン作成の万能な解決策ではありません。
+ネットワークの確認には、選択したクラスター subnet と正確な route/security group/NACL 設定を使います。クラスター subnet の要件と、ノード/Pod/LB のアドレス容量計画は別の課題です。private cluster は、NAT gateway や一般的なインターネット接続なしで必要な service endpoint を使える場合があります。`kubernetes.io/cluster/...` subnet tag は、コントロールプレーン作成に対する万能の修正ではありません。
 
-クォータエラーが発生した場合は、エラーからサービス/クォータを特定し、増加を申請する前に現在の適用値を照会します。EKS クラスターのクォータ、EC2 の vCPU/インスタンスタイプファミリーのクォータ、VPC の上限はそれぞれ異なります。「上限は 5」などの過去のメッセージは例であり、現在のアカウントの上限を示すものではありません。
+quota エラーでは、エラーに記載された service/quota を特定し、増枠を申請する前に現在の適用値を照会します。EKS cluster quota、EC2 vCPU/instance family quota、VPC 制限はそれぞれ別です。「limit is 5」のような過去のメッセージは例であり、現在のアカウント上限ではありません。
 
-#### 一般的な解決策
+#### よくある解決策
 
-具体的な権限、サービスロールの信頼関係、サブネット選択、IP 割り当て、クォータの問題をインフラストラクチャの所有者を通じて修正し、再試行の内容を確認します。`UnsupportedAvailabilityZoneException` は、指定したクラスターサブネットの AZ がアカウントで EKS をサポートしていないことを意味します。例外で報告されたサポート対象 AZ を使用してください。EC2 のインスタンスタイプが利用可能かどうかだけでは診断できません。
+インフラストラクチャの所有者を通じ、確認できた権限、service role の信頼関係、subnet 選択、IP 割り当て、quota の問題だけを修正してから、再試行を検討します。`UnsupportedAvailabilityZoneException` は、指定されたクラスター subnet がそのアカウントで EKS をサポートしない AZ にあることを示します。例外で報告されたサポート対象 AZ を使ってください。EC2 instance type の提供状況だけから原因を判断するものではありません。
 
-サービスイベントについては AWS Health を確認します。リージョンの変更は、別個の配置/データ/ネットワーク設計と、場合によっては別のクラスターを必要とします。既定のトラブルシューティング用再試行ではありません。`eksctl create cluster --verbose ...` や AWS CLI のデバッグフラグでも、実際に作成処理が実行されます。新しいプロビジョニングリクエストを行う前に、既存のスタックイベントとリクエスト ID を確認してください。
+service event がないか AWS Health を確認します。別リージョンへの変更は別個の配置、データ、ネットワーク設計であり、クラスターも追加で作成される可能性があります。既定のトラブルシューティング再試行ではありません。`eksctl create cluster --verbose ...` と AWS CLI の debug flag も、実際にクラスターを作成します。新しい provisioning request を出す前に、既存の stack event と request ID を確認します。
 
-### クラスターエンドポイントへのアクセスに関する問題
+### クラスター endpoint へのアクセス問題
 
-#### DNS、トランスポート、TLS、認証、認可を個別に診断する
+#### DNS、transport、TLS、認証、認可を切り分ける
 
-エンドポイントモード、許可されたパブリック CIDR、クラスターのセキュリティグループを確認し、クラスター CA とタイムアウトを指定してテストします。
+endpoint mode、許可された public CIDR、cluster security group を調べ、クラスター CA と timeout を指定してテストします。
 
 ```bash
 set -euo pipefail
@@ -228,13 +228,13 @@ curl --silent --show-error --connect-timeout 5 --max-time 10 \
   --write-out 'HTTP status: %{http_code}\n' "$ENDPOINT"
 ```
 
-このコマンドは Kubernetes のベアラートークンを送信しません。401/403 の応答は、アクセスが拒否されても DNS/TCP/TLS で到達できることを示す場合があります。HTTP リクエストへの成功応答があっても、アプリケーションが正常である証明にはなりません。`curl -k` を使うと証明書の検証失敗が隠れてしまいます。DNS を調べる場合は、エンドポイント URL に含まれるホスト名を使用し、`https://` 付きの URL を `nslookup` に渡さないでください。
+この操作では Kubernetes bearer token を送りません。401/403 応答は、アクセスを拒否されたとしても DNS/TCP/TLS が到達できたことを示す場合があります。HTTP 応答に成功しても、アプリケーションの正常性を証明しません。`curl -k` は証明書検証の失敗を隠します。DNS lookup が必要な場合は、endpoint URL の `https://` URL 全体を `nslookup` に渡さず、hostname を使います。
 
-パブリックエンドポイントでは、クライアントの実際の送信元/NAT アドレスが許可 CIDR に含まれているか確認します。プライベートエンドポイントでは、VPC/接続ネットワークの経路、DNS 解決、セキュリティグループのアクセスを確認します。インターフェイスエンドポイント `com.amazonaws.<region>.eks` が提供するのは **EKS 管理 API** であり、Kubernetes API サーバーではありません。これを有効にするだけでは kubectl のアクセスは解決しません。クラスターの Kubernetes プライベートエンドポイントとは別のものです。
+public endpoint では、クライアントの実際の egress/NAT address が許可 CIDR に含まれるかを確認します。private endpoint では、VPC/接続済みネットワークの経路、DNS 解決、security group access を調べます。interface endpoint `com.amazonaws.<region>.eks` が提供するのは **EKS 管理 API** であり、Kubernetes API server ではありません。有効化しただけでは kubectl のアクセスは修復されません。クラスターの Kubernetes private endpoint は別のものです。
 
 #### kubeconfig と権限
 
-認証情報をそのまま表示せずに、コンテキスト名/サーバーを確認します。別の診断用 kubeconfig を作成する場合は、明示的なパスと別名を使用し、`NAMESPACE` に意図した認可範囲を設定します。
+資格情報そのものを表示せず、context 名と server を調べます。診断用の kubeconfig を別に作成するには、明示的な path と alias を使います。`NAMESPACE` には意図した認可範囲を設定します。
 
 ```bash
 set -euo pipefail
@@ -249,7 +249,7 @@ export KUBECONFIG="$DIAGNOSTIC_KUBECONFIG"
 kubectl --context "$KUBE_CONTEXT" auth can-i get pods --namespace "$NAMESPACE"
 ```
 
-kubeconfig の作成には `eks:DescribeCluster` が必要です。Kubernetes の認証/認可は別途必要です。ロールを引き受ける場合は、レビュー済みの `--role-arn` と、信頼/STS 権限を使用します。セッショントークンを表示するのではなく、実際の認証情報プロバイダー（設定済みの SSO セッションなど）を通じて認証情報を更新してください。
+kubeconfig の作成には `eks:DescribeCluster` が必要です。Kubernetes の認証/認可は別途必要です。role を引き受ける場合は、レビュー済みの `--role-arn` と、その信頼関係/STS 権限を使います。session token を表示せず、設定済み SSO session など、実際の credential provider を通じて資格情報を更新します。
 
 ```bash
 set -euo pipefail
@@ -260,27 +260,27 @@ aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
 aws eks list-access-entries --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
 ```
 
-アクセスエントリ認証が有効な場合は、該当するエントリと関連ポリシーの適用範囲を確認します。従来の `CONFIG_MAP` または混在クラスターでは、`aws-auth` も使用される場合があります。既存のノードマッピングを維持し、計画に沿って移行してください。一般的なアクセス修正として `system:masters` を付与したり、ConfigMap 全体を上書きしたりしないでください。IRSA の IAM OIDC プロバイダーはワークロードの AWS 認証情報に使うものであり、人間の IAM プリンシパルが Kubernetes で認可されるためのマッピングではありません。
+access-entry 認証が有効な場合は、該当する entry と関連する policy の範囲を確認します。従来の `CONFIG_MAP` や混合 mode では `aws-auth` も使われる場合があります。既存の node mapping を保持し、計画的に移行してください。一般的な access 修正として `system:masters` を付与したり、ConfigMap 全体を上書きしたりしないでください。IRSA の IAM OIDC provider は workload の AWS 資格情報用であり、人の IAM principal に Kubernetes 認可を与える mapping ではありません。
 
-#### アクセス経路を修正する
+#### 正しいアクセス経路を修正する
 
-エンドポイントモードに適した、接続済みのプライベート管理経路、またはレビュー済みのパブリック CIDR 許可リストを使用します。診断コマンドを動作させるためだけに `0.0.0.0/0` を開放しないでください。パブリックアクセスを削除する前にプライベート経路をテストし、無関係な既存 VPC 設定を維持して、構成変更の更新 ID を追跡します。計画的な変更については、[セキュリティの章のエンドポイント手順](./05-eks-security.md)に従ってください。
+接続済みの private 管理経路、または endpoint mode に合ったレビュー済み public CIDR allow-list を使います。診断コマンドを動かすためだけに `0.0.0.0/0` を開放しないでください。public access を削除する前に private path をテストし、無関係な VPC 設定を保持し、設定更新の update ID を追跡します。計画的な変更には[セキュリティ章の endpoint 手順](./05-eks-security.md)を参照してください。
 
-#### ワンクリック CloudShell アクセス
+#### ワンクリック CloudShell access
 
-2026年4月30日に発表されたワンクリック機能が利用できます。クラスター詳細ページで **Connect** を選択すると、kubectl が設定された状態で CloudShell が開きます。パブリック API エンドポイントとプライベート API エンドポイントの両方がサポートされます。プライベートエンドポイントでは CloudShell VPC 環境が自動的に起動し、環境名の入力を求められます。この機能は EKS リージョンで追加の機能料金なしで利用できます。
+2026年4月30日に発表されたワンクリック機能が利用できます。クラスター詳細ページで **Connect** を選ぶと、kubectl が設定された CloudShell が開きます。public と private の両 API endpoint に対応しています。private endpoint の場合、CloudShell VPC environment が自動で起動し、その名前の入力が求められます。この機能自体の追加料金は EKS リージョンでは発生しません。
 
-コンソール経由であっても、関連する IAM/CloudShell/VPC 環境の権限、Kubernetes アクセス、動作するネットワーク設定が必要です。ローカルのセットアップは不要になりますが、認可チェックは省略されません。該当するリソース料金/データ転送料金と、コマンド実行時のセッション ID を確認してください。
+ただし、コンソール経由でも該当する IAM/CloudShell/VPC environment 権限、Kubernetes access、動作する network 設定が必要です。ローカル設定が不要になるだけで、認可確認はなくなりません。該当するリソース/データ転送の料金と、session の identity を確認してからコマンドを実行してください。
 
-出典: [kubeconfig と CloudShell](https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html)、[ワンクリック機能の発表](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-one-click-cluster-access/)、[EKS PrivateLink との違い](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)、[クラスターのトラブルシューティング](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)。
+参考資料: [kubeconfig と CloudShell](https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html)、[ワンクリック機能のお知らせ](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-one-click-cluster-access/)、[EKS PrivateLink の違い](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)、[EKS クラスタートラブルシューティング](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)。
 
 ### クラスター削除の問題
 
-#### 削除を妨げている依存関係を特定する
+#### 削除を妨げる依存関係を特定する
 
-クラスターの削除は意図的な廃止作業であり、一般的なトラブルシューティングの解決策ではありません。EKS/CloudFormation の正確なエラー、クラスター ARN/アカウント/リージョン、更新状態、削除保護の設定を確認します。マネージドノードグループや Fargate プロファイルのほか、削除保護やインストール済み EKS Capabilities も削除を妨げる場合があります。削除が完了するまで、クラスターの IAM/サービスロールを保持してください。
+クラスター削除は意図的な teardown であり、一般的なトラブルシューティング手段ではありません。正確な EKS/CloudFormation error、cluster ARN/account/Region、update state、deletion-protection 設定を確認します。deletion protection とインストール済み EKS Capabilities は、マネージドノードグループや Fargate profile 以外にも削除を妨げる場合があります。削除が完了するまでクラスターの IAM/service role を保持します。
 
-対象クラスターのインベントリを取得し、明示的な kubectl コンテキストのエンドポイントと比較します。次のコマンドは読み取り専用であり、削除対象のリソースを自動で選択するものではありません。
+選択したクラスターを一覧し、endpoint が明示した kubectl context と一致するか確認します。以下は読み取り専用のコマンドであり、削除対象を自動選択しません。
 
 ```bash
 set -euo pipefail
@@ -308,17 +308,17 @@ aws eks list-capabilities --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
 aws eks list-addons --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
 ```
 
-Service の `EXTERNAL-IP` の出力だけでは所有者の証明になりません。コントローラー管理の `LoadBalancer` Service、手動設定の外部 IP、その他の Service タイプを区別してください。namespace/name/UID、コントローラーの所有関係、AWS リソース ARN、関連タグを記録します。コントローラーがインストールされている場合は Ingress、Gateway/TargetGroupBinding リソースも含め、ターゲットやロードバランサーが共有されているかを確認します。
+Service の `EXTERNAL-IP` 出力だけでは所有者を特定できません。controller 管理の `LoadBalancer` Service、手動設定の external IP、その他の Service type を区別します。namespace/name/UID、controller の所有関係、AWS resource ARN、関連 tag を記録します。controller がインストールされている場合は Ingress、Gateway/TargetGroupBinding resource も含め、target や load balancer が共有されていないか確認します。
 
-#### 所有者の手順に従ってリソースを廃止する
+#### 所有者が定めた順序でリソースを廃止する
 
-1. トラフィックとワークロードを移行し、アプリケーション整合性のあるバックアップ/復元とデータ保持要件を確認します。PVC の YAML を保存しても、データのバックアップにはなりません。`Delete` の reclaim ポリシーでは、claim の削除時にバックエンドのストレージが削除される場合があります。`Retain` では、データ/ストレージの扱いを別途決定する必要があります。
-2. 必要なロードバランサーコントローラーが稼働している間に、ロードバランサーを所有する、レビュー済みの Kubernetes リソースだけを削除します。finalizer の処理を待ち、対応する AWS リソースが解放されたことを確認します。ノードを削除する前に、コントローラーの IAM または依存関係の問題を解決してください。クリーンアップの失敗を隠すために finalizer を削除しないでください。
-3. 所有権/リソース削除の仕様に従って EKS Capabilities を削除します。レビュー済みの順序でマネージドノードグループと Fargate プロファイルを削除し、完了を待ちます。セルフマネージドノード/スタックには、それぞれ独自の廃止手順が必要です。アドオンの削除によって Kubernetes コンポーネントも削除される場合があります。依存するクリーンアップが終わるまで、ネットワーク/ストレージコントローラーを維持してください。
-4. 明示的な廃止の判断として削除保護を無効にし、元のインフラストラクチャ所有者を通じてクラスターを削除します。Auto Mode のクラスター削除では、管理対象ノードとロードバランサーも削除されます。その範囲と、組み込みの TargetGroupBinding のターゲットグループのライフサイクルを考慮してください。
-5. 正確な所有関係に基づいて、残存リソースを確認します。専用スタック/VPC、ボリューム/スナップショット、ロードバランサー、IAM リソース、ログ、Prometheus スクレーパーなどが対象です。共有リソースと保持データには独立したライフサイクルがあり、料金が発生し続ける場合があります。
+1. traffic と workload を移行し、アプリケーション整合性のある backup/restore とデータ保持要件を確認します。PVC YAML を保存してもデータの backup にはなりません。`Delete` reclaim policy では claim 削除時に保存先が削除される場合があります。`Retain` ではデータ/ストレージの扱いを別途決める必要があります。
+2. 必要な load-balancer controller が動作している間に、load balancer を所有するレビュー済み Kubernetes resource だけを削除します。finalizer の処理を待ち、対応する AWS resource が解放されたことを確認します。ノードを削除する前に controller の IAM/依存関係の失敗を解消します。cleanup の失敗を隠すためだけに finalizer を削除しないでください。
+3. EKS Capabilities は文書化された所有権/resource 削除の仕様に従って削除します。マネージドノードグループと Fargate profile をレビュー済みの順序で削除し、完了を待ちます。セルフマネージドノード/stack は別途 teardown が必要です。addon の削除で Kubernetes component も消える場合があります。依存する cleanup が終わるまで networking/storage controller を保持してください。
+4. teardown を明示的に決定した場合に限り deletion protection を無効にし、元のインフラストラクチャ所有者を通じてクラスターを削除します。Auto Mode ではクラスター削除に伴いマネージドノードと load balancer も削除されます。その範囲と組み込み TargetGroupBinding の target-group lifecycle を考慮してください。
+5. 専用 stack/VPC、volume/snapshot、load balancer、IAM resource、log、Prometheus scraper など、残るリソースを正確な所有者ごとに確認します。共有リソースと保持データはそれぞれ独立した lifecycle があり、料金が継続する場合があります。
 
-たとえば、次は、それより前に行うトラフィック/データの確認を経た後に、明示的に選択した Service **1つ**を削除する例です。リソースを検索しながら一括削除するループではありません。
+例として、以下は先行する traffic/data 確認後に明示的に選択した Service 1つを削除します。リソースを検出しながら一括削除する処理ではありません。
 
 ```bash
 set -euo pipefail
@@ -329,29 +329,29 @@ kubectl --context "$KUBE_CONTEXT" -n "$SERVICE_NAMESPACE" delete service "$SERVI
   --wait=true --timeout=10m
 ```
 
-タイムアウトしたからといって、AWS ロードバランサーが残存した、または削除されたと断定できるわけではありません。finalizer、コントローラーイベント、該当する AWS ARN を確認してください。Kubernetes リソースと AWS リソースのクリーンアップは、異なるタイミングで完了する場合があります。
+timeout になっても AWS load balancer が保持された、または削除された証明にはなりません。finalizer、controller event、該当する AWS ARN を確認します。Kubernetes と AWS の resource cleanup は異なるタイミングで完了する場合があります。
 
-#### 削除エラーと強制処理
+#### 削除エラーと force 動作
 
-EKS の更新詳細と CloudFormation スタックイベントを使用して、依存関係、認可、処理中の操作によるエラーを特定します。eksctl 0.229 では、`delete cluster --force` はエラーが発生しても削除を続行できる有効なオプションです。これはクリーンアップが完全に行われたことや、孤立リソースの所有者を安全に特定できたことを証明しません。`--disable-nodegroup-eviction` は削除によって PDB チェックを別途回避するオプションです。どちらも、既定で行うインシデント対応ではありません。
+EKS update の詳細と CloudFormation stack event を使い、依存関係、認可、処理中 operation の失敗を特定します。eksctl 0.229 では `delete cluster --force` が有効で、エラー発生時にも削除を続けられます。これは cleanup の完了や orphan の所有者を安全に特定した証明ではありません。`--disable-nodegroup-eviction` は別の option で、削除によって PDB の確認を迂回します。どちらも既定の障害対応にしないでください。
 
-アカウント/リージョン全体の ELB/ELBv2 一覧を削除コマンドにパイプしたり、依存関係エラーを解消するために全 Service、PVC、namespace を削除したりしないでください。孤立リソースを手動で削除する必要がある場合は、最初にその正確なクラスター/スタックの所有者とデータ/トラフィックへの影響を確認し、該当サービスのレビュー済み廃止手順に従います。
+account/Region 全体の ELB/ELBv2 一覧を delete command に pipe したり、依存関係エラーを解消するために全 Service、PVC、namespace を削除したりしないでください。orphan を手動削除する必要がある場合は、まず正確な cluster/stack の所有者とデータ/traffic への影響を確定し、該当 service のレビュー済み teardown 手順を使います。
 
-出典: [EKS クラスターの削除](https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html)、[削除に関するトラブルシューティング](https://repost.aws/knowledge-center/eks-delete-cluster-issues)、[PersistentVolume のライフサイクル](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)。
+参考資料: [EKS クラスター削除](https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html)、[削除トラブルシューティング](https://repost.aws/knowledge-center/eks-delete-cluster-issues)、[persistent volume の lifecycle](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)。
 
 ## ネットワークに関する問題 {#networking-issues}
 
-![Pod 間通信、Service アクセス、ロードバランシング、DNS、CNI/IP 割り当てに分類したネットワークの症状。](../.gitbook/assets/en-eks-09-eks-troubleshooting-2.png)
+![Pod 間通信、Service access、load balancing、DNS、CNI/IP 割り当てに分類したネットワーク上の症状。](../.gitbook/assets/en-eks-09-eks-troubleshooting-2.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-2.html)
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-2.html)
 
-まず、実際のコンピューティング/データプレーンを特定します。オープンソースの VPC CNI を使う標準 EC2 ノード、Fargate、Auto Mode では、エージェントや設定が同一ではありません。Auto Mode では `NodeClass` のネットワーク制御を使用します。`aws-node` DaemonSet や `ENIConfig` を変更しても Auto Mode ノードの設定にはなりません。
+最初に実際のコンピューティング/data plane を特定します。open-source VPC CNI を使う標準 EC2 ノード、Fargate、Auto Mode では、agent も設定方法も同じではありません。Auto Mode では `NodeClass` の networking control を使います。`aws-node` DaemonSet や `ENIConfig` を変更しても Auto Mode node は設定されません。
 
 ### Pod 間通信の問題
 
-#### 失敗している経路をたどる
+#### 失敗している経路を追跡する
 
-送信元/宛先の Pod、namespace、ノード/AZ、IP ファミリー、プロトコル、宛先ポートを記録します。承認済みのテストで差異を切り分けられる場合は、同一ノード内とノード間の動作を比較します。その経路について、ポリシー、セキュリティグループ、ルート/NACL、CNI の状態、IP 割り当て、パス MTU を確認します。
+送信元/宛先 Pod、namespace、node/AZ、IP family、protocol、宛先 port を記録します。承認済みのテストで違いを切り分けられる場合は、同一ノード内とノード間の動作を比較します。その経路に対して policy、security group、route/NACL、CNI state、IP 割り当て、path MTU を確認します。
 
 ```bash
 set -euo pipefail
@@ -365,15 +365,15 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
   --sort-by='.metadata.creationTimestamp'
 ```
 
-標準の `networking.k8s.io/v1` NetworkPolicy では、許可されるトラフィックは加算的に適用されます。ルールの優先順位や「最後のポリシーが優先」といった動作はありません。両方のピアが分離されている場合、送信元の egress と宛先の ingress の両方で、その通信が許可される必要があります。管理者/クラスター全体に適用されるポリシー API やベンダー固有のポリシーエンジンには、個別の仕様があります。namespace ラベルと、`namespaceSelector` と `podSelector` が同じ peer 内（AND）か、別々の peer（OR）かを確認します。
+標準の `networking.k8s.io/v1` NetworkPolicy は許可 traffic を加算します。priority や「最後に評価した policy が勝つ」という動作はありません。送信元と宛先の両方が隔離されている場合は、送信元の egress と宛先の ingress がその通信を許可する必要があります。admin/cluster-wide policy API や vendor 固有 policy engine は別の仕様です。namespace label と、`namespaceSelector`/`podSelector` が同じ peer 内の AND 条件か、別 peer の OR 条件かも確認します。
 
-VPC CNI はネイティブのネットワークポリシー適用をサポートしています。サードパーティーのポリシー Pod が見つからないという理由だけで Calico/Cilium をインストールしないでください。サポート対象の CNI/プラットフォーム/カーネルと、有効化されたポリシーエージェントの設定を確認します。標準の起動モードでは、新しい Pod はポリシーが設定されるまで最初はトラフィックを許可します。strict モードでは最初から拒否され、必要な DNS/依存関係ポリシーが必要です。host-network の動作やその他の適用範囲の制限については、該当する実装のドキュメントを確認してください。
+VPC CNI は native network-policy enforcement に対応しています。third-party policy Pod が見当たらないという理由だけで Calico/Cilium をインストールしないでください。対応する CNI/platform/kernel と、有効になっている policy-agent 設定を確認します。標準 startup mode では、policy が設定されるまで新規 Pod の traffic が一時的に許可されます。strict mode では起動時から deny されるため、必要な DNS/dependency policy が必要です。host-network の動作やその他の適用範囲には、利用する実装に固有の制限があります。
 
-標準的な VPC CNI のインストールでは、該当コンテナがある場合、実際の `aws-node` Pod の `aws-network-policy-agent` ログを調べます。`kubectl get pods -l ...` が成功しても結果が空であれば、プラグインがインストール済みである証明にはなりません。Auto Mode では、組み込みのポリシー制御を使用します。
+標準 VPC CNI installation で対象 container がある場合は、実際の `aws-node` Pod の `aws-network-policy-agent` log を調べます。`kubectl get pods -l ...` が成功しても一覧が空なら、plugin がインストールされている証拠にはなりません。Auto Mode では組み込み policy control を使います。
 
-#### 意図した通信フローだけを修正する
+#### 意図した通信だけを修正する
 
-namespace 全体に許可する ingress/egress を追加したり、ポリシーを削除したりするのではなく、許可する通信フローの全体を確認します。次の例では、バックエンド API Pod を選択し、フロントエンドの web Pod からの TCP 8080 だけを許可します。
+namespace 全体の allow-all ingress/egress を追加したり policy を削除したりせず、許可する通信の全体像をレビューします。次の例は backend API Pod を選択し、frontend の web Pod からの TCP 8080 だけを許可します。
 
 ```yaml
 # Example ingress policy only: review both peers and the complete allowed-flow matrix.
@@ -401,13 +401,13 @@ spec:
           port: 8080
 ```
 
-このポリシーを適用すると、他のポリシーが許可していない限り、選択されたバックエンド Pod への他の ingress が分離される場合があります。クライアント側の egress、DNS、すべての依存関係を設定するものではありません。それらは肯定テストと否定テストで個別に確認します。この例の名前をそのまま使用せず、実際のワークロードの namespace/ラベルを使用してください。
+この policy を適用すると、他の policy で許可しない限り、選択した backend Pod への別の ingress も隔離されます。client egress、DNS、すべての依存先は設定しません。それらは別々に positive/negative test で確認します。例の namespace/name をそのままコピーせず、実際の workload を使ってください。
 
-セキュリティグループについては、該当する場合、Pod 用セキュリティグループ/カスタム Pod サブネットを含め、送信元と宛先の ENI に関連付けられたグループを確認します。所有者を通じて必要な送信元/ポートを許可し、一般的な修正としてすべてのプロトコルや広範な CIDR を追加しないでください。MTU の値（1500 や 9001 など）は経路によって異なります。失敗を測定し、カプセル化を考慮してから CNI 設定を変更したり Pod を置き換えたりしてください。
+security group については、該当する場合は Pod group/custom Pod subnet も含め、送信元と宛先 ENI の group を調べます。必要な送信元/port だけを所有者経由で許可してください。一般的な修正として全 protocol や広範な CIDR を追加しないでください。MTU の 1500 や 9001 は path に依存する値です。CNI 設定を変更したり Pod を置換したりする前に、失敗を測定して encapsulation を考慮します。
 
-### Service アクセスの問題
+### Service access の問題
 
-Service セレクター、実際の Pod の readiness、エンドポイントの条件、ポートマッピングをまとめて確認します。
+Service selector、実際の Pod readiness、endpoint condition、port mapping を合わせて確認します。
 
 ```bash
 set -euo pipefail
@@ -426,19 +426,19 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get endpointslices \
   -l "kubernetes.io/service-name=$SERVICE_NAME" -o yaml
 ```
 
-非推奨の Endpoints API に頼らず、EndpointSlices を使用します。`ready`、`serving`、`terminating` の各条件と、`publishNotReadyAddresses`、`externalTrafficPolicy`、`internalTrafficPolicy` などの Service オプションを確認します。Pod が Running であっても Ready とは限りません。
+非推奨の Endpoints API に頼らず EndpointSlice を確認します。`ready`、`serving`、`terminating` condition と、`publishNotReadyAddresses`、`externalTrafficPolicy`、`internalTrafficPolicy` などの Service option を調べます。Pod が Running でも Ready とは限りません。
 
-`ExternalName` Service では、選択対象の Pod ではなく DNS エイリアスを診断します。headless Service の場合、`clusterIP: None` は意図された設定です。セレクターのない Service では、所有者が管理する EndpointSlices を使用する場合があります。Service の `port` と `targetPort` は異なることがあります。コンテナポートを宣言しても、アプリケーションがそのポートでリッスンするとは限りません。
+`ExternalName` Service では選択対象 Pod を探すのではなく DNS alias を調べます。headless Service の `clusterIP: None` は意図した設定です。selector のない Service では、所有者が管理する EndpointSlice を使う場合があります。Service の `port` は `targetPort` と異なることがあります。container port を宣言しても、アプリケーションがそこで listen するとは限りません。
 
-ラベルやポートが誤っている場合は、リリース設定を通じて所有する Service/Pod テンプレートを更新します。コントローラーが所有する Pod 1つのラベルを変更しても、永続的な修正にはなりません。パッチを適用する前に、ポートの一覧全体とイミュータブルなフィールドを確認します。原因を診断せずに Service を削除/再作成したり、ClusterIP を変更したり、すべての kube-proxy Pod を再起動したりしないでください。
+label や port が誤っている場合、release 設定を通じて、所有 controller が管理する Service/Pod template を修正します。controller 管理 Pod 1つだけに label を付け直しても恒久対策にはなりません。patch 前に port 一覧全体と immutable field を確認します。原因を調べる前に Service を削除/再作成したり、ClusterIP を変更したり、すべての kube-proxy Pod を再起動したりしないでください。
 
-ポリシーが許す範囲で、同じ送信元とプロトコルを使い、Pod への直接接続と Service 経由の接続を比較します。iptables/nftables/eBPF の動作を調べる前に、データプレーンが kube-proxy、代替実装、Auto Mode のどれなのかを確認します。kube-proxy Pod がないことが常に異常とは限りません。
+同じ送信元と protocol を使い、policy で許可された場合に限って Pod 直通と Service 経由の接続を比較します。iptables/nftables/eBPF の動作を調べる前に、data plane が kube-proxy、別実装、Auto Mode のどれかを確認してください。kube-proxy Pod がないことは、常に障害を意味するわけではありません。
 
-### ロードバランサーの問題
+### Load balancer の問題
 
-Service/Ingress クラス、アノテーション、所有関係からコントローラーを特定します。標準の AWS Load Balancer Controller と EKS Auto Mode では、クラス/API とライフサイクルのルールが異なります。その所有者に応じて、コントローラーイベント、サブネット選択、IAM、セキュリティグループ、ターゲット登録、ヘルスチェックを確認します。
+Service/Ingress class、annotation、所有者から controller を特定します。標準の AWS Load Balancer Controller と EKS Auto Mode では、class/API と lifecycle rule が異なります。その所有者について controller event、subnet 選択、IAM、security group、target 登録、health check を確認してください。
 
-ワークロードに関連付けられた正確なロードバランサーとターゲットグループの ARN を使用します。
+workload に関連する正確な load balancer と target group の ARN を使います。
 
 ```bash
 set -euo pipefail
@@ -455,17 +455,17 @@ aws elbv2 describe-target-health --region "$AWS_REGION" \
   --target-group-arn "$TARGET_GROUP_ARN"
 ```
 
-`describe-load-balancer-attributes` で分かるのは属性であり、運用状態ではありません。運用状態は `describe-load-balancers` に含まれます。ターゲットのヘルス理由コード、ヘルスチェックのプロトコル/ポート/パス、リスナー/ルーティングルール、アプリケーションの応答を確認します。通常、インスタンスターゲットはノード/NodePort に接続し、IP ターゲットは Pod のターゲットポートに接続します。セキュリティグループのルールは実際の経路に一致させる必要があります。
+`describe-load-balancer-attributes` は属性を表示し、稼働状態は表示しません。状態は `describe-load-balancers` で確認します。target health reason code、health-check protocol/port/path、listener/rule routing、application response を調べます。instance target は通常 node/NodePort に到達し、IP target は Pod target port に到達します。security group rule を実際の経路に合わせます。
 
-サブネットのロールタグは自動検出に影響するため、パブリック/内部のスキーム、ルートテーブル、空き IP、AZ のカバレッジを確認します。同じサブネットにパブリックとプライベートのロールタグを両方付けても解決しません。明示的なサブネット選択とコントローラーのバージョンによって、必要なタグは変わる場合があります。ヘルスチェックの失敗を回避するために、フロントエンド/バックエンドのセキュリティグループを `0.0.0.0/0` に開放しないでください。
+subnet role tag は自動検出に影響します。public/internal scheme、route table、空き IP、AZ coverage を確認してください。同じ subnet に public と private の両 role tag を付けても修正にはなりません。明示的な subnet 選択や controller version によって tag 要件が変わる場合があります。health check の失敗を回避するために frontend/backend security group を `0.0.0.0/0` に開放しないでください。
 
-所有者の現在のスキーム/タイプ設定を使用します。従来の `aws-load-balancer-internal` や `aws-load-balancer-type: nlb` の例は、現在のコントローラークラスと互換性があるとは限りません。コントローラーの所有関係や LB スキームの変更には、計画的な置き換えとトラフィック移行が必要になることがあります。アノテーションを編集したからといって、インプレース変換が保証されるわけではありません。Auto Mode は、セルフマネージドコントローラーがすでに管理しているロードバランサーを引き継ぎません。
+所有者が管理する現在の scheme/type 設定を使います。古い `aws-load-balancer-internal` や `aws-load-balancer-type: nlb` の例は、現在の controller class と同じ意味ではありません。controller の所有者や LB scheme の変更には、計画的な置換と traffic 移行が必要な場合があります。annotation を編集しても、その場で変換されるとは限りません。Auto Mode は self-managed controller が既に管理している load balancer を引き継ぎません。
 
-Service を削除すると、ロードバランサーも削除される場合があります。エクスポートした Service の生 YAML は、トラフィック/データを含むロールバック計画として不十分です。ALB を手動で作成しても、Kubernetes Service と自動的に接続されるわけではありません。変更前に、選択した所有者に対応する[ネットワークガイド](./03-eks-networking-part2.md)を確認してください。
+Service 削除により load balancer も削除される場合があります。export した Service YAML だけでは、traffic/data rollback の全手順にはなりません。手動で ALB を作っても Kubernetes Service には自動接続されません。所有者を決めたうえで[ネットワークガイド](./03-eks-networking-part2.md)を確認します。
 
 ### DNS の問題
 
-#### 影響を受ける Pod が使うリゾルバーを調べる
+#### 影響を受けた Pod が使う resolver を調べる
 
 ```bash
 set -euo pipefail
@@ -480,9 +480,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" \
   -c "$CONTAINER_NAME" -- nslookup "$DNS_TEST_NAME"
 ```
 
-イメージにシェルや DNS ツールが含まれていない場合、それはツール上の制限であって、DNS クエリの失敗ではありません。関連するネットワーク/ID のコンテキストを維持する、レビュー済みのデバッグ方法を準備します。新しいデバッグ Pod では、異なる DNS/ポリシー設定が使われる場合があります。
+イメージに shell や DNS tool がない場合、それは tool 上の制限であって、DNS query が失敗した証拠ではありません。関連するネットワーク/identity context を維持する、レビュー済みの debug 手段を準備します。新しい debug Pod では DNS/policy 設定が異なる場合があります。
 
-Auto Mode 以外の標準ノードでは、インストール済みの CoreDNS Deployment/Service、設定、EndpointSlices を調べます。
+標準 non-Auto node では、インストール済み CoreDNS Deployment/Service、設定、EndpointSlice を確認します。
 
 ```bash
 kubectl --context "$KUBE_CONTEXT" -n kube-system get deployment coredns
@@ -495,9 +495,9 @@ kubectl --context "$KUBE_CONTEXT" -n kube-system logs -l k8s-app=kube-dns \
   --all-containers=true --prefix=true --since=15m --tail=100
 ```
 
-**Auto Mode ノード**では、CoreDNS はノードのシステムサービスとして動作します。Auto Mode のみのクラスターでは、従来の CoreDNS Deployment がなくても運用できます。Auto/non-Auto 混在クラスターでは、非 Auto Mode ノード用に Deployment を維持する必要があります。Auto Mode の解決策として、NodeLocal DNSCache をインストールしたり、存在しない Deployment を再起動したりしないでください。
+**Auto Mode node** では CoreDNS が node system service として動作します。Auto Mode のみのクラスターは、従来の CoreDNS Deployment なしで動作できます。Auto/non-Auto 混在クラスターでは、non-Auto node 用に Deployment を残す必要があります。Auto Mode の対処として NodeLocal DNSCache をインストールしたり、存在しない Deployment を再起動したりしないでください。
 
-Pod のネームサーバー、CoreDNS/NodeLocal のアップストリーム、VPC リゾルバーを区別します。`169.254.20.10` は NodeLocal DNSCache でよく選ばれるアドレスであり、すべての環境で使う VPC DNS サーバーではありません。`8.8.8.8` などのパブリックリゾルバーは、Kubernetes Service のゾーンやプライベート AWS DNS の代わりにはなりません。
+Pod の nameserver、CoreDNS/NodeLocal の upstream、VPC resolver を区別します。`169.254.20.10` はよく使われる NodeLocal DNSCache address であり、すべての環境で共通の VPC DNS server ではありません。`8.8.8.8` などの public resolver は Kubernetes Service zone や private AWS DNS の代替になりません。
 
 ```bash
 set -euo pipefail
@@ -510,17 +510,17 @@ aws ec2 describe-vpcs --region "$AWS_REGION" --vpc-ids "$VPC_ID" \
   --query 'Vpcs[].{VpcId:VpcId,DhcpOptionsId:DhcpOptionsId}'
 ```
 
-DNS 属性の確認には `describe-vpc-attribute` を使用します。これらは `describe-vpcs` が返すフィールドではありません。取得した ID を使って DHCP オプションも照会します。他のワークロードの設定を確認せずに、共有 VPC の DHCP 設定を置き換えないでください。
+DNS attribute の確認には `describe-vpc-attribute` を使います。`describe-vpcs` の戻り値には含まれません。DHCP option は返された ID を使って照会します。他の workload への影響を確認せずに、共有 VPC の DHCP 設定を置き換えないでください。
 
-#### 対象を絞って DNS を修正する
+#### 対象を絞った DNS 修正を適用する
 
-必要に応じて UDP/TCP 53、CoreDNS の実際の readiness/設定、アップストリームへの到達性、DNS ポリシー、カスタム検索設定を確認します。クラスター DNS を使う `hostNetwork` Pod では、通常 `ClusterFirstWithHostNet` が必要です。`dnsPolicy: None` では、完全かつ意図的なリゾルバー設定が必要です。DNS のみを許可する egress ポリシーでは、他のポリシーが許可しない限り、選択された Pod の他の egress も分離されます。
+必要に応じて UDP/TCP 53、実際の CoreDNS readiness/configuration、upstream 到達性、DNS policy、独自の search 設定を確認します。cluster DNS を使う意図で `hostNetwork` Pod を動かす場合は、通常 `ClusterFirstWithHostNet` が必要です。`dnsPolicy: None` では resolver を意図どおり完全に設定しなければなりません。DNS だけを許可する egress policy でも、別 policy が許可しない限り、選択された Pod の他の egress は隔離されます。
 
-所有者が管理する Corefile のカスタマイズを維持し、アドオンがサポートする設定スキーマを使用します。CoreDNS のスケールや再起動の前に、レプリカ/リソース/PDB/スケジューリングと、オートスケーリングの所有者を確認します。更新 ID と機能的な DNS チェックを記録し、最初の手段としてすべての DNS Pod を削除したり、推測した「latest」イメージをインストールしたりしないでください。
+所有者が管理する Corefile の独自設定を保持し、addon のサポート対象 configuration schema を使います。CoreDNS の replica/resources/PDB/scheduling と、autoscaling の所有者を確認してから scale/restart します。DNS Pod をすべて削除したり、推測した「latest」image を最初の対処としてインストールしたりしないでください。update ID を記録し、実際に DNS が機能することを確認します。
 
 ### VPC CNI の問題
 
-次の調査は、**オープンソースの VPC CNI を使う標準 EC2 ノード**を対象としています。影響を受けているノード上の Pod を明示的に選択します。`kubectl exec` ではラベルセレクターを指定できません。
+以下は**open-source VPC CNI を使う標準 EC2 node** の調査手順です。`kubectl exec` は label selector を受け付けないため、対象 Pod を明示します。
 
 ```bash
 set -euo pipefail
@@ -538,7 +538,7 @@ kubectl --context "$KUBE_CONTEXT" -n kube-system logs "$AWS_NODE_POD" \
   -c aws-node --since=15m --tail=200
 ```
 
-アドオンの `configurationValues`、DaemonSet の環境変数、関連するカスタムリソースを調べます。`aws-node` ConfigMap にすべての設定が含まれると思い込まないでください。ノードの `.spec.podCIDR` は、VPC CNI の Pod アドレスを把握するための信頼できるインベントリではありません。実際の Pod IP、EC2 ENI、プレフィックス、サブネットを調べます。
+addon の `configurationValues`、DaemonSet の environment、関連する custom resource を確認します。`aws-node` ConfigMap にすべての設定があるとは限りません。node の `.spec.podCIDR` は VPC CNI Pod address の正確な一覧ではありません。実際の Pod IP、EC2 ENI、prefix、subnet を調べます。
 
 ```bash
 set -euo pipefail
@@ -553,33 +553,33 @@ aws ec2 describe-instance-types --region "$AWS_REGION" --instance-types "$INSTAN
   --query 'InstanceTypes[].{Type:InstanceType,Network:NetworkInfo}'
 ```
 
-IPAMD のイントロスペクションが有効な場合、ノード上の設定済みエンドポイント（通常はループバックのポート 61679）で利用できます。必要なツールを使える、許可されたノード/エージェント診断方法を使用してください。CNI イメージに curl がないことは IPAM の障害ではありません。
+有効な場合、IPAMD introspection は node で設定された introspection endpoint（通常 loopback の port 61679）にあります。必要な tool がある、許可された node/agent 診断手段を使ってください。CNI image に curl がないことは IPAM の障害ではありません。
 
-#### 割り当て制約を区別する
+#### 割り当て上限を切り分ける
 
-- **サブネットの枯渇/断片化:** 空きアドレス数とプレフィックスを比較します。プレフィックス委任には、サポート対象のインスタンス/設定と、割り当て可能な連続プレフィックスブロックが必要です。空き IP 数だけでは /28 を割り当てられる証拠になりません。
-- **インスタンスの ENI/IP 上限:** `NetworkInfo` と既存の ENI を調べます。ノードグループの desired/min/max を変更しても、ノード数が変わるだけでインスタンスタイプやインスタンスごとの上限は変わりません。インスタンス設定を変更するには、レビュー済みの新しいグループ、またはサポートされている元の起動テンプレート更新経路を使用します。
-- **カスタムネットワーク:** 有効化する前に、対応する `ENIConfig`、Pod サブネット/セキュリティグループ、ノード選択を準備します。セカンダリ ENI/Pod IP の割り当て元は変わりますが、容量が無制限になるわけではありません。
-- **ウォームターゲット:** `WARM_IP_TARGET` は空き IP の余裕を制御し、`MINIMUM_IP_TARGET` は割り当て済み IP 総数の下限になります。ドキュメントに記載されているとおり、これらはウォーム ENI の動作を上書きします。プレフィックスモードでは、IP/最小ターゲットがウォームプレフィックスの動作に影響します。正のウォーム余裕がない状態で最小値を設定すると、その後の割り当てが妨げられる場合があります。任意の 1/2/5 の設定値をコピーするのではなく、ワークロード/IP の予算に基づいて値を決めてください。
-- **ID/所有者:** 実際の CNI IRSA/Pod Identity または該当するノードロールと、IPv4/IPv6 ポリシーを調べます。すべてのノードロールに IPv4 CNI ポリシーをアタッチするのは、万能の修正策ではありません。
+- **subnet の枯渇/断片化:** 空き address と prefix を比較します。prefix delegation には対応 instance/configuration と、連続した prefix block が必要です。空き IP の合計だけでは `/28` を割り当てられる証拠になりません。
+- **instance の ENI/IP 上限:** `NetworkInfo` と既存 ENI を確認します。node group の desired/min/max を拡張しても node 数が変わるだけで、instance type や instance あたりの上限は変わりません。instance configuration の変更には、レビュー済みの新しい group、または元の launch-template を使ったサポート対象の更新経路を使います。
+- **custom networking:** 有効化前に、対応する `ENIConfig`、Pod subnet/security group、node selector を準備します。secondary ENI/Pod IP の割り当て元は変わりますが、容量が無制限になるわけではありません。
+- **warm target:** `WARM_IP_TARGET` は空き IP の余裕を制御し、`MINIMUM_IP_TARGET` は割り当て済み総 IP 数の下限を定めます。文書化されたとおり、これらは warm-ENI の動作を上書きします。また prefix mode で IP/minimum target を設定すると warm-prefix の動作にも影響します。warm headroom を正の値にしないまま minimum だけを指定すると、その後の割り当てを妨げる場合があります。根拠のない 1/2/5 の値をコピーせず、workload/IP budget から決めます。
+- **identity/所有権:** 実際の CNI IRSA/Pod Identity、または該当する node role と IPv4/IPv6 policy を確認します。すべての node role に IPv4 CNI policy を付けても、万能な対処にはなりません。
 
-Auto Mode は `NodeClass` のサブネット/セキュリティグループ/ポリシー制御を使い、これらのウォーム IP/ENI や `ENIConfig` 設定を受け付けません。管理対象のネットワークモデルを維持してください。
+Auto Mode では `NodeClass` の subnet/security-group/policy control を使い、これらの warm-IP/ENI や `ENIConfig` の設定は受け付けません。管理されたネットワーク model を維持してください。
 
-所有者を通じてレビュー済みの CNI バージョン/設定を適用し、サポートされている中間バージョンと設定スキーマに従います。正確なアドオン更新を監視し、その後のネットワークを検証するには、[アップグレードガイド](./08-eks-upgrades.md)を使用してください。イメージを一方のコンテナだけで置き換えたり、設定を無条件に上書きしたり、割り当ての失敗を隠すためにすべてのワークロードを再起動したりしないでください。
+CNI の所有者を通じ、サポート対象の中間 version と configuration schema に従って、レビュー済みの version/configuration を適用します。正確な addon update を監視し、完了後にネットワークを検証するには[アップグレードガイド](./08-eks-upgrades.md)を使ってください。container image を1つだけ置き換えたり、設定を無条件に上書きしたり、IP 割り当て失敗を隠すために全 workload を再起動したりしないでください。
 
-出典: [VPC CNI ポリシー設定](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)、[Auto Mode のネットワーク](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)、[カスタムネットワーク](https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html)、[CNI の設定](https://github.com/aws/amazon-vpc-cni-k8s)、[Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)、[EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/)。
+参考資料: [VPC CNI policy 設定](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)、[Auto Mode networking](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)、[custom networking](https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html)、[CNI 設定](https://github.com/aws/amazon-vpc-cni-k8s)、[Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)、[EndpointSlice](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/)。
 
 ## ノードと Pod に関する問題 {#node-and-pod-issues}
 
-![調査すべきリソース、kubelet、ネットワーク、ワークロード、スケーリングの仮説とともに、ノードと Pod の症状を示します。](../.gitbook/assets/en-eks-09-eks-troubleshooting-3.png)
+![node、Pod のリソース、kubelet、network、workload、scaling の仮説に関する症状。](../.gitbook/assets/en-eks-09-eks-troubleshooting-3.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-3.html)
+[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-3.html)
 
 ### Node NotReady の問題
 
-#### 条件と実際のノードを調べる
+#### condition と実際の node を調べる
 
-`Ready=False` と `Ready=Unknown` では、必要な証拠が異なります。kubelet/ランタイムが正常でなければ障害を報告することがあります。一方、heartbeat の欠落は接続喪失やノードの停止を示す場合があります。メモリ、ディスク、PID の圧迫はそれぞれ別の条件であり、必ずしも `NotReady` を意味しません。単一のラベルから原因を推測せず、条件の理由/時刻、lease、イベントを調べます。
+`Ready=False` と `Ready=Unknown` では必要な証拠が異なります。kubelet/runtime の異常では failure が報告されますが、heartbeat が途絶えた場合は接続断や node の停止が考えられます。memory、disk、PID pressure は別個の condition であり、必ずしも `NotReady` を意味しません。label ひとつから原因を推測せず、condition の reason/time、lease、event を調べてください。
 
 ```bash
 set -euo pipefail
@@ -592,7 +592,7 @@ kubectl --context "$KUBE_CONTEXT" get events -A --field-selector "involvedObject
 kubectl --context "$KUBE_CONTEXT" get pods -A --field-selector "spec.nodeName=$NODE_NAME" -o wide
 ```
 
-EC2 の確認には正確な ProviderID を使います。`grep` でノード IP を照合すると、誤ったリソースが選ばれる場合があります。マネージドノードグループでは、ヘルス、イメージ/リリース、自動修復の設定を調べます。
+EC2 を確認するときは正確な ProviderID を使います。IP を `grep` して一致させると別の resource を選ぶ可能性があります。マネージドノードグループでは health、image/release、repair 設定を確認します。
 
 ```bash
 set -euo pipefail
@@ -602,13 +602,13 @@ aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NOD
   --query 'nodegroup.{status:status,health:health,version:version,releaseVersion:releaseVersion,amiType:amiType,nodeRepairConfig:nodeRepairConfig,updateConfig:updateConfig,scalingConfig:scalingConfig}'
 ```
 
-ノードへのアクセスがサポートされている場合は、「基本」のセクションにあるリモートセッション手順を使って、kubelet/containerd のジャーナル、ネットワーク、ディスクのバイト数/inode、メモリを調べます。秘密鍵を表示せずに、実際に設定された証明書/kubeconfig のパスを確認します。`kubeadm certs renew` は EKS マネージドコントロールプレーンの修復方法ではありません。また、`eksctl replace nodegroup` はサポートされている eksctl コマンドではありません。AL2023 は nodeadm の設定を使います。すべてのイメージに AL2 の `/etc/eks/bootstrap.sh` の手順を再実行しないでください。
+node access がサポートされる場合は、基本節の remote-session 手順で kubelet/containerd journal、networking、disk byte/inode、memory を調べます。秘密鍵を表示せず、実際に設定された certificate/kubeconfig path を確認してください。`kubeadm certs renew` は EKS managed control plane の修復ではなく、`eksctl replace nodegroup` はサポート対象の eksctl command ではありません。AL2023 は nodeadm 設定を使います。すべての image に AL2 の `/etc/eks/bootstrap.sh` 手順を再実行しないでください。
 
-#### 復旧と自動修復
+#### 復旧と自動 repair
 
-証拠を保存してから、所有者と合意した復旧操作を選びます。kubelet/containerd の再起動、再起動、ノードの置き換えはワークロードに影響するうえ、永続的な IAM/ネットワーク/bootstrap の問題を解決しない場合があります。再起動 API の応答が返っても、インスタンスや kubelet が Ready になったことを意味するわけではありません。cordon を解除する前に、同じノード/インスタンスとワークロードを確認します。
+証拠を保存してから、所有者が管理する復旧操作を選びます。kubelet/containerd の再起動、reboot、node 置換は workload に影響し、継続中の IAM/network/bootstrap 問題は解決しない場合があります。reboot API の応答は instance や kubelet の復旧を意味しません。uncordon する前に、同じ node/instance と workload を確認してください。
 
-計画的な置き換えでは、1つのノードをタイムアウト付きで drain する前に、容量、ステートフルデータ、PDB、置き換えの所有者を確認します。
+計画的な置換では、capacity、stateful data、PDB、置換リソースの所有者を確認します。選択した node 1台を timeout 付きで drain します。
 
 ```bash
 set -euo pipefail
@@ -623,13 +623,13 @@ kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces \
 kubectl --context "$KUBE_CONTEXT" drain "$NODE_NAME" --ignore-daemonsets --timeout=10m
 ```
 
-drain に失敗した後で EC2 インスタンスの終了に進んだり、既定で `emptyDir` データを破棄したりしないでください。drain が途中まで進んだノードは cordon されたままになる場合があります。PDB がカバーするのは eviction 経路であり、あらゆるインフラストラクチャ障害、終了、コントローラーによるスケールダウンではありません。インプレースでパッケージを変更するのではなく、マネージドな置き換えについては[ノードアップグレード手順](./08-eks-upgrades.md)に従います。
+drain が失敗したら、EC2 termination に進んだり、既定で `emptyDir` data を破棄したりしないでください。途中まで drain された node は cordon 状態のままになる場合があります。PDB が保護するのは eviction path であり、すべてのインフラ障害、termination、controller scale-down ではありません。package を node 上で直接変更せず、マネージド置換については[node upgrade procedure](./08-eks-upgrades.md)を参照してください。
 
-EKS の自動ノード修復は、実際に用意されている独立した仕組みです。Auto Mode では既定で有効です。マネージドノードグループでは `nodeRepairConfig` を有効にでき、Karpenter には独自の機能/設定要件があります。ノードモニタリングで追加の条件が報告されても、検出だけでは修復は有効になりません。現在の既定の一覧では、`Ready`、ランタイム、カーネル、ネットワーク、ストレージに関する継続的な障害が置き換えの対象です。`MemoryPressure` と `DiskPressure` には、**既定の修復アクションがありません**。修復しきい値/並列度や、異常なフリート/ARC 制御によって、新しいアクションが停止しても、進行中のアクションは継続する場合があります。カスタム Lambda、ASG タグ、`maxUnavailable` が自動的にこの動作を提供すると断言しないでください。
+EKS automatic node repair は実在する別の機構です。Auto Mode では既定で有効です。managed node group では `nodeRepairConfig` を有効化でき、Karpenter には別の機能/設定要件があります。Node monitoring が追加 condition を報告しても、それだけで repair は有効になりません。現在の既定 table では、`Ready`、runtime、kernel、networking、storage の継続的な failure に対する置換が含まれますが、`MemoryPressure` と `DiskPressure` には**既定の repair action はありません**。repair threshold/parallelism、unhealthy-fleet/ARC control は新しい action を停止する場合がある一方、進行中 action は続く可能性があります。独自 Lambda、ASG tag、`maxUnavailable` が自動的にこの動作を提供すると約束しないでください。
 
-### Pod が実行されない問題
+### Pod が起動しない問題
 
-#### 状態、イベント、所有コントローラーを確認する
+#### state、event、所有 controller を読む
 
 ```bash
 set -euo pipefail
@@ -650,23 +650,23 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
   --field-selector "involvedObject.uid=$POD_UID" --sort-by='.metadata.creationTimestamp'
 ```
 
-「基本」のセクションにあるコンテナ別のログ取得手順を使用します。`Pending`、`ContainerCreating`、イメージ取得の待機、init コンテナの失敗、readiness の失敗、`OOMKilled`、再起動バックオフは、それぞれ別の問題を示します。`CrashLoopBackOff` は、コンテナの失敗が繰り返された後のバックオフ状態であり、根本原因ではありません。
+基本節にあるコンテナ別 log 手順を使います。`Pending`、`ContainerCreating`、image pull 待ち、init-container failure、readiness failure、`OOMKilled`、restart backoff はそれぞれ別の問題です。`CrashLoopBackOff` は container failure を繰り返した後の backoff 状態であり、root cause ではありません。
 
-| 証拠 | 次に確認すること |
+| 証拠 | 次に確認する項目 |
 | --- | --- |
-| イメージ取得エラー | レジストリ/名前/タグ/digest/アーキテクチャ、ノード側の DNS/TLS/ルート、レート制限、実際の取得 ID |
-| FailedScheduling | requests と割り当て可能容量、Pod 数、taint/affinity/topology、クォータ、PVC のコンシューマー制約 |
-| FailedMount / attach | PVC/PV/StorageClass、CSI/ID、AZ、現在のアタッチ状態。「ストレージ」のセクションを参照 |
-| OOMKilled / Evicted | コンテナの終了状態、limits、ノードの圧迫、使用履歴。メモリリークと決めつけない |
-| Forbidden / admission failure | 正確な API 呼び出し元、RBAC、admission ポリシー。Pod の一覧表示権限を追加しても、無関係なレジストリ/ファイルシステムアクセスは解決しない |
+| image pull error | registry/name/tag/digest/architecture、node 側の DNS/TLS/route、rate limit、実際の pull identity |
+| FailedScheduling | request と allocatable capacity、Pod 数、taint/affinity/topology、quota、PVC consumer 制約 |
+| FailedMount / attach | PVC/PV/StorageClass、CSI/identity、AZ、現在の attachment。ストレージ節を参照 |
+| OOMKilled / Evicted | container termination state、limit、node pressure、usage history。memory leak と決めつけない |
+| Forbidden / admission failure | 正確な API actor、RBAC/admission policy。Pod list 権限を追加しても、無関係な registry/filesystem access は直らない |
 
-`imagePullPolicy` を `Always` に変更しても、存在しないイメージや無効な認証情報の問題は解決しません。ラップトップで Docker を使ってイメージを取得しても、ノードの経路/ID は確認できません。また、Docker に読み込んだイメージが自動的に containerd ランタイムに登録されることもありません。
+`imagePullPolicy` を `Always` にしても、存在しない image や不正な資格情報は修正されません。laptop 上の Docker で image を pull しても、node の経路/identity は検証できません。また、Docker に読み込ませただけでは containerd runtime に自動で image が登録されません。
 
-#### レジストリの認証情報とワークロードの変更
+#### registry 資格情報と workload の変更
 
-プライベート ECR では、実際のノード/Fargate の実行 ID とリポジトリポリシーを確認します。アプリケーションの IRSA/Pod Identity は、起動前にイメージを取得する ID ではありません。プライベート ECR のネットワークには ECR API/DKR と S3 へのアクセスが必要な場合があります。ECR エンドポイントを用意しても、任意のレジストリへのプライベートアクセスは提供されません。
+private ECR では、実際の node/Fargate execution identity と repository policy を確認します。application IRSA/Pod Identity は、起動前に image を pull する主体ではありません。private ECR の通信に ECR API/DKR と S3 への access が必要な場合があります。ECR endpoint は任意の registry への private access を提供しません。
 
-イメージプル Secret が必要なレジストリでは、正しいレジストリ認証情報を含む、保護された自己完結型の Docker 認証 JSON ファイルを使用します。`.dockerconfigjson` やパスワードをログ/コマンド引数に表示しないでください。デスクトップの認証情報ヘルパーへの参照だけでは、kubelet が使える認証情報にはなりません。
+image-pull Secret を必要とする registry では、正しい registry credential を含む、保護された自己完結型の Docker auth JSON file を使います。`.dockerconfigjson` や password を log/command argument に出さないでください。desktop の credential-helper 参照だけでは、kubelet が使える資格情報になりません。
 
 ```bash
 set -euo pipefail
@@ -685,9 +685,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" rollout status \
   "deployment/$DEPLOYMENT_NAME" --timeout=5m
 ```
 
-Secret は Pod と同じ namespace に置く必要があります。戦略的 Pod テンプレートパッチは pull-secret エントリを名前でマージし、管理された Deployment のロールアウトを開始します。リリースの所有関係とその他の設定を維持してください。既存 Pod の `imagePullSecrets` は、通常、編集可能なフィールドではありません。ServiceAccount の既定値が反映されるのは、新たに受け入れられる Pod です。namespace 全体の既定 ServiceAccount を変更すると、無関係なワークロードに影響する場合があります。期限切れの認証情報は、共有 Secret を定期的に削除/再作成するのではなく、所有者を通じて更新します。
+Secret は Pod と同じ namespace に置きます。strategic Pod-template patch は名前ごとに pull-secret entry を merge し、制御された Deployment rollout を開始します。release の所有権と他の設定を保持してください。既存 Pod の `imagePullSecrets` は一般に編集できる field ではありません。ServiceAccount の既定値は新たに admission される Pod に影響します。namespace 全体の default ServiceAccount を変えると、関係のない workload にも影響する場合があります。共有 Secret を定期的に削除/再作成せず、所有者を通じて期限切れの資格情報を更新します。
 
-その他の設定変更では、コントローラーの宣言済みテンプレートを修正し、ロールアウト/readiness を監視します。Pod を削除しても、適切なコントローラーがなければ再作成されず、有用な証拠が失われる場合があります。デバッグ用の `--copy-to` Pod は、アプリケーションの副作用を複製する可能性があります。稼働中のアプリケーションにパッケージをインストールするのではなく、明示的な権限とクリーンアップ計画を含むレビュー済みの診断方法/イメージを使用してください。
+その他の設定変更では、controller の宣言済み template を修正し、rollout/readiness を確認します。適切な controller がなければ Pod を削除しても再作成されません。また、有用な証拠が失われる場合があります。debug 用 `--copy-to` Pod は application の副作用も複製し得ます。稼働中の application に package を追加するのではなく、権限と cleanup を明記した、レビュー済み診断手段と image を使ってください。
 
 ### リソース制約の問題
 
@@ -698,15 +698,15 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
 kubectl --context "$KUBE_CONTEXT" top nodes
 ```
 
-メトリクスコマンドの実行には Metrics Server と、kubelet への正常なアクセスが必要です。スケジューリングで使われるのはリソース requests とノードの割り当て可能容量であり、現在の `kubectl top` の使用率ではありません。該当する場合は、init コンテナ、Pod オーバーヘッド、エフェメラルストレージ、拡張リソース、Pod 数の上限も含めます。namespace のクォータと LimitRange はそれぞれ別の制約です。
+metrics command には Metrics Server と、動作する kubelet access が必要です。scheduler は現在の `kubectl top` 使用率ではなく、resource request と node allocatable capacity を使います。該当する場合は init container、Pod overhead、ephemeral storage、extended resource、Pod 数の上限も含めてください。namespace quota と LimitRange は別の制約です。
 
-測定したワークロードの必要性が裏付けられている場合にのみ requests を減らします。メモリ request を減らしても `Insufficient pods` は解決せず、コンテナが limit 内に収まる保証にもなりません。limit を高くすると、ノード側の圧迫が増す場合があります。ログやキャッシュを削除する前に、ディスク/inode とイメージ/ファイルシステムの使用状況を解決し、インシデントの証拠を保存してください。
+実測した workload の要件から必要だと判断できる場合に限り request を下げます。memory request を下げても `Insufficient pods` は修正されず、container が limit 内に収まる保証もありません。limit を上げると node pressure が高まる場合があります。log/cache を削除する前に disk/inode と image/filesystem 使用量を調べ、障害の証拠を保存します。
 
-ノード数を増やしても、インスタンスごとの容量は変わりません。マネージドグループでは、desired/min/max をそのオートスケーラーと連携させます。スケーリング設定を縮小しても PDB は順守されません。インスタンスタイプを変更するには、適切な新しいグループ、またはサポートされている元の起動テンプレート/バージョン経路を使用します。Pod をスケジュール可能にするだけのために、taint、affinity、topology の制約を削除しないでください。
+node 数を増やしても instance あたりの capacity は変わりません。managed group では、autoscaler と desired/min/max の設定を調整します。scaling 設定を縮小しても PDB は守られません。instance type を変える場合は、適切な新しい group または元の launch-template/version を使うサポート対象の手順を使います。Pod を scheduling させるためだけに taint、affinity、topology 制約を削除しないでください。
 
-### オートスケーリングの問題
+### autoscaling の問題
 
-レプリカのスケーリング（HPA）、リソースの推奨/更新（VPA）、ノードのプロビジョニング（CA、Karpenter、Auto Mode）、アプリケーションのボトルネックを区別します。別のノードプロビジョナーが容量を管理している場合、CA の Pod がないのは正常です。
+replica scaling（HPA）、resource の推奨/更新（VPA）、node provisioning（CA、Karpenter、Auto Mode）、application bottleneck を切り分けます。別の node provisioner が capacity を管理している場合、CA Pod がないのは正常です。
 
 ```bash
 set -euo pipefail
@@ -719,13 +719,13 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
   --sort-by='.metadata.creationTimestamp'
 ```
 
-HPA の `AbleToScale`、`ScalingActive`、`ScalingLimited` などの条件、現在のメトリクス、動作を調べます。desired レプリカ数と現在のレプリカ数の一時的な差は、自動的に障害を意味するものではありません。CPU/メモリ使用率のターゲットにはリソース requests が必要です。カスタム/外部メトリクスには、それぞれ独自の API アダプターまたは KEDA 統合が必要です。メトリクスエラーによってスケールダウンが妨げられる場合があります。
+`AbleToScale`、`ScalingActive`、`ScalingLimited` などの HPA condition、現在の metric、behavior を確認します。desired と current replica が一時的に異なっても、直ちに障害とは限りません。CPU/memory utilization target には resource request が必要です。custom/external metric には各 API adapter または KEDA integration を使います。metric error によって scale-down が止まる場合があります。
 
-CA では、インストール済みリリース、サポートされる Kubernetes マイナーバージョン、ID、検出タグ、スケジュール不可 Pod の制約、ノードグループの最大数/クォータを調べます。ノード CPU の平均使用率が高いだけで CA がノードを追加するわけではありません。Karpenter/Auto Mode では、対応する NodePool/NodeClaim/プロバイダーの上限とイベントを調べます。一般的な対策として CA をインストールしないでください。
+CA では、インストール済み release、対応する Kubernetes minor、identity、discovery tag、unschedulable Pod の制約、node-group 上限/quota を調べます。CA は平均 node CPU が高いというだけで node を追加しません。Karpenter/Auto Mode では、対応する NodePool/NodeClaim/provider 上限と event を確認します。万能な対処として CA をインストールしないでください。
 
-VPA では、推奨のみの `Off`、作成時に適用する `Initial`、意図的な更新モードを区別します。`Auto` は非推奨であり、`Recreate` が推奨されています。モード変更によってワークロードが中断されたり、同じ CPU/メモリシグナルを使用する HPA と競合したりする場合があります。API クエリに失敗しても、VPA CRD が存在しない証拠にはなりません。
+VPA では、推奨のみの `Off`、作成時に適用する `Initial`、意図的な update mode を区別します。`Auto` は非推奨で `Recreate` が代替です。mode 変更は workload を中断させ、同じ CPU/memory signal を使う HPA と競合する場合があります。API query の失敗だけでは VPA CRD がないと証明できません。
 
-これは**リソースメトリクス**を使った HPA の例であり、カスタムメトリクス設定ではありません。
+これは custom metric 設定ではなく、**resource metric** による HPA の例です。
 
 ```yaml
 # Resource metrics example, not a custom/external-metrics adapter configuration.
@@ -759,11 +759,11 @@ spec:
       stabilizationWindowSeconds: 300
 ```
 
-70%/80%、レプリカ数の範囲、安定化ウィンドウは例示用の設定であり、測定に基づく推奨値ではありません。対象の Deployment が存在し、適切な requests と容量が必要です。HPA は各メトリクスのレプリカ推奨数のうち最大の値を選びます。メモリの動作とアダプターの障害については、ワークロードごとにテストが必要です。レプリカのスケーリングを管理する所有者は1つにし、Terraform/GitOps が `.spec.replicas` を継続的にリセットしないようにしてください。
+70%/80%、replica 上限/下限、stabilization window は例示値であり、実測に基づく推奨値ではありません。対象 Deployment が存在し、適切な request と capacity が必要です。複数 metric がある場合、HPA は最大の replica 推奨値を選びます。memory behavior と adapter failure は workload ごとにテストしてください。replica scaling の所有者を1つにし、Terraform/GitOps が `.spec.replicas` を継続して元に戻さないようにします。
 
-[オートスケーリングの概念](../core/09-cluster-administration.md)と、インストール済みコントローラーのドキュメントに記載された設定を使用してください。未レビューの `master` マニフェストを適用したり、ノードロールに `AutoScalingFullAccess` を付与したりするのではなく、実際の Helm の値/ID と、署名またはバージョン固定されたリリースを確認します。
+[autoscaling の概念](../core/09-cluster-administration.md)と、インストール済み controller の文書化された設定を参照してください。未レビューの `master` manifest を適用したり、node role に `AutoScalingFullAccess` を付けたりせず、実際の Helm value/identity と署名・固定した release を確認します。
 
-出典: [EKS ノード修復](https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html)、[Pod のライフサイクル](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)、[プライベートイメージの取得](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)、[HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)、[VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)。
+参考資料: [EKS node repair](https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html)、[Pod lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)、[private image pull](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)、[HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)、[VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)。
 
 ## IAM と認証に関する問題 {#iam-and-authentication-issues}
 
@@ -773,9 +773,9 @@ spec:
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-4.html)
 -->
 
-### クラスターへのアクセスが拒否される
+### クラスター access の拒否
 
-AWS の呼び出し元、EKS API 権限、kubeconfig/STS 認証、クラスターの ID マッピング、Kubernetes の認可を切り分けます。EKS コントロールプレーンが使う IAM ロールは、人間のオペレーターのロールではありません。AWS の `DescribeCluster` が成功しても、Kubernetes へのアクセスは許可されません。
+AWS caller、EKS API 権限、kubeconfig/STS 認証、クラスター identity mapping、Kubernetes 認可を切り分けます。EKS control plane が使う IAM role は、オペレーターの role ではありません。AWS `DescribeCluster` に成功しても Kubernetes access は付与されません。
 
 ```bash
 set -euo pipefail
@@ -788,9 +788,9 @@ kubectl config view --context "$KUBE_CONTEXT" --minify \
 kubectl --context "$KUBE_CONTEXT" auth can-i get pods -n "$NAMESPACE"
 ```
 
-トランスポートエラーについては、アクセスのセクションにあるエンドポイント/CA チェックを使用します。認証情報の期限が切れている場合は、設定済みの SSO/フェデレーション/引き受けたロールのセッションを更新し、選択されているプロファイル/ロールを確認します。`sts get-session-token` はどの環境でも使える更新コマンドではありません。また、その出力を表示すると認証情報が漏れるおそれがあります。
+transport error では、access 節にある endpoint/CA 確認を使います。資格情報が失効した場合は、設定済み SSO/federated/assumed-role session を更新し、選択した profile/role を確認します。`sts get-session-token` は万能の更新 command ではありません。また、その出力を表示すると資格情報が漏れる場合があります。
 
-ID マッピングの仕組みを判断する前に、クラスターの認証モードを調べます。
+identity mapping の仕組みを判断する前に、クラスターの authentication mode を調べます。
 
 ```bash
 set -euo pipefail
@@ -803,13 +803,13 @@ aws eks list-associated-access-policies --cluster-name "$CLUSTER_NAME" --region 
   --principal-arn "$PRINCIPAL_ARN"
 ```
 
-API ベースのアクセスでは、正確なプリンシパル、エントリタイプ、Kubernetes グループ、関連付けられたアクセスポリシーの namespace/クラスター適用範囲を確認します。`aws-auth` が関係するのは `CONFIG_MAP` モードと混在モードのレガシー部分です。`aws-auth` が存在しないからといって、すべてのアクセスが壊れていると決めつけないでください。ノードマッピングを維持し、認証モードを変更する前に、ドキュメントに記載された移行手順に従います。
+API ベースの access では、正確な principal、entry type、Kubernetes group、access policy に関連付けられた namespace/cluster scope を確認します。`aws-auth` は `CONFIG_MAP` mode と mixed mode の legacy 側で使われます。`aws-auth` がないだけで、すべての access が壊れたとは限りません。既存の node mapping を保持し、authentication mode を変更する前に文書化された移行方法を使います。
 
-一般的な修正として `aws-auth` を短い例で置き換えたり、`system:masters` を付与したりしないでください。namespace スコープの許可を追加しても、別のバインディング/アクセスポリシーですでに付与されている、より広い権限は取り消されません。意図したアクセス経路を、その所有者を通じて修正します。
+一般的な修正として `aws-auth` を短い例で置き換えたり、`system:masters` を付与したりしないでください。namespace-scoped の grant では、別の binding/access policy による既存の広い grant は取り消されません。access の所有者を通じて、意図した経路を修正します。
 
 ### RBAC の問題
 
-認証の失敗、Kubernetes の `Forbidden` 応答、偽装リクエストの失敗は、それぞれ異なる証拠です。正確な API verb、リソース/subresource、namespace、主体の種類を確認します。
+認証失敗、Kubernetes `Forbidden` response、impersonation request の失敗はそれぞれ別の証拠です。正確な API verb、resource/subresource、namespace、subject kind を確認します。
 
 ```bash
 set -euo pipefail
@@ -823,9 +823,9 @@ kubectl --context "$KUBE_CONTEXT" get clusterrolebindings -o json \
   | jq --arg name "$SUBJECT_NAME" '.items[] | select(any(.subjects[]?; .name == $name)) | {name:.metadata.name,roleRef,subjects}'
 ```
 
-これらのクエリで見つかるのは、主体名の候補です。同じ文字列でも主体が異なる場合があるため、`kind`、ServiceAccount の namespace、`roleRef` を確認します。`kubectl auth can-i --as=...` には偽装の権限が必要です。偽装した RBAC チェックや `--list` の出力では、EKS アクセスポリシーによるすべての許可が再現されるとは限りません。意図した認証済みの主体でもテストしてください。
+この query は subject name の候補を探します。同じ文字列でも subject の `kind`、ServiceAccount namespace、`roleRef` を確認してください。`kubectl auth can-i --as=...` には impersonation 権限が必要です。impersonated RBAC check と `--list` の出力では、EKS access policy によるすべての grant は再現されません。実際に認証する主体でもテストします。
 
-たとえば、標準の IAM アクセスエントリを `eks-troubleshoot-readers` に意図的にマッピングした後、次の Role で許可されるのは namespace 内の Pod/Service/event/EndpointSlice の読み取りと Pod ログの取得だけです。
+例えば、標準 IAM access entry を意図的に `eks-troubleshoot-readers` に mapping した後、以下の Role は namespace 内の Pod/Service/event/EndpointSlice の read と Pod log だけを許可します。
 
 ```yaml
 # Example for a deliberately mapped Kubernetes group in an existing namespace.
@@ -860,11 +860,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-namespace はすでに存在している必要があり、グループマッピングは別途確認が必要です。アプリケーションの ServiceAccount には、`kind: ServiceAccount`、正確な名前、namespace を指定した個別のバインディングを使用します。ノード/namespace の読み取りはクラスター全体の権限であり、明示的にレビューした ClusterRole が必要です。すべての診断ユーザーに cluster-admin 権限を付与しないでください。この Role は Secret の読み取りを許可しませんが、ログアクセスからアプリケーションデータが漏れる可能性があります。
+namespace が既に存在し、group mapping を別途レビュー済みである必要があります。application ServiceAccount では、`kind: ServiceAccount`、正確な name と namespace を指定した別の binding を使います。node/namespace read は cluster-scoped であり、レビュー済みの ClusterRole が必要です。すべての診断ユーザーに cluster-admin access を付与しないでください。この Role は Secret read 権限を持ちませんが、log access から application data が漏れる可能性はあります。
 
 ### IRSA と Pod Identity の問題
 
-IRSA は**ワークロード用の AWS 認証情報**を提供します。クラスターの IAM OIDC プロバイダーは、人間の IAM プリンシパルが Kubernetes RBAC にアクセスするための仕組みではありません。実際の Pod ServiceAccount、信頼関係とアクセス許可ポリシー、SDK の認証情報チェーン、サービスエンドポイントへの到達性を調べます。
+IRSA が提供するのは**workload の AWS 資格情報**です。そのクラスターの IAM OIDC provider は、人の IAM principal が Kubernetes RBAC access を得る仕組みではありません。Pod ServiceAccount、trust/permission policy、SDK credential chain、service endpoint 到達性を確認します。
 
 ```bash
 set -euo pipefail
@@ -881,9 +881,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
   | jq '{serviceAccount:.spec.serviceAccountName,containers:[.spec.containers[] | {name,awsEnvironmentNames:[.env[]? | select(.name | startswith("AWS_")) | .name]}]}'
 ```
 
-ここで表示するのは AWS 環境変数の名前だけです。ID のトラブルシューティングで、すべての Pod 環境変数値や投影トークンを出力しないでください。IRSA を使用する場合は、サポートされる SDK が投影された Web Identity トークンと設定済みロールを実際に使っていることを確認します。それより前に設定された静的/既定の認証情報ソースが優先されることがあります。
+ここに表示しているのは AWS environment variable 名だけです。identity の調査で Pod の全 environment value や projected token を出力しないでください。IRSA では、サポート対象 SDK が projected web-identity token と設定した role を使うことを確認します。先に評価される static/default credential source が優先される場合があります。
 
-次は、1つの ServiceAccount の主体と STS のオーディエンスを結び付ける、説明用の信頼ポリシーステートメントです。アカウント、パーティション、リージョン、issuer ID、subject は確認済みの値に置き換えてください。共有ロールを上書きするためのポリシーではありません。
+次の trust statement は、1つの ServiceAccount subject と STS audience に結び付きます。共有 role をそのまま上書きする policy として使わず、account、partition、Region、issuer ID、subject を確認済みの値に置き換えてください。
 
 ```json
 {
@@ -906,11 +906,11 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
 }
 ```
 
-所有するロールを変更する際は、他の正当な信頼関係も維持してください。ロールの引き受けに成功した後でも、IAM アクセス許可ポリシー、リソースポリシー、KMS grant、組織の制御によって AWS アクションが拒否される場合があります。ServiceAccount のアノテーションを更新しても、既存の Pod に環境変数/volume の設定が遡及的に注入されることはありません。ワークロードの所有者と連携してロールアウトします。
+所有対象の role を変更するときも、正当な trust statement は保持します。role assumption に成功しても、IAM permission policy、resource policy、KMS grant、Organization control によって AWS action が拒否される場合があります。ServiceAccount annotation を変更しても、既存 Pod に environment/volume 設定が遡及して注入されることはありません。workload owner と調整して rollout します。
 
-現在の EKS ガイドでは、OIDC discovery/JWKS 用に別個の `com.amazonaws.<region>.oidc-eks` PrivateLink エンドポイントがサポートされています。これは EKS 管理エンドポイント、Pod Identity 用の `eks-auth`、STS とは別です。プライベート OIDC アクセスだけでは、IAM プロバイダーは作成されず、ロールの信頼も付与されず、STS への到達性も確保されません。
+現在の EKS guide では、OIDC discovery/JWKS 用に `com.amazonaws.<region>.oidc-eks` PrivateLink endpoint を別途サポートしています。これは EKS 管理 endpoint、Pod Identity 用の `eks-auth`、STS とは別です。private OIDC access だけで IAM provider が作成されたり、role trust が付与されたり、STS に到達できたりするわけではありません。
 
-EKS Pod Identity では、正確な namespace/ServiceAccount の関連付けを調べます。
+EKS Pod Identity では、正確な namespace/ServiceAccount に対する association を確認します。
 
 ```bash
 set -euo pipefail
@@ -919,9 +919,9 @@ aws eks list-pod-identity-associations --cluster-name "$CLUSTER_NAME" --region "
   --namespace "$NAMESPACE" --service-account "$SERVICE_ACCOUNT"
 ```
 
-次に、返された関連付け ID、ロールの信頼/アクセス許可、サポートされるエージェント/SDK/コンピューティングの要件を調べます。IRSA アノテーションがないことは Pod Identity の障害を意味しません。関連付けの更新、認証情報のキャッシュ、先行する SDK 認証情報プロバイダーが影響します。すべての利用者を検証する前に、ID 方式を切り替えたり、既存の IRSA 信頼関係を削除したりしないでください。現在のセットアップ/移行経路については、[セキュリティの章](./05-eks-security.md)を参照してください。
+その後、返された association ID、role trust/permission、サポートされる agent/SDK/compute の要件を確認します。IRSA annotation がないことは Pod Identity の障害を意味しません。association update、credential cache、先に評価される SDK credential provider も関係します。全 consumer を確認する前に identity mechanism を切り替えたり、既存 IRSA trust を削除したりしないでください。現在の設定/移行経路は[セキュリティ章](./05-eks-security.md)を参照します。
 
-### ノードの参加に失敗する
+### Node Join の失敗
 
 ```bash
 set -euo pipefail
@@ -933,23 +933,23 @@ aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query 'cluster.{endpoint:endpoint,access:accessConfig,vpc:resourcesVpcConfig}'
 ```
 
-マネージドグループでは、`health.issues`、起動テンプレート/AMI/bootstrap の詳細、実際の EC2 インスタンス状態を確認します。セルフマネージド/ハイブリッドノードでは、独自の bootstrap/登録方法を調べます。マネージドノード API だけで説明できると思い込まないでください。
+managed group では `health.issues`、launch-template/AMI/bootstrap の詳細、実際の EC2 instance 状態を確認します。self-managed/hybrid node では、managed-node API で状態を把握できると決めつけず、独自の bootstrap と登録方式を調べます。
 
-インスタンスプロファイル ARN ではなく IAM **ロール ARN** と、適切なノード認証マッピング/アクセスエントリを確認します。マネージドノードグループと Fargate では、ID の動作がサービスによって管理されています。それらのマッピングを上書きしないでください。ノードのアクセスエントリは、標準の人間用エントリとはタイプ/動作が異なります。ロールパスと従来の `aws-auth` の制約についても、該当する認証モードのガイダンスを確認します。
+instance-profile ARN ではなく IAM **role ARN** を確認し、適切な node authentication mapping/access entry を使います。managed node group と Fargate では service 管理の identity 動作があり、その mapping を上書きしないでください。node access entry は、一般的な人間用 entry と type/semantics が異なります。role path と legacy `aws-auth` の制限も、該当する authentication-mode guidance に従います。
 
-ノードに必要なポリシーと ECR の取得権限を確認し、サポートされている場合は、CNI/CSI/アプリケーションの権限をそれぞれ実際の ID に割り当てます。`AmazonEKSClusterPolicy` やすべての CNI/ストレージ権限をノードロールに追加しても、一般的な登録の問題は解決しません。
+必要な node policy と ECR pull 権限を確認します。サポートされる場合は、CNI/CSI/application の権限を実際の各 identity に付与します。node role に `AmazonEKSClusterPolicy` や CNI/storage の全権限を追加しても、一般的な node 登録の解決策にはなりません。
 
-ノードから API サーバーへの HTTPS、API サーバーから kubelet へのポート 10250、実際の webhook/依存関係への経路を確認します。DNS、ルート/NACL、セキュリティグループの方向も確認してください。バックエンド webhook のルールがあるからといって、すべてのノードであらゆる送信元からのインバウンド 443 が必要なわけではありません。
+node から API server への HTTPS、API server から kubelet への port 10250、実際に必要な webhook/dependency 経路を確認します。DNS、route/NACL、security group の方向も含みます。backend webhook 用の rule があるからといって、すべての node で全方向からの inbound 443 が必要なわけではありません。
 
-AMI の bootstrap モデルを使用します。AL2023/nodeadm、Bottlerocket の設定、カスタム AMI では、それぞれ前提条件が異なります。AL2 のスクリプトを再実行したり kubelet だけを入れ替えたりしても、あらゆるイメージを修復できるわけではありません。証拠を保存し、確認済みの原因に対処した後で、所有者が管理するノード置き換え手順に従ってください。
+AMI 固有の bootstrap model を使います。AL2023/nodeadm、Bottlerocket setting、custom AMI では前提条件が異なります。AL2 script を再実行したり kubelet だけを置き換えたりしても、どの AMI でも修復できるわけではありません。証拠を保持し、原因を確認した後に所有者が管理する node replacement 手順を使います。
 
-出典: [EKS アクセスエントリ](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)、[RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)、[IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)、[OIDC PrivateLink](https://docs.aws.amazon.com/eks/latest/userguide/irsa-fetch-keys.html)、[EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)。
+参考資料: [EKS access entry](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)、[RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)、[IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)、[OIDC PrivateLink](https://docs.aws.amazon.com/eks/latest/userguide/irsa-fetch-keys.html)、[EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)。
 
 ## ストレージに関する問題 {#storage-issues}
 
-### PVC、PV、コンシューマーの診断
+### PVC、PV、consumer の診断
 
-正確な namespace/claim/UID、プロビジョナー、コンシューマーから調べます。`WaitForFirstConsumer` を使う場合、適切なコンシューマー Pod がスケジュールされるまで `Pending` になるのは正常なことがあります。ストレージコントローラーだけでなく、その Pod のスケジューリング/AZ/容量の制約も確認します。
+正確な namespace/claim/UID、provisioner、consumer から調べます。`WaitForFirstConsumer` の `Pending` は、適切な consumer Pod が scheduling されるまで正常な場合があります。その Pod の scheduling/zone/capacity 制約だけでなく、storage controller も確認します。
 
 ```bash
 set -euo pipefail
@@ -975,19 +975,19 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -o json \
   | jq --arg pvc "$PVC_NAME" '.items[] | select(any(.spec.volumes[]?; .persistentVolumeClaim.claimName == $pvc)) | {name:.metadata.name,node:.spec.nodeName,phase:.status.phase,conditions:.status.conditions}'
 ```
 
-`spec.volumes.persistentVolumeClaim.claimName` に対する、サポートされている Pod のフィールドセレクターはありません。上の JSON クエリでは、無効な API フィルターを使わずにコンシューマーを選択しています。`storageClassName` が未指定の場合と、空文字列が明示されている場合では、デフォルト/静的バインディングの意図が異なります。リテラルの `<default>` クラスを照会しないでください。
+`spec.volumes.persistentVolumeClaim.claimName` に対するサポート済み Pod field selector はありません。上記の JSON query は、この無効な API filter を使わず consumer を抽出します。`storageClassName` の省略と空文字列の明示では、default/static binding の意図が異なります。`<default>` という文字列の StorageClass を照会しないでください。
 
-PVC の YAML はオブジェクトの設定であり、内容のバックアップではありません。claim を削除/再作成すると、`Delete` の場合はバックエンドストレージが削除され、保持された PV の場合は意図的な再バインドが必要になることがあります。Pending/FailedMount の一般的な解決策として使用しないでください。ライフサイクルを変更する前に、reclaim ポリシー、スナップショット/バックアップ、ワークロード/データの所有者を確認します。claim が Bound でも、アプリケーションがそのストレージをマウントまたは読み取りできる証拠にはなりません。
+PVC YAML は object の設定であり、内容の backup ではありません。claim を削除/再作成すると、`Delete` の下では保存先が削除される場合があります。または保持された PV が意図的な再割り当てを待つ場合があります。Pending/FailedMount に対する一般的な修正として使わないでください。lifecycle を変更する前に reclaim policy、snapshot/backup、workload/data の所有者を調べます。claim が Bound でも、application が mount/read できる証明にはなりません。
 
-### EBS ボリュームの問題
+### EBS volume の問題
 
-#### ドライバーと実際のボリュームを確認する
+#### driver と実際の volume を確認する
 
-標準の `ebs.csi.aws.com`、Auto Mode の `ebs.csi.eks.amazonaws.com`、レガシー/移行済みボリューム、それぞれの所有者を区別します。通常、標準 EBS CSI コントローラーの権限は設定済みの IAM ID から付与されます。ノード IAM ロールだけを確認しても不十分です。実際のキーに必要な KMS 権限と、コントローラー/ノードコンポーネントの健全性も確認してください。
+標準 `ebs.csi.aws.com`、Auto Mode の `ebs.csi.eks.amazonaws.com`、legacy/migrated volume とその所有者を区別します。標準 EBS CSI controller の権限は通常設定済み IAM identity から付与されます。node IAM role だけを見ても不十分です。実際の key に必要な KMS 権限と、controller/node component の状態も含めて確認します。
 
-Auto Mode のノードルート/データボリュームの暗号化設定から、ワークロード PVC のすべてが暗号化されているとは判断できません。現在の[Auto Mode StorageClass リファレンス](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)では、`encrypted` の既定値は `false` です。どちらの EBS プロビジョナーを使う場合も、`encrypted: "true"` を明示的に指定し、実際の EBS ボリューム/キーを確認します。アカウントの暗号化既定値やスナップショットのプロパティも結果に影響することがあります。
+Auto Mode node の root/data volume が暗号化されていても、すべての workload PVC が暗号化されるとは限りません。現行の [Auto Mode StorageClass reference](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html) では `encrypted` の既定値は `false` です。EBS provisioner のどちらでも `encrypted: "true"` を明示して、実際の EBS volume/key を確認してください。アカウントの暗号化既定値や snapshot の属性も結果に影響する場合があります。
 
-Auto Mode が自身のボリュームを扱う場合、標準 EBS CSI コントローラーを別途インストールする必要はありません。EBS ボリュームは Fargate Pod にマウントできません。また、EBS CSI ドライバー/ボリュームは EKS Hybrid Nodes ではサポートされていません。コントローラーを Fargate 上で動かしても、Fargate ワークロードで EBS をマウントできるようにはなりません。
+Auto Mode の独自 volume に標準 EBS CSI controller を別途インストールする必要はありません。EBS volume は Fargate Pod に mount できず、EBS CSI driver/volume は EKS Hybrid Node でサポートされません。Fargate で controller を動かしても、Fargate workload が EBS を mount できるようにはなりません。
 
 ```bash
 set -euo pipefail
@@ -997,17 +997,17 @@ aws ec2 describe-volumes --region "$AWS_REGION" --volume-ids "$VOLUME_ID" \
 aws ec2 describe-volume-status --region "$AWS_REGION" --volume-ids "$VOLUME_ID"
 ```
 
-選択した Pod/ノードと EBS ボリュームが同じ AZ を利用できることを確認し、アタッチ上限、CSI エラー、現在の VolumeAttachment/EC2 状態を調べます。PVC 名だけでは namespace が異なる claim や古いボリュームと区別できません。PV を通じて正確なボリュームを特定します。
+選択した Pod/node と EBS volume が同じ AZ を使えることを確認し、attachment 上限、CSI error、現在の VolumeAttachment/EC2 state を調べます。PVC name だけでは namespace や過去の volume を一意に特定できません。PV から正確な volume を確認します。
 
-#### アタッチとマウントの復旧
+#### attachment と mount の復旧
 
-Multi-Attach では、古いコンシューマーがまだ動作/書き込み中か、そのノードに接続できるか/フェンスされているか、ロールアウトによって2つ目のコンシューマーが別ノードに配置されたかを確認します。`ReadWriteOnce` は単一ノードのアクセスモードであり、単一 Pod のロックではありません。ワークロードの停止と CSI のアンマウント/デタッチを調整します。Pod オブジェクトを単に削除しただけで、プロセスも停止したと考えないでください。
+Multi-Attach では、古い consumer がまだ稼働または書き込み中か、その node が到達可能/隔離済みか、rollout で別 node に第2の consumer を配置したかを調べます。`ReadWriteOnce` は単一 node の access mode であり、単一 Pod の lock ではありません。workload 停止と CSI unmount/detach を調整します。Pod object を削除しただけで、process も停止したと決めつけないでください。
 
-手動でのアタッチ/デタッチは、CSI の調整処理の代わりにはなりません。手動介入による復旧が必要な場合は、書き込み元が停止していることとデータ保護を確認し、EBS の復旧手順に従います。マウント中のボリュームをデタッチすると、データが破損する可能性があります。ノードを繰り返し再起動したり、強制デタッチしたりしてアタッチエラーを回避しないでください。
+手動の attach/detach は CSI reconciliation の代わりにはなりません。手動介入が必要な場合、書き込み元が停止したこととデータ保護を確認し、EBS recovery 手順に従います。mount 中の volume を detach するとデータが破損するおそれがあります。node を何度も reboot したり force detach したりして attachment error を回避しないでください。
 
-#### StorageClass とプロビジョニング
+#### StorageClass と provisioning
 
-**新規**の標準ドライバー用クラスでは、暗号化、遅延バインディング、保持を明示した例は次のとおりです。
+**新規**の標準 driver class では、暗号化、遅延 binding、保持を明示する次の例を使えます。
 
 ```yaml
 # New, explicitly selected StorageClass for standard EBS CSI, not an in-place edit.
@@ -1025,17 +1025,17 @@ allowVolumeExpansion: true
 reclaimPolicy: Retain
 ```
 
-既存 PVC のクラスは変更されません。既存の StorageClass では、プロビジョナー/パラメーター/バインディングモードを自由に変更できません。既定クラスを切り替えると、他の claim にも影響します。`Retain` は、ストレージを別途判断するまで残す意図的な設定であり、料金が継続して発生する場合があります。拡張にはドライバー/クラス/ファイルシステムのサポートが必要で、要求サイズを編集して PVC を縮小することはできません。
+この例で既存 PVC の class は変更されません。既存 StorageClass の provisioner/parameter/binding mode は自由に変更できません。default class の切り替えは他の claim にも影響します。`Retain` は意図的に storage を残すため、別途 cleanup を判断し、継続課金も考慮します。拡張には driver/class/filesystem のサポートが必要です。PVC の要求サイズを書き換えて縮小することはできません。
 
-互換性のある CSI アドオンを既存の所有者を通じて選択/設定し、実際の IRSA/Pod Identity と完全な設定を含めます。`eksctl create iamserviceaccount --role-only` はロールを作成しますが、そのロールをアドオンに関連付けるわけではありません。`--force` を使ってアドオンを再インストールするのではなく、調査したアドオン ID と更新手順を使用します。
+互換性のある CSI addon を既存 owner 経由で選んで設定し、実際の IRSA/Pod Identity と全 configuration を含めます。`eksctl create iamserviceaccount --role-only` は role を作成するだけで、addon と関連付けるわけではありません。検査した addon identity と update 手順を使い、`--force` で再インストールしないでください。
 
-Auto Mode への移行については、[EBS ガイド](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)でスナップショットを使った移行が説明されています。また、[Auto Mode 移行ガイド](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)では、ワークロードを停止して Retain/静的 PV を使う方法も説明されています。経路を選ぶ前に、該当するドライバー、タグ/IAM、claim/finalizer のライフサイクル、復旧計画を検証します。バインド済み claim のプロビジョナー文字列を変更しても移行にはなりません。スナップショットには CSI snapshot controller/CRD と、適切なクラス/権限も必要です。
+Auto Mode への移行では、[EBS guide](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html) が snapshot 移行を説明しています。[Auto Mode migration guide](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html) では、workload を停止して Retain/static PV にする方法も説明されています。選択する前に、該当 driver、tag/IAM、claim/finalizer lifecycle、recovery plan を確認します。Bound claim の provisioner string を書き換えても移行にはなりません。snapshot を利用する場合は、CSI snapshot controller/CRD と該当 class/権限も必要です。
 
-### EFS ボリュームの問題
+### EFS volume の問題
 
-#### プロビジョニングとマウントアクセスを個別に追跡する
+#### provisioning と mount access を個別に追跡する
 
-PV からファイルシステム/アクセスポイントを特定し、コンシューマーノード/AZ、マウントターゲットの可用性、DNS、NFS 経路を確認します。アクセスポイントを作成するコントローラー API の権限と、ファイルをマウント/アクセスするクライアントの権限は異なります。ファイルシステムポリシー、TLS/IAM 要件、アクセスポイントの POSIX ID/ルートディレクトリ所有権、アプリケーションの UID/GID を確認します。
+PV から filesystem/access point、consumer node/AZ、mount target の稼働状態、DNS、NFS 経路を確認します。access point を作成する controller API の権限と、client が file を mount/access する権限は異なります。filesystem policy、TLS/IAM 要件、access-point の POSIX identity/root-directory ownership、application UID/GID を確認してください。
 
 ```bash
 set -euo pipefail
@@ -1048,13 +1048,13 @@ aws efs describe-mount-target-security-groups --region "$AWS_REGION" \
   --mount-target-id "$MOUNT_TARGET_ID"
 ```
 
-実際のクライアントネットワーク ID とマウントターゲットの間で、ルーティング/NACL とセキュリティグループも含めて NFS TCP 2049 を確認します。ノードのサブネットをコントロールプレーンのサブネットから推測しないでください。ワークロードの AZ/topology に適したマウントターゲットを使用します。マウントターゲットの追加は別個のインフラストラクチャ変更です。
+実際の client network identity と mount target の間で NFS TCP 2049 が許可されていることを調べます。route/NACL と security group も確認します。control plane の subnet から node subnet を推測しないでください。workload の AZ/topology に適した mount target を使います。別の mount target の作成は独立したインフラストラクチャ変更です。
 
-サポートされている EC2 環境では、インストール済みの EFS CSI コントローラー/ノードプラグインと、現在の互換バージョンを調べます。Fargate では組み込みの EFS マウントが使え、ドキュメントに記載された静的プロビジョニング経路が利用できます。現在の EKS ガイドでは、Fargate ノードでの動的プロビジョニングはサポートされていません。EFS CSI ドライバーは Windows コンテナまたは EKS Hybrid Nodes ではサポートされていません。古い `release-1.5` マニフェストを無条件にインストールしたり、マネージドアドオンを重複させたりしないでください。
+対応 EC2 環境では、インストール済み EFS CSI controller/node plugin と現在互換性のある version を確認します。Fargate には文書化された static provisioning 経路の組み込み EFS mount 機能があります。現行 EKS guide では Fargate node での dynamic provisioning はサポートされません。EFS CSI driver は Windows container/EKS Hybrid Node ではサポートされません。古い `release-1.5` manifest を無条件にインストールしたり、managed addon を重複させたりしないでください。
 
-#### 動的プロビジョニングと静的プロビジョニングは別の方法
+#### dynamic provisioning と static provisioning は別の選択肢
 
-動的プロビジョニングでは、**既存の** EFS ファイルシステム内にアクセスポイントを作成します。ファイルシステムやマウントターゲットが作成されるわけではありません。例示の ID を置き換え、アクセスポイントの所有者/権限、クォータ、保持を確認してください。
+dynamic provisioning は**既存** EFS filesystem 内に access point を作成します。filesystem や mount target 自体は作成しません。例の ID を実際の値に置き換え、access point の所有権/権限、quota、保持を確認します。
 
 ```yaml
 # Dynamic EFS access-point provisioning example for a supported EC2-node setup.
@@ -1072,7 +1072,7 @@ mountOptions:
 reclaimPolicy: Retain
 ```
 
-または、意図的に準備した既存アクセスポイントを、静的 PV から参照できます。
+別の方法として、事前に用意した既存 access point を static PV から参照できます。
 
 ```yaml
 # Alternative static provisioning: replace the filesystem/access-point IDs.
@@ -1095,17 +1095,17 @@ spec:
     volumeHandle: fs-0123456789abcdef0::fsap-0123456789abcdef0
 ```
 
-静的 PV には、`storageClassName: ""` と意図した `volumeName` を指定したレビュー済みの claim を組み合わせます。バインディング/claimRef のセマンティクスを維持します。これを動的クラスと併用し、新しい claim が誤ってファイルシステムのルートにバインドされないようにしてください。`5Gi` は Kubernetes のバインディング用メタデータであり、EFS のディレクトリ/ファイルシステムサイズを強制するクォータではありません。
+static PV と、`storageClassName: ""`、意図した `volumeName` を指定したレビュー済み claim を組み合わせます。binding/claimRef の意味を保ちます。dynamic class と併用して、新しい claim を意図せず filesystem root に bind しないでください。`5Gi` capacity field は Kubernetes の binding metadata であり、EFS directory や filesystem の実効容量 quota ではありません。
 
-マウントを診断する際は、まず既存の Pod/CSI イベントとログを確認します。診断 Pod が必要な場合は、claim と同じ namespace に置き、互換性のあるノード/ID を使用します。`df` を実行するためだけにアプリケーションの PVC を読み書き可能でマウントすると、別の書き込み元が生まれる可能性があります。プローブが必要な場合は、明示的にレビューした読み取り専用マウント、準備済みのイメージ、期限付きの実行、所有者を考慮したクリーンアップを使用してください。無関係な EBS ボリュームを作成したり、デバイスを手動でアタッチしたりするのを、ストレージの「テスト」として行わないでください。
+mount の診断では、まず既存 Pod/CSI event と log を使います。診断 Pod も claim と同じ namespace に置き、互換性のある node/identity を使います。`df` を実行するために application PVC を read-write で mount すると、新たな書き込み元になる可能性があります。probe が必要なら、明示的にレビューした read-only mount、準備済み image、期間の上限、所有者を考慮した cleanup を使ってください。ストレージの「テスト」として、無関係な EBS volume を作成したり、device を手動で attach したりしないでください。
 
-出典: [EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)、[EFS CSI](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html)、[PersistentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)、[StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/)。
+参考資料: [EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)、[EFS CSI](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html)、[persistent volume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)、[StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/)。
 
 ## ログとモニタリングに関する問題 {#logging-and-monitoring-issues}
 
 ### CloudWatch Logs と Container Insights
 
-EKS コントロールプレーンのログ配信、Fluent Bit などのコレクターによるアプリケーション/ホストログ収集、CloudWatch エージェントのメトリクス、アプリケーションの計測を切り分けます。クラスターのログ記録を有効にしても、アプリケーションのコレクターはインストールされません。コレクターが稼働していても、意図したアカウント/リージョン/ロググループにデータが届いた証拠にはなりません。
+EKS control-plane log 配信、Fluent Bit などの collector による application/host log 収集、CloudWatch agent metric、application instrumentation を区別します。cluster logging を有効にしても application collector はインストールされません。また collector が実行中でも、意図した account/Region/log group にデータが届いた証明にはなりません。
 
 ```bash
 set -euo pipefail
@@ -1122,9 +1122,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$COLLECTOR_NAMESPACE" logs "$COLLECTOR_POD
   -c "$COLLECTOR_CONTAINER" --since=15m --tail=200 --timestamps=true
 ```
 
-ラベル/名前の慣例を推測せず、インストール済みコレクターの namespace、Pod、コンテナ、設定、送信先を使います。入力パス、パーサー、フィルター、バッファリング/バックプレッシャー、ファイルシステム容量、タイムスタンプ、出力エラー、DNS/TLS/エンドポイント、クォータを確認します。ロググループが見つからない場合、配信されていない、別の送信先が使われている、照会権限が足りないといった可能性があります。無条件にロググループを作成しても、送信側の問題は解決しません。
+名前/label の慣例を推測せず、インストール済み collector の namespace、Pod、container、configuration、destination を確認します。input path、parser、filter、buffering/backpressure、filesystem 容量、timestamp、output error、DNS/TLS/endpoint、quota を調べます。log group がない場合、配信されていない、別 destination に届いている、query 権限がない可能性があります。log group を作成するだけでは producer は修復されません。
 
-実際の IRSA/Pod Identity、またはその他のサポートされている ID を調べます。ノードポリシーや ServiceAccount アノテーションだけでは、コレクターが使う認証情報は分かりません。CloudWatch Observability EKS アドオンがインストールされている場合は、その ID/ヘルス状態を確認します。
+実際の IRSA/Pod Identity または他のサポートされた identity を確認します。node policy や ServiceAccount annotation があるだけでは、collector が使う資格情報を証明しません。CloudWatch Observability EKS addon を使用している場合は、その identity/health も調べます。
 
 ```bash
 set -euo pipefail
@@ -1135,11 +1135,11 @@ aws eks describe-addon --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query 'addon.{status:status,version:addonVersion,health:health,role:serviceAccountRoleArn,podIdentity:podIdentityAssociations}'
 ```
 
-API エラーが起きても、アドオンが存在しない証拠にはなりません。エラーと実際の Helm/アドオンの所有者を確認してください。更新時には、その所有者とカスタム設定を維持します。一般的な復旧手順として、古い未レンダリングの Fluentd/Fluent Bit クイックスタートを適用したり、既存の ServiceAccount を上書きしたりしないでください。Windows、Fargate、Auto Mode、EC2 ではログ収集経路が異なります。
+API error が出ても addon が存在しない証明にはなりません。error と実際の Helm/addon owner を確認します。update 時は owner と独自設定を保持してください。古い未rendered Fluentd/Fluent Bit quickstart を適用したり、一般的な復旧として既存 ServiceAccount を上書きしたりしないでください。Windows、Fargate、Auto Mode、EC2 では collection 経路が異なります。
 
-Container Insights では、実際のメトリクス名前空間、ディメンション、期間を使ってクエリします。メトリクス一覧はメタデータであり、現在のデータポイントやアラーム/通知が機能する証拠ではありません。範囲を限定したデータ照会を行い、コレクターログと比較します。設定とログの証拠を保護し、保持期間/KMS を変更する場合はロググループの所有者を通じて行います。
+Container Insights では、実際の metric namespace、dimension、time window を query します。metric 一覧は metadata であり、最新 datapoint や alarm/notification の動作を証明しません。collection log と比較しながら期間を絞った query を使います。log 設定と証拠を保護し、retention/KMS 変更は log group owner を通じて行います。
 
-### Metrics Server とリソースメトリクス
+### Metrics Server と resource metric
 
 ```bash
 set -euo pipefail
@@ -1150,11 +1150,11 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
 kubectl --context "$KUBE_CONTEXT" top nodes
 ```
 
-リソース Metrics API、kube-state-metrics のオブジェクトメトリクス、Prometheus/cAdvisor のサンプルデータは、それぞれ異なるデータソースです。APIService の条件、aggregator/RBAC アクセス、Metrics Server のログ、各 kubelet への接続を確認します。
+resource Metrics API、kube-state-metrics object metric、Prometheus/cAdvisor sample はデータソースが異なります。APIService condition、aggregator/RBAC access、Metrics Server log、各 kubelet への接続を調べます。
 
-`Unauthorized` の場合は、どの呼び出し元とエンドポイントが認証情報を拒否したかを特定します。`Forbidden` では、正確な RBAC verb/リソースを確認します。スクレイプの失敗は、ルーティング、kubelet のアドレス/ポート、証明書の検証、認証、kubelet の異常によって発生することがあります。古い未認証ポート 10255 を有効にしたり、一般的な対策として `--kubelet-insecure-tls` を使ったりしないでください。
+`Unauthorized` では、どの caller と endpoint が資格情報を拒否したか確認します。`Forbidden` では該当する RBAC verb/resource を調べます。scrape failure は routing、kubelet address/port、証明書検証、認証、kubelet の異常で起こる場合があります。古い未認証 port 10255 を有効にしたり、万能の修正として `--kubelet-insecure-tls` を使ったりしないでください。
 
-`v1.Pod` の resource-not-found エラーだけで EKS API サーバーの設定不良が証明されるわけではありません。kubeconfig/URL、API discovery、クライアント互換性、プロキシの応答を確認します。証拠を収集する前に Metrics Server を最新版に再インストールしたり、その Pod をすべて再起動したりすると、問題の痕跡が隠れる可能性があります。
+`v1.Pod` resource-not-found error だけでは EKS API server の設定不良を証明できません。kubeconfig/URL、API discovery、client 互換性、proxy response を確認します。証拠を収集する前に Metrics Server を再インストールしたり、すべての Pod を再起動したりすると、問題が隠れる場合があります。
 
 ### Prometheus と Grafana
 
@@ -1168,9 +1168,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$MONITORING_NAMESPACE" get events \
   --sort-by='.metadata.creationTimestamp'
 ```
 
-実際のチャート/Operator、リリース namespace、Service ポート、ストレージ、セレクターを特定します。`prometheus-community/prometheus` は単独で動作するチャートです。これをインストールしても、ServiceMonitor リソースを調整する Prometheus Operator は提供されません。Operator ベースのスタックでは、追加の CRD、Prometheus カスタムリソース、セレクター/RBAC の要件があります。
+実際の chart/operator、release namespace、Service port、storage、selector を特定します。standalone chart である `prometheus-community/prometheus` をインストールしても、ServiceMonitor resource を reconcile する Prometheus Operator は提供されません。Operator ベースの stack には、追加の CRD、Prometheus custom resource、selector/RBAC 要件があります。
 
-既存の Prometheus エンドポイントを調べるには、1つ目の端末でループバックのみにバインドした port-forward を実行し、そのまま開いておきます。
+既存 Prometheus endpoint を調べる場合は、localhost 限定の次の port-forward を1つ目の terminal で開いたままにします。
 
 ```bash
 : "${KUBE_CONTEXT:?}"; : "${MONITORING_NAMESPACE:?}"
@@ -1180,7 +1180,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$MONITORING_NAMESPACE" port-forward \
   --address 127.0.0.1 "service/$PROMETHEUS_SERVICE" "9090:$PROMETHEUS_SERVICE_PORT"
 ```
 
-2つ目のローカル端末では、このアクセスを許可するエンドポイントに対して次を実行します。
+2つ目の local terminal では、access が許可されている endpoint に対して次を実行します。
 
 ```bash
 set -euo pipefail
@@ -1189,11 +1189,11 @@ curl --fail --silent --show-error --max-time 10 \
   | jq '.data.activeTargets[] | {scrapePool,health,lastError,lastScrape}'
 ```
 
-実際のエンドポイントに合わせてスキームと認証を調整します。アクセス制御を回避しないでください。スクレイプエラー、relabeling、ターゲット検出、クエリ期間、保持期間を確認します。クエリ結果が空でも、データがない可能性があり、使用量が健全にゼロであるとは限りません。
+scheme と認証を実際の endpoint に合わせます。access control を迂回しないでください。scrape error、relabeling、target discovery、query time window、retention を確認します。query 結果が空でも、data/label がない可能性があり、使用量が正常にゼロという意味ではありません。
 
 #### ServiceMonitor の選択
 
-次の例では、既存アプリケーションの名前付きメトリクスポートを Operator の ServiceMonitor に関連付けます。
+この例では、既存 application の名前付き metrics port と Operator ServiceMonitor を接続します。
 
 ```yaml
 # Requires an existing application exporting metrics on a named container port "metrics".
@@ -1233,9 +1233,9 @@ spec:
       interval: 30s
 ```
 
-実際のインストール環境に合わせて namespace、ラベル、リリースセレクターを置き換えます。3種類の選択が関係します。Prometheus は ServiceMonitor の namespace を選択し、その `serviceMonitorSelector` はモニターのラベルを選び、モニターの `namespaceSelector` と `selector` は Service を選択します。`endpoints.port` で指定するのは**Service ポート**であり、任意のコンテナポートではありません。アプリケーションが実際にリッスンし、想定されたメトリクスパスを公開する必要があります。Prometheus には、検出権限とネットワーク/TLS/認証アクセスも必要です。
+namespace、label、release selector を実際の installation に置き換えます。3つの選択が関係します。Prometheus は ServiceMonitor の namespace を選択し、その `serviceMonitorSelector` が monitor label を選び、monitor の `namespaceSelector` と `selector` が Service を選択します。`endpoints.port` が指定するのは、任意の container port ではなく**Service port**です。application が想定される metrics path で実際に listen して公開する必要があります。Prometheus には discovery 権限、network/TLS/auth access も必要です。
 
-#### 設定を維持して変更を検証する
+#### 設定を保護して変更を確認する
 
 ```bash
 set -euo pipefail
@@ -1248,19 +1248,19 @@ helm get values "$MONITORING_RELEASE" --namespace "$MONITORING_NAMESPACE" \
 printf 'Protected configuration snapshot: %s\n' "$MONITORING_EVIDENCE"
 ```
 
-保護されたファイルに保存しても、値には機密データが含まれる場合があります。共有する前にマスキングしてください。対象チャート/バージョンの既定値、CRD の移行、カスタム値、ワークロードリソース、PVC 容量を確認します。既存の所有者を通じて更新を適用し、その後スクレイプ/アラートの動作を検証してください。2つ目のスタックをインストールしたり、診断なしにリソース上限をパッチしたりしないでください。
+保護された file に書き込んでも、value に機微情報が含まれることがあります。共有前に削除してください。更新対象 chart/version の既定値、CRD migration、独自 value、workload resource、PVC 容量を確認します。既存 owner 経由で更新し、その後 scrape/alert 動作を検証してください。stack を重複してインストールしたり、診断せず resource limit を patch したりしないでください。
 
-Grafana では、データソース UID/URL/認証、ネットワークアクセス、クエリのラベル/期間、ダッシュボードのプロビジョニング/サイドカーの選択を確認します。想定されたサイドカーのラベル/namespace がない ConfigMap は、ダッシュボードとして自動的に登録されません。既存のログイン/SSO フローを使用し、トラブルシューティングログに管理者パスワードを表示しないでください。
+Grafana では datasource UID/URL/authentication、network access、query label/time range、dashboard provisioning/sidecar selection を確認します。期待する sidecar label/namespace がない ConfigMap は、dashboard として自動で取り込まれません。既存の login/SSO を使い、administrator password をトラブルシューティング log に出力しないでください。
 
-レビュー済みのインストール、クエリ、アラート手順については、[EKS のモニタリングとログ](./06-eks-monitoring-logging.md)を参照してください。上の例は診断/設定用のテンプレートであり、実際のログ配信、モニタリング範囲、または本番環境でテスト済みであることを保証するものではありません。
+レビュー済み installation、query、alert 手順は[EKS monitoring and logging](./06-eks-monitoring-logging.md)を参照してください。上記の例は診断/設定用 template であり、実際の log 配信、monitoring coverage、本番適性を検証したものではありません。
 
-出典: [CloudWatch EKS アドオン](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-addon.html)、[Metrics Server](https://github.com/kubernetes-sigs/metrics-server)、[Prometheus Operator のトラブルシューティング](https://prometheus-operator.dev/docs/platform/troubleshooting/)。
+参考資料: [CloudWatch EKS addon](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-addon.html)、[Metrics Server](https://github.com/kubernetes-sigs/metrics-server)、[Prometheus Operator troubleshooting](https://prometheus-operator.dev/docs/platform/troubleshooting/)。
 
 ## パフォーマンスに関する問題 {#performance-issues}
 
-### 比較可能なベースラインを作成する
+### 比較可能な基準値を設定する
 
-影響を受けるワークロード、リクエストレート、レイテンシ/エラーの分布、リソース requests/limits、ノード/AMI/ランタイム、配置、時間帯を記録します。現在の使用量と、予約済み容量や飽和状態は同じではありません。また、メモリ使用量が増加しただけでリークが証明されるわけでもありません。ノード、Pod、ストレージ、ネットワーク、アプリケーションのボトルネックを切り分けます。
+影響を受けた workload、request rate、latency/error 分布、resource request/limit、node/AMI/runtime、配置、対象時間帯を記録します。現在の使用量は予約 capacity や飽和状態と同じではありません。また、memory が増えただけで leak と証明されません。node、Pod、storage、network、application の bottleneck を切り分けます。
 
 ```bash
 set -euo pipefail
@@ -1273,11 +1273,11 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
   | jq '{containers:[.spec.containers[] | {name,resources}],status:.status}'
 ```
 
-メトリクスを利用するには、その収集経路が正常に動作している必要があります。必要に応じて、CPU throttling、working set/RSS/heap の動き、OOM 終了状態、ディスクのレイテンシ/キュー、ネットワークドロップを含めます。アプリケーションの負荷と照らし合わせ、無関係なワークロードに同じ 100m/128Mi のリソース値を一律に推奨しないでください。
+metric は収集経路が動作している場合にのみ有効です。状況に応じて CPU throttling、working set/RSS/heap の挙動、OOM termination state、disk latency/queue、network drop を確認します。application load と関連付けてください。無関係な workload に同じ 100m/128Mi の resource 値を勧めないでください。
 
-### ノードのパフォーマンス問題
+### Node のパフォーマンス問題
 
-確認済みのリモート Linux ノードセッションで、必要なツールが利用可能な場合は、範囲を限定して観察結果を収集します。
+該当ツールを使えることを確認した remote Linux node session で、期間を絞って調査します。
 
 ```bash
 top -b -n 1
@@ -1289,26 +1289,26 @@ ip -s link
 ss -s
 ```
 
-これらのコマンドを実行するためだけに、本番のアプリケーションコンテナにツールをインストールしないでください。準備済みの診断イメージか、サポートされているノードアクセス方法を使用し、ホストを変更する前に証拠を保存します。
+これらの command を実行するために、本番 application container に tool をインストールしないでください。準備済み diagnostic image またはサポートされる node access method を使い、host を変更する前に証拠を保存します。
 
-ノードを追加するとスケジュール可能な容量は増えますが、ノードごとのネットワーク/ENI/EBS 上限は変わりません。インスタンスタイプを変更するには、ノードグループがサポートする置き換え/起動テンプレート経路を使用します。`update-nodegroup-config --launch-template` は有効なコマンドではありません。所有者に知らせずにサイズを変更するのではなく、オートスケーリングとワークロード配置を調整します。
+node 数の増加は scheduling 可能な capacity には役立ちますが、node あたりの network/ENI/EBS 上限は変わりません。instance type を変えるには、node group がサポートする replacement/launch-template 経路を使います。`update-nodegroup-config --launch-template` は有効な command ではありません。owner の管理外で resize せず、autoscaling と workload 配置を調整します。
 
-#### カーネル設定
+#### kernel 設定
 
-調整を検討する前に、対象のホストまたは Pod の namespace で、関連する設定を確認します。
+tuning を考える前に、対象の host または Pod namespace で関連設定を調べます。
 
 ```bash
 sysctl net.ipv4.ip_local_port_range net.ipv4.tcp_fin_timeout
 sysctl net.core.somaxconn net.ipv4.tcp_max_syn_backlog fs.file-max
 ```
 
-多くのネットワーク sysctl は namespace 化されています。`hostPID: true` を設定しただけでは、コンテナがホストのネットワーク namespace に入ることはありません。そのため、特権 DaemonSet がノード全体の設定も変更しながら、別のネットワーク namespace を変更してしまう可能性があります。許可される namespace 化設定には、サポートされる Pod `securityContext.sysctls` を使用します。ノードレベルの設定には、所有者が管理するノード設定を使用します。変更前に、カーネル/Kubernetes のポリシーサポート、分離、影響を確認します。クラスター全体に無差別に特権 sysctl 調整を行っても、パフォーマンスの診断にはなりません。
+多くの network sysctl は namespace ごとに適用されます。`hostPID: true` だけでは container は host network namespace に入りません。privileged DaemonSet が node 全体の設定も変更しながら、異なる network namespace を変更する場合があります。許可された namespace 固有設定にはサポート対象の Pod `securityContext.sysctls` を使い、node-level 設定には owner が管理する node configuration を使います。変更前に kernel/Kubernetes policy のサポート状況、分離、影響を確認してください。任意の cluster-wide privileged sysctl tuning は performance diagnosis ではありません。
 
 #### EBS パフォーマンスの変更
 
-EBS ボリュームの種類/IOPS/スループットと、インスタンスの EBS 帯域幅を確認してから、どちらかを変更します。EC2 の `modify-instance-attribute` では、EBS の調整インターフェイスとして、ブロックデバイスマッピングにボリュームタイプ/IOPS/スループットを指定できません。EBS の操作には `ModifyVolume` を使います。CSI 管理のストレージでは、ずれた設定が生じないよう、サポートされているストレージ所有者の手順を使い、設定を調整します。
+変更前に実 volume の type/IOPS/throughput と、instance の EBS bandwidth を調べます。EC2 `modify-instance-attribute` の block-device mapping は EBS の type/IOPS/throughput を調整する interface ではありません。該当する EBS operation は `ModifyVolume` です。CSI 管理 storage は、対応する storage-owner workflow を使い、drift を起こさず設定を調整します。
 
-次の任意の**変更操作**を行うには、所有者がサポートされる上限/比率、インスタンス能力、コスト、現在の変更状態、アプリケーション/データへの影響を確認している必要があります。
+以下の任意の**変更操作**は、volume owner がサポート上限/比率、instance capability、料金、現在の modification state、application/data への影響を確認していることを前提とします。
 
 ```bash
 set -euo pipefail
@@ -1328,21 +1328,21 @@ aws ec2 describe-volumes-modifications --region "$AWS_REGION" --volume-ids "$VOL
   --output json
 ```
 
-リクエストは非同期です。`modifying`、`optimizing`、`completed`、`failed` を追跡します。最初の応答で変更が完了したわけではありません。該当する変更レートの上限を確認し、前回の変更が完了するまで次のリクエストを待ちます。容量を増やした場合は、ファイルシステムの拡張を別途検討する必要があります。以前の 16000 IOPS/1000 MiB/s の例は設定例であり、測定に基づく普遍的な最適値ではありません。このレビューでは EBS の変更を実施していません。
+request は非同期です。`modifying`、`optimizing`、`completed`、`failed` を追跡します。最初の応答は完了を意味しません。適用される modification rate 上限を考慮し、次の request の前に現在の変更が完了するまで待ちます。容量を増やした場合は、filesystem の拡張を別途検討します。以前の 16000 IOPS/1000 MiB/s の例は設定例であり、一般的な最適値を測定したものではありません。このレビューでは EBS 変更を実行していません。
 
-### Pod のパフォーマンスとメモリの問題
+### Pod のパフォーマンスと memory の問題
 
-コンテナごとの使用量/limits、再起動/終了理由をリクエスト負荷と照らし合わせます。`OOMKilled` はコンテナステータスで確認します。Event の理由に文字どおり表示されない場合もあります。ノードに空きメモリがあっても、cgroup の上限で OOM が発生する場合があります。キャッシュの増加、アロケーターの動作、ワークロードの急増、到達可能なまま保持されたオブジェクトでは、それぞれ異なる調査が必要です。定期的なガベージコレクションやノードの再起動は、一般的なメモリリークの修正策ではありません。
+container ごとの使用量/limit、restart/termination reason を request load と関連付けます。`OOMKilled` は container status から確認でき、Event に文字列として現れない場合もあります。node に空き memory があっても cgroup limit が原因で OOM になることがあります。cache 増加、allocator の挙動、workload burst、参照が残る object では調査方法が異なります。定期的な garbage collection や node reboot は一般的な leak 対策ではありません。
 
-実際のランタイム/バージョンに合ったプロファイラーを選び、レビュー済みの手順で対象プロセスに接続します。`node --inspect` を起動しても新しいプロセスが開始されるだけで、既存のアプリケーションに自動的に接続されるわけではありません。JVM/Python/Go のプロファイラーには、ツール、シンボル、コード、エンドポイントの前提条件があります。ヒープダンプはワークロードを停止させたり、ディスクを使い切ったり、秘密情報を含んだりする可能性があります。収集範囲を限定し、成果物を保護してください。この章ではプロファイル取得やベンチマークは実行していません。
+実際の runtime/version に対応する profiler を選び、レビュー済み手順で対象 process に接続します。`node --inspect` は新しい process を開始するため、稼働中の application に自動接続はしません。JVM/Python/Go profiler には tool、symbol、code、endpoint の前提条件があります。heap dump は workload を停止させたり、disk を使い切ったり、secret を含んだりする場合があります。採取範囲を限定して artifact を保護してください。この章では profile や benchmark を実行していません。
 
-測定結果に基づいて requests/limits を調整し、ランタイムのオーバーヘッドも含めます。リソースクォータ、ロールアウト、HPA/VPA の所有者を確認します。preferred anti-affinity と `ScheduleAnyway` の topology spread は推奨条件であり、保証ではありません。厳格なルールがある場合、適格なノードが不足すると Pod が Pending のままになることがあります。レプリカをスケールしても、単一スレッド、ストレージ、下流サービスのボトルネックは必ずしも解消されません。
+実測した要件から request/limit を調整し、runtime overhead も含めます。resource quota、rollout、HPA/VPA の所有者を確認します。preferred anti-affinity と `ScheduleAnyway` topology spread は希望条件であって保証ではありません。strict rule では適格 node が不足して Pod が Pending になります。replica を増やしても、single-thread、storage、downstream service の bottleneck は直らない場合があります。
 
-### ネットワークのパフォーマンス問題
+### Network のパフォーマンス問題
 
-実際の CNI/ポリシー/セキュリティグループ経路、インスタンスの帯域幅/PPS/接続上限、MTU、DNS の動作、送信元/宛先の配置を調べます。MTU を 9001 に変更したり、ENA を有効化したり、起動テンプレートのバージョンを置き換えたりしても、万能の即時対策にはなりません。プラットフォーム/状態の前提条件を確認し、所有者が管理するロールアウトに従います。Auto Mode では、ノード DNS と独自のネットワーク設定がすでに提供されています。
+実際の CNI/policy/SG 経路、instance bandwidth/PPS/connection 上限、MTU、DNS 挙動、送信元/宛先の配置を確認します。MTU を 9001 にする、ENA を有効化する、launch-template version を置き換える、といった変更はどの環境でも使える即時修正ではありません。platform/state の前提条件を確認し、owner が管理する rollout を行います。Auto Mode には node DNS と独自の networking configuration が既にあります。
 
-テストを計画する際は、互換性のあるクライアント/サーバーイメージ、リソース、ノード/AZ の配置、分離されたテスト範囲で許可された TCP 5201 を準備します。イメージ/バージョン、方向、トポロジを記録します。次の範囲を限定した例では、元の30秒の実行時間を維持し、1ストリームの目標ビットレートを制限します。
+テストを実施する場合は、互換 client/server image、resource、node/AZ 配置、隔離された試験範囲で許可する TCP 5201 access を準備します。image/version、方向、topology を記録します。次の範囲を限定した例は、元の30秒の実行時間を保ちつつ、1 stream あたりの target bitrate を制限します。
 
 ```bash
 set -euo pipefail
@@ -1354,15 +1354,15 @@ kubectl --context "$KUBE_CONTEXT" -n "$TEST_NAMESPACE" exec "$CLIENT_POD" \
   -c "$CLIENT_CONTAINER" -- iperf3 -c "$SERVER_IP" -P 1 -t 30 -b 10M -J
 ```
 
-10 Mbit/s の目標値はテストの送信レートであり、期待される性能やネットワーク上限の証明ではありません。複数ストリームを使う場合、それぞれのストリームにビットレート制限が適用されます。コマンドを実行する前にサーバー/クライアントが Ready であることを待ち、準備したテストリソースだけを後でクリーンアップします。DNS の時間を測定する場合は、キャッシュヒット、アップストリーム照会、コマンド/exec のオーバーヘッドを区別します。実際の証拠なしに、本番のスループット、レイテンシ、ベンチマークの成功を断言しないでください。
+10 Mbit/s は試験時の pacing であり、期待性能や network ceiling の証明ではありません。複数 stream ではそれぞれに bitrate 上限が適用されます。command 実行前に server/client readiness を待ち、その後は準備した試験 resource だけを cleanup します。DNS 時間では cache hit、upstream lookup、command/exec overhead を区別します。実際の証拠がないまま、本番 throughput、latency、benchmark 成功を主張しないでください。
 
-出典: [Kubernetes sysctl](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/)、[EBS ModifyVolume](https://docs.aws.amazon.com/botocore/latest/reference/services/ec2/client/modify_volume.html)、[iperf のマニュアル](https://software.es.net/iperf/invoking.html)。
+参考資料: [Kubernetes sysctl](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/)、[EBS ModifyVolume](https://docs.aws.amazon.com/botocore/latest/reference/services/ec2/client/modify_volume.html)、[iperf manual](https://software.es.net/iperf/invoking.html)。
 
 ## アップグレードに関する問題 {#upgrade-issues}
 
-### 正確な操作を特定する
+### 実行した operation を特定する
 
-クラスター/ノードグループの状態が `ACTIVE` であっても、特定のリクエストの結果の代わりにはなりません。更新 ID、操作の対象範囲、意図したバージョン/設定、最後に成功した段階、エラーを記録します。
+cluster/node-group が `ACTIVE` でも、特定 request の結果を意味しません。update ID、operation の範囲、意図した version/configuration、最後に成功した段階、error を記録します。
 
 ```bash
 set -euo pipefail
@@ -1378,9 +1378,9 @@ esac
 aws eks describe-update "${args[@]}" --output json --no-cli-pager
 ```
 
-進行中の操作については、[EKS のアップグレード](./08-eks-upgrades.md)にある、対象 ID を指定した範囲限定のポーリング手順を使用します。成功といえるのは `Successful` だけです。失敗/キャンセル/不明な状態や照会エラーがあれば調査が必要です。ローカルでタイムアウトしても AWS の操作はキャンセルされません。
+処理中の operation では、[EKS upgrades](./08-eks-upgrades.md)にある対象 ID を限定した poller を使います。成功と判断できるのは `Successful` だけです。failure/cancellation/unknown state や query error は調査が必要です。local timeout で AWS operation が取り消されることはありません。
 
-### コントロールプレーンと API の互換性
+### Control plane と API 互換性
 
 ```bash
 set -euo pipefail
@@ -1393,59 +1393,59 @@ aws eks describe-addon-versions --kubernetes-version "$TARGET_VERSION" --region 
   --output json
 ```
 
-アドオンのカタログはクラスターのバージョンカタログではありません。クラスターのカタログと実際の現在のバージョンを確認し、次のサポート対象 EKS マイナーバージョンを選びます。上流のリリースから EKS のサポート状況を推測しないでください。保守的な準備としてノードのバージョンを現在のコントロールプレーンに合わせます。ただし、それをサポートされるバージョンスキューの境界と区別してください。一部のアドオンでは、コントロールプレーン変更の前に中間バージョンが必要です。
+addon catalog は cluster-version catalog とは別です。cluster catalog と実際の current version から、次にサポートされる EKS minor を選びます。upstream release から EKS のサポートを推測しないでください。保守的な準備として node を現在の control-plane version に合わせますが、それとサポートされる version skew の境界は区別します。一部 addon では control-plane 変更前に bridge version が必要です。
 
-元のマニフェスト/Helm メタデータ、ランタイム API の呼び出し元、アップグレードインサイト、admission/conversion webhook を調べます。コンテナイメージの一覧や、現在返されるオブジェクトの `.apiVersion` 表示だけでは、クライアントが削除対象 API を使っていないとは証明できません。移行ガイドと、ソースのアップグレード章で確認済みの Pluto コマンドを使用します。`kubectl convert` は別のプラグインであり、組み込みの汎用移行/テスト機能ではありません。
+元の manifest/Helm metadata、runtime が呼び出す API、upgrade insight、admission/conversion webhook を調べます。container image list や、現在返される object の `.apiVersion` を見ても、client が削除済み API を使っていない証明にはなりません。migration guide と、source upgrade chapter で確認済みの Pluto command を使います。`kubectl convert` は別の plugin であり、組み込みの汎用 migration/test command ではありません。
 
-現在の EKS ガイドでは、通常のアップグレードインサイトにおける `--force` の適用は一時的にロールバックされています。これは、`ROLLBACK_READINESS` のブロック条件とは別です。以前のコマンドがタイムアウトしただけでアップグレードを再送信しないでください。また、通常のコントロールプレーンアップグレードは、一度開始するとキャンセルできると決めつけないでください。
+現行 EKS guide では、通常 upgrade insight に対する `--force` enforcement は一時的に rollback されています。これは `ROLLBACK_READINESS` の block condition とは別の話です。前の command が timeout しただけで upgrade を再送信しないでください。また、開始済みの通常 control-plane upgrade を取り消せると決めつけないでください。
 
-### ノードグループとアドオンの復旧
+### Node group と addon の復旧
 
-PDB の許容 disruption、レプリカ/readiness、置き換え用の EC2/IP 容量、AMI/bootstrap、マネージドノードの実際の更新エラーを確認します。`kubectl drain --force` で許可されるのは、管理対象外 Pod の削除です。PDB の eviction チェックは回避しません。`--disable-eviction` とマネージドノードの強制更新では、混乱を引き起こす動作が異なります。エラーを解消するだけのために `minAvailable: 0` にしたり、`emptyDir` データを破棄したりしないでください。
+PDB の許可済み disruption 数、replica/readiness、置換用 EC2/IP capacity、AMI/bootstrap、実際の managed-node update error を調べます。`kubectl drain --force` は管理されていない Pod の削除を許可しますが、PDB eviction check は回避しません。`--disable-eviction` と managed-node force update は異なる破壊的動作です。error を消すためだけに `minAvailable: 0` にしたり、`emptyDir` data を破棄したりしないでください。
 
-EKS 最適化 AMI では、Kubernetes バージョンと AMI リリースの両方を確認します。カスタム AMI のグループでは、正しい API/オプションを用いて、元の起動テンプレートの新しいバージョンをレビューします。更新に失敗しても、フリートが自動的にロールバックされるとは限りません。すぐにグループを作成/削除するのではなく、このドキュメントのノード/Pod のセクションと、段階的なアップグレード手順に従います。
+EKS 最適化 AMI では Kubernetes version と AMI release の両方を確認します。custom-AMI group では、元の launch template と正しい API/option を使った、レビュー済みの新 version が必要です。update に失敗しても fleet が自動 rollback するとは限りません。すぐに group を追加・削除するのではなく、現在の node/Pod 節と段階的 upgrade 手順を使います。
 
-アドオンでは、バージョン/設定/スキーマ、IAM/Pod Identity、所有者を維持します。`PRESERVE` は完全な設定マージを保証するものでも、機能を保証するものでもありません。`OVERWRITE` はカスタマイズを破棄する場合があります。ネットワーク/ストレージアドオンを削除/再作成すると、依存するクリーンアップやワークロードアクセスが中断する場合があります。汎用の `{"key":"value"}` ペイロードや、CoreDNS と誤って表示された VPC CNI マニフェストは、有効な修正ではありません。
+addon では version/configuration/schema、IAM/Pod Identity、所有者を保持します。`PRESERVE` は設定を完全に merge したり機能を保証したりしません。`OVERWRITE` は独自設定を破棄する場合があります。networking/storage addon を削除・再作成すると、依存 cleanup や workload access に影響する場合があります。汎用 `{"key":"value"}` payload や、CoreDNS と偽った VPC CNI manifest は有効な修正ではありません。
 
-### ロールバックは別個の判断
+### rollback は別途判断する
 
-現在の EKS では、インプレースアップグレードの完了後7日以内であれば、直前のマイナーバージョンに条件付きでロールバックできます。適用可否、サポートポリシー、機能の前提条件、コンピューティングタイプの順序、`ROLLBACK_READINESS` が引き続き適用されます。マネージドノードのロールバックはコントロールプレーンより先です。Auto Mode ではノードが先に調整されます。タイムアウト/キャンセル/中断のルールは通常のアップグレードとは異なります。
+現行 EKS では、in-place upgrade 完了後7日以内なら、条件付きで直前の minor に rollback できます。対象資格、support policy、feature 前提条件、compute type ごとの順序、`ROLLBACK_READINESS` が適用されます。managed-node rollback は control plane より先に行います。Auto Mode は先に node を調整します。timeout/cancellation/disruption rule は通常 upgrade と異なります。
 
-`--force` で回避されるのはロールバックインサイトであり、前提条件の検証や Auto Mode の中断制御ではありません。バージョンのロールバックではバックアップを復元するのではなく、ワークロード/データの状態が維持されます。また、アドオンが自動的に元に戻るわけでもありません。Fargate、ハイブリッド/カスタムノード、サポートポリシー、復旧条件については[完全なロールバック手順](./08-eks-upgrades.md)を使用します。Git/CloudFormation のロールバックは、サービスのロールバック操作ではありません。
+`--force` で rollback insight は無視できますが、前提条件の検証や Auto Mode disruption control は回避されません。version rollback で保持されるのは workload/data の現状であり、backup が復元されるわけではありません。addon も自動 rollback されません。Fargate、hybrid/custom node、support policy、recovery 条件は[rollback の全手順](./08-eks-upgrades.md)に従います。Git/CloudFormation の rollback は EKS service operation の代わりではありません。
 
-出典: [EKS の更新](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)、[マネージドノードの更新](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html)、[EKS のロールバック](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)、[Auto Mode のロールバック](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)。
+参考資料: [EKS update](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)、[managed-node update](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html)、[EKS rollback](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)、[Auto Mode rollback](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)。
 
-## 一般的なエラーメッセージと解決策 {#common-error-messages-and-solutions}
+## よくあるエラーメッセージと解決方法 {#common-error-messages-and-solutions}
 
-ここに示すのは例示的なメッセージやパターンであり、現在のすべてのコントローラーがまったく同じ文字列を出力するという意味ではありません。実際のエラーコード、リソース UID、リクエスト ID、条件を確認してください。提案された原因は、証拠によって裏付けられるまでは仮説です。
+以下は例示の message/pattern であり、すべての現行 controller が必ず同じ文字列を出すわけではありません。実際の error code、resource UID、request ID、condition を確認します。提案した原因は証拠で裏付けるまで仮説です。
 
-| メッセージ / パターン | 証拠と適切な次の手順 |
+| message / pattern | 証拠と次の適切な手順 |
 | --- | --- |
-| `UnsupportedAvailabilityZoneException` | 選択されたクラスターサブネット/AZ は、そのアカウントの EKS でサポートされていません。EC2 インスタンスの提供状況だけでなく、エラーに記載されたサポート対象 AZ を確認します |
-| `ResourceLimitExceeded` / quota error | 該当するサービス/クォータと現在の適用上限を特定します。過去の「上限 5」というテキストは現在の上限ではありません |
-| `InvalidParameterException: Error in role params` | ロールの存在/信頼関係、呼び出し元の `iam:PassRole`、必要な権限、正確なリクエストを確認します。共有ロールを無条件に新規作成しないでください |
-| `ClusterUnreachable` | エンドポイントの DNS、ルート、SG/NACL、TLS を確認します。kubeconfig を再生成するだけではトランスポートの問題は修正されません |
-| `You must be logged in ... (Unauthorized)` / `the server has asked for the client to provide credentials` | 認証情報プロバイダー、ロール/プロファイル、exec 認証、クラスターの認証モード、アクセスエントリまたは従来のマッピングを確認します |
-| `Forbidden` | 認証された主体、verb/リソース/subresource/namespace、適用されるすべての許可を確認し、偽装の失敗と区別します |
-| `error loading ... .kube/config ... permission denied` | 選択されているファイル、所有者、親ディレクトリの権限を確認します。所有者/パスが正しい場合にのみ、モード 600 が役立ちます |
-| `dial tcp: lookup ... no such host` | エンドポイントのホスト名を解決し、実際のリゾルバー/プライベート経路を調べます。完全な HTTPS URL を DNS ルックアップに渡さないでください |
-| `FailedScheduling ... Insufficient memory` | requests/オーバーヘッド、適格なノードの割り当て可能容量、配置、クォータを比較します。現在の空きメモリや `top` のデータだけではスケジューラーの計算は分かりません |
-| `Insufficient pods` | ノードの割り当て可能な Pod スロット数と現在の割り当てを確認します。メモリ requests を下げても Pod スロットは増えません |
-| `CrashLoopBackOff` | コンテナ/init コンテナの現在/直前の終了状態、直前インスタンスのログ、設定、probe を調べます |
-| `ImagePullBackOff` | イメージ/digest/プラットフォーム、ノード側のレジストリ経路/TLS/レート制限、実際の取得 ID に関する取得エラーを読みます。デバッグのために認証情報を決して露出させないでください |
-| `Evicted` | Pod の理由/メッセージとノードの圧迫/タイミングを確認し、該当するデータ/可用性の復旧経路を使用します |
-| `FailedCreateServiceEndpoints` / EndpointSlice update error | Service のセレクター/タイプ、Pod の Ready/エンドポイント条件、名前付きポート、コントローラーイベントを調べます |
-| `EniLimitExceeded` / IPAM allocation error | 実際の ENI/IP/サブネット/プレフィックスの制約とクォータ/エラーの詳細を確認します。プレフィックス/カスタムネットワークによってすべての上限がなくなるわけではありません |
-| `FailedLoadBalancerCreation` / controller provisioning error | 正確なコントローラーの所有関係、サブネット選択、IAM、ターゲットのヘルス、SG 経路を調べます。サブネットに一律でタグを付けたり、すべてのトラフィックを許可したりしないでください |
-| `FailedAttachVolume: Multi-Attach ...` | 実際のコンシューマーとアタッチ/フェンスの状態を特定します。強制デタッチするのではなく、CSI のアンマウント/デタッチとデータの安全を調整します |
-| `FailedMount ... timeout ...` | CSI コントローラー/ノードプラグイン、ID/KMS、トポロジ、ファイルシステム、アタッチイベントを確認します。ノードの再起動が自動的な解決策ではありません |
-| `PersistentVolumeClaim is not bound` | 想定どおりの遅延バインディングか、クラス/プロビジョナー/ID/コンシューマーのスケジューリング問題かを区別します。claim を削除しないでください |
-| `Failed to list *v1.Pod: Unauthorized` | 拒否したエンドポイント/呼び出し元、トークン/ID を特定します。Metrics Server を再起動しても、認証情報の欠落は解消されません |
-| `Failed to scrape node` | 認証された kubelet のスクレイプ経路、証明書、アドレス/ポート、ネットワーク、ノードのヘルスを調べます |
-| `Failed to list *v1.Pod: the server could not find the requested resource` | EKS コントロールプレーンの設定に原因を求める前に、API URL/context/discovery とクライアント/プロキシの応答を確認します |
+| `UnsupportedAvailabilityZoneException` | 選択した cluster subnet/AZ が、そのアカウントでは EKS 非対応です。EC2 instance 提供状況だけでなく、error に記載された対応 AZ を調べます |
+| `ResourceLimitExceeded` / quota error | 該当 service/quota と現在の適用上限を特定します。過去の「limit 5」という記述は現在の上限ではありません |
+| `InvalidParameterException: Error in role params` | role の存在/trust、caller の `iam:PassRole`、必要な権限、正確な request を確認します。共有 role を安易に新規作成しないでください |
+| `ClusterUnreachable` | endpoint の DNS、route、SG/NACL、TLS を調べます。kubeconfig を再作成しても transport は直りません |
+| `You must be logged in ... (Unauthorized)` / `the server has asked for the client to provide credentials` | credential provider、role/profile、exec authentication、cluster authentication mode/access entry または legacy mapping を確認します |
+| `Forbidden` | 認証済み subject、verb/resource/subresource/namespace と該当する全 grant を確認します。impersonation 失敗も区別します |
+| `error loading ... .kube/config ... permission denied` | 選択された file、owner、親 directory の権限を確認します。所有者/path が正しくなければ mode 600 にしても解決しません |
+| `dial tcp: lookup ... no such host` | endpoint hostname を解決し、実際の resolver/private path を調べます。DNS lookup に HTTPS URL 全体を渡さないでください |
+| `FailedScheduling ... Insufficient memory` | request/overhead、配置、quota、eligible node の allocatable capacity を比較します。現在の空き memory/`top` だけでは scheduler の計算を再現できません |
+| `Insufficient pods` | node の割り当て可能 Pod slot と現在の割り当てを調べます。memory request を下げても Pod slot は増えません |
+| `CrashLoopBackOff` | container/init-container の現在と直前の termination state、前回 instance の log、configuration、probe を確認します |
+| `ImagePullBackOff` | image/digest/platform、node 側 registry 経路/TLS/rate limit、実際の pull identity を error から確認します。診断目的でも資格情報を公開しないでください |
+| `Evicted` | Pod reason/message と node pressure/時間帯を読み、関連するデータ/可用性の復旧手順を使います |
+| `FailedCreateServiceEndpoints` / EndpointSlice update error | Service selector/type、Pod Ready/endpoint condition、named port、controller event を調べます |
+| `EniLimitExceeded` / IPAM allocation error | 実際の ENI/IP/subnet/prefix 制約と quota/error context を確認します。prefix/custom networking ですべての上限がなくなるわけではありません |
+| `FailedLoadBalancerCreation` / controller provisioning error | 正確な controller owner、subnet 選択、IAM、target health、SG 経路を確認します。すべての subnet に tag を付けたり、全 traffic を許可したりしないでください |
+| `FailedAttachVolume: Multi-Attach ...` | consumer と attachment/fencing state を特定します。force detach せず、CSI unmount/detach と data safety を調整します |
+| `FailedMount ... timeout ...` | CSI controller/node plugin、identity/KMS、topology、filesystem、attachment event を確認します。node restart は自動的な修正ではありません |
+| `PersistentVolumeClaim is not bound` | 予定された delayed binding と class/provisioner/identity/consumer scheduling の問題を区別します。claim を削除しないでください |
+| `Failed to list *v1.Pod: Unauthorized` | error を返した endpoint/caller と token/identity を特定します。Metrics Server を再起動しても資格情報は修復されません |
+| `Failed to scrape node` | 認証付き kubelet scrape 経路、証明書、address/port、networking、node health を調べます |
+| `Failed to list *v1.Pod: the server could not find the requested resource` | EKS control-plane 設定のせいと決めつける前に API URL/context/discovery と client/proxy response を確認します |
 
-このドキュメントの該当セクションに従って、範囲を絞った証拠を収集し、所有者が管理する修正を選択します。結果と未解決の前提を記録してください。これらの例示メッセージのどれも、診断結果や復旧がテスト済みであることを証明するものではありません。
+該当する節を使い、範囲を絞った証拠を収集して所有者が管理する修正を選びます。結果と未解決の前提を記録してください。これらの例示 message だけでは、診断や復旧を証明できません。
 
 ## クイズ
 
-理解度を確認するには、[トピック別クイズ](../quizzes/eks/09-eks-troubleshooting-quiz.md)に挑戦してください。
+この章で学んだ内容を確認するには、[トピック quiz](../quizzes/eks/09-eks-troubleshooting-quiz.md)に挑戦してください。
