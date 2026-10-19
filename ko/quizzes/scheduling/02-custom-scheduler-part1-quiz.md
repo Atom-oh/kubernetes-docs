@@ -199,6 +199,7 @@ kubectl logs -n scheduler-lab -l app=custom-scheduler --prefix --tail=100
 - C. metadata.scheduler: Kubernetes API에 존재하지 않는 필드입니다.
 - D. spec.nodeName: 이 필드는 스케줄러를 우회하고 파드를 특정 노드에 직접 할당하는 데 사용됩니다. 스케줄러를 지정하는 필드가 아닙니다.
 </details>
+
 ### 4. Kubernetes 스케줄링 프레임워크에서 "Filter" 확장 포인트의 역할은 무엇인가요?
 
 A. 노드에 점수 부여  
@@ -338,6 +339,7 @@ spec:
 **다른 선택지:**
 A·B·D는 스케줄링 고려 사항입니다. 구분해야 할 것은 배치 결정과 런타임 작업이며, 이미지 정보 자체를 스케줄링에서 제외하는 것이 아닙니다.
 </details>
+
 ### 6. Kubernetes 스케줄링 프레임워크에서 "Score" 확장 포인트의 역할은 무엇인가요?
 
 A. 파드를 실행할 수 없는 노드 제외  
@@ -553,6 +555,7 @@ extenders:
 - B. 스케줄러 익스텐더: 유효한 스케줄러 확장 방법입니다.
 - C. 다중 스케줄러 배포: 유효한 스케줄러 확장 방법입니다.
 </details>
+
 ### 8. 다음 중 Kubernetes 스케줄러의 `--leader-elect` 플래그의 목적은 무엇인가요?
 
 A. 스케줄러에 리더십 권한 부여  

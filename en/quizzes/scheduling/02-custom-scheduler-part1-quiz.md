@@ -199,6 +199,7 @@ kubectl logs -n scheduler-lab -l app=custom-scheduler --prefix --tail=100
 - C. metadata.scheduler: A field that does not exist in the Kubernetes API.
 - D. spec.nodeName: This field is used to bypass the scheduler and directly assign a pod to a specific node. It is not a field for specifying a scheduler.
 </details>
+
 ### 4. What is the role of the "Filter" extension point in the Kubernetes scheduling framework?
 
 A. Score nodes
@@ -338,6 +339,7 @@ spec:
 **Other Options:**
 A, B and D are valid scheduling considerations. The original distinction is between placement and runtime actions, not between scheduling and image information.
 </details>
+
 ### 6. What is the role of the "Score" extension point in the Kubernetes scheduling framework?
 
 A. Exclude nodes where pods cannot run
@@ -553,6 +555,7 @@ Assess implementation complexity, per-node HTTP overhead, cache consistency, fai
 - B. Scheduler extender: A valid scheduler extension method.
 - C. Deploying multiple schedulers: A valid scheduler extension method.
 </details>
+
 ### 8. What is the purpose of the `--leader-elect` flag in the Kubernetes scheduler?
 
 A. Grant leadership authority to the scheduler
