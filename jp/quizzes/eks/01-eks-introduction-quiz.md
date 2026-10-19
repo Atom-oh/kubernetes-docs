@@ -1,106 +1,97 @@
-# EKS 入門クイズ
+# EKS入門クイズ
 
-このクイズでは、Amazon Elastic Kubernetes Service (EKS) の基本概念と機能に関する理解を確認します。EKS architecture、components、管理方法、料金モデルなどのトピックを扱います。
+> **最終更新日**: 2026年10月12日
+
+このクイズでは、Amazon Elastic Kubernetes Service (EKS) の基本的な概念と機能についての理解度を確認します。EKSのアーキテクチャ、コンポーネント、管理方法、料金モデルなどのトピックを扱います。
+
+単独で実行するAPIの例では、`EXAMPLE_CLUSTER`、`EXAMPLE_REGION`、`EXAMPLE_CONTEXT`や、ほかに指定されている変数に、レビュー済みの対象を設定してください。IRSAの例では、既存の`EXAMPLE_NAMESPACE`、必要なバケット/プレフィックスに範囲を限定した`APP_POLICY_ARN`、およびIRSAに対応したAWS SDKを使用するアプリケーションが必要です。2つの演習では、それぞれ専用のクラスターに個別の`EKS_INTRO_*`変数を使用します。
 
 ## 多肢選択問題
 
-1. Amazon EKS (Elastic Kubernetes Service) の主なメリットは何ですか？
-   * A) 自分で Kubernetes control plane infrastructure を管理する必要がない
-   * B) 他の managed Kubernetes services よりコストが低い
-   * C) AWS services だけを使用できる
-   * D) 単一の availability zone でのみ実行できる
+1. Amazon EKS (Elastic Kubernetes Service) の主な利点は何ですか？
+   * A) Kubernetesコントロールプレーンのインフラストラクチャを自分で管理する必要がない
+   * B) ほかのマネージドKubernetesサービスより低コストである
+   * C) AWSサービスのみを使用できる
+   * D) 単一のアベイラビリティーゾーンでしか実行できない
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: A) 自分で Kubernetes control plane infrastructure を管理する必要がない**
+**解答: A) Kubernetesコントロールプレーンのインフラストラクチャを自分で管理する必要がない**
 
-**解説:** Amazon EKS (Elastic Kubernetes Service) の主なメリットは、自分で Kubernetes control plane infrastructure を管理する必要がないことです。AWS が Kubernetes control plane の可用性とスケーラビリティを管理するため、ユーザーは workloads の実行に集中できます。
+**解説:** Amazon EKS (Elastic Kubernetes Service) の主な利点は、Kubernetesコントロールプレーンのインフラストラクチャを自分で管理する必要がないことです。AWSがKubernetesコントロールプレーンの可用性とスケーラビリティを管理するため、ユーザーはワークロードの実行に専念できます。
 
-EKS の主なメリット:
+EKSの主な利点:
 
-* **Managed Control Plane**: AWS が control plane nodes、etcd cluster、API server などを管理します。
-* **High Availability**: control plane は複数の availability zones にまたがってデプロイされ、単一障害点を排除します。
-* **Automatic Upgrades and Patches**: AWS が Kubernetes version upgrades と security patches を管理します。
-* **Integration with AWS Services**: IAM、VPC、ELB、ECR など、さまざまな AWS services とシームレスに統合します。
-* **Standard Kubernetes**: vendor lock-in を防ぐため、完全に互換性のある Kubernetes を提供します。
+* **マネージドコントロールプレーン**: AWSがコントロールプレーンノード、etcdクラスター、APIサーバーなどを管理します。
+* **高可用性**: リージョンのコントロールプレーンは複数のアベイラビリティーゾーンにまたがります。ワークロードの可用性は、引き続きレプリカ、配置、キャパシティ、依存関係に左右されます。
+* **マネージドメンテナンス**: AWSがコントロールプレーンにパッチを適用します。マイナーバージョンのアップグレードは運用担当者が計画します。バージョンサポートポリシーに基づく自動アップグレードも実施されます。
+* **AWSサービスとの統合**: IAM、VPC、ELB、ECRなど、さまざまなAWSサービスとシームレスに統合されます。
+* **標準的なKubernetes**: 準拠したKubernetes APIにより移植性が向上します。ただし、AWS固有のID、ストレージ、統合機能の移行には引き続き作業が必要です。
 
-他の選択肢の問題点:
+ほかの選択肢が誤りである理由:
 
-* EKS は他の managed Kubernetes services より必ずしも安いわけではありません。実際には control plane に時間単位の料金がかかります。
-* EKS は AWS services だけでなく、任意の Kubernetes-compatible applications と services を実行できます。
-* EKS clusters は high availability のため、デフォルトで複数の availability zones にまたがってデプロイされます。
+* EKSがほかのマネージドKubernetesサービスより必ず安いとは限りません。実際には、コントロールプレーンに時間単位の料金がかかります。
+* EKSではAWSサービスだけでなく、Kubernetes互換のアプリケーションやサービスを実行できます。
+* リージョンのEKSコントロールプレーンは複数のアベイラビリティーゾーンにまたがります。ワーカーノードとアプリケーションレプリカは、ユーザーが別途分散させる必要があります。
 
 </details>
 
-2. Amazon EKS cluster control plane はどこにデプロイされますか？
-   * A) ユーザーの VPC 内
-   * B) AWS-managed account の複数の availability zones にまたがってデプロイされる
-   * C) ユーザーが選択した単一の availability zone
-   * D) ユーザーの EC2 instances 上で実行される
+2. Amazon EKSクラスターのコントロールプレーンはどこにデプロイされますか？
+   * A) ユーザーのVPC内
+   * B) AWSが管理するアカウント内で複数のアベイラビリティーゾーンにまたがってデプロイされる
+   * C) ユーザーが選択した単一のアベイラビリティーゾーン
+   * D) ユーザーのEC2インスタンス上
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) AWS-managed account の複数の availability zones にまたがってデプロイされる**
+**解答: B) AWSが管理するアカウント内で複数のアベイラビリティーゾーンにまたがってデプロイされる**
 
-**解説:** Amazon EKS cluster control plane は、AWS-managed account の複数の availability zones にまたがってデプロイされます。これは managed service としての EKS の中核的な側面の 1 つです。
+**解説:** Amazon EKSクラスターのコントロールプレーンは、AWSが管理するアカウント内で複数のアベイラビリティーゾーンにまたがってデプロイされます。これはマネージドサービスとしてのEKSの中核的な特徴の1つです。
 
-EKS control plane deployment の主な特徴:
+EKSコントロールプレーンのデプロイに関する主な特徴:
 
-* **AWS-Managed Infrastructure**: control plane は AWS が所有および管理する account で実行されます。
-* **Multi-AZ Deployment**: high availability のため、少なくとも 3 つの availability zones にまたがってデプロイされます。
-* **Auto Recovery**: AWS が control plane components の健全性を監視し、障害が発生した components を自動的に置き換えます。
-* **Endpoint Accessibility**: control plane endpoints は、publicly accessible または VPC 内からのみアクセス可能に構成できます。
-* **Auto Scaling**: control plane capacity は cluster load に基づいて自動的に調整されます。
+* **AWS管理のインフラストラクチャ**: コントロールプレーンは、AWSが所有および管理するアカウント内で実行されます。
+* **マルチAZデプロイ**: リージョンのEKSコントロールプレーンコンポーネントは、複数のアベイラビリティーゾーンに分散されます。
+* **自動復旧**: AWSはコントロールプレーンコンポーネントの状態を監視し、障害が発生したコンポーネントを自動的に置き換えます。
+* **エンドポイントへのアクセス**: パブリックアクセス、プライベートアクセス、またはその両方を設定できます。プライベートアクセスには、VPCまたは接続先ネットワークからのDNSとルーティングも必要です。
+* **自動スケーリング**: 標準のコントロールプレーンキャパシティは自動的に調整されます。オプションのProvisioned Control Planeティアは明示的に選択します。
 
-他の選択肢の問題点:
+ほかの選択肢が誤りである理由:
 
-* control plane はユーザーの VPC 内にはデプロイされません。代わりに、ENI (Elastic Network Interface) を通じてユーザーの VPC と AWS-managed VPC の間に接続が確立されます。
-* control plane は high availability を確保するため、単一ではなく複数の availability zones にまたがってデプロイされます。
-* control plane はユーザーの EC2 instances 上ではなく、AWS-managed infrastructure 上で実行されます。
+* コントロールプレーンはユーザーのVPC内にはデプロイされません。代わりに、ENI (Elastic Network Interface) を介してユーザーのVPCとAWS管理のVPCの間に接続が確立されます。
+* 高可用性を確保するため、コントロールプレーンは単一のアベイラビリティーゾーンではなく、複数のアベイラビリティーゾーンにまたがってデプロイされます。
+* コントロールプレーンはAWS管理のインフラストラクチャ上で実行され、ユーザーのEC2インスタンス上では実行されません。
 
 </details>
 
-3. Amazon EKS で worker nodes を管理する有効な方法ではないものはどれですか？
-   * A) Self-managed node groups
-   * B) Managed node groups
-   * C) Fargate profiles
-   * D) EKS automatic node provisioning
+3. EKSのコンピューティング管理について、誤っている説明はどれですか？
+   * A) セルフマネージドEC2ノード
+   * B) マネージドノードグループ
+   * C) Fargateプロファイル
+   * D) Bottlerocketは独立したサーバーレスコンピューティングサービスである
 
 <details>
+<summary>解答を表示</summary>
 
-<summary>答えを表示</summary>
+**解答: D) Bottlerocketは独立したサーバーレスコンピューティングサービスである**
 
-**答え: D) EKS automatic node provisioning**
+Bottlerocketはコンテナノード向けのオペレーティングシステムであり、独立したサーバーレス実行オプションではありません。
 
-**解説:** 「EKS automatic node provisioning」は、Amazon EKS で正式に提供されている worker node 管理方法ではありません。この機能は存在しません。
+1. **セルフマネージドノード**: お客様がEC2/Auto Scalingグループ、AMI、更新、ノード構成を管理します。
+2. **マネージドノードグループ**: AWSがプロビジョニングと置き換えのワークフローを管理し、運用担当者がAMI/バージョンの更新を開始します。最小サイズと最大サイズを設定するだけでは、需要に応じたスケーリングは有効になりません。
+3. **Fargate**: プロファイルで、分離されたコンピューティング環境で実行するPodを選択します。DaemonSet、GPU、EBSなどの制限を確認してください。
+4. **EKS Auto Mode**: ノードのプロビジョニング、スケーリング、置き換えを自動化する、実際のEKS機能です。
+5. **Hybrid Nodes**: オンプレミス/エッジのマシンをAWS管理のコントロールプレーンに接続します。
 
-Amazon EKS で worker nodes を管理する実際の方法は次のとおりです:
-
-1. **Self-managed node groups**:
-   * ユーザーが EC2 instances を直接作成して管理します。
-   * Auto Scaling groups を通じて管理できます。
-   * node configuration を完全に制御できます。
-   * operational overhead が最も高くなります。
-2. **Managed node groups**:
-   * AWS が node provisioning と lifecycle を管理します。
-   * node upgrades、patches、調整が自動化されます。
-   * EC2 Auto Scaling groups に基づきます。
-   * 標準の Amazon Linux または Bottlerocket AMI を使用します。
-3. **Fargate profiles**:
-   * 個々の EC2 instances を管理する必要をなくす serverless computing option です。
-   * pod ごとに computing resources をプロビジョニングします。
-   * infrastructure management overhead が最も低くなります。
-   * 一定の制限があります (例: DaemonSet support がない、特定の resource restrictions)。
-
-node auto-scaling について、EKS は Kubernetes Cluster Autoscaler や Karpenter のようなツールをサポートしていますが、「EKS automatic node provisioning」と呼ばれる公式機能はありません。
+従来型のEC2ノードでは、需要に応じたスケーリングのために、Cluster AutoscalerまたはセルフマネージドKarpenterを別途構成できます。
 
 </details>
 
-4. Amazon EKS clusters の pod networking でデフォルトで使用される CNI plugin は何ですか？
+4. 従来型のEC2ベースのEKSノードにおけるデフォルトのCNIは何ですか？
    * A) Flannel
    * B) Calico
    * C) AWS VPC CNI
@@ -108,102 +99,87 @@ node auto-scaling について、EKS は Kubernetes Cluster Autoscaler や Karpe
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: C) AWS VPC CNI**
+**解答: C) AWS VPC CNI**
 
-**解説:** Amazon EKS clusters の pod networking でデフォルトで使用される CNI (Container Network Interface) plugin は AWS VPC CNI です。この plugin は Amazon VPC networking と Kubernetes pods を直接統合します。
+**解説:** Amazon EKSクラスターでPodネットワーキングにデフォルトで使用されるCNI (Container Network Interface) プラグインはAWS VPC CNIです。このプラグインは、Amazon VPCネットワーキングとKubernetes Podを直接統合します。
 
-AWS VPC CNI の主な機能:
+AWS VPC CNIの主な機能:
 
-* **VPC-native IP address assignment**: Pods は VPC から直接 IP addresses を受け取り、VPC 内の他の resources と同じ network space に存在します。
-* **Secondary IP address usage**: 各 node の Elastic Network Interface (ENI) に関連付けられた secondary IP addresses を pods に割り当てます。
-* **Security group integration**: security groups を pod レベルで適用できます (SecurityGroupsForPods feature)。
-* **VPC flow log visibility**: Pod traffic は VPC flow logs で可視化されます。
-* **Leverage AWS networking features**: VPC peering、Transit Gateway、PrivateLink などの機能を pods から直接利用できます。
+* **VPCネイティブなIPアドレス割り当て**: PodにはVPCから直接IPアドレスが割り当てられ、VPC内のほかのリソースと同じネットワーク空間に配置されます。
+* **セカンダリIPアドレスの使用**: 各ノードのElastic Network Interface (ENI) に関連付けられたセカンダリIPアドレスをPodに割り当てます。
+* **セキュリティグループとの統合**: Pod用セキュリティグループには、サポート対象インスタンス、VPCリソースコントローラーの権限、CNIの構成、SecurityGroupPolicyが必要です。
+* **VPCフローログでの可視性**: PodのトラフィックはVPCフローログで確認できます。
+* **AWSネットワーキング機能の活用**: VPCピアリング、Transit Gateway、PrivateLinkなどの機能をPodから直接利用できます。
 
-AWS VPC CNI は open-source project であり、GitHub で code を確認できます: https://github.com/aws/amazon-vpc-cni-k8s
+AWS VPC CNIはオープンソースプロジェクトです。コードはGitHubで確認できます: https://github.com/aws/amazon-vpc-cni-k8s
 
-他の CNI plugins (Flannel、Calico、Weave Net など) も EKS にインストールできますが、AWS VPC CNI がデフォルトで提供されます。
-
-</details>
-
-5. Amazon EKS で Kubernetes resources の authentication と authorization を管理する方法は何ですか？
-   * A) Kubernetes service accounts のみを使用する
-   * B) AWS IAM と Kubernetes RBAC の統合
-   * C) EKS-specific permission management system
-   * D) AWS Cognito による user authentication
-
-<details>
-
-<summary>答えを表示</summary>
-
-**答え: B) AWS IAM と Kubernetes RBAC の統合**
-
-**解説:** Amazon EKS は、AWS IAM (Identity and Access Management) と Kubernetes RBAC (Role-Based Access Control) の統合を通じて、Kubernetes resources の authentication と authorization を管理します。この統合アプローチは、AWS の強力な identity management capabilities と Kubernetes の細かな permission control を組み合わせます。
-
-主な機能:
-
-* **IAM Authentication**: AWS IAM credentials を使用して Kubernetes API server に認証します。
-* **aws-auth ConfigMap**: IAM roles または users を Kubernetes users と groups にマッピングします。
-* **RBAC Authorization**: Kubernetes RBAC system を使用して cluster 内の permissions を制御します。
-* **IRSA (IAM Roles for Service Accounts)**: IAM roles を Kubernetes service accounts にリンクし、pods が AWS services に安全にアクセスできるようにします。
-
-仕組み:
-
-1. ユーザーは `aws eks get-token` command (AWS CLI または AWS SDK 経由) を使用して Kubernetes API server 用の authentication token を取得します。
-2. この token は IAM credentials を使用して署名されます。
-3. Kubernetes API server は AWS IAM authenticator を使用して token を検証します。
-4. aws-auth ConfigMap の mappings に基づいて、ユーザーに Kubernetes users と groups が割り当てられます。
-5. Kubernetes RBAC system は、それらの users または groups に付与された permissions に基づいて requests を許可または拒否します。
-
-他の選択肢の問題点:
-
-* Kubernetes service accounts のみを使用すると、AWS services との統合が制限されます。
-* EKS には個別の専用 permission management system はなく、標準の Kubernetes RBAC と AWS IAM を統合します。
-* AWS Cognito は EKS authentication には直接使用されませんが、OIDC provider として構成することはできます。
+EC2ノードで代替CNIを使用する場合は、それぞれの互換性とサポート状況を確認する必要があります。FargateとAuto Modeでは任意のCNIへの置き換えはサポートされません。Hybrid Nodesでは互換性のあるオンプレミスCNIが必要です。`hostNetwork`を使用するPodはノードのネットワーキングを共有します。
 
 </details>
 
-6. Amazon EKS cluster 内で pods が AWS services (例: S3、DynamoDB) にアクセスするための推奨方法は何ですか？
-   * A) EC2 instance profiles を使用して nodes に IAM roles を付与する
-   * B) AWS credentials を environment variables として pods に直接注入する
-   * C) IAM roles を Kubernetes service accounts (IRSA) にリンクする
-   * D) AWS credentials を Kubernetes Secrets として保存し、mount する
+5. IAM IDにEKS Kubernetes APIへのアクセスを付与するには、どうすればよいですか？
+   * A) すべてのIAMユーザーをServiceAccountだけで認証する
+   * B) アクセスエントリを使用したIAM認証と、アクセス用ポリシーおよび/またはKubernetes RBACを使う
+   * C) EKS IAMポリシーによって、すべてのKubernetesリソースへの権限が自動的に付与される
+   * D) Cognitoをすべてのクラスターに自動的に接続する
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B) アクセスエントリを使用したIAM認証と、アクセス用ポリシーおよび/またはKubernetes RBACを使う**
+
+Kubernetes APIへのIAMアクセスと、PodによるAWS APIへのアクセスは別の経路です。
+
+1. `aws eks get-token`は、IAM認証情報で署名された認証トークンを作成します。
+2. EKSがIAM IDを認証します。新しいアクセス構成には**アクセスエントリ**を使用してください。
+3. EKSアクセス用ポリシーを関連付けるか、Kubernetesグループを指定してRoleBinding/ClusterRoleBindingを作成します。RBACとEKSオーソライザーは許可を加算します。どちらもリクエストを許可しない場合、そのリクエストは拒否されます。
+4. 従来の`aws-auth` ConfigMapは非推奨です。既存のマッピングがすべて自動的に移行されるわけではないため、アクセスエントリへの移行時に各IDと権限を確認してください。
+
+IAMポリシーはEKSサービスAPIへの呼び出しを制御します。EKSアクセス用ポリシーはKubernetes権限のテンプレートであり、IAMポリシーではありません。IRSA/Pod Identityは、ワークロードにAWSの権限を別途付与します。Kubernetes ServiceAccountトークンと構成済みのOIDCプロバイダーを使用して、Kubernetesに認証することもできます。IAMだけが認証方式ではありません。
+
+</details>
+
+6. Kubernetes ServiceAccountに一時的なAWS認証情報を付与するために、OIDCフェデレーション関係を使用するのはどれですか？
+   * A) EC2インスタンスプロファイルを使ってノードにIAMロールを付与する
+   * B) Podの環境変数に長期有効なAWSアクセスキーを埋め込む
+   * C) IAMロールをKubernetes ServiceAccountにリンクする (IRSA)
+   * D) AWS認証情報をKubernetes Secretsに保存してマウントする
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: C) IAM roles を Kubernetes service accounts (IRSA) にリンクする**
+**解答: C) IAMロールをKubernetes ServiceAccountにリンクする (IRSA)**
 
-**解説:** Amazon EKS cluster 内で pods が AWS services にアクセスするための推奨方法は、IAM roles を Kubernetes service accounts にリンクすることです。この機能は IRSA (IAM Roles for Service Accounts) と呼ばれ、pod レベルで細かな permissions を提供します。
+IRSAでは、クラスターのOIDCプロバイダーを介してServiceAccountトークンを交換し、一時的なAWS認証情報を取得します。信頼ポリシーの対象をnamespace/ServiceAccountおよび`aud=sts.amazonaws.com`に限定してください。EKS Pod Identityも一時的な認証情報を提供しますが、別途OIDCプロバイダーを必要としません。コンピューティング環境、エージェント、SDKの要件を確認してください。この例ではIRSA方式を示します。
 
-IRSA の主なメリット:
+IRSAの主な利点:
 
-* **Principle of least privilege**: 各 application に必要な最小限の permissions のみを付与できます。
-* **Permission isolation**: 同じ node 上で実行される異なる pods に、異なる IAM permissions を持たせることができます。
-* **Simplified credential management**: AWS credentials を直接管理する必要がありません。
-* **Enhanced security**: credentials は code や configuration に hardcoded されません。
+* **最小権限の原則**: 各アプリケーションに必要な最小限の権限だけを付与できます。
+* **権限の分離**: 同じノード上で実行される別々のPodに、異なるIAM権限を付与できます。
+* **認証情報管理の簡素化**: AWS認証情報を直接管理する必要がありません。
+* **セキュリティの強化**: 認証情報をコードや構成にハードコードしません。
 
-IRSA の設定方法:
+IRSAの設定方法:
 
-1.  OpenID Connect (OIDC) provider を EKS cluster に関連付けます:
+1. EKSクラスターにOpenID Connect (OIDC) プロバイダーを関連付けます。
 
     ```bash
-    eksctl utils associate-iam-oidc-provider --cluster=<cluster-name> --approve
+    eksctl utils associate-iam-oidc-provider --cluster="${EXAMPLE_CLUSTER:?}" --region="${EXAMPLE_REGION:?}" --approve
     ```
-2.  service account 用の IAM role を作成します:
+2. ServiceAccount用のIAMロールを作成します。
 
     ```bash
     eksctl create iamserviceaccount \
-      --name=<service-account-name> \
-      --namespace=<namespace> \
-      --cluster=<cluster-name> \
-      --attach-policy-arn=arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
+      --name=app-sa \
+      --namespace="${EXAMPLE_NAMESPACE:?}" \
+      --cluster="${EXAMPLE_CLUSTER:?}" --region="${EXAMPLE_REGION:?}" \
+      --attach-policy-arn="${APP_POLICY_ARN:?Use a reviewed policy scoped to the required bucket/prefix}" \
       --approve
     ```
-3.  pod manifest で service account を参照します:
+3. 同じnamespace内のPodでServiceAccountを指定します。これはテンプレートです。イメージをIRSA互換SDKを使用するアプリケーションのものに置き換え、`-n "$EXAMPLE_NAMESPACE"`を指定して適用してください。
 
     ```yaml
     apiVersion: v1
@@ -211,137 +187,137 @@ IRSA の設定方法:
     metadata:
       name: my-pod
     spec:
-      serviceAccountName: <service-account-name>
+      serviceAccountName: app-sa
       containers:
       - name: my-container
-        image: my-image
+        image: registry.example.com/team/app:reviewed
     ```
 
-他の選択肢の問題点:
+ほかの選択肢が誤りである理由:
 
-* EC2 instance profiles を使用すると、同じ node 上のすべての pods に同じ permissions が付与され、principle of least privilege に反します。
-* AWS credentials を environment variables として注入すると、credential exposure のリスクがあり、credential rotation が難しくなります。
-* AWS credentials を Kubernetes Secrets として保存すると、credential management の負担が増え、credential rotation が複雑になります。
+* IMDSにアクセスできるPodは、ノードロールの認証情報を取得する場合があります。IMDSへのアクセスを制限し、ワークロード固有のロールを使用してください。IRSAだけではそのアクセスをブロックできません。
+* Podの環境変数に長期有効なアクセスキーを埋め込むと、漏えいとローテーションのリスクが高まります。IRSA/Pod Identityの認証情報プロバイダー環境変数は、これとは異なる仕組みです。
+* AWS認証情報をKubernetes Secretsに保存すると、認証情報管理の負担が増え、ローテーションも複雑になります。
 
 </details>
 
-7. Amazon EKS clusters の logging feature について正しい記述はどれですか？
-   * A) すべての logs がデフォルトで CloudWatch Logs に送信される
-   * B) Control plane logs は任意で CloudWatch Logs に送信できる
-   * C) worker node logs のみ CloudWatch Logs に送信できる
-   * D) EKS は logging functionality を提供しない
+7. Amazon EKSクラスターのログ機能について、正しい説明はどれですか？
+   * A) すべてのログがデフォルトでCloudWatch Logsに送信される
+   * B) コントロールプレーンのログは、オプションでCloudWatch Logsに送信できる
+   * C) ワーカーノードのログだけをCloudWatch Logsに送信できる
+   * D) EKSにはログ機能がない
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) Control plane logs は任意で CloudWatch Logs に送信できる**
+**解答: B) コントロールプレーンのログは、オプションでCloudWatch Logsに送信できる**
 
-**解説:** Amazon EKS clusters では、control plane logs を任意で CloudWatch Logs に送信できます。この機能はデフォルトでは無効で、ユーザーは必要な log types を選択して有効化できます。
+**解説:** Amazon EKSクラスターでは、コントロールプレーンのログをオプションでCloudWatch Logsに送信できます。この機能はデフォルトで無効になっており、必要なログタイプを選んで有効化できます。
 
-EKS control plane logging の主な機能:
+EKSコントロールプレーンのログ記録機能:
 
-* **Optional activation**: cluster 作成時または既存 clusters で有効化できます。
-* **Log type selection**: 次の中から必要な log types のみを選択できます:
-  * API server (api)
-  * Audit (audit)
-  * Authenticator (authenticator)
-  * Controller manager (controllerManager)
-  * Scheduler (scheduler)
-* **CloudWatch Logs integration**: 選択した logs は、保存、分析、monitoring のため AWS CloudWatch Logs に送信されます。
-* **Cost consideration**: log storage には CloudWatch Logs pricing が適用されます。
+* **任意で有効化**: クラスター作成時にも、既存のクラスターにも有効化できます。
+* **ログタイプの選択**: 次の中から必要なログタイプだけを選択できます。
+  * APIサーバー (api)
+  * 監査 (audit)
+  * 認証機能 (authenticator)
+  * コントローラーマネージャー (controllerManager)
+  * スケジューラー (scheduler)
+* **CloudWatch Logsとの統合**: 選択したログは、保存、分析、監視のためにAWS CloudWatch Logsに送信されます。
+* **コストに関する考慮事項**: CloudWatch Logsの取り込み、保持、クエリに料金がかかる場合があります。
 
-logging を有効化する方法:
+ログを有効にする方法:
 
 ```bash
 # Enable logging using AWS CLI
 aws eks update-cluster-config \
-    --region <region> \
-    --name <cluster-name> \
+    --region "${EXAMPLE_REGION:?}" \
+    --name "${EXAMPLE_CLUSTER:?}" \
     --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
 
 # Enable logging using eksctl
-eksctl utils update-cluster-logging --enable-types api,audit,authenticator,controllerManager,scheduler --cluster <cluster-name> --region <region>
+eksctl utils update-cluster-logging --enable-types api,audit,authenticator,controllerManager,scheduler --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" --approve
 ```
 
-Worker node logging:
+ワーカーノードのログ:
 
-* Worker node logs は EKS control plane logging feature には含まれません。
-* worker node logs を CloudWatch Logs に送信するには、CloudWatch agent をインストールするか、Fluentd/Fluent Bit のような logging solution を構成する必要があります。
+* ワーカーノードのログは、EKSコントロールプレーンのログ機能には含まれません。
+* ワーカーノードのログをCloudWatch Logsに送信するには、CloudWatchエージェントをインストールするか、Fluentd/Fluent Bitなどのログソリューションを構成する必要があります。
 
-他の選択肢の問題点:
+ほかの選択肢が誤りである理由:
 
-* すべての logs がデフォルトで CloudWatch Logs に送信されるわけではありません。ユーザーが明示的に有効化する必要があります。
-* CloudWatch Logs に送信できるのが worker node logs のみというわけではありません。control plane logs も送信できます。
-* EKS は control plane logging functionality を提供しています。
+* すべてのログがデフォルトでCloudWatch Logsに送信されるわけではありません。ユーザーが明示的に有効化する必要があります。
+* CloudWatch Logsに送信できるのがワーカーノードのログだけというわけではありません。コントロールプレーンのログも送信できます。
+* EKSにはコントロールプレーンのログ機能があります。
 
 </details>
 
-8. Amazon EKS cluster の cost component ではないものはどれですか？
-   * A) EKS control plane hourly fee
-   * B) worker nodes の EC2 instance costs
-   * C) Fargate pod execution costs
-   * D) Kubernetes license fees
+8. Amazon EKSクラスターのコスト項目ではないものはどれですか？
+   * A) EKSコントロールプレーンの時間単位料金
+   * B) ワーカーノード用EC2インスタンスの料金
+   * C) Fargate Podの実行料金
+   * D) Kubernetesのライセンス料
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: D) Kubernetes license fees**
+**解答: D) Kubernetesのライセンス料**
 
-**解説:** Kubernetes license fees は Amazon EKS clusters の cost component ではありません。Kubernetes は Cloud Native Computing Foundation (CNCF) によって管理される open-source software であり、Apache 2.0 license の下で無料で使用できます。したがって、EKS を使用する際に別途 Kubernetes license fees は発生しません。
+**解説:** Kubernetesのライセンス料は、Amazon EKSクラスターのコスト項目ではありません。KubernetesはCloud Native Computing Foundation (CNCF) が管理するオープンソースソフトウェアであり、Apache 2.0ライセンスのもとで無料で使用できます。そのため、EKSを使用してもKubernetesのライセンス料は別途発生しません。
 
-Amazon EKS clusters の実際の cost components には次が含まれます:
+Amazon EKSクラスターの実際のコスト項目:
 
-1. **EKS control plane hourly fee**:
-   * 各 EKS cluster に対して固定の hourly fee が課金されます (例: $0.10 per hour)。
-   * このコストは cluster size や workload に関係なく一定です。
-   * 複数 regions にまたがる場合は region ごとに料金が発生します。
-2. **worker nodes の EC2 instance costs**:
-   * self-managed または managed node groups で使用される EC2 instances に対してコストが発生します。
-   * コストは instance type、size、quantity、runtime によって異なります。
-   * Reserved Instances、Savings Plans、Spot Instances によってコストを最適化できます。
-3. **Fargate pod execution costs**:
-   * Fargate を使用する場合、pods に割り当てられた vCPU と memory resources に基づいて課金されます。
-   * コストは pod runtime に基づいて秒単位で計算されます。
-   * node management overhead はありませんが、一般的に EC2-based nodes より高くなります。
-4. **追加の AWS resource costs**:
-   * EBS volumes
-   * Load balancers (NLB, ALB)
-   * CloudWatch logs and metrics
+1. **EKSコントロールプレーンの時間単位料金**:
+   * 標準サポートと延長サポートではクラスター料金が異なります。オプションのProvisioned Control Planeティアには追加料金がかかります。
+   * EKSクラスターはリージョンリソースです。複数リージョンにデプロイする場合は、クラスターと料金がそれぞれ必要です。
+   * Auto Mode、EKS Capabilities、Hybrid Nodes、AWSインフラストラクチャの料金も個別に考慮してください。
+2. **ワーカーノード用EC2インスタンスの料金**:
+   * セルフマネージドまたはマネージドノードグループで使用するEC2インスタンスには料金が発生します。
+   * 料金はインスタンスタイプ、サイズ、数、実行時間によって異なります。
+   * リザーブドインスタンス、Savings Plans、Spotインスタンスを活用してコストを最適化できます。
+3. **Fargate Podの実行料金**:
+   * Fargateを使用する場合、Podに割り当てられたvCPUとメモリのリソースに基づいて料金が発生します。
+   * Linux Fargateの課金はイメージのダウンロード開始時に始まり、秒単位に切り上げられ、最低1分が適用されます。要求されたリソースは、サポートされている構成単位に切り上げられます。
+   * プロビジョニング済みの総キャパシティ、使用率、運用負荷を比較してください。FargateとEC2のどちらかが常に安いとは限りません。
+4. **その他のAWSリソースの料金**:
+   * EBSボリューム
+   * ロードバランサー (NLB、ALB)
+   * CloudWatchのログとメトリクス
    * NAT Gateway
-   * Data transfer
+   * データ転送
 
-Cost optimization strategies:
+コスト最適化の方法:
 
-* 適切な instance types の選択
-* auto-scaling の構成
-* Spot Instances の使用
-* Cluster automation と scheduled scaling
-* resource requests と limits の最適化
-* Cost monitoring と analysis
+* 適切なインスタンスタイプを選択する
+* オートスケーリングを構成する
+* Spotインスタンスを使用する
+* クラスターの自動化とスケジュールに基づくスケーリング
+* リソースのrequestsとlimitsを最適化する
+* コストを監視して分析する
 
 </details>
 
-9. Amazon EKS cluster で load balancing を実装する正しい方法は何ですか？
-   * A) built-in EKS load balancer を使用する
-   * B) Kubernetes Service resources と AWS Load Balancer Controller を統合する
-   * C) EC2 load balancers を手動で作成して構成する
-   * D) EKS は load balancing をサポートしない
+9. Auto Modeを使用しない従来型のEKSクラスターで、ALB/NLBとの宣言的な統合を提供するのはどれですか？
+   * A) 組み込みのEKSロードバランサーを使用する
+   * B) Kubernetes ServiceリソースをAWS Load Balancer Controllerと統合する
+   * C) EC2ロードバランサーを手動で作成して構成する
+   * D) EKSはロードバランシングをサポートしていない
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: B) Kubernetes Service resources と AWS Load Balancer Controller を統合する**
+**解答: B) Kubernetes ServiceリソースをAWS Load Balancer Controllerと統合する**
 
-**解説:** Amazon EKS cluster で load balancing を実装する正しい方法は、Kubernetes Service resources と AWS Load Balancer Controller を統合することです。このアプローチは Kubernetes の declarative resource management と AWS の load balancing capabilities を組み合わせます。
+**解説:** Amazon EKSクラスターでロードバランシングを実装する正しい方法は、Kubernetes ServiceリソースをAWS Load Balancer Controllerと統合することです。この方法では、Kubernetesの宣言的なリソース管理とAWSのロードバランシング機能を組み合わせます。
 
-EKS で load balancing を実装する方法:
+EKSでロードバランシングを実装する方法:
 
-1.  **Default LoadBalancer type Service**:
+1. **デフォルトのLoadBalancerタイプのService**:
 
-    * Kubernetes で `LoadBalancer` type Service を作成すると、デフォルトで Classic Load Balancer (CLB) または Network Load Balancer (NLB) がプロビジョニングされます。
+   * 選択されるコントローラーによってロードバランサーが決まります。この例では、インストール済みで使用が許可されたAWS LBCを`service.k8s.aws/nlb`で明示的に選択します。従来の統合ではCLBが作成される場合があります。
 
     ```yaml
     apiVersion: v1
@@ -350,17 +326,18 @@ EKS で load balancing を実装する方法:
       name: my-service
     spec:
       type: LoadBalancer
+      loadBalancerClass: service.k8s.aws/nlb
       ports:
       - port: 80
         targetPort: 8080
       selector:
         app: my-app
     ```
-2.  **AWS Load Balancer Controller**:
+2. **AWS Load Balancer Controller**:
 
-    * Application Load Balancer (ALB) と Network Load Balancer (NLB) を管理するためのより高度な機能を利用するには、AWS Load Balancer Controller をインストールします。
-    * ALB は Ingress resources を通じてプロビジョニングおよび構成できます。
-    * さまざまな load balancer attributes を annotations によって構成できます。
+   * Application Load Balancer (ALB) とNetwork Load Balancer (NLB) を管理する高度な機能を利用するには、AWS Load Balancer Controllerをインストールします。
+   * Ingressリソースを通じてALBをプロビジョニングおよび構成できます。
+   * アノテーションを通じて、さまざまなロードバランサー属性を構成できます。
 
     ```yaml
     apiVersion: networking.k8s.io/v1
@@ -368,10 +345,10 @@ EKS で load balancing を実装する方法:
     metadata:
       name: my-ingress
       annotations:
-        kubernetes.io/ingress.class: alb
         alb.ingress.kubernetes.io/scheme: internet-facing
         alb.ingress.kubernetes.io/target-type: ip
     spec:
+      ingressClassName: alb
       rules:
       - http:
           paths:
@@ -383,9 +360,9 @@ EKS で load balancing を実装する方法:
                 port:
                   number: 80
     ```
-3.  **Service annotations**:
+3. **Serviceアノテーション**:
 
-    * load balancer type と configuration を指定するために、services に annotations を追加できます。
+   * Serviceにアノテーションを追加して、ロードバランサーのタイプと構成を指定できます。
 
     ```yaml
     apiVersion: v1
@@ -393,43 +370,48 @@ EKS で load balancing を実装する方法:
     metadata:
       name: my-service
       annotations:
-        service.beta.kubernetes.io/aws-load-balancer-type: nlb
-        service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+        service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+        service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
     spec:
       type: LoadBalancer
-      # ...
+      loadBalancerClass: service.k8s.aws/nlb
+      selector:
+        app: my-app
+      ports:
+      - port: 80
+        targetPort: 8080
     ```
 
-他の選択肢の問題点:
+ほかの選択肢が誤りである理由:
 
-* EKS には独立した「built-in EKS load balancer」component はありません。load balancing は Kubernetes Service resources と AWS load balancers の統合を通じて提供されます。
-* EC2 load balancers を手動で作成して構成することは可能ですが、Kubernetes の declarative approach に合わず、管理が複雑になります。
-* EKS は load balancing を完全にサポートしています。
+* Auto Modeは`eks.amazonaws.com/nlb`を含む異なるクラスを使って、マネージドロードバランシングを提供します。クラスター内にAWS LBCをインストールする必要はありません。両者のクラスや、サポート対象外のアノテーションを混在させないでください。
+* EC2ロードバランサーを手動で作成して構成することもできますが、Kubernetesの宣言的なアプローチに合わず、管理が複雑になります。
+* EKSはロードバランシングを全面的にサポートしています。
 
 </details>
 
-10. Amazon EKS cluster で storage を管理する有効な方法ではないものはどれですか？
-    * A) EBS CSI driver を使用して EBS volumes をプロビジョニングする
-    * B) EFS CSI driver を使用して EFS file systems を mount する
-    * C) EKS built-in storage manager による automatic volume provisioning
-    * D) FSx for Lustre CSI driver を使用して high-performance file systems に接続する
+10. Amazon EKSクラスターでストレージを管理する有効な方法ではないものはどれですか？
+    * A) EBS CSIドライバーを使用してEBSボリュームをプロビジョニングする
+    * B) EFS CSIドライバーを使用してEFSファイルシステムをマウントする
+    * C) Fargate PodにEBSボリュームをマウントする
+    * D) FSx for Lustre CSIドライバーを使用して高性能ファイルシステムに接続する
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: C) EKS built-in storage manager による automatic volume provisioning**
+**解答: C) Fargate PodにEBSボリュームをマウントする**
 
-**解説:** 「EKS built-in storage manager」は存在しない機能です。Amazon EKS には automatic volume provisioning のための built-in storage manager はなく、storage は CSI (Container Storage Interface) drivers を通じて管理されます。
+FargateではEBSボリュームをマウントできません。従来型のEC2ノードでは、インストール済みのEBS CSIドライバーとIAM権限を使用します。Auto Modeでは、マネージドEBSプロビジョニングを`ebs.csi.eks.amazonaws.com`を通じて提供します。これは従来型の`ebs.csi.aws.com`ドライバーとは異なります。
 
-Amazon EKS clusters で storage を管理する実際の方法には次が含まれます:
+Amazon EKSクラスターでストレージを管理する実際の方法:
 
-1.  **EBS CSI driver**:
+1. **EBS CSIドライバー**:
 
-    * Amazon EBS (Elastic Block Store) volumes を Kubernetes pods に接続できます。
-    * block storage を必要とする applications (databases など) に適しています。
-    * dynamic provisioning、snapshots、volume resizing をサポートします。
-    * 単一の availability zone 内でのみアクセス可能です (ReadWriteOnce access mode)。
+   * Amazon EBS (Elastic Block Store) ボリュームをKubernetes Podに接続できます。
+   * ブロックストレージを必要とするアプリケーション (データベースなど) に適しています。
+   * StorageClassで許可されている場合、動的プロビジョニング、スナップショットコントローラーを使用したスナップショット、拡張をサポートします。
+   * EBSはAZスコープです。ReadWriteOnceは1つのノードからの読み書きマウントを意味し、1つのPodだけを意味するわけではありません。同じノード上の複数のPodがボリュームを使用できる場合があります。アクセスモードによってAZが決まるわけではありません。
 
     ```yaml
     # StorageClass example
@@ -443,12 +425,12 @@ Amazon EKS clusters で storage を管理する実際の方法には次が含ま
       type: gp3
       encrypted: "true"
     ```
-2.  **EFS CSI driver**:
+2. **EFS CSIドライバー**:
 
-    * Amazon EFS (Elastic File System) を Kubernetes pods に mount できます。
-    * 複数の pods から同時にアクセスする必要がある shared file systems に適しています。
-    * 複数の availability zones にまたがってアクセス可能です (ReadWriteMany access mode)。
-    * web servers、CMS、CI/CD pipelines などに適しています。
+   * Amazon EFS (Elastic File System) をKubernetes Podにマウントできます。
+   * 複数のPodから同時にアクセスする必要がある共有ファイルシステムに適しています。
+   * 複数のアベイラビリティーゾーンからアクセスできます (ReadWriteManyアクセスモード)。
+   * Webサーバー、CMS、CI/CDパイプラインなどに適しています。
 
     ```yaml
     # StorageClass example
@@ -462,11 +444,11 @@ Amazon EKS clusters で storage を管理する実際の方法には次が含ま
       fileSystemId: fs-0123456789abcdef0
       directoryPerms: "700"
     ```
-3.  **FSx for Lustre CSI driver**:
+3. **FSx for Lustre CSIドライバー**:
 
-    * Amazon FSx for Lustre を Kubernetes pods に接続できます。
-    * high-performance computing、machine learning、big data analytics などの high-performance workloads に適しています。
-    * high throughput と low latency を提供します。
+   * Amazon FSx for LustreをKubernetes Podに接続できます。
+   * ハイパフォーマンスコンピューティング、機械学習、ビッグデータ分析など、高性能なワークロードに適しています。
+   * 高スループットと低レイテンシーを提供します。
 
     ```yaml
     # StorageClass example
@@ -482,202 +464,248 @@ Amazon EKS clusters で storage を管理する実際の方法には次が含ま
       automaticBackupRetentionDays: "1"
       dailyAutomaticBackupStartTime: "00:00"
       perUnitStorageThroughput: "200"
-      storageCapacity: "1200"
     ```
-4. **Other storage options**:
-   * CSI drivers または S3 mounters を通じた Amazon S3 (Simple Storage Service)
+   容量は`storageCapacity` StorageClassパラメーターではなく、PVCの`spec.resources.requests.storage` (例: `1200Gi`) で指定してください。デプロイメント固有の容量単位、サブネット/セキュリティグループ、Lustreクライアントの互換性、ドライバーのIAM権限を確認してください。
+
+4. **その他のストレージオプション**:
+   * CSIドライバーまたはS3マウンターを介したAmazon S3 (Simple Storage Service)
    * Amazon FSx for Windows File Server
    * Amazon FSx for NetApp ONTAP
-   * Third-party storage solutions (Portworx, Rook など)
+   * サードパーティーのストレージソリューション (Portworx、Rookなど)
 
-Storage management best practices:
+ストレージ管理のベストプラクティス:
 
-* workload requirements に適した storage types を選択する
-* dynamic provisioning のために StorageClass を構成する
-* backup と recovery strategies を確立する
-* storage performance を監視する
-* cost optimization のために適切な storage classes と sizes を選択する
+* ワークロードの要件に合ったストレージタイプを選択する
+* 動的プロビジョニング用にStorageClassを構成する
+* バックアップおよび復旧戦略を策定する
+* ストレージのパフォーマンスを監視する
+* コスト最適化のために、適切なストレージクラスとサイズを選択する
 
 </details>
 
 ## ハンズオン演習
 
-### 演習 1: EKS Cluster の作成と構成
+### 演習1: EKSクラスターの作成と構成
 
-**シナリオ:** あなたは会社の DevOps engineer であり、development team のために Amazon EKS cluster をセットアップする必要があります。この cluster は development environment 用で、必要な機能をすべて提供しながら cost-effective である必要があります。
+**シナリオ:** あなたは勤務先のDevOpsエンジニアで、開発チーム用にAmazon EKSクラスターをセットアップする必要があります。このクラスターは開発環境向けであり、必要な機能をすべて備えつつ、コスト効率のよい構成にします。
 
 **要件:**
 
-1. cost-effective な EKS cluster を作成する
-2. 適切な node groups を構成する
-3. basic monitoring を設定する
-4. cluster への kubectl access を構成する
+1. コスト効率のよいEKSクラスターを作成する
+2. 適切なノードグループを構成する
+3. 基本的なモニタリングを設定する
+4. クラスターへのkubectlアクセスを構成する
 
-**解決策:**
+**解答:**
 
 <details>
+<summary>解答を表示</summary>
 
-<summary>解決策を表示</summary>
+これらのデプロイコマンドを実行すると、料金が発生するAWSリソースが作成されます。監査時には実行していません。Bash、最新のAWS CLI v2、kubectl 1.36、Helmを準備し、OS/CPUアーキテクチャとチェックサムを確認するため、[公式のeksctlインストール手順](https://eksctl.io/installation/)を使用してください。この例はeksctl 0.230.0のスキーマとEKS 1.36を基準にレビューしたものであり、本番環境で検証済みの構成ではありません。
 
-**1. eksctl を使用して EKS Cluster を作成する**
+1つのシェルで手順を実行し、コマンドが失敗した場合は停止してください。`EKS_INTRO_ADMIN_CIDR`には、通常は`/32`を指定して、承認済みクライアントの実際の外部IPv4 CIDRを設定します。この新しいクラスターは、プライベートノード/プライベートAPIアクセスに加えて、制限付きのパブリックAPIアクセスを使用します。単一のNAT gatewayは開発ラボ向けの選択であり、本番環境の可用性設計ではありません。クラスター作成者への管理者アクセスは、この専用ラボの初期セットアップのみを目的としています。
+
+**1. 専用クラスターを作成する**
 
 ```bash
-# Install eksctl (if not already installed)
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin
-eksctl version
+# Use a dedicated nonproduction AWS account/role and an approved region.
+eksctl version  # Example tool baseline: 0.230.0
+aws --version
+kubectl version --client
+helm version
 
-# Create cluster
-cat << EOF > eks-cluster.yaml
+EKS_INTRO_DIR=$(mktemp -d /tmp/eks-intro.XXXXXX)
+: "${EKS_INTRO_DIR:?}"
+EKS_INTRO_CLUSTER=$(basename "$EKS_INTRO_DIR" | tr '[:upper:].' '[:lower:]-')
+EKS_INTRO_REGION=us-west-2
+: "${EKS_INTRO_ADMIN_CIDR:?Set your approved client egress IPv4 CIDR, normally /32}"
+EKS_INTRO_KUBECONFIG="$EKS_INTRO_DIR/kubeconfig"
+unset EKS_INTRO_CLUSTER_ARN EKS_INTRO_POLICY_ARN
+aws sts get-caller-identity
+
+cat > "$EKS_INTRO_DIR/eks-cluster.yaml" << EOF
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
-
 metadata:
-  name: dev-cluster
-  region: us-west-2
-  version: "1.28"
-
+  name: ${EKS_INTRO_CLUSTER}
+  region: ${EKS_INTRO_REGION}
+  version: "1.36"
+  tags:
+    docs-lab: ${EKS_INTRO_CLUSTER}
+iam:
+  withOIDC: true
+accessConfig:
+  authenticationMode: API
+  bootstrapClusterCreatorAdminPermissions: true
+vpc:
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+  publicAccessCIDRs: ["${EKS_INTRO_ADMIN_CIDR}"]
+  nat:
+    gateway: Single
 managedNodeGroups:
-  - name: ng-1
-    instanceType: t3.medium
-    desiredCapacity: 2
-    minSize: 1
-    maxSize: 3
-    iam:
-      withAddonPolicies:
-        imageBuilder: true
-        autoScaler: true
-        externalDNS: true
-        certManager: true
-        appMesh: false
-        ebs: true
-        fsx: false
-        efs: false
-        albIngress: true
-        xRay: false
-        cloudWatch: true
-
+- name: ng-1
+  amiFamily: AmazonLinux2023
+  instanceType: t3.medium
+  privateNetworking: true
+  disableIMDSv1: true
+  disablePodIMDS: true
+  desiredCapacity: 2
+  minSize: 1
+  maxSize: 3
 cloudWatch:
   clusterLogging:
     enableTypes: ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 EOF
 
-eksctl create cluster -f eks-cluster.yaml
+# Inspect the file, account, allowed CIDR and projected costs before provisioning.
+cat "$EKS_INTRO_DIR/eks-cluster.yaml"
+eksctl create cluster -f "$EKS_INTRO_DIR/eks-cluster.yaml" \
+  --kubeconfig "$EKS_INTRO_KUBECONFIG" &&
+  EKS_INTRO_CLUSTER_ARN=$(aws eks describe-cluster --name "$EKS_INTRO_CLUSTER" \
+    --region "$EKS_INTRO_REGION" --query cluster.arn --output text)
+: "${EKS_INTRO_CLUSTER_ARN:?Cluster creation/verification did not complete}"
 ```
 
-**2. kubectl を構成して検証する**
+作成に失敗した場合は、この一意の名前に対応するCloudFormationスタック/リソースを調査して削除してから、同じ名前を再利用してください。`minSize`/`maxSize`は範囲を設定するだけで、需要に応じたノードオートスケーラーはインストールされません。t3.mediumはあくまで一例です。キャパシティ、CPUクレジット、リージョンごとの料金を確認してください。
+
+**2. 専用kubeconfigと接続確認**
 
 ```bash
-# Update kubectl configuration
-aws eks update-kubeconfig --name dev-cluster --region us-west-2
-
-# Verify cluster connection
-kubectl get nodes
-kubectl cluster-info
+aws eks update-kubeconfig --name "${EKS_INTRO_CLUSTER:?}" \
+  --region "${EKS_INTRO_REGION:?}" --kubeconfig "${EKS_INTRO_KUBECONFIG:?}"
+intro_kubectl() {
+  kubectl --kubeconfig "${EKS_INTRO_KUBECONFIG:?}" "$@"
+}
+intro_kubectl get nodes
+intro_kubectl cluster-info
 ```
 
-**3. Basic Monitoring Components を検証する**
+**3. 基本的なリソースメトリクス**
+
+Metrics Server 0.9.xはKubernetes 1.34以降をサポートします。これはリソースメトリクスを提供するものであり、ログ記録や長期モニタリングを提供するものではありません。TLS検証を無効にせずに、kubelet証明書とネットワーク接続を確認してください。
 
 ```bash
-# Check basic system pods
-kubectl get pods -n kube-system
+intro_kubectl get pods -n kube-system
 
-# Install metrics server (if not provided by default)
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-
-# Verify metrics server operation
-kubectl get deployment metrics-server -n kube-system
-kubectl top nodes
+# Fresh lab cluster only: do not overwrite an existing managed installation.
+curl -fL https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.9.0/components.yaml \
+  -o "${EKS_INTRO_DIR:?}/metrics-server.yaml" &&
+  intro_kubectl apply -f "$EKS_INTRO_DIR/metrics-server.yaml"
+intro_kubectl rollout status deployment/metrics-server -n kube-system --timeout=180s
+intro_kubectl top nodes
 ```
 
-**4. AWS Load Balancer Controller をインストールする**
+**4. AWS Load Balancer Controllerをインストールする**
+
+ポリシー、コントローラー、チャートのバージョンは3.5.0に固定されています。無関係なアドオン権限をすべてのノードに付与する代わりに、専用のIRSAロールを使用してください。IMDSによる検出に依存しないよう、リージョンとVPCを明示的に指定します。サブネットタグ、セキュリティグループ、サービスクォータは別途確認してください。
 
 ```bash
-# Create IAM policy
-curl -o iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
-aws iam create-policy \
-    --policy-name AWSLoadBalancerControllerIAMPolicy \
-    --policy-document file://iam-policy.json
+: "${EKS_INTRO_CLUSTER_ARN:?Use the new lab cluster}"
+curl -fL https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json \
+  -o "${EKS_INTRO_DIR:?}/lbc-policy.json" || exit 1
+# Inspect the pinned policy before creating this lab-owned IAM policy.
+EKS_INTRO_POLICY_ARN=$(aws iam create-policy \
+  --policy-name "${EKS_INTRO_CLUSTER:?}-lbc" \
+  --policy-document "file://$EKS_INTRO_DIR/lbc-policy.json" \
+  --query Policy.Arn --output text)
+: "${EKS_INTRO_POLICY_ARN:?Policy creation failed}"
 
-# Set up IRSA
+# iam.withOIDC created the cluster OIDC provider in step1.
 eksctl create iamserviceaccount \
-  --cluster=dev-cluster \
-  --namespace=kube-system \
-  --name=aws-load-balancer-controller \
-  --attach-policy-arn=arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
-  --override-existing-serviceaccounts \
-  --approve
+  --cluster="$EKS_INTRO_CLUSTER" --region="${EKS_INTRO_REGION:?}" \
+  --namespace=kube-system --name=aws-load-balancer-controller \
+  --attach-policy-arn="$EKS_INTRO_POLICY_ARN" --approve
 
-# Install controller with Helm
+EKS_INTRO_VPC_ID=$(aws eks describe-cluster --name "$EKS_INTRO_CLUSTER" \
+  --region "$EKS_INTRO_REGION" --query cluster.resourcesVpcConfig.vpcId --output text)
+: "${EKS_INTRO_VPC_ID:?}"
 helm repo add eks https://aws.github.io/eks-charts
-helm repo update
-helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-  -n kube-system \
-  --set clusterName=dev-cluster \
+helm repo update eks
+helm --kubeconfig "${EKS_INTRO_KUBECONFIG:?}" install aws-load-balancer-controller \
+  eks/aws-load-balancer-controller --version 3.5.0 -n kube-system \
+  --set clusterName="$EKS_INTRO_CLUSTER" \
+  --set region="$EKS_INTRO_REGION" --set vpcId="$EKS_INTRO_VPC_ID" \
   --set serviceAccount.create=false \
-  --set serviceAccount.name=aws-load-balancer-controller
+  --set serviceAccount.name=aws-load-balancer-controller \
+  --wait --timeout 5m
 ```
 
-**5. Cluster Status を確認する**
+**5. クラスターの状態を確認する**
 
 ```bash
-# Check node status
-kubectl get nodes -o wide
-
-# Check system pod status
-kubectl get pods -n kube-system
-
-# Check cluster events
-kubectl get events --sort-by='.lastTimestamp'
-
-# Check cluster info
-kubectl cluster-info
+intro_kubectl get nodes -o wide
+intro_kubectl get pods -n kube-system
+intro_kubectl get events --sort-by='.lastTimestamp'
+intro_kubectl cluster-info
 ```
 
-**6. Test Application をデプロイする**
+**6. ローカルのポートフォワーディングを使って基本的なアプリを確認する**
 
 ```bash
-# Deploy simple nginx
-kubectl create deployment nginx --image=nginx
-kubectl expose deployment nginx --port=80 --type=LoadBalancer
-
-# Verify deployment
-kubectl get deployment nginx
-kubectl get service nginx
+intro_kubectl create namespace intro-smoke
+intro_kubectl -n intro-smoke create deployment nginx --image=nginx:1.30.6-alpine
+intro_kubectl -n intro-smoke rollout status deployment/nginx --timeout=180s
+intro_kubectl -n intro-smoke expose deployment nginx --port=80 --type=ClusterIP
+intro_kubectl -n intro-smoke get deployment,service
+# Run in a separate terminal using the same dedicated kubeconfig.
+kubectl --kubeconfig "${EKS_INTRO_KUBECONFIG:?}" -n intro-smoke \
+  port-forward --address 127.0.0.1 service/nginx 8080:80
 ```
 
-この演習を通じて、cost-effective な EKS cluster を作成し、basic monitoring を設定し、load balancer controller を構成して applications を外部に公開する方法を学びました。t3.medium instance type は development environments に適した cost-effective な選択肢であり、auto-scaling settings によって必要に応じて nodes をスケールできます。
+ポートフォワーディングの実行中に`http://127.0.0.1:8080`を開きます。停止するにはCtrl-Cを押してください。次の演習では、外部からのALBアクセスを構成します。2つの演習が終わったら、クリーンアップ手順を実行してください。想定される動作やコスト削減効果は、監査で測定した結果ではありません。
 
 </details>
 
-### 演習 2: EKS Cluster への Applications のデプロイと Services の公開
+### 演習2: EKSクラスターへのアプリケーションのデプロイとServiceの公開
 
-**シナリオ:** あなたの team は microservices architecture に基づく web application を開発しました。この application を EKS cluster にデプロイし、外部からアクセスできるように構成する必要があります。
+**シナリオ:** チームはマイクロサービスアーキテクチャに基づくWebアプリケーションを開発しました。このアプリケーションをEKSクラスターにデプロイし、外部からアクセスできるようにする必要があります。
 
 **要件:**
 
-1. frontend と backend services をデプロイする
-2. inter-service communication を構成する
-3. ingress controller を通じて external access を構成する
-4. basic scaling を設定する
+1. フロントエンドとバックエンドのServiceをデプロイする
+2. Service間通信を構成する
+3. Ingressコントローラーを通じた外部アクセスを構成する
+4. 基本的なスケーリングを設定する
 
-**解決策:**
+**解答:**
 
 <details>
+<summary>解答を表示</summary>
 
-<summary>解決策を表示</summary>
+演習1で使用した専用クラスターとシェル変数、AWS LBC/IngressClass `alb`、正常に動作しているMetrics Serverを使用してください。このHTTPデモが返すのは公開用のダミーレスポンスのみで、ALBへのアクセスは選択したクライアントCIDRに制限されています。アプリケーション認証、TLS、本番環境での負荷検証は実装していません。
 
-**1. Namespace を作成する**
+**1. namespaceを作成する**
 
 ```bash
-kubectl create namespace web-app
-kubectl config set-context --current --namespace=web-app
+: "${EKS_INTRO_CLUSTER_ARN:?Complete exercise1 first}"
+unset EKS_INTRO_WEB_UID
+EKS_INTRO_WEB_UID=$(intro_kubectl create namespace web-app -o jsonpath='{.metadata.uid}')
+: "${EKS_INTRO_WEB_UID:?Stop if this namespace already exists}"
 ```
 
-**2. Backend Service をデプロイする**
+**2. バックエンドを構成する**
 
-```yaml
-# backend-deployment.yaml
+ポート80でリッスンし、`/api`を含むパスに対してダミーJSONを返すようにNGINXを構成します。
+
+```bash
+cat > "${EKS_INTRO_DIR:?}/backend-deployment.yaml" << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: web-app
+data:
+  default.conf: |
+    server {
+        listen 80;
+        location / {
+            default_type application/json;
+            return 200 '{"service":"backend","example":true}\n';
+        }
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -693,11 +721,13 @@ spec:
       labels:
         app: backend
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: backend
-        image: nginx:alpine  # Replace with actual backend image
+        image: nginx:1.30.6-alpine
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 80
         resources:
           requests:
             cpu: 100m
@@ -705,6 +735,18 @@ spec:
           limits:
             cpu: 500m
             memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: backend-config
 ---
 apiVersion: v1
 kind: Service
@@ -716,17 +758,35 @@ spec:
     app: backend
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: http
+EOF
+intro_kubectl apply -f "$EKS_INTRO_DIR/backend-deployment.yaml"
 ```
+
+**3. フロントエンドとService間通信を構成する**
+
+標準のNGINXイメージは`BACKEND_URL`を使用しません。この明示的なNGINX構成では、`/proxy-api/`を`backend-service`にプロキシし、実際のService間通信経路を作成します。
 
 ```bash
-kubectl apply -f backend-deployment.yaml
-```
-
-**3. Frontend Service をデプロイする**
-
-```yaml
-# frontend-deployment.yaml
+cat > "${EKS_INTRO_DIR:?}/frontend-deployment.yaml" << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: web-app
+data:
+  default.conf: |
+    server {
+        listen 80;
+        location /proxy-api/ {
+            proxy_pass http://backend-service/;
+        }
+        location / {
+            default_type text/plain;
+            return 200 'frontend demo\n';
+        }
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -742,14 +802,13 @@ spec:
       labels:
         app: frontend
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: frontend
-        image: nginx:alpine  # Replace with actual frontend image
+        image: nginx:1.30.6-alpine
         ports:
-        - containerPort: 80
-        env:
-        - name: BACKEND_URL
-          value: "http://backend-service"
+        - name: http
+          containerPort: 80
         resources:
           requests:
             cpu: 100m
@@ -757,6 +816,18 @@ spec:
           limits:
             cpu: 500m
             memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: frontend-config
 ---
 apiVersion: v1
 kind: Service
@@ -768,28 +839,29 @@ spec:
     app: frontend
   ports:
   - port: 80
-    targetPort: 80
+    targetPort: http
+EOF
+intro_kubectl apply -f "$EKS_INTRO_DIR/frontend-deployment.yaml"
 ```
+
+**4. AWS LBC Ingressを作成する**
+
+ALBが`/api`を自動的に取り除くことはありません。このバックエンドはパスを直接処理します。`/`と`/proxy-api/`はフロントエンドに転送されます。
 
 ```bash
-kubectl apply -f frontend-deployment.yaml
-```
-
-**4. Ingress Resource を作成する (AWS ALB Ingress Controller を使用)**
-
-```yaml
-# ingress.yaml
+cat > "${EKS_INTRO_DIR:?}/ingress.yaml" << EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: web-app-ingress
   namespace: web-app
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/inbound-cidrs: ${EKS_INTRO_ADMIN_CIDR:?}
 spec:
+  ingressClassName: alb
   rules:
   - http:
       paths:
@@ -807,16 +879,16 @@ spec:
             name: frontend-service
             port:
               number: 80
+EOF
+intro_kubectl apply -f "$EKS_INTRO_DIR/ingress.yaml"
 ```
+
+**5. HPAを構成する**
+
+CPU使用率はrequestsを基準に測定されます。HPAが変更するのはPodのレプリカ数であり、ノード数ではありません。また、Metrics Serverとノードの余剰キャパシティが必要です。
 
 ```bash
-kubectl apply -f ingress.yaml
-```
-
-**5. Horizontal Pod Autoscaling (HPA) を構成する**
-
-```yaml
-# hpa.yaml
+cat > "${EKS_INTRO_DIR:?}/hpa.yaml" << 'EOF'
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -856,85 +928,120 @@ spec:
       target:
         type: Utilization
         averageUtilization: 70
+EOF
+intro_kubectl apply -f "$EKS_INTRO_DIR/hpa.yaml"
 ```
+
+**6. ルーティングと状態を確認する**
+
+ALBホスト名が存在しても、ターゲットが正常であることの証明にはなりません。リクエストに失敗した場合は、イベント、ターゲットのヘルス状態、セキュリティグループ、クライアントCIDRを調べてください。
 
 ```bash
-kubectl apply -f hpa.yaml
+intro_kubectl -n web-app rollout status deployment/backend --timeout=180s
+intro_kubectl -n web-app rollout status deployment/frontend --timeout=180s
+intro_kubectl -n web-app get deployments,services,ingress,hpa
+intro_kubectl -n web-app describe ingress web-app-ingress
+ALB_ADDRESS=$(intro_kubectl -n web-app get ingress web-app-ingress \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+: "${ALB_ADDRESS:?Wait for ALB provisioning and inspect events}"
+curl --fail --show-error --connect-timeout 5 --max-time 20 "http://$ALB_ADDRESS/"
+curl --fail --show-error --connect-timeout 5 --max-time 20 "http://$ALB_ADDRESS/api"
+curl --fail --show-error --connect-timeout 5 --max-time 20 "http://$ALB_ADDRESS/proxy-api/"
 ```
 
-**6. Deployment Status を確認する**
+**7. 上限を設けた負荷を観察する**
+
+この負荷サンプルでは、CPUターゲットを超えることやHPAが起動することは保証されません。静的なNGINXレスポンスではCPU使用率が低い可能性があり、フロントエンドのルートへのリクエストはバックエンドに負荷をかけません。実際にスケーリングが行われるかどうかは、メトリクス、HPAの状態、Pending Podを確認してください。
 
 ```bash
-# Check deployment status
-kubectl get deployments -n web-app
-
-# Check service status
-kubectl get services -n web-app
-
-# Check ingress status
-kubectl get ingress -n web-app
-
-# Check HPA status
-kubectl get hpa -n web-app
-
-# Get ALB address
-kubectl get ingress web-app-ingress -n web-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+# Only target the lab ALB whose ownership and health you checked above.
+: "${ALB_ADDRESS:?}"
+ab -n 1000 -c 10 -s 10 "http://$ALB_ADDRESS/"
+intro_kubectl -n web-app get hpa
+intro_kubectl -n web-app top pods
+intro_kubectl -n web-app get events --sort-by='.lastTimestamp'
+# Optional observation; Ctrl-C stops watching, not the HPA.
+intro_kubectl -n web-app get hpa -w
 ```
-
-**7. Load Test を実行し、Scaling を検証する**
-
-```bash
-# Get ALB address
-ALB_ADDRESS=$(kubectl get ingress web-app-ingress -n web-app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-
-# Load test (requires separate tool)
-# Example: Using Apache Bench
-ab -n 10000 -c 100 http://$ALB_ADDRESS/
-
-# Verify scaling
-kubectl get hpa -n web-app -w
-```
-
-この演習を通じて、microservices architecture application を EKS cluster にデプロイし、AWS ALB Ingress Controller を使用して外部に公開し、HPA を通じて auto-scaling を構成する方法を学びました。Resource requests と limits は efficient resource usage を確保するために適切に設定され、path-based routing は ingress rules を通じて実装されました。
 
 </details>
 
+### 演習リソースをクリーンアップする
+
+アカウント、ARN、タグが専用ラボクラスターを示していることを確認してください。コントローラーを削除する前にアプリケーションロードバランサーを削除し、finalizerの処理完了を待ちます。タイムアウトした場合は、finalizerを削除するのではなく、コントローラーのエラーを調査してください。
+
+```bash
+: "${EKS_INTRO_CLUSTER_ARN:?Use only the dedicated cluster created in exercise1}"
+EKS_INTRO_CLEANUP_READY=false
+current_arn=$(aws eks describe-cluster --name "${EKS_INTRO_CLUSTER:?}" \
+  --region "${EKS_INTRO_REGION:?}" --query cluster.arn --output text)
+current_tag=$(aws eks describe-cluster --name "$EKS_INTRO_CLUSTER" \
+  --region "$EKS_INTRO_REGION" --query 'cluster.tags."docs-lab"' --output text)
+if [[ "$current_arn" = "$EKS_INTRO_CLUSTER_ARN" && "$current_tag" = "$EKS_INTRO_CLUSTER" ]]; then
+  # Keep the controller running until it removes ALB resources/finalizers.
+  intro_kubectl -n web-app delete ingress web-app-ingress --ignore-not-found --wait=true --timeout=180s &&
+    intro_kubectl delete namespace web-app intro-smoke --ignore-not-found --wait=true --timeout=180s &&
+    EKS_INTRO_CLEANUP_READY=true
+else
+  printf 'Ownership check failed; stop cleanup and inspect the selected account/cluster\n' >&2
+fi
+```
+
+所有権の確認とIngress/namespaceの削除が成功した後にのみ続行してください。IAMロールスタックの削除とポリシーのデタッチが完了したことを確認してから、ポリシーを削除します。
+
+```bash
+if [[ ${EKS_INTRO_CLEANUP_READY:-false} = true ]]; then
+  helm --kubeconfig "${EKS_INTRO_KUBECONFIG:?}" uninstall aws-load-balancer-controller -n kube-system
+  eksctl delete iamserviceaccount --cluster="${EKS_INTRO_CLUSTER:?}" \
+    --region="${EKS_INTRO_REGION:?}" --namespace=kube-system --name=aws-load-balancer-controller --approve --wait
+  # Wait for the related IAM-role stack deletion to finish before deleting its policy.
+  aws iam list-entities-for-policy --policy-arn "${EKS_INTRO_POLICY_ARN:?}"
+  # Continue only when no attachment remains.
+  aws iam delete-policy --policy-arn "$EKS_INTRO_POLICY_ARN" &&
+    eksctl delete cluster --config-file="${EKS_INTRO_DIR:?}/eks-cluster.yaml" --wait
+else
+  printf 'Complete ownership and load balancer cleanup checks first\n' >&2
+fi
+```
+
+CloudFormationの削除と、残存するロードバランサー、セキュリティグループ、NAT、EBS、ログ保持コストを確認してください。CloudWatchロググループは、保持するか削除するかを別途判断してください。一部の作成処理が失敗した場合や、これらの手順以外で作成されたリソースまで自動的にクリーンアップされたと考えないでください。ラボ終了後は、専用ディレクトリにあるマニフェスト、ポリシー、kubeconfigを削除してください。
+
 ## 高度なトピック
 
-以下は高度な Amazon EKS topics に関する問題です。このセクションでは、高度な EKS features と integrations に関する理解を確認します。
+以下はAmazon EKSの高度なトピックに関する問題です。このセクションでは、高度なEKS機能と統合についての理解度を確認します。
 
-1. Amazon EKS で Fargate profile を構成する際の正しい説明はどれですか？
-   * A) Fargate profiles は、特定の namespaces と labels に基づいて pods を Fargate で実行することを指定する
-   * B) Fargate profiles はすべての pods を Fargate で自動的に実行する
-   * C) Fargate profiles は pod execution を特定の EC2 instance types に制限する
-   * D) Fargate profiles は cluster 全体の resource quotas を設定する
+1. Amazon EKSでFargateプロファイルを構成する際の正しい説明はどれですか？
+   * A) Fargateプロファイルは、特定のnamespaceとラベルに基づいてFargateで実行するPodを指定する
+   * B) Fargateプロファイルは、すべてのPodを自動的にFargateで実行する
+   * C) Fargateプロファイルは、Podの実行を特定のEC2インスタンスタイプに制限する
+   * D) Fargateプロファイルは、クラスター全体のリソースクォータを設定する
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: A) Fargate profiles は、特定の namespaces と labels に基づいて pods を Fargate で実行することを指定する**
+**解答: A) Fargateプロファイルは、特定のnamespaceとラベルに基づいてFargateで実行するPodを指定する**
 
-**解説:** Amazon EKS Fargate profile は、特定の namespaces と labels に基づいて、どの pods を Fargate で実行するかを指定する configuration です。これにより、serverless container execution environments と EC2-based nodes の両方を使用する hybrid architecture を構成できます。
+**解説:** Amazon EKSのFargateプロファイルは、特定のnamespaceとラベルに基づいてFargateで実行するPodを指定する構成です。これにより、サーバーレスコンテナ実行環境とEC2ベースのノードを併用するハイブリッドアーキテクチャを構成できます。
 
-Fargate profiles の主な機能:
+Fargateプロファイルの主な機能:
 
-* **Selective execution**: すべての pods ではなく、profile で定義された条件に一致する pods のみが Fargate で実行されます。
-* **Namespace and label selectors**: Pods は特定の namespace と label の組み合わせに基づいて選択されます。
-* **Subnet specification**: pods が実行される private subnets を指定できます。
-* **IAM role**: Fargate pods 用の IAM execution role を指定します。
+* **選択的な実行**: プロファイルで定義された条件に一致するPodだけがFargateで実行され、すべてのPodが対象になるわけではありません。
+* **namespaceとラベルセレクター**: 特定のnamespaceとラベルの組み合わせに基づいてPodが選択されます。
+* **サブネットの指定**: Podの実行先となるプライベートサブネットを指定できます。
+* **IAMロール**: Pod実行ロールは、イメージの取得などのためにFargateインフラストラクチャによって使用されます。アプリケーションコンテナがAWS APIにアクセスするには、独自のIRSAロールが必要です。
 
-Fargate profile 作成例:
+Fargateプロファイルの作成例:
 
 ```bash
 eksctl create fargateprofile \
-  --cluster my-cluster \
+  --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
   --name my-fargate-profile \
   --namespace my-namespace \
   --labels app=my-app
 ```
 
-YAML-based Fargate profile definition:
+YAMLによるFargateプロファイルの定義:
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -951,119 +1058,114 @@ fargateProfiles:
       - namespace: another-namespace
 ```
 
-Fargate を使用する際の考慮事項:
+Fargateを使用する際の注意点:
 
-* DaemonSets は Fargate でサポートされません。
-* Privileged containers は実行できません。
-* HostNetwork と HostPort はサポートされません。
-* GPU workloads はサポートされません。
-* pod ごとのコストが発生するため、cost planning が必要です。
-* storage は ephemeral storage に制限されます (EFS を通じて persistent volumes は可能)。
+* FargateではDaemonSetはサポートされません。
+* 特権コンテナは実行できません。
+* HostNetworkとHostPortはサポートされません。
+* GPUワークロードはサポートされません。
+* Pod単位で料金が発生するため、コスト計画が必要です。
+* 静的にプロビジョニングされたEFSボリュームを通じて永続ストレージを利用できます。FargateではEBSボリュームとEFSの動的プロビジョニングはサポートされません。
 
-他の選択肢の問題点:
+ほかの選択肢が誤りである理由:
 
-* Fargate profiles はすべての pods を Fargate で自動的に実行するわけではありません。selectors に一致する pods のみが Fargate で実行されます。
-* Fargate profiles は EC2 instance types とは関係ありません。Fargate は serverless container execution environment です。
-* Fargate profiles は cluster-wide resource quotas を設定しません。Resource quotas は Kubernetes ResourceQuota を通じて管理されます。
-
-</details>
-
-2. Amazon EKS で cluster upgrade を実行する際の正しい順序はどれですか？
-   * A) Worker node upgrade -> Control plane upgrade -> Add-on upgrade
-   * B) Control plane upgrade -> Worker node upgrade -> Add-on upgrade
-   * C) Add-on upgrade -> Control plane upgrade -> Worker node upgrade
-   * D) すべての components を同時に upgrade する
-
-<details>
-
-<summary>答えを表示</summary>
-
-**答え: B) Control plane upgrade -> Worker node upgrade -> Add-on upgrade**
-
-**解説:** Amazon EKS cluster upgrade の正しい順序は、まず control plane を upgrade し、次に worker nodes、最後に add-ons を upgrade することです。この順序は Kubernetes の version compatibility model に従い、upgrade process 中の潜在的な問題を最小限に抑えます。
-
-**1. Control Plane Upgrade**
-
-* control plane は cluster の頭脳として機能し、最初に upgrade する必要があります。
-* Kubernetes は、control plane が nodes より最大 2 minor versions 先行できるように設計されています。
-* Control plane upgrades は AWS Management Console、AWS CLI、または eksctl を通じて実行できます。
-
-```bash
-# Control plane upgrade using AWS CLI
-aws eks update-cluster-version --name my-cluster --kubernetes-version 1.28
-
-# Control plane upgrade using eksctl
-eksctl upgrade cluster --name=my-cluster --version=1.28 --approve
-```
-
-**2. Worker Node Upgrade**
-
-* control plane upgrade が完了したら、worker nodes を upgrade します。
-* managed node groups の場合、upgrades は AWS Management Console、AWS CLI、または eksctl を通じて実行できます。
-* self-managed nodes の場合、nodes を新しい AMIs に置き換える必要があります。
-
-```bash
-# Managed node group upgrade
-aws eks update-nodegroup-version --cluster-name my-cluster --nodegroup-name my-nodegroup
-
-# Managed node group upgrade using eksctl
-eksctl upgrade nodegroup --cluster=my-cluster --name=my-nodegroup
-```
-
-**3. Add-on Upgrade**
-
-* 最後に、cluster add-ons (kube-proxy、CoreDNS、Amazon VPC CNI など) を upgrade します。
-* Add-ons は特定の Kubernetes versions と互換性があるように設計されているため、control plane と node upgrades の後に upgrade する必要があります。
-
-```bash
-# Add-on upgrade using AWS CLI
-aws eks update-addon --cluster-name my-cluster --addon-name vpc-cni --addon-version v1.12.0-eksbuild.1
-
-# Add-on upgrade using eksctl
-eksctl update addon --name vpc-cni --version v1.12.0-eksbuild.1 --cluster my-cluster
-```
-
-**Upgrade Best Practices:**
-
-* upgrade 前に cluster status を確認し、backup を取得する
-* まず test environment で upgrade をテストする
-* blue/green deployment strategy を検討する
-* upgrade 中の workload disruption を最小限にするため PodDisruptionBudget を構成する
-* 一度に 1 minor version ずつ upgrade する
-* upgrade 後に workloads と system components を検証する
-
-他の選択肢の問題点:
-
-* control plane の前に worker nodes を upgrade すると、version compatibility issues が発生する可能性があります。
-* add-ons を先に upgrade すると、新しい add-on versions が古い Kubernetes version と互換性を持たない可能性があります。
-* すべての components を同時に upgrade するのはリスクが高く、問題が発生した場合に原因の特定が困難です。
+* FargateプロファイルはすべてのPodを自動的にFargateで実行するわけではありません。Fargateで実行されるのはセレクターに一致するPodだけです。
+* FargateプロファイルはEC2インスタンスタイプとは関係ありません。Fargateはサーバーレスのコンテナ実行環境です。
+* Fargateプロファイルはクラスター全体のリソースクォータを設定しません。リソースクォータはKubernetes ResourceQuotaで管理します。
 
 </details>
 
-3. Amazon EKS の VPC CNI plugin の key feature ではないものはどれですか？
-   * A) pods に VPC IP addresses を割り当てる
-   * B) pod レベルで security groups を適用する
-   * C) pods 間の network traffic を暗号化する
-   * D) prefix delegation によって IP addresses を拡張する
+2. EKSのアップグレードはどのように計画すべきですか？
+   * A) 先にノードを目標バージョンにアップグレードし、後から互換性を確認する
+   * B) 互換性と現行バージョンを事前に確認し、各アドオンの更新を調整しながら、コントロールプレーン → ノードの順に進める
+   * C) 準備として、すべてのアドオンを確認せずに最新バージョンへアップグレードする
+   * D) すべてのコンポーネントを同時に変更する
+
+<details>
+<summary>解答を表示</summary>
+
+**解答: B) 互換性と現行バージョンを事前に確認し、各アドオンの更新を調整しながら、コントロールプレーン → ノードの順に進める**
+
+最初に、クラスター/ノードの現行バージョン、アップグレードインサイト、削除予定のAPI、Webhook/CRD/アドオンの互換性、サブネットの余剰IP、復旧計画を確認してください。次のマイナーバージョンに進む前に、バージョンが遅れているノードを現行コントロールプレーンのバージョンまで更新します。
+
+**1. コントロールプレーン**
+
+一度に1つのマイナーバージョンずつ進めます。現在のkubeletをAPIサーバーより新しいバージョンにすることはできず、最大で3つ前のマイナーバージョンまで許容されます。ただし、EKSはアップグレードの前後でバージョンを一致させることを推奨しています。許可される最大のバージョンスキューは、定常状態での目標ではありません。
+
+```bash
+# Inspect the current version and node versions before choosing the next minor.
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --query 'cluster.{version:version,status:status}' --output table
+kubectl --context "${EXAMPLE_CONTEXT:?}" get nodes
+
+# Choose one interface, after prerequisite checks and workload testing.
+aws eks update-cluster-version --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --kubernetes-version "${NEXT_MINOR_VERSION:?Select the next supported minor}"
+# Alternative:
+# eksctl upgrade cluster --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" --version "$NEXT_MINOR_VERSION" --approve
+
+# Use the update ID returned above. Proceed only after status is Successful.
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --update-id "${CONTROL_PLANE_UPDATE_ID:?}" --query update.status
+```
+
+**2. ノード**
+
+コントロールプレーンの更新が成功した後に、マネージドノードグループの更新を開始し、更新状態、ノードの準備状態、kubeletバージョンを確認します。従来型のノードグループは、コントロールプレーンと同時には自動更新されません。セルフマネージドノード/Hybrid Nodesは運用担当者が更新します。新しいバージョンを使用するには、Fargate Podを再作成してください。Auto Modeのノードは段階的に更新されます。
+
+```bash
+aws eks update-nodegroup-version --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --nodegroup-name "${EXAMPLE_NODEGROUP:?}" \
+  --kubernetes-version "${NEXT_MINOR_VERSION:?}"
+# Alternative:
+# eksctl upgrade nodegroup --cluster "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" --name "$EXAMPLE_NODEGROUP" --kubernetes-version "$NEXT_MINOR_VERSION"
+```
+
+**3. アドオンとクライアント**
+
+現行バージョンと目標バージョンの両方との互換性を事前に確認してください。一部のCNI、Webhook、コントローラーコンポーネントは、コントロールプレーンより先に互換性のあるバージョンへ更新する必要があります。そのため、アドオンの更新を常に最後に行えるとは限りません。コントロールプレーンの更新後、残りのアドオン、Cluster Autoscaler、kubectlをサポート対象のバージョンにし、それぞれを検証してください。
+
+```bash
+aws eks describe-addon-versions --region "${EXAMPLE_REGION:?}" --addon-name vpc-cni \
+  --kubernetes-version "${NEXT_MINOR_VERSION:?}" \
+  --query 'addons[].addonVersions[].addonVersion' --output table
+
+# Select a compatible EKS add-on build after reviewing configuration changes.
+aws eks update-addon --cluster-name "${EXAMPLE_CLUSTER:?}" --region "$EXAMPLE_REGION" \
+  --addon-name vpc-cni --addon-version "${REVIEWED_ADDON_VERSION:?}" \
+  --resolve-conflicts PRESERVE
+```
+
+`PRESERVE`はユーザー構成を保持しますが、互換性を保証するものではありません。PDB、余剰キャパシティ、正常な終了処理を確認し、forceフラグで失敗を覆い隠さないでください。各段階を検証し、復元可能なアプリケーション/データのバックアップを準備します。AWSによるコントロールプレーンのバックアップは、お客様のデータ復旧計画の代わりにはなりません。
+
+EKSでは、条件を満たすアップグレードの完了から7日以内であれば、1つ前のマイナーバージョンへのロールバックをサポートするようになりました。ノード、アドオン、API変更、サポートポリシーに関する制約があり、アプリケーションデータは自動的には復元されません。[アップグレード手順](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)と[ロールバック条件](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)に従ってください。
+
+</details>
+
+3. Amazon EKSのVPC CNIプラグインの主要な機能ではないものはどれですか？
+   * A) PodへのVPC IPアドレスの割り当て
+   * B) Pod単位でのセキュリティグループの適用
+   * C) Pod間のネットワークトラフィックの暗号化
+   * D) プレフィックス委任によるIPアドレスの拡張
 
 <details>
 
-<summary>答えを表示</summary>
+<summary>解答を表示</summary>
 
-**答え: C) pods 間の network traffic を暗号化する**
+**解答: C) Pod間のネットワークトラフィックの暗号化**
 
-**解説:** Amazon VPC CNI (Container Network Interface) plugin は、pods 間の network traffic を自動的には暗号化しません。Pod-to-pod traffic encryption は VPC CNI の基本機能ではなく、service meshes (例: AWS App Mesh、Istio) や network policy solutions (例: Calico、Cilium) などの追加ツールが必要です。
+Amazon VPC CNIは、Pod間トラフィックを一律に暗号化する機能を提供しません。アプリケーションTLS/mTLS、または明示的にサポートされているメッシュ/CNI暗号化機能を構成してください。NetworkPolicyはトラフィックをフィルタリングしますが、暗号化は行いません。
 
-Amazon VPC CNI plugin の実際の key features には次が含まれます:
+Amazon VPC CNIプラグインの実際の主な機能:
 
-1. **pods への VPC IP addresses の割り当て**:
-   * 各 pod は VPC 内で一意の IP address を受け取ります。
-   * これにより、pods は VPC 内の他の resources と直接通信できます。
-   * Pod IPs は VPC 内で routable であり、複雑な overlay networks は不要です。
-2. **pod レベルでの security groups の適用**:
-   * SecurityGroupsForPods feature によって、AWS security groups を個々の pods に適用できます。
-   * これにより、pod レベルで細かな network security policies を実装できます。
-   *   Example configuration:
+1. **PodへのVPC IPアドレスの割り当て**:
+   * 通常のPodにはVPC IPが割り当てられます。`hostNetwork` Podはノードのネットワークを共有します。
+   * これにより、PodはVPC内のほかのリソースと直接通信できます。
+   * PodのIPはVPC内でルーティングできるため、複雑なオーバーレイネットワークは不要です。
+2. **Pod単位でのセキュリティグループの適用**:
+   * SecurityGroupsForPods機能を通じて、個々のPodにAWSセキュリティグループを適用できます。
+   * これにより、Pod単位で細かなネットワークセキュリティポリシーを実装できます。
+   *   構成例:
 
        ```yaml
        apiVersion: vpcresources.k8s.aws/v1beta1
@@ -1079,207 +1181,159 @@ Amazon VPC CNI plugin の実際の key features には次が含まれます:
            groupIds:
              - sg-0123456789abcdef0
        ```
-3. **prefix delegation による IP addresses の拡張**:
-   * デフォルトでは、各 node が pods に割り当てられる IP addresses の数は限られています (instance type によって異なります)。
-   * prefix delegation feature を使用すると、各 node に /28 CIDR blocks (16 IPs) を割り当てることができ、利用可能な IP addresses を増やせます。
-   * これにより、高密度 deployment scenarios での IP address shortage problems を解決できます。
-4. **Custom networking**:
-   * Pods を特定の subnets に配置できます。
-   * Pod networking は複数の network interfaces を使用して構成できます。
-5. **Host networking integration**:
-   * Pods は host network stack を直接使用できます。
-   * network performance が重要な workloads に役立ちます。
+3. **プレフィックス委任によるIPアドレスの拡張**:
+   * デフォルトでは、各ノードがPodに割り当てられるIPアドレスの数に制限があります (インスタンスタイプによって異なります)。
+   * プレフィックス委任機能を使用すると、各ノードに/28 CIDRブロック (16個のIP) を割り当てて、利用可能なIPアドレス数を増やせます。
+   * これによりENIあたりのアドレス数が増えますが、サブネット内の既存のアドレスを消費します。空きプレフィックスが連続している必要があり、サブネットの新たなキャパシティが作られるわけではありません。
+4. **カスタムネットワーキング**:
+   * Podを特定のサブネットに配置できます。
+   * 複数のネットワークインターフェイスを使用してPodのネットワーキングを構成できます。
+5. **Kubernetesのホストネットワーキング**:
+   * `hostNetwork`はノードのネットワークを使用します。これはKubernetes Podの設定であり、CNIの暗号化機能や分離機能ではありません。
+   * ネットワークパフォーマンスが重要なワークロードに役立ちます。
 
-VPC CNI configuration examples:
+前提条件を確認したうえで、VPC CNIの機能を個別に適用してください。
+
+| 設定 | 確認事項 |
+| --- | --- |
+| `ENABLE_PREFIX_DELEGATION` | サポート対象のインスタンス/CNIバージョン、連続した空き`/28`ブロック、kubeletのmax-pods、新しいノードへの移行計画 |
+| `ENABLE_POD_ENI` | サポート対象のtrunk/branch ENIインスタンス、VPCリソースコントローラーの権限、SecurityGroupPolicy、DNS/セキュリティグループのルール |
+| `AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG` | IPv4、同一VPC/AZ内のPodサブネット/セキュリティグループ、ノードのENIConfig選択、空きIP |
+
+フラグを有効にするだけでは、新旧のPodで動作が異なったり、IP割り当てに失敗したりする場合があります。EKSマネージドアドオンの構成と競合しないよう、公式の移行手順に従ってください。この従来型EC2 DaemonSet方式をAuto Mode、Fargate、Hybrid Nodesに直接適用しないでください。
 
 ```bash
-# Enable prefix delegation
-kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-# Enable security group pods feature
-kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
-
-# Enable custom networking
-kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true
+# Inspect current non-secret CNI flags; this does not enable any feature.
+kubectl --context "${EXAMPLE_CONTEXT:?}" -n kube-system get daemonset aws-node \
+  -o jsonpath='{.spec.template.spec.containers[?(@.name=="aws-node")].env}{"\n"}'
 ```
 
-pods 間の network traffic encryption を実装するには、次の代替案を検討してください:
 
-* TLS を使用した AWS App Mesh
-* Istio service mesh の実装
-* Cilium の transparent encryption feature の使用
-* application レベルでの TLS/mTLS の実装
+Pod間のネットワークトラフィックを暗号化するには、次の代替手段を検討してください。
+
+* App Meshのサポートは2026年9月30日に終了しました。既存ユーザーは移行する必要があります。
+* Istioサービスメッシュを実装する
+* Ciliumの透過的な暗号化機能を使用する
+* アプリケーションレベルでTLS/mTLSを実装する
 
 </details>
 
-4. Amazon EKS で cluster authentication のために IAM role-based access control (RBAC) を構成する正しい方法は何ですか？
-   * A) Kubernetes RBAC roles を IAM users に直接割り当てる
-   * B) aws-auth ConfigMap で IAM role と Kubernetes group mappings を構成する
-   * C) IAM policies を EKS cluster に直接 attach する
-   * D) IAM roles を Kubernetes service accounts にリンクする
+4. 開発者用IAMロールに、namespaceスコープのKubernetes読み取りアクセスを付与するにはどうすればよいですか？
+   * A) IAMユーザーにKubernetes Roleを直接アタッチする
+   * B) EKSアクセスエントリでIAMロールをKubernetesグループにマッピングし、RBACバインディングを構成する
+   * C) クラスターIAMロールにS3ポリシーだけをアタッチする
+   * D) アプリケーションServiceAccountのIRSA設定だけで、開発者にkubectlアクセスを付与する
 
 <details>
+<summary>解答を表示</summary>
 
-<summary>答えを表示</summary>
+**解答: B) EKSアクセスエントリでIAMロールをKubernetesグループにマッピングし、RBACバインディングを構成する**
 
-**答え: B) aws-auth ConfigMap で IAM role と Kubernetes group mappings を構成する**
+新しいIAMアクセスには**EKSアクセスエントリ**を使用してください。クラスターの認証モードは`API`または`API_AND_CONFIG_MAP`である必要があります。既存クラスターのモードを変更する前に、マッピングの移行と管理者の復旧経路を準備してください。`aws-auth`は非推奨ですが、唯一のマッピング方式ではありません。
 
-**解説:** Amazon EKS で cluster authentication のために IAM role-based access control (RBAC) を構成する正しい方法は、`aws-auth` ConfigMap を使用して IAM roles と Kubernetes groups の mappings を構成することです。この方法により、AWS IAM credentials と Kubernetes RBAC system を統合できます。
+この例では、既存の開発者用IAMロールを`dev-readers`に関連付けます。IAM IDとアクセスエントリだけでは、Kubernetes RBACオブジェクトは自動的に作成されません。
 
-**aws-auth ConfigMap の仕組み:**
+```bash
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --query cluster.accessConfig.authenticationMode
 
-1. EKS は AWS IAM Authenticator を使用して API requests を認証します。
-2. `aws-auth` ConfigMap は IAM entities (users または roles) を Kubernetes users と groups にマッピングします。
-3. Kubernetes RBAC system はこれらの users と groups に permissions を付与します。
-
-**aws-auth ConfigMap configuration example:**
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aws-auth
-  namespace: kube-system
-data:
-  mapRoles: |
-    - rolearn: arn:aws:iam::123456789012:role/EksAdminRole
-      username: eks-admin
-      groups:
-        - system:masters
-    - rolearn: arn:aws:iam::123456789012:role/DevTeamRole
-      username: dev-team
-      groups:
-        - dev-group
-  mapUsers: |
-    - userarn: arn:aws:iam::123456789012:user/admin-user
-      username: admin
-      groups:
-        - system:masters
-    - userarn: arn:aws:iam::123456789012:user/read-only-user
-      username: read-only
-      groups:
-        - read-only-group
+aws eks create-access-entry --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --principal-arn "${DEV_ROLE_ARN:?Existing developer IAM role}" \
+  --type STANDARD --kubernetes-groups dev-readers
 ```
 
-**Kubernetes RBAC role and binding configuration:**
+管理者は、既存の`dev` namespaceにこのRoleとRoleBindingを適用します。これにより、Secretへのアクセス権限や変更権限を付与せずに、Pod/Deploymentの読み取りアクセスを付与できます。ワークロード作成権限はnamespace内のSecretの使用を可能にする場合があるため、別途検討が必要です。
 
 ```yaml
-# Create developer role
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   namespace: dev
-  name: developer
+  name: dev-reader
 rules:
-- apiGroups: ["", "apps", "batch"]
-  resources: ["pods", "deployments", "jobs"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
 ---
-# Bind role to developer group
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: dev-binding
+  name: dev-readers
   namespace: dev
 subjects:
 - kind: Group
-  name: dev-group
+  name: dev-readers
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: Role
-  name: developer
+  name: dev-reader
   apiGroup: rbac.authorization.k8s.io
 ```
 
-**eksctl を使用した IAM と RBAC の構成:**
+ロールの引き受けが許可されたIDを使用して、専用のkubeconfigを作成し、実際の権限を確認してください。別のRBAC付与またはEKSアクセス用ポリシーによって権限が追加されていない限り、最初のチェックは許可され、2番目のチェックは拒否されます。
 
 ```bash
-# Add IAM role mapping
-eksctl create iamidentitymapping \
-  --cluster my-cluster \
-  --arn arn:aws:iam::123456789012:role/EksAdminRole \
-  --username eks-admin \
-  --group system:masters
-
-# Add IAM user mapping
-eksctl create iamidentitymapping \
-  --cluster my-cluster \
-  --arn arn:aws:iam::123456789012:user/admin-user \
-  --username admin \
-  --group system:masters
+aws eks update-kubeconfig --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --role-arn "${DEV_ROLE_ARN:?}" --kubeconfig "${DEV_KUBECONFIG:?Use a dedicated file}"
+kubectl --kubeconfig "$DEV_KUBECONFIG" auth can-i get pods -n dev
+kubectl --kubeconfig "$DEV_KUBECONFIG" auth can-i get secrets -n dev
 ```
 
-**Best practices:**
-
-* principle of least privilege を適用する
-* 個別の IAM users より IAM roles を優先する
-* namespace ごとに permissions を分離する
-* access permissions を定期的に review する
-* cluster administrator permissions (system:masters) は慎重に付与する
-
-他の選択肢の問題点:
-
-* Kubernetes RBAC roles を IAM users に直接割り当てることはできません。IAM と Kubernetes は別々の systems であるため、aws-auth ConfigMap を通じた mapping が必要です。
-* IAM policies を EKS cluster に直接 attach することは、cluster 内の RBAC permissions とは関係ありません。IAM policies は cluster 自体への API call permissions を制御します。
-* IAM roles を Kubernetes service accounts にリンクすること (IRSA) は、pods が AWS services にアクセスするためのものであり、cluster authentication と authorization とは異なる目的です。
+代わりに、namespaceスコープのEKSアクセス用ポリシーをエントリに関連付けることもできます。アクセス用ポリシーとRBACによる許可は加算されます。IAMポリシーをアタッチするだけでは、Kubernetes権限は付与されません。IRSA/Pod Identityは、PodがAWS APIを呼び出すための別の経路です。通常の開発者に`system:masters`を付与したり、`aws-auth` ConfigMap全体を上書きしたりしないでください。
 
 </details>
 
-5. Amazon EKS の Kubernetes version support policy の正しい説明はどれですか？
-   * A) すべての Kubernetes versions が無期限にサポートされる
-   * B) 各 Kubernetes version は release 後 12 か月間サポートされる
-   * C) latest version と previous 3 versions のみがサポートされる
-   * D) 各 Kubernetes version は release 後 14 か月間サポートされる
+5. EKSのバージョンサポートについて、正しい説明はどれですか？
+   * A) すべてのバージョンが無期限にサポートされる
+   * B) すべてのバージョンが12か月後にサポート終了となる
+   * C) 常に最新バージョンと、その前の3バージョンちょうどがサポートされる
+   * D) EKSリリース後、標準サポートが14か月、その後、有料の延長サポートが12か月提供される
 
 <details>
+<summary>解答を表示</summary>
 
-<summary>答えを表示</summary>
+**解答: D) EKSリリース後、標準サポートが14か月、その後、有料の延長サポートが12か月提供される**
 
-**答え: D) 各 Kubernetes version は release 後 14 か月間サポートされる**
+EKSのマイナーバージョンは、EKSでのリリース日から**14か月間の標準サポート**を受け、その後**12か月間の有料延長サポート**を受けます。期間の起算日は上流のリリース日ではありません。
 
-**解説:** Amazon EKS の Kubernetes version support policy によると、各 Kubernetes version は EKS での release 後 14 か月間サポートされます。この期間の後、その version はサポート対象外となり、cluster をサポートされている version に upgrade する必要があります。
+* 2026年10月12日時点の公式リスト: 標準サポートは**1.34～1.37**、延長サポートは**1.31～1.33**です。EKS 1.37は上流リリースの8月26日より後、2026年10月1日に利用可能になりました。
+* 延長サポートはデフォルトで有効です。`STANDARD`のアップグレードポリシーを選択するとオプトアウトされ、標準サポート終了後に自動アップグレードの対象になります。
+* 延長サポートが終了すると、AWSはコントロールプレーンをサポート対象のバージョンに自動アップグレードします。実施の正確な時期は保証されないため、運用担当者は先を見越してアップグレードを計画してください。
+* コントロールプレーンが自動アップグレードされても、マネージド/セルフマネージド/Hybrid Nodesは更新されません。Fargate Podの置き換えとアドオンの更新は別途計画してください。Auto Modeのノードはマネージド更新に従います。
+* サポート対象バージョンにはセキュリティパッチが適用されますが、すべてのバージョンを無期限に保持することはできません。サポート終了後のバージョンでは新しいクラスターを作成できません。
 
-**EKS version support policy の主な特徴:**
-
-1. **14-month support period**:
-   * 各 Kubernetes version は EKS で release された日から 14 か月間サポートされます。
-   * Support end dates は AWS によって事前に発表されます。
-2. **Standard support schedule**:
-   * Kubernetes community は約 4 か月ごとに新しい version を release します。
-   * EKS は通常、community release 後 2〜3 か月以内に新しい Kubernetes versions をサポートします。
-   * これにより、通常は 3〜4 個の Kubernetes versions が EKS で同時にサポートされます。
-3. **No automatic upgrades**:
-   * support が終了しても AWS は clusters を自動的には upgrade しません。
-   * Cluster administrators が明示的に upgrades を実行する必要があります。
-4. **Impact after support ends**:
-   * サポート対象外の versions で実行されている clusters は動作を続けますが、AWS は security patches や bug fixes を提供しなくなります。
-   * サポート対象外の versions では新しい clusters を作成できません。
-   * AWS support は利用できません。
-
-**Version upgrade best practices:**
-
-* 定期的な upgrade schedules を確立する
-* support end dates を監視する
-* まず test environments で upgrades をテストする
-* upgrade 前に cluster を backup する
-* 一度に 1 minor version ずつ upgrade する
-* blue/green deployment strategy を検討する
-
-**version support status の確認:**
+実際に使用するリージョンのリリースカレンダーとバージョン情報を確認してください。アドオンのメタデータをgrepしても、クラスターのバージョンサポート一覧の代わりにはなりません。
 
 ```bash
-# Check available EKS versions
-aws eks describe-addon-versions | grep kubernetesVersion
-
-# Check specific cluster version
-aws eks describe-cluster --name my-cluster --query "cluster.version"
+aws eks describe-cluster-versions --region "${EXAMPLE_REGION:?}" --output table
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "$EXAMPLE_REGION" \
+  --query 'cluster.{version:version,upgradePolicy:upgradePolicy}' --output json
 ```
 
-他の選択肢の問題点:
-
-* すべての Kubernetes versions が無期限にサポートされるわけではありません。各 version は定められた期間のみサポートされます。
-* 各 version は 12 か月ではなく 14 か月間サポートされます。
-* 「latest version と previous 3 versions のみがサポートされる」という固定ルールはありません。サポートされる versions の数は Kubernetes community release schedule と EKS support policy に基づいて変わります。
+アップグレードスケジュールを維持し、削除予定のAPI/互換性を確認し、本番環境以外でテストを実施して、アプリケーション/データの復旧を準備したうえで、一度に1つのマイナーバージョンずつ進めてください。EKSでは少なくとも3つのバージョンが標準サポートされますが、「常に最新とその前の3バージョンのみ」という固定ルールはありません。
 
 </details>
+
+
+## 公式リファレンスと検証範囲
+
+- [EKSのバージンライフサイクル](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
+- [EKSアクセスエントリ](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
+- [Pod IdentityとIRSA](https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html)
+- [Load Balancer Controller](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
+- [Auto Modeのロードバランシング](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html)
+- [EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)
+- [FSx CSIの構成とPVC容量](https://docs.aws.amazon.com/eks/latest/userguide/fsx-csi-create.html)
+- [Fargateの制限](https://docs.aws.amazon.com/eks/latest/userguide/fargate.html)
+- [プレフィックス委任](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html)
+- [カスタムネットワーキング](https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html)
+- [EKSの料金](https://aws.amazon.com/eks/pricing/)
+- [Fargateの料金](https://aws.amazon.com/fargate/pricing/)
+- [eksctl 0.230.0のスキーマ](https://github.com/eksctl-io/eksctl/blob/v0.230.0/pkg/apis/eksctl.io/v1alpha5/assets/schema.json)
+- [LBC 3.5.0のインストール](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/installation.md)
+- [Metrics Server 0.9.0の互換性](https://github.com/kubernetes-sigs/metrics-server/blob/v0.9.0/README.md)
+
+これは公式ドキュメントとリリーススキーマに照らして行った静的レビューです。クラスター/IAM/ロードバランサーのプロビジョニング、アプリケーションのデプロイ、アップグレード/ロールバック、NGINXの実行、負荷テスト、コスト測定は実施していません。例で想定される動作は、測定結果ではありません。

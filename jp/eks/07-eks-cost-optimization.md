@@ -1,263 +1,180 @@
-# Amazon EKS Cost Optimization
+# Amazon EKS のコスト最適化
 
-> **Supported Versions**: Amazon EKS 1.31, 1.32, 1.33
-> **最終更新**: February 22, 2026
+> **検証範囲**: AWS の最新の料金・サポート資料。Kubernetes マニフェストは 1.36 に照らして確認済みです。実際の EKS バージョンとアドオンは、AWS サポートカタログから選択してください。
+> **最終更新日**: 2026年10月16日
 
-Amazon EKS (Elastic Kubernetes Service) は、containerized applications のデプロイ、管理、スケーリングを容易にしますが、コストを効果的に管理することが重要です。このドキュメントでは、EKS cluster のコストを最適化するためのさまざまな戦略と best practices について説明します。
+Amazon EKS (Elastic Kubernetes Service) を使うと、コンテナ化されたアプリケーションを簡単にデプロイ、管理、スケールできますが、コストを効果的に管理することも重要です。このドキュメントでは、EKS クラスターのコストを最適化するためのさまざまな戦略とベストプラクティスについて説明します。
 
-## Table of Contents
+以下のコマンドは設定例であり、実際のデプロイや測定済みのコスト削減を示すものではありません。適用する前に、アカウント、リージョン、既存リソースの所有者、ワークロード要件、サポートされているツールのバージョンを確認してください。以下に記載する過去の料金前提は、現在のサービス動作とは明確に区別しています。
 
-1. [EKS Cost Components](#eks-cost-components)
-2. [FinOps Principles and EKS](#finops-principles-and-eks)
-3. [Compute Cost Optimization](#compute-cost-optimization)
-4. [Storage Cost Optimization](#storage-cost-optimization)
-5. [Networking Cost Optimization](#networking-cost-optimization)
-6. [Resource Management and Governance](#resource-management-and-governance)
-7. [Cost Monitoring and Analysis](#cost-monitoring-and-analysis)
-8. [Cost Optimization Best Practices](#cost-optimization-best-practices)
+## 目次
 
-## EKS Cost Components
+1. [EKS のコスト要素](#eks-cost-components)
+2. [FinOps の原則と EKS](#finops-principles-and-eks)
+3. [コンピューティングコストの最適化](#compute-cost-optimization)
+4. [ストレージコストの最適化](#storage-cost-optimization)
+5. [ネットワークコストの最適化](#networking-cost-optimization)
+6. [リソース管理とガバナンス](#resource-management-and-governance)
+7. [コストの監視と分析](#cost-monitoring-and-analysis)
+8. [コスト最適化のベストプラクティス](#cost-optimization-best-practices)
 
-Amazon EKS の利用時に発生するコストは、次の components で構成されます。
+## EKS のコスト要素
 
-```mermaid
-flowchart TD
-    EKSCost[EKS Total Cost] --> ControlPlane["EKS Control Plane
-                $0.10/hour"]
-    EKSCost --> Compute[Compute Cost]
-    EKSCost --> Storage[Storage Cost]
-    EKSCost --> Networking[Networking Cost]
-    EKSCost --> Others[Other Costs]
+Amazon EKS の利用にかかるコストは、次の要素で構成されます。
 
-    Compute --> EC2[EC2 Instances]
-    Compute --> Fargate[Fargate]
+![EKS の総コストを 5 つの要素に分解した図: コントロールプレーン（$0.10/時間）、コンピューティング（EC2 インスタンス、Fargate）、ストレージ（EBS、EFS、S3）、ネットワーク（データ転送、ロードバランサー、NAT ゲートウェイ）、その他のコスト（CloudWatch、ECR、その他の AWS サービス）。](../.gitbook/assets/en-eks-07-eks-cost-optimization-0.png)
 
-    Storage --> EBS[EBS Volumes]
-    Storage --> EFS[EFS]
-    Storage --> S3[S3]
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-0.html)
 
-    Networking --> DataTransfer[Data Transfer]
-    Networking --> LoadBalancer[Load Balancer]
-    Networking --> NAT[NAT Gateway]
+## FinOps の原則と EKS
 
-    Others --> CloudWatch[CloudWatch]
-    Others --> ECR[ECR]
-    Others --> OtherServices[Other AWS Services]
+FinOps は、テクノロジーのビジネス価値を最大化するための運用フレームワークであり、組織文化の実践でもあります。エンジニアリング、財務、ビジネスの各チームが、タイムリーなデータに基づく意思決定と財務責任を通じて協力します。この章では、このアプローチを EKS に適用します。
 
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+### FinOps フレームワークの中核原則
 
-    %% Class application
-    class ControlPlane,EC2,Fargate,EBS,EFS,S3,DataTransfer,LoadBalancer,NAT,CloudWatch,ECR,OtherServices awsService;
-```
+FinOps Foundation は、チーム間の協力、意思決定におけるビジネス価値、利用状況に対する責任、タイムリーで正確かつアクセス可能なデータ、中央による支援、クラウドの変動費モデルの意図的な活用を重視しています。以下の EKS の実践はこれらの原則を適用するものであり、独立した公式の「6 原則」フレームワークではありません。
 
-## FinOps Principles and EKS
+<!-- Pending parent diagram repair: see /tmp/eks-cost-optimization-audit/diagram-review.json
+![Diagram mapping six FinOps core principles on the left to five EKS implementation methods on the right, showing which implementation method operationalizes each principle, with cost monitoring tools serving both forecasting and real-time decision making.](../.gitbook/assets/en-eks-07-eks-cost-optimization-1.png)
 
-FinOps (Financial Operations) は、finance、technology、business teams が協力して cloud spending に対する責任を共有し、cost optimization decisions を行う cloud cost management の operational model です。
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-1.html)
+-->
 
-### Core Principles of the FinOps Framework
+### FinOps を EKS に適用する
 
-```mermaid
-flowchart TD
-    subgraph FinOps [FinOps Core Principles]
-        Visibility[Visibility and Transparency]
-        Accountability[Shared Accountability]
-        Optimization[Continuous Optimization]
-        Forecasting[Forecasting and Planning]
-        RealTime[Real-time Decision Making]
-        Culture[Cost-aware Culture]
-    end
+1. **コストの可視化**
+   - Kubernetes の名前空間、ラベル、アノテーションを使ったコスト配分
+   - AWS Cost Explorer や Kubecost などのツールを統合した詳細なコスト分析
+   - チーム、アプリケーション、環境ごとのコスト分析
 
-    subgraph Implementation [EKS Implementation Methods]
-        Tagging[Resource Tagging Strategy]
-        Allocation[Cost Allocation]
-        Monitoring[Cost Monitoring Tools]
-        Governance[Governance Policies]
-        Automation[Automated Optimization]
-    end
+2. **責任共有モデルの導入**
+   - チームごとのコスト配分とレポート
+   - コスト最適化目標の設定と追跡
+   - コスト削減へのインセンティブの提供
 
-    Visibility --> Tagging
-    Accountability --> Allocation
-    Optimization --> Automation
-    Forecasting --> Monitoring
-    RealTime --> Monitoring
-    Culture --> Governance
+3. **継続的な最適化の自動化**
+   - オートスケーリングポリシーの導入
+   - Spot インスタンス利用の自動化
+   - 無駄の候補を検出し、所有者・保持期間の確認後にのみリソースを削除
 
-    classDef finopsPrinciple fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef implementation fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Visibility,Accountability,Optimization,Forecasting,RealTime,Culture finopsPrinciple;
-    class Tagging,Allocation,Monitoring,Governance,Automation implementation;
-    class FinOps,Implementation default;
-```
-
-### Applying FinOps to EKS
-
-1. **Achieving Cost Visibility**
-   - Kubernetes namespaces、labels、annotations を使用した cost allocation
-   - AWS Cost Explorer や Kubecost などの tools と統合した詳細な cost analysis
-   - team、application、environment 別の cost analysis
-
-2. **Implementing Shared Accountability Model**
-   - team 別の cost allocation と reporting
-   - cost optimization goals の設定と tracking
-   - cost savings に対する incentives の提供
-
-3. **Automating Continuous Optimization**
-   - auto-scaling policies の実装
-   - spot instance utilization の自動化
-   - idle resources の検出と削除
-
-4. **Cost Forecasting and Planning**
-   - workload pattern analysis による cost forecasting
+4. **コスト予測と計画**
+   - ワークロードパターン分析によるコスト予測
    - Reserved Instances と Savings Plans の活用
-   - cost anomaly detection と alerting
+   - コスト異常の検出とアラート
 
-### Latest FinOps Tools and Technologies
+### 最新の FinOps ツールとテクノロジー
 
-1. **Kubecost**: Kubernetes cost monitoring and optimization tool
-2. **AWS Cost Anomaly Detection**: 異常な cost increases の検出
-3. **Karpenter**: 効率的な node provisioning と cost optimization
-4. **Goldilocks**: Resource requests and limits optimization
-5. **Vertical Pod Autoscaler**: pod resource requests の自動調整
+1. **Kubecost**: Kubernetes のコスト監視・最適化ツール
+2. **AWS Cost Anomaly Detection**: 異常なコスト増加の検出
+3. **Karpenter**: 効率的なノードプロビジョニングとコスト最適化
+4. **Goldilocks**: リソース requests と limits の最適化
+5. **Vertical Pod Autoscaler**: Pod のリソース requests の自動調整
 
-### EKS Cluster Cost
+### EKS クラスターのコスト
 
-EKS cluster 自体のコスト:
+公開されているバージョンサポート料金は次のとおりです。
 
-- **EKS Control Plane**: 1 時間あたり $0.10 (region によって異なる場合があります)
-- **EKS Extended Cluster**: 1 時間あたり $0.10 (region によって異なる場合があります)
+- **標準サポート**: クラスター 1 時間あたり $0.10。
+- **延長サポート**: **クラスター 1 時間あたり合計 $0.60**（基本料金 $0.10 + 延長サポート料金 $0.50）。$0.10 の「延長クラスター」が別に存在するわけではありません。
 
-### Compute Cost
+標準サポートは EKS バージョンのリリースから 14 か月間続き、その後 12 か月間は延長サポートとなります。正確なバージョンの日付とサポートポリシーは、[EKS リリースカレンダー](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)で確認してください。Provisioned Control Plane のティア、Auto Mode、Hybrid Nodes、EKS Capabilities には別途料金が発生する場合があります。EC2/Fargate、ストレージ、ネットワーク、オブザーバビリティの料金も別です。概要図の $0.10 という表示は、バージョンの標準サポート料金のみを示しています。[EKS の最新料金](https://aws.amazon.com/eks/pricing/)を参照してください。
 
-EKS cluster で実行される worker nodes のコスト:
+### コンピューティングコスト
 
-- **EC2 Instances**: node groups に使用される EC2 instances のコスト
-- **Fargate**: Fargate profiles を使用する場合の vCPU と memory usage に基づくコスト
+EKS クラスターで実行されるワーカーノードのコストです。
 
-### Storage Cost
+- **EC2 インスタンス**: ノードグループに使用する EC2 インスタンスの料金
+- **Fargate**: サンプリングされた使用率ではなく、プロビジョニングされた Pod の vCPU/メモリ構成と利用時間に対する料金。該当するストレージ料金も含めてください
 
-EKS cluster で使用される storage のコスト:
+### ストレージコスト
 
-- **EBS Volumes**: persistent volumes に使用される EBS volumes のコスト
-- **EFS**: shared file systems に使用される EFS のコスト
-- **S3**: object storage に使用される S3 のコスト
+EKS クラスターで使用するストレージのコストです。
 
-### Networking Cost
+- **EBS ボリューム**: 永続ボリュームに使用する EBS ボリュームの料金
+- **EFS**: 共有ファイルシステムに使用する EFS の料金
+- **S3**: オブジェクトストレージに使用する S3 の料金
 
-EKS cluster の networking に関連するコスト:
+### ネットワークコスト
 
-- **Data Transfer**: regions 間または internet への data transfer のコスト
-- **Load Balancer**: services に使用される load balancers のコスト
-- **NAT Gateway**: private subnets からの outbound traffic 用 NAT gateway のコスト
+EKS クラスターのネットワークに関連するコストです。
 
-### Other Costs
+- **データ転送**: AZ 間、リージョン間、インターネットへの転送に適用される料金。正確な方向とサービス経路が重要です
+- **ロードバランサー**: サービスに使用するロードバランサーの料金
+- **NAT ゲートウェイ**: プライベートサブネットからのアウトバウンドトラフィックに使用する NAT ゲートウェイの料金
 
-- **CloudWatch**: monitoring と logging に使用される CloudWatch のコスト
-- **ECR**: container image storage に使用される ECR のコスト
-- **Other AWS Services**: EKS cluster とともに使用されるその他の AWS services のコスト
+### その他のコスト
 
-## Compute Cost Optimization
+- **CloudWatch**: 監視とログ記録に使用する CloudWatch の料金
+- **ECR**: コンテナイメージの保存に使用する ECR の料金
+- **その他の AWS サービス**: EKS クラスターとともに使用するその他の AWS サービスの料金
 
-Compute cost は通常、EKS cluster の最大の cost component です。次の戦略を使用して compute costs を最適化できます。
+## コンピューティングコストの最適化
 
-```mermaid
-flowchart TD
-    ComputeCost[Compute Cost Optimization] --> InstanceType[Instance Type Optimization]
-    ComputeCost --> SpotInstances[Spot Instance Utilization]
-    ComputeCost --> SavingsPlans["Savings Plans and
-                Reserved Instances"]
-    ComputeCost --> AutoScaling[Auto Scaling Optimization]
-    ComputeCost --> FargateVsEC2["Fargate vs EC2
-                Cost Comparison"]
+通常、コンピューティングコストは EKS クラスターのコスト要素の中で最も大きな割合を占めます。次の戦略を使ってコンピューティングコストを最適化できます。
 
-    InstanceType --> Family[Instance Family Selection]
-    InstanceType --> Size[Instance Size Optimization]
-    InstanceType --> Generation[Instance Generation Consideration]
+![EKS のコンピューティングコスト最適化を 5 つの戦略に分岐して示す図: インスタンスタイプの最適化、Spot インスタンスの利用、Savings Plans と Reserved Instances、オートスケーリングの最適化、Fargate と EC2 のコスト比較。各戦略の項目として、ファミリー、サイズ、世代、MNG、Karpenter と中断への対応、Compute SP、EC2 Instance SP と RI、CA、Karpenter、HPA、VPA などを示す。](../.gitbook/assets/en-eks-07-eks-cost-optimization-2.png)
 
-    SpotInstances --> WorkloadTypes[Suitable Workload Types]
-    SpotInstances --> ManagedNodeGroups[Managed Node Groups]
-    SpotInstances --> Karpenter[Karpenter Utilization]
-    SpotInstances --> InterruptionHandling[Interruption Handling]
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-2.html)
 
-    SavingsPlans --> ComputeSP[Compute Savings Plans]
-    SavingsPlans --> EC2SP[EC2 Instance Savings Plans]
-    SavingsPlans --> RI[Reserved Instances]
+### 適切なインスタンスタイプの選択
 
-    AutoScaling --> CA[Cluster Autoscaler]
-    AutoScaling --> KarpenterAS[Karpenter]
-    AutoScaling --> HPA[Horizontal Pod Autoscaler]
-    AutoScaling --> VPA[Vertical Pod Autoscaler]
+ワークロードに適したインスタンスタイプを選ぶことが重要です。
 
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+#### インスタンスファミリーの選択
 
-    %% Class application
-    class ComputeSP,EC2SP,RI,SpotInstances,ManagedNodeGroups awsService;
-    class CA,KarpenterAS,HPA,VPA,Karpenter k8sComponent;
-    class ComputeCost,InstanceType,Family,Size,Generation,WorkloadTypes,InterruptionHandling,SavingsPlans,AutoScaling,FargateVsEC2 default;
-```
+ワークロードの特性に基づいて選択します。以下のファミリーは旧世代の例であり、現行世代を推奨するものではありません。リージョンでの提供状況、プロセッサアーキテクチャ、AMI、料金を確認してください。
 
-### Selecting the Right Instance Type
+- **汎用 (T3、M5、M6)**: コンピューティング、メモリ、ネットワークの各リソースをバランスよく必要とするワークロード
+- **コンピューティング最適化 (C5、C6)**: 高性能プロセッサを必要とする、コンピューティング負荷の高いワークロード
+- **メモリ最適化 (R5、R6、X1)**: 大規模なインメモリデータベースやキャッシュなど、メモリ負荷の高いワークロード
+- **ストレージ最適化 (I3、D2)**: 高いディスク I/O を必要とするワークロード
+- **高速コンピューティング (P3、G4、Inf1)**: GPU または機械学習アクセラレーターを必要とするワークロード
 
-workload に適した instance type を選択することが重要です。
+#### インスタンスサイズの最適化
 
-#### Instance Family Selection
+ワークロードの要件に合ったインスタンスサイズを選択します。
 
-workload characteristics に基づいて適切な instance family を選択します。
+- インスタンスが大きすぎると、リソースが無駄になる場合があります。
+- インスタンスが小さすぎると、パフォーマンス上の問題が発生する場合があります。
+- CloudWatch Container Insights または Kubernetes メトリクスを使って実際のリソース使用量を監視し、適切なサイズを選択してください。
 
-- **General Purpose (T3, M5, M6)**: balanced compute、memory、networking resources を必要とする workloads
-- **Compute Optimized (C5, C6)**: high-performance processors を必要とする compute-intensive workloads
-- **Memory Optimized (R5, R6, X1)**: large in-memory databases、caches などの memory-intensive workloads
-- **Storage Optimized (I3, D2)**: high disk I/O を必要とする workloads
-- **Accelerated Computing (P3, G4, Inf1)**: GPU または machine learning accelerators を必要とする workloads
+#### インスタンス世代の検討
 
-#### Instance Size Optimization
+新しい世代を、自分のワークロード測定値やリージョン料金と比較してください。以下は以前の移行例です。x86 (`i`) から Graviton (`g`) に移行する場合は、arm64 イメージと依存関係の互換性も必要です。
 
-workload requirements に適した instance size を選択します。
+- M5 ではなく M6i または M6g を使用する
+- C5 ではなく C6i または C6g を使用する
+- R5 ではなく R6i または R6g を使用する
 
-- 大きすぎる instances は resource waste につながる可能性があります。
-- 小さすぎる instances は performance issues を引き起こす可能性があります。
-- CloudWatch Container Insights または Kubernetes metrics を使用して実際の resource usage を monitor し、適切な size を選択します。
+### Spot インスタンスの利用
 
-#### Instance Generation Consideration
+AWS はオンデマンド料金に対して最大 90% の Spot 割引を提示していますが、実際の価格、利用可能な容量、中断のリスクは変動します。ステートレスであることだけでは、中断に耐えられるとは限りません。
 
-新しい世代の instances は一般に、前世代よりも優れた performance と cost efficiency を提供します。
+#### Spot インスタンスに適したワークロード
 
-- M5 の代わりに M6i または M6g を使用する
-- C5 の代わりに C6i または C6g を使用する
-- R5 の代わりに R6i または R6g を使用する
+- **ステートレスアプリケーション**: 状態を保存しないアプリケーション
+- **耐障害性のあるアプリケーション**: インスタンスの中断に対処できるアプリケーション
+- **バッチ処理ジョブ**: 中断された場合に再起動できるジョブ
+- **CI/CD パイプライン**: ビルドとテストのジョブ
 
-### Spot Instance Utilization
+#### Managed Node Groups で Spot インスタンスを使用する
 
-spot instances を使用すると、EC2 instances を on-demand prices より最大 90% 低い価格で利用できます。
-
-#### Workloads Suitable for Spot Instances
-
-- **Stateless Applications**: state を保存しない applications
-- **Fault-tolerant Applications**: instance interruptions に対応できる applications
-- **Batch Processing Jobs**: 中断された場合に restart できる jobs
-- **CI/CD Pipelines**: build と test jobs
-
-#### Using Spot Instances in Managed Node Groups
+このコマンドは既存クラスターに managed node group を作成します。Cluster Autoscaler はインストールしません。所有する設定で、プライベートサブネット、IAM ロール、AMI、インスタンスタイプの多様性を確認してください。広範なノードロールのアドオン権限ではなく、コントローラーの所有者を通じて明示的なスケーリング/IAM 設定を追加してください。
 
 ```bash
 eksctl create nodegroup \
   --cluster my-cluster \
   --name my-spot-ng \
+  --managed \
   --node-type m5.large \
   --nodes-min 2 \
   --nodes-max 5 \
   --spot
 ```
 
-#### Spot Instance Provisioning with Karpenter
+#### Karpenter による Spot インスタンスのプロビジョニング
+
+前提条件: Karpenter/CRD がインストール済みであること、スコープを限定したコントローラー IAM、認可済みのノードロール、検出用タグが付いたサブネット/セキュリティグループ、中断キューがあること。EKS 1.36 の場合、現行の互換性マトリックスでは Karpenter >=1.13 が必要です。これらのリソースはコントローラーをインストールしません。インスタンス一覧と上限は例であり、コスト上限を保証するものではありません。解決される AMI を確認してください。`al2023@latest` は可変のセレクターであり、ドリフトや置き換えを引き起こす場合があります。本番環境で変更する場合は、検証済みのエイリアスバージョンまたは AMI ID を固定してください。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -293,6 +210,9 @@ kind: EC2NodeClass
 metadata:
   name: spot-class
 spec:
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: my-cluster
@@ -301,112 +221,96 @@ spec:
         karpenter.sh/discovery: my-cluster
 ```
 
-#### Spot Instance Interruption Handling
+#### Spot インスタンスの中断への対応
 
-spot instance interruptions を処理するための best practices:
+Spot インスタンスの中断に対応するためのベストプラクティス:
 
-1. **Use Multiple Instance Types**: さまざまな instance types を使用して interruption risk を分散します
-2. **Use Multiple Availability Zones**: 複数の availability zones に instances を deploy します
-3. **Use Spot Instance Interruption Handler**: AWS Node Termination Handler を使用して interruption notifications を処理します
+1. **複数のインスタンスタイプを使用する**: さまざまなインスタンスタイプを利用して中断リスクを分散します
+2. **複数のアベイラビリティーゾーンを使用する**: インスタンスを複数のアベイラビリティーゾーンに分散してデプロイします
+3. **ノードセットごとに中断への対応を担う所有者を 1 つ選ぶ**: managed node group は Spot の中断/リバランスにすでに対応します。Karpenter のノードには Karpenter ネイティブの中断キューを設定してください。同じノードに Node Termination Handler をインストールしないでください。セルフマネージド ASG では、[AWS Node Termination Handler](https://github.com/aws/aws-node-termination-handler)を、IMDS モードまたはキューモードのいずれかと、それに対応する権限/イベント連携を明示的に選んで使用できます。
+4. **アプリケーションの復旧設計を行う**: 置き換え用の容量が保証されるわけではありません。グレースフル終了、再試行/チェックポイント、障害ドメインをまたいだレプリカが、利用可能な中断猶予時間に収まる必要があります。PDB で EC2 による Spot インスタンスの回収を防ぐことはできません。
 
-```bash
-helm repo add eks https://aws.github.io/eks-charts
-helm install aws-node-termination-handler \
-  --namespace kube-system \
-  eks/aws-node-termination-handler \
-  --set enableSpotInterruptionDraining=true
-```
+### Savings Plans と Reserved Instances
 
-### Savings Plans and Reserved Instances
-
-予測可能な workloads では、Savings Plans または Reserved Instances を使用してコストを削減できます。
+予測可能なワークロードでは、Savings Plans または Reserved Instances を使ってコストを削減できます。
 
 #### Compute Savings Plans
 
-Compute Savings Plans は、1 年または 3 年の commitment により on-demand rates から最大 66% の割引を提供します。
+Compute Savings Plans は、1 年または 3 年の利用コミットメントにより、オンデマンド料金から最大 66% の割引を提供します。
 
-- **Flexibility**: instance family、size、OS、tenancy、region に関係なく適用されます
-- **Includes EC2, Fargate, and Lambda**: 複数の compute services にわたって適用されます
+- **柔軟性**: インスタンスファミリー、サイズ、OS、テナンシー、リージョンにかかわらず適用されます
+- **EC2、Fargate、Lambda が対象**: 複数のコンピューティングサービスに適用されます
 
 #### EC2 Instance Savings Plans
 
-EC2 Instance Savings Plans は、特定の region の instance families に対して最大 72% の割引を提供します。
+EC2 Instance Savings Plans は、特定リージョンのインスタンスファミリーに対して最大 72% の割引を提供します。
 
-- **Moderate Flexibility**: 特定の region の instance family 内で、sizes と OS にわたって適用されます
-- **Higher Discount Rate**: Compute Savings Plans より高い discount rate を提供します
+- **中程度の柔軟性**: 特定リージョンのインスタンスファミリー内で、サイズと OS を問わず適用されます
+- **より高い割引率**: Compute Savings Plans より高い割引率を提供します
 
 #### Reserved Instances
 
-Reserved Instances は、特定の instance types と regions に対して最大 75% の割引を提供します。
+AWS は現在、RI による最大 **72%** の節約を提示しています。Standard RI と Convertible RI では変更/交換のルールが異なり、Regional と Zonal でも適用範囲が異なります。Zonal RI にはその AZ のキャパシティ予約が含まれますが、Regional RI には含まれません。RI は一致する利用に適用される請求上の特典であり、Kubernetes のスケジューラーでも最大割引を保証するものでもありません。
 
-- **Low Flexibility**: 特定の instance types、regions、availability zones に結び付けられます
-- **Highest Discount Rate**: 最も高い discount rate を提供します
+Savings Plans は 1 年または 3 年にわたり、1 時間あたりの対象支出をコミットします。RI は対象となるインスタンス利用をコミットします。適正化後の安定したベースラインを基にコミットメントの規模を決め、未使用コミットメントのリスクを確認してください。どちらも Spot 利用に追加割引を適用するものではなく、提示されている最大値はこのクラスターで測定された節約額ではありません。
 
-### Fargate vs EC2 Cost Comparison
+### Fargate と EC2 のコスト比較
 
-Fargate と EC2 のどちらを選択するかを決めるときは、コストを考慮します。
+Fargate と EC2 のどちらを選ぶかを検討する際は、コストを考慮してください。
 
-#### Fargate Advantages
+#### Fargate の利点
 
-- **Reduced Operational Overhead**: node management が不要です
-- **Precise Resource Provisioning**: pod level での resource allocation
-- **No Idle Capacity**: running pods に対してのみ支払います
+- **運用オーバーヘッドの削減**: ノード管理が不要
+- **正確なリソースプロビジョニング**: Pod 単位でリソースを割り当て
+- **別途管理するアイドル状態のワーカーノードが不要**: ただし料金は引き続き、プロビジョニングされた Pod の容量と利用時間に基づき、丸め処理や課金の最低時間も適用されます
 
-#### EC2 Advantages
+#### EC2 の利点
 
-- **More Cost-efficient for Large Workloads**: resource utilization が高いケースでより cost-efficient です
-- **More Instance Type Options**: さまざまな workloads 向けに instance types を選択できます
-- **Spot Instance Support**: spot instances を使用した追加の cost savings が可能です
+- **大規模ワークロードでコスト効率が高い**: リソース使用率が高い場合
+- **インスタンスタイプの選択肢が多い**: さまざまなワークロードに合ったインスタンスタイプを選択できます
+- **Spot インスタンスをサポート**: Spot インスタンスを使うことで、追加のコスト削減が可能です
 
-#### Cost Comparison Example
+#### コスト比較の例
 
-**Scenario**: 2vCPU、4GB memory を使用する application
+**過去の例示的な前提（料金の出典/リージョンは未記録。現行の見積もりやベンチマークではありません）**: 2 vCPU と 4 GB メモリを要求するアプリケーション。元の単価と計算は以下にそのまま示していますが、EKS 固有の予約分とノードのオーバーヘッドは含まれていません。
 
-**Fargate Cost**:
-- vCPU: $0.04048 per vCPU-hour × 2 = $0.08096 per hour
-- Memory: $0.004445 per GB-hour × 4 = $0.01778 per hour
-- Total Cost: $0.09874 per hour
+**Fargate のコスト**:
+- vCPU: 1 vCPU 時間あたり $0.04048 × 2 = 1 時間あたり $0.08096
+- メモリ: 1 GB 時間あたり $0.004445 × 4 = 1 時間あたり $0.01778
+- 合計コスト: 1 時間あたり $0.09874
 
-**EC2 Cost (t3.medium)**:
-- On-demand: $0.0416 per hour
-- Spot: ~$0.0125 per hour (assuming 70% discount)
+**EC2 のコスト (t3.medium)**:
+- オンデマンド: 1 時間あたり $0.0416
+- Spot: 1 時間あたり約 $0.0125（70% 割引を想定）
 
-この例では EC2 の方が cost-efficient ですが、node management overhead と cluster utilization を考慮する必要があります。
+**割り当てに関する補足:** EKS Fargate では Kubernetes コンポーネント用に 256 MB が追加され、サポートされている構成に切り上げられます。この前提では、2 vCPU/4 GB の要求に対し、プロビジョニング容量は **2 vCPU/5 GB** となります。同じ過去の料金を使った計算は `2 × 0.04048 + 5 × 0.004445 = 0.103185 USD/hour` です。これは計算であり、新しい料金見積もりではありません。Linux Fargate の課金はイメージのダウンロード時に開始し、最低 1 分が課金されます。EC2 `t3.medium` の公称容量は 2 vCPU/4 GiB ですが、OS/Kubernetes/DaemonSet の予約後は割り当て可能なリソースが少なくなります。この Pod を配置できると仮定することはできません。また、CPU を継続的に使用すると T3 クレジット料金が発生する場合があります。EBS、ネットワーク、クラスター料金、使用率、運用を含め、実際にワークロードをスケジュールできるキャパシティプランを比較してください。この表は、同等のサービスのどちらが優れているかを示すものではありません。
 
-### Auto Scaling Optimization
+### オートスケーリングの最適化
 
-effective auto-scaling strategies を実装することでコストを最適化できます。
+効果的なオートスケーリング戦略を導入してコストを最適化できます。
 
 #### Cluster Autoscaler
 
-Cluster Autoscaler は、pods を schedule できない場合に自動的に nodes を追加し、十分に利用されていない nodes を削除します。
+Cluster Autoscaler は、スケジュールできない Pod に応じて ASG をスケールし、要求リソースと再スケジュール/中断の確認に基づいて対象ノードを削除します。測定された CPU 使用率が低いという理由だけで削除するものではありません。Kubernetes のマイナーバージョンをクラスターに合わせ、実際の ASG に検出用タグを設定し、専用のワークロード IAM ロールを用意してください。EKS/ノードグループのタグが、すべての基盤リソースに自動的に伝播するわけではありません。所有するリリースを準備する際は、[アップストリームの AWS 設定](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/aws)と[EKS の推奨事項](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html)を参照してください。
 
-```bash
-# Install Cluster Autoscaler
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
+これらの chart 値は CLI 引数に変換されます。独自の `CLUSTER_AUTOSCALER_*` 環境変数を設定しても構成されません。また、未編集の `master` の例を適用しても、クラスター固有の IAM/検出設定は行われません。以下の期間は調整例であり、遅延を短くすると変更頻度が増える場合があります。
 
-# Configure Cluster Autoscaler
-kubectl -n kube-system set env deployment.apps/cluster-autoscaler \
-  CLUSTER_NAME=my-cluster \
-  AWS_REGION=us-west-2
-```
-
-Cluster Autoscaler configuration optimization:
-
-- **scale-down-delay-after-add**: node addition 後、scale down するまでの delay (default: 10 minutes)
-- **scale-down-unneeded-time**: node が不要と見なされるまでの time (default: 10 minutes)
-- **max-node-provision-time**: node provisioning の maximum wait time (default: 15 minutes)
-
-```bash
-kubectl -n kube-system set env deployment.apps/cluster-autoscaler \
-  CLUSTER_AUTOSCALER_EXPANDER=least-waste \
-  CLUSTER_AUTOSCALER_SCALE_DOWN_DELAY_AFTER_ADD=5m \
-  CLUSTER_AUTOSCALER_SCALE_DOWN_UNNEEDED_TIME=5m
+```yaml
+# Values fragment for the upstream cluster-autoscaler Helm chart.
+# Merge into the existing release's reviewed values, including workload IAM.
+autoDiscovery:
+  clusterName: my-cluster
+awsRegion: us-west-2
+extraArgs:
+  expander: least-waste
+  scale-down-delay-after-add: 10m
+  scale-down-unneeded-time: 10m
+  max-node-provision-time: 15m
 ```
 
 #### Karpenter
 
-Karpenter は Cluster Autoscaler の代替であり、より高速で柔軟な node provisioning を提供します。
+Karpenter は、固定 ASG のサイズ変更ではなく、NodePool/EC2NodeClass の制約に基づいてプロビジョニングします。プロビジョニングのレイテンシーとコストは、ワークロードと利用可能な容量によって異なります。前述のコントローラー/IAM/AMI の前提条件はここでも適用されます。Karpenter が所有するノードは、Cluster Autoscaler が管理する ASG から分離してください。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -439,6 +343,9 @@ kind: EC2NodeClass
 metadata:
   name: default-class
 spec:
+  role: KarpenterNodeRole-my-cluster
+  amiSelectorTerms:
+    - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: my-cluster
@@ -447,15 +354,15 @@ spec:
         karpenter.sh/discovery: my-cluster
 ```
 
-Karpenter cost optimization settings:
+Karpenter のコスト最適化設定:
 
-- **ttlSecondsAfterEmpty**: node が empty になってから termination までの time (例: 30 seconds)
-- **consolidation.enabled**: node consolidation を有効化 (default: true)
-- **instance-types**: cost-efficient な instance types を指定します
+- **disruption.consolidateAfter**: ポリシーと中断の確認に従い、Pod の追加/削除後に統合を検討するまでの遅延（例: `30s`。旧来の `ttlSecondsAfterEmpty` に代わります）
+- **disruption.consolidationPolicy**: ノード統合ポリシー。空のノードのみを削除する `WhenEmpty`、または使用率の低いノードも統合する `WhenEmptyOrUnderutilized` のいずれか（旧来の `consolidation.enabled: true` に相当）
+- **template.spec.requirements** (`node.kubernetes.io/instance-type`): コスト効率の高いインスタンスタイプを指定
 
 #### Horizontal Pod Autoscaler (HPA)
 
-HPA は CPU utilization または custom metrics に基づいて pods の数を自動的に調整します。
+HPA は CPU 使用率またはカスタムメトリクスに基づいて Pod 数を自動調整します。
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -484,15 +391,11 @@ spec:
         averageUtilization: 80
 ```
 
-HPA optimization settings:
-
-- **--horizontal-pod-autoscaler-downscale-stabilization**: Scale down stabilization period (default: 5 minutes)
-- **--horizontal-pod-autoscaler-cpu-initialization-period**: CPU initialization period (default: 5 minutes)
-- **--horizontal-pod-autoscaler-initial-readiness-delay**: Initial readiness delay (default: 30 seconds)
+CPU/メモリの使用率目標は requests に対する割合です。対象コンテナに requests を設定し、resource metrics API を利用できるようにする必要があります。複数のメトリクスがある場合、HPA は希望レプリカ数が最も多いものを選択します。メトリクスを取得できないと、スケールダウンが妨げられる場合があります。レプリカを追加してもメモリ使用量が低下しない場合があるため、アプリケーションの動作を検証してください。EKS が controller-manager のフラグを管理します。グローバルフラグを編集できると想定せず、HPA ごとに `spec.behavior.scaleDown.stabilizationWindowSeconds` を設定してください。HPA が使用率の分母として使う CPU/メモリ requests を、VPA で自動的に同時変更しないでください。
 
 #### Vertical Pod Autoscaler (VPA)
 
-VPA は resource utilization を最適化するため、pod CPU と memory requests を自動的に調整します。
+VPA は Pod の CPU とメモリ requests を自動調整し、リソース使用率を最適化します。
 
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
@@ -505,7 +408,7 @@ spec:
     kind: Deployment
     name: app
   updatePolicy:
-    updateMode: Auto
+    updateMode: "Off"
   resourcePolicy:
     containerPolicies:
     - containerName: '*'
@@ -517,164 +420,137 @@ spec:
         memory: 1Gi
 ```
 
-VPA Modes:
+この例では、上記の HPA と競合せず推奨値のみを収集するために **Off** を使用しています。最初に VPA コンポーネント/CRD とメトリクス依存関係をインストールしてください。
 
-- **Auto**: resource requests を update するため pods を自動的に restart します
-- **Initial**: 新しい pods に対してのみ resource requests を設定します
-- **Off**: recommendations のみを提供し、自動 updates は行いません
-## Storage Cost Optimization
+- **Off**: 推奨値のみを提示します。
+- **Initial**: アドミッション時に、新規作成 Pod の requests を設定します。
+- **Recreate**: アップデーターが Pod を退避し、コントローラーが推奨リソースで再作成する場合があります。退避ポリシー/PDB に従います。
+- **Auto**: Recreate の非推奨エイリアスです。新しい構成では明示的なモードを選んでください。
+- インプレースモードには、互換性のある VPA/Kubernetes リリースと、文書化された機能ゲートが必要です。選択したモードの仕様を確認してください。`InPlaceOrRecreate` は退避にフォールバックする場合がありますが、`InPlace` にはその再作成へのフォールバックがありません。自動更新を有効にする前に、上限、ディスラプション、ピーク需要を確認してください。
 
-Storage は EKS clusters の重要な cost component です。次の戦略を使用して storage costs を最適化できます。
+## ストレージコストの最適化
 
-```mermaid
-flowchart TD
-    StorageCost[Storage Cost Optimization] --> EBSOptimize[EBS Volume Optimization]
-    StorageCost --> EFSOptimize[EFS Cost Optimization]
-    StorageCost --> S3Optimize[S3 Cost Optimization]
+ストレージは EKS クラスターの重要なコスト要素です。次の戦略でストレージコストを最適化できます。
 
-    EBSOptimize --> VolumeType[Select Appropriate Volume Type]
-    EBSOptimize --> GP3Migration[Migrate to gp3]
-    EBSOptimize --> VolumeSize[Volume Size Optimization]
-    EBSOptimize --> LifecycleManagement[Volume Lifecycle Management]
+![EKS のストレージコスト最適化を示すアーキテクチャ図。EBS ボリュームの最適化（ボリュームタイプの選択と gp3 への移行、ボリュームサイズの最適化、ボリュームライフサイクル管理）、EFS のコスト最適化（スループットモードの選択、ライフサイクル管理、アクセスパターンの最適化）、S3 のコスト最適化（ライフサイクルポリシーによるストレージクラスの最適化、リクエストの最適化）に分岐する。](../.gitbook/assets/en-eks-07-eks-cost-optimization-3.png)
 
-    EFSOptimize --> ThroughputMode[Select Appropriate Throughput Mode]
-    EFSOptimize --> EFSLifecycle[Lifecycle Management]
-    EFSOptimize --> AccessPatterns[Access Pattern Optimization]
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-3.html)
 
-    S3Optimize --> StorageClass[Storage Class Optimization]
-    S3Optimize --> LifecyclePolicy[Lifecycle Policy]
-    S3Optimize --> RequestOptimize[S3 Request Optimization]
+### EBS ボリュームの最適化
 
-    VolumeType --> GP3[gp3: General Purpose SSD]
-    VolumeType --> GP2[gp2: Previous Generation General Purpose SSD]
-    VolumeType --> IO[io1/io2: Provisioned IOPS SSD]
-    VolumeType --> ST1[st1: Throughput Optimized HDD]
-    VolumeType --> SC1[sc1: Cold HDD]
+EBS ボリュームは主に EKS クラスターの永続ストレージとして使用されます。
 
-    StorageClass --> Standard[S3 Standard]
-    StorageClass --> IntelligentTiering[S3 Intelligent-Tiering]
-    StorageClass --> StandardIA[S3 Standard-IA]
-    StorageClass --> OneZoneIA[S3 One Zone-IA]
-    StorageClass --> Glacier[S3 Glacier]
+#### 適切なボリュームタイプの選択
 
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+ワークロードに適した EBS ボリュームタイプを選択してください。
 
-    %% Class application
-    class GP3,GP2,IO,ST1,SC1,Standard,IntelligentTiering,StandardIA,OneZoneIA,Glacier awsService;
-    class StorageCost,EBSOptimize,EFSOptimize,S3Optimize,VolumeType,GP3Migration,VolumeSize,LifecycleManagement,ThroughputMode,EFSLifecycle,AccessPatterns,StorageClass,LifecyclePolicy,RequestOptimize default;
-```
+- **gp3**: ほとんどのワークロードに推奨される汎用 SSD
+- **gp2**: 旧世代の汎用 SSD。gp3 への移行を推奨
+- **io1/io2**: 高性能ワークロード向けのプロビジョンド IOPS SSD
+- **st1**: スループット負荷の高いワークロード向けのスループット最適化 HDD
+- **sc1**: アクセス頻度の低いデータ向けのコールド HDD
 
-### EBS Volume Optimization
+gp3 では容量、IOPS、スループットの料金が分かれています。ベースラインの 3,000 IOPS は、すべての gp2 ボリュームより高いわけではありません。以下の上限は一般的な AWS リージョンのボリュームに対する現行値ですが、容量/IOPS 比やインスタンス上限の影響を受けます。Outposts では上限が異なります。$0.08/$0.10 のストレージ料金は、リージョン/日付が記録されていない例示的な前提です。プロビジョニングする IOPS/スループットを含め、最新の見積もりを取得してください。
 
-EBS volumes は EKS clusters の persistent storage に主に使用されます。
-
-#### Select Appropriate Volume Type
-
-workload に適した EBS volume type を選択します。
-
-- **gp3**: ほとんどの workloads に推奨される general purpose SSD
-- **gp2**: previous generation general purpose SSD。gp3 への migration を推奨
-- **io1/io2**: high-performance workloads 向けの Provisioned IOPS SSD
-- **st1**: throughput-intensive workloads 向けの Throughput optimized HDD
-- **sc1**: infrequently accessed data 向けの Cold HDD
-
-gp3 は gp2 より cost-efficient で、より高い baseline performance を持ちます。
-
-| Volume Type | Baseline IOPS | Max IOPS | Baseline Throughput | Max Throughput | Price per GB |
+| ボリュームタイプ | ベースライン IOPS | 最大 IOPS | ベースラインスループット | 最大スループット | 1 GB あたりの料金 |
 |------------|--------------|----------|---------------------|----------------|--------------|
-| gp3        | 3,000        | 16,000   | 125 MiB/s           | 1,000 MiB/s    | $0.08/GB-month |
-| gp2        | 3 IOPS/GB    | 16,000   | Up to 250 MiB/s     | 250 MiB/s      | $0.10/GB-month |
+| gp3 | 3,000 | 80,000 | 125 MiB/s | 2,000 MiB/s | $0.08/GB-month (例示) |
+| gp2 | 3 IOPS/GiB、最低 100。対象となる小容量ボリュームではバースト可能 | 16,000 | サイズ/I/O に依存 | 250 MiB/s | $0.10/GB-month (例示) |
 
-#### Migrate to gp3
+#### gp3 への移行
 
-既存の gp2 volumes を gp3 に migrate してコストを削減します。
+このクラスは、標準の EBS CSI ドライバー (`ebs.csi.aws.com`) を使って新しい gp3 ボリュームを作成します。既存ボリュームの移行や、クラスターのデフォルト変更は行いません。Auto Mode は別のプロビジョナー (`ebs.csi.eks.amazonaws.com`) と適切なノード/ストレージ移行経路を使用します。インストール済みドライバー、IAM/KMS 権限、既存クラスの所有者、トポロジーを確認してください。`Retain` を設定すると、解放されたストレージは所有者が確認するまで保持され、料金が引き続き発生する場合があります。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: gp3
-  annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
 provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
   encrypted: "true"
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
 allowVolumeExpansion: true
 ```
 
-Migrating existing PVC to gp3:
+既存の PVC を gp3 に移行する手順:
 
-1. volume snapshot を作成します
-2. snapshot から gp3 volume の新しい PVC を作成します
-3. application を新しい PVC に migrate します
+1. インストール済みの CSI スナップショットコンポーネントを使い、アプリケーション整合性のあるバックアップ/スナップショットを取得して、準備状況と復元アクセスを確認します。
+2. gp3 クラスを使って**新しい** PVC を復元します。バインド済みの PVC は、インプレースで StorageClass を切り替えられません。
+3. 復元をテストし、確認済みの切り替え作業中にワークロードを切り替えます。復旧を検証するまで元のボリュームを保持します。
 
-#### Volume Size Optimization
+サポート対象の構成では、インプレースの EBS Elastic Volumes タイプ変更が代替手段となる場合があります。構成ドリフトを起こさないよう、CSI/IaC の所有者と調整してください。[ストレージガイド](04-eks-storage-part1.md)を参照してください。
 
-必要な volume size のみを provision します。
+#### ボリュームサイズの最適化
 
-- Over-provisioned volumes は不要なコストを発生させます。
-- volume usage を monitor し、必要に応じて size を調整します。
-- 必要に応じて volume size を自動的に調整する auto-expansion solutions を検討します。
+必要なサイズだけをプロビジョニングしてください。
 
-#### Volume Lifecycle Management
+- 過剰にプロビジョニングされたボリュームは不要なコストを発生させます。
+- ファイルシステムの使用量を監視し、必要に応じてサポート対象のボリュームを拡張します。EBS ボリュームや Kubernetes PVC はインプレースで縮小できません。容量を減らすには、新しい小容量ボリュームを作成し、アプリケーションを考慮したデータ移行が必要です。
+- `allowVolumeExpansion` は、サポート対象の拡張要求を許可する設定です。使用量の監視や自動サイズ変更は行いません。自動拡張には、別途コントローラー、上限、障害対応を設定する必要があります。
 
-不要な volumes を特定して削除します。
+#### ボリュームライフサイクルの管理
 
-- unused PVCs と PVs を定期的に review する
-- terminated pods の volumes を cleanup する
-- 適切な PV reclaim policies (Delete または Retain) を設定する
+不要なボリュームを特定して削除します。
 
-### EFS Cost Optimization
+- 未使用の PVC と PV を定期的に確認します
+- Pod が終了しても、その PVC/PV を破棄してよいことにはなりません。claim やボリュームを削除する前に、StatefulSet の保持設定、後続の利用予定、バックアップ、所有者を確認してください
+- 適切な PV の再利用ポリシー (Delete または Retain) を設定します
 
-EFS は複数の nodes にまたがる shared access を必要とする workloads に有用です。
+### EFS のコスト最適化
 
-#### Select Appropriate Throughput Mode
+EFS は、複数ノードからの共有アクセスを必要とするワークロードに役立ちます。
 
-workload に適した EFS throughput mode を選択します。
+#### 適切なスループットモードの選択
 
-- **Bursting Throughput**: intermittent access patterns に適しています
-- **Provisioned Throughput**: predictable performance を必要とする workloads に適しています
-- **Elastic Throughput**: 変動の大きい workloads に適しています
+ワークロードに適した EFS スループットモードを選択してください。
 
-#### Lifecycle Management
+- **バーストスループット**: アクセス頻度が断続的な場合に適しています
+- **プロビジョンドスループット**: 予測可能なパフォーマンスを必要とするワークロードに適しています
+- **Elastic Throughput**: 変動が非常に大きいワークロードに適しています
 
-EFS lifecycle management を使用して、infrequently accessed files を IA (Infrequent Access) storage class に自動的に移動します。
+#### ライフサイクル管理
+
+EFS ライフサイクルポリシーでは、条件を満たすアクセス頻度の低いファイルを IA/Archive に移行したり、アクセス時にプライマリストレージに戻したりできます。アクセス料金、課金対象となる最小サイズ/期間、スループットモード、アクセスパターンが節約額に影響します。この例では既存のポリシー配列をエクスポートして確認します。その配列内の IA ルールを編集し、必要な Archive/プライマリへの復帰エントリを保持したうえで、希望する構成全体を送信してください。
 
 ```bash
+aws efs describe-lifecycle-configuration \
+  --file-system-id fs-1234567890abcdef0 \
+  --query LifecyclePolicies --output json > efs-lifecycle-policies.json
+# Edit the exported array; an IA rule is {"TransitionToIA":"AFTER_30_DAYS"}.
+# Preserve required Archive/return-to-primary rules and review the complete array.
 aws efs put-lifecycle-configuration \
   --file-system-id fs-1234567890abcdef0 \
-  --lifecycle-policies '[{"TransitionToIA":"AFTER_30_DAYS"}]'
+  --lifecycle-policies file://efs-lifecycle-policies.json
 ```
 
-#### Access Pattern Optimization
+#### アクセスパターンの最適化
 
-コストを削減するために EFS access patterns を最適化します。
+コストを削減するため、EFS のアクセスパターンを最適化します。
 
-- small files ではなく larger files を使用する
-- metadata operations を最小化する
-- sequential access patterns を使用する
+- 小さなファイルを多数使うより、大きなファイルを使う
+- メタデータ操作を最小限にする
+- シーケンシャルアクセスパターンを使用する
 
-### S3 Cost Optimization
+### S3 のコスト最適化
 
-S3 は logs、backups、static content などを保存するための cost-efficient な選択肢です。
+S3 はログ、バックアップ、静的コンテンツなどの保存に適したコスト効率の高い選択肢です。
 
-#### Storage Class Optimization
+#### ストレージクラスの最適化
 
-workload に適した S3 storage class を選択します。
+ワークロードに適した S3 ストレージクラスを選択してください。
 
-- **S3 Standard**: frequently accessed data
-- **S3 Intelligent-Tiering**: access patterns が変化する data
-- **S3 Standard-IA**: infrequently accessed data
-- **S3 One Zone-IA**: infrequently accessed、non-critical data
-- **S3 Glacier**: archive data
+- **S3 Standard**: 頻繁にアクセスするデータ
+- **S3 Intelligent-Tiering**: アクセスパターンが変化するデータ
+- **S3 Standard-IA**: アクセス頻度の低いデータ
+- **S3 One Zone-IA**: アクセス頻度が低く、重要度の低いデータ
+- **S3 Glacier**: アーカイブデータ
 
-#### Lifecycle Policy
+#### ライフサイクルポリシー
 
-S3 lifecycle policies を使用して、objects をより安価な storage classes に自動的に移動する、または expire させます。
+この例示的なルールでは、現行バージョンのオブジェクトを 30/90 日後に移行し、365 日後に期限切れにします。復旧にかかる時間、保持/Object Lock の要件、移行/リクエスト料金、最低保存期間、新規/変更構成では 128 KB 未満のオブジェクトが移行対象からデフォルトで除外されることを確認してください。バージョニングが有効なバケットでは、旧バージョンの管理を別に設定する必要があります。現行バージョンの有効期限切れによって削除マーカーが作成されても、古いデータには料金が発生し続ける場合があります。put-bucket-lifecycle-configuration の呼び出しはバケットのライフサイクル構成を置き換えるため、他のルールを統合して保持してください。
 
 ```json
 {
@@ -682,7 +558,7 @@ S3 lifecycle policies を使用して、objects をより安価な storage class
     {
       "ID": "Move to IA after 30 days, Glacier after 90 days",
       "Status": "Enabled",
-      "Prefix": "logs/",
+      "Filter": {"Prefix": "logs/"},
       "Transitions": [
         {
           "Days": 30,
@@ -701,81 +577,47 @@ S3 lifecycle policies を使用して、objects をより安価な storage class
 }
 ```
 
-#### S3 Request Optimization
+#### S3 リクエストの最適化
 
-S3 request costs を最適化します。
+S3 リクエストコストを最適化します。
 
-- small objects を larger objects にまとめる
-- 不要な LIST operations を最小化する
-- S3 Transfer Acceleration または multipart uploads の使用を検討する
+- 小さなオブジェクトをまとめて大きなオブジェクトにする
+- 不要な LIST 操作を最小限にする
+- マルチパートアップロードは転送/再試行の動作を改善できますが、リクエスト料金と未完了パートの保存料金が発生します。放棄されたアップロードを中止/クリーンアップするよう設定してください。Transfer Acceleration には追加料金が発生する場合があり、レイテンシー/スループットを改善する選択肢であって、自動的にリクエストコストを削減するものではありません
 
-## Networking Cost Optimization
+## ネットワークコストの最適化
 
-Networking costs は、特に大規模な data transfers がある場合に大きくなる可能性があります。次の戦略を使用して networking costs を最適化できます。
+ネットワークコストは、特に大規模なデータ転送がある場合に大きくなる可能性があります。次の戦略を使ってネットワークコストを最適化できます。
 
-```mermaid
-flowchart TD
-    NetworkCost[Networking Cost Optimization] --> DataTransfer[Data Transfer Optimization]
-    NetworkCost --> LoadBalancer[Load Balancer Optimization]
-    NetworkCost --> NATGateway[NAT Gateway Optimization]
+<!-- Pending parent diagram repair: see /tmp/eks-cost-optimization-audit/diagram-review.json
+![Tree diagram of EKS networking cost optimization branching into data transfer, load balancer, and NAT gateway optimization, each with three tactics such as intra-region communication, AZ-aware routing, compression, load balancer type selection and sharing, idle load balancer removal, NAT gateway sharing, VPC endpoints, and outbound traffic optimization, with the VPC endpoint path emphasized.](../.gitbook/assets/en-eks-07-eks-cost-optimization-4.png)
 
-    DataTransfer --> RegionalComm[Utilize Intra-region Communication]
-    DataTransfer --> AZRouting[Availability Zone Aware Routing]
-    DataTransfer --> Compression[Use Compression]
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-4.html)
+-->
 
-    LoadBalancer --> LBType[Select Appropriate Load Balancer Type]
-    LoadBalancer --> LBSharing[Load Balancer Sharing]
-    LoadBalancer --> IdleLB[Remove Idle Load Balancers]
+### データ転送の最適化
 
-    NATGateway --> NATSharing[NAT Gateway Sharing]
-    NATGateway --> VPCEndpoints[Use VPC Endpoints]
-    NATGateway --> OutboundTraffic[Outbound Traffic Optimization]
+#### リージョン内通信の活用
 
-    LBType --> NLB[Network Load Balancer]
-    LBType --> ALB[Application Load Balancer]
-    LBType --> CLB[Classic Load Balancer]
+可能な限り同一リージョン内で通信し、リージョン間データ転送コストを削減します。
 
-    VPCEndpoints --> S3Endpoint[S3 VPC Endpoint]
-    VPCEndpoints --> DynamoDBEndpoint[DynamoDB VPC Endpoint]
-    VPCEndpoints --> ECREndpoint[ECR VPC Endpoint]
-    VPCEndpoints --> CloudWatchEndpoint[CloudWatch Logs VPC Endpoint]
-    VPCEndpoints --> STSEndpoint[STS VPC Endpoint]
+- EKS クラスターと関連する AWS サービスを同じリージョンに配置します
+- 複数リージョンにまたがる場合、リージョン間データ転送を最小限にします
 
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+#### AZ を考慮したルーティング
 
-    %% Class application
-    class NLB,ALB,CLB,S3Endpoint,DynamoDBEndpoint,ECREndpoint,CloudWatchEndpoint,STSEndpoint awsService;
-    class AZRouting k8sComponent;
-    class NetworkCost,DataTransfer,LoadBalancer,NATGateway,RegionalComm,Compression,LBType,LBSharing,IdleLB,NATSharing,VPCEndpoints,OutboundTraffic default;
-```
+AZ 間のデータ転送コストを削減するため、AZ を考慮したルーティングを実装します。
 
-### Data Transfer Optimization
-
-#### Utilize Intra-region Communication
-
-可能な限り同じ region 内で通信することで、inter-region data transfer costs を削減します。
-
-- EKS cluster と関連する AWS services を同じ region に配置する
-- 複数 regions にまたがる場合は inter-region data transfer を最小化する
-
-#### Availability Zone Aware Routing
-
-inter-AZ data transfer costs を削減するために、availability zone aware routing を実装します。
-
-- topology-aware service routing を使用する
-- availability zone affinity を設定する
+- トポロジーを考慮したサービスルーティングを使用します
+- マルチ AZ の可用性を維持しながら、サポートされている場合はローカルエンドポイントを優先します。`trafficDistribution: PreferSameZone` は Kubernetes 1.35 以降で安定版です。クラスター/プロキシの実装を検証してください。これは優先設定であり、ローカルエンドポイントを利用できない場合はフォールバックするため、AZ 間トラフィックがゼロになる保証はありません。配置のアフィニティだけでは Service トラフィックはルーティングされません
 
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: my-service
-  annotations:
-    service.kubernetes.io/topology-aware-hints: "auto"
 spec:
+  trafficDistribution: PreferSameZone
   selector:
     app: my-app
   ports:
@@ -784,39 +626,32 @@ spec:
   type: ClusterIP
 ```
 
-#### Use Compression
+#### 圧縮の使用
 
-データ転送前に compression を使用して、転送されるデータ量を削減します。
+データ転送前に圧縮を使用して、転送データ量を減らします。
 
-- API response compression
-- Log and metric compression
-- Image and static asset optimization
+- API 応答の圧縮
+- ログとメトリクスの圧縮
+- イメージと静的アセットの最適化
 
-### Load Balancer Optimization
+### ロードバランサーの最適化
 
-#### Select Appropriate Load Balancer Type
+#### 適切なロードバランサータイプの選択
 
-workload に適した load balancer type を選択します。
+ワークロードに適したロードバランサータイプを選択してください。
 
-- **Network Load Balancer (NLB)**: TCP/UDP traffic、low latency が必要な場合
-- **Application Load Balancer (ALB)**: HTTP/HTTPS traffic、path-based routing が必要な場合
-- **Classic Load Balancer (CLB)**: legacy workloads
+- **Network Load Balancer (NLB)**: 低レイテンシーが必要な場合の TCP/UDP トラフィック
+- **Application Load Balancer (ALB)**: パスベースのルーティングが必要な場合の HTTP/HTTPS トラフィック
+- **Classic Load Balancer (CLB)**: レガシーワークロード
 
-#### Load Balancer Sharing
+#### ロードバランサーの共有
 
-複数の services で load balancers を共有してコストを削減します。
+複数のサービス間でロードバランサーを共有してコストを削減します。
 
-- ALB Ingress Controller を使用する
-- Ingress resources を使用して複数の services を expose する
+- AWS Load Balancer Controller を使用する
+- Ingress リソースを使って複数のサービスを公開する
 
-```bash
-# Install ALB Ingress Controller
-helm repo add eks https://aws.github.io/eks-charts
-helm install aws-load-balancer-controller \
-  eks/aws-load-balancer-controller \
-  -n kube-system \
-  --set clusterName=my-cluster
-```
+[ネットワークガイド](03-eks-networking-part1.md)を使って、適切な chart、IAM/service account、サブネット、セキュリティグループを設定し、標準の AWS Load Balancer Controller をインストールしてください。既存のコントローラー所有者を再利用します。Auto Mode には異なる組み込み連携があるため、これらのインストール/クラス設定が適用されると想定しないでください。以下の両方のバックエンド Service は Ingress と同じ名前空間に存在し、ポート 80 を公開している必要があります。IP ターゲットモードでは、Pod IP に到達できる必要があります。これは HTTP ルーティングの例です。本番環境で公開する場合は、TLS、DNS、アクセス制御も確認してください。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -824,9 +659,10 @@ kind: Ingress
 metadata:
   name: shared-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
   - host: service1.example.com
     http:
@@ -850,27 +686,27 @@ spec:
               number: 80
 ```
 
-#### Remove Idle Load Balancers
+#### アイドル状態のロードバランサーの削除
 
-未使用の load balancers を特定して削除します。
+未使用のロードバランサーを特定して削除します。
 
-- traffic のない load balancers を monitor する
-- test または development environments の不要な load balancers を削除する
+- トラフィックのないロードバランサーを監視します
+- テスト環境または開発環境で不要なロードバランサーを削除します
 
-### NAT Gateway Optimization
+### NAT ゲートウェイの最適化
 
-NAT gateways には hourly charges と data processing charges が発生します。
+NAT ゲートウェイには、時間単位の料金とデータ処理料金が発生します。
 
-#### NAT Gateway Sharing
+#### NAT ゲートウェイの共有
 
-複数の subnets で NAT gateways を共有してコストを削減します。
+複数のサブネット間で NAT ゲートウェイを共有してコストを削減します。
 
-- availability zone ごとに 1 つの NAT gateway を使用する
-- 複数の private subnets に同じ NAT gateway を使用する
+- AZ 単位の NAT ゲートウェイでは、同じ AZ のプライベートサブネットがローカルゲートウェイを共有できます。AZ ごとの可用性と固定の時間料金を評価してください。
+- 1 つの AZ 単位のゲートウェイを複数の AZ で共有すると、AZ 間依存関係と転送料金が発生する可能性があります。これは意図的なトレードオフであり、常に安価な高可用性設計とは限りません。現在のリージョン NAT オプションは、文書化された可用性/料金モデルに基づいて別途評価してください。
 
-#### Use VPC Endpoints
+#### VPC エンドポイントの使用
 
-AWS services への private access に VPC endpoints を使用して、NAT gateway costs を削減します。
+実際のトラフィックについて、エンドポイント料金と NAT 経由の料金を比較してください。S3/DynamoDB ゲートウェイエンドポイントには、追加のエンドポイント時間料金/データ処理料金はありません。インターフェイスエンドポイント（ECR/Logs/STS など）には個別の料金があり、DNS/セキュリティグループの設定が必要です。以下のコマンドは、確認済みの既存ルートテーブルにゲートウェイエンドポイントを作成します。適切なエンドポイントポリシーを適用してください。ECR イメージのプルには通常、ECR API エンドポイントだけでなく、`ecr.api`/`ecr.dkr` の両方のインターフェイスエンドポイントと S3 アクセスが必要です。
 
 ```bash
 # Create S3 VPC Endpoint
@@ -886,7 +722,7 @@ aws ec2 create-vpc-endpoint \
   --route-table-ids rtb-1234567890abcdef0
 ```
 
-Commonly used VPC endpoints:
+よく使用される VPC エンドポイント:
 
 - S3
 - DynamoDB
@@ -894,63 +730,31 @@ Commonly used VPC endpoints:
 - CloudWatch Logs
 - STS
 
-#### Outbound Traffic Optimization
+#### アウトバウンドトラフィックの最適化
 
-NAT gateway を通過する outbound traffic を最適化します。
+NAT ゲートウェイを通過するアウトバウンドトラフィックを最適化します。
 
-- 不要な external API calls を最小化する
-- 大規模な data transfers を off-peak hours に schedule する
-- data compression を使用する
+- 不要な外部 API 呼び出しを最小限にします
+- スケジュール設定で競合を減らせる場合はありますが、通常の NAT/データ転送料金には一般的なオフピーク割引はありません。課金対象のバイト数またはプロビジョニング期間を削減してください
+- データを圧縮します
 
-## Resource Management and Governance
+## リソース管理とガバナンス
 
-効果的な resource management と governance は、EKS cluster costs を制御するうえで重要です。次の戦略を使用して resources を効果的に管理できます。
+EKS クラスターのコストを管理するには、効果的なリソース管理とガバナンスが重要です。次の戦略でリソースを効果的に管理できます。
 
-```mermaid
-flowchart TD
-    ResourceGov[Resource Management and Governance] --> ResourceReqLim[Resource Requests and Limits Optimization]
-    ResourceGov --> NamespaceQuota[Namespaces and Resource Quotas]
-    ResourceGov --> CostAllocation[Cost Allocation and Tagging]
+![EKS のリソース管理とガバナンスを示すツリー図。リソース requests と limits の最適化、名前空間とリソースクォータ、コスト配分とタグ付けに分岐し、それぞれの実践として requests/limits の設定、ResourceQuota と LimitRange を用いた名前空間の分離、リソースタグ、Kubernetes ラベル、Kubecost を示す。](../.gitbook/assets/en-eks-07-eks-cost-optimization-5.png)
 
-    ResourceReqLim --> RequestSetting[Set Appropriate Resource Requests]
-    ResourceReqLim --> LimitSetting[Set Resource Limits]
-    ResourceReqLim --> QoSClasses[Understanding QoS Classes]
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-5.html)
 
-    NamespaceQuota --> NamespaceSeparation[Namespace-based Separation]
-    NamespaceQuota --> ResourceQuotas[Set Resource Quotas]
-    NamespaceQuota --> LimitRanges[Set LimitRange]
+### リソース requests と limits の最適化
 
-    CostAllocation --> ResourceTagging[Resource Tagging]
-    CostAllocation --> K8sLabels[Kubernetes Labels and Annotations]
-    CostAllocation --> Kubecost[Using Kubecost]
+#### 適切なリソース requests の設定
 
-    QoSClasses --> Guaranteed["Guaranteed
-                Request = Limit"]
-    QoSClasses --> Burstable["Burstable
-                Request < Limit"]
-    QoSClasses --> BestEffort["BestEffort
-                No Request and Limit"]
+アプリケーションの実際のリソース要件に合う requests を設定してください。
 
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ResourceTagging awsService;
-    class NamespaceSeparation,ResourceQuotas,LimitRanges,K8sLabels,Guaranteed,Burstable,BestEffort,Kubecost k8sComponent;
-    class ResourceGov,ResourceReqLim,NamespaceQuota,CostAllocation,RequestSetting,LimitSetting,QoSClasses default;
-```
-
-### Resource Requests and Limits Optimization
-
-#### Set Appropriate Resource Requests
-
-application の実際の resource requirements に合った resource requests を設定します。
-
-- 高すぎる requests は resource waste につながります。
-- 低すぎる requests は performance issues を引き起こす可能性があります。
-- VPA (Vertical Pod Autoscaler) を使用して resource requests を最適化します
+- requests が高すぎると、リソースの無駄につながります。
+- requests が低すぎると、パフォーマンス上の問題が発生する場合があります。
+- VPA (Vertical Pod Autoscaler) を使ってリソース requests を最適化します
 
 ```yaml
 apiVersion: v1
@@ -970,35 +774,37 @@ spec:
         memory: 512Mi
 ```
 
-#### Set Resource Limits
+#### リソース limits の設定
 
-containers が過剰な resources を使用しないように resource limits を設定します。
+コンテナが過剰なリソースを使わないよう、リソース limits を設定します。
 
-- CPU Limit: container が使用できる maximum CPU
-- Memory Limit: container が使用できる maximum memory
+- CPU limits は通常スロットリングによって適用されます。低すぎる limit は、ノードに余剰 CPU があってもレイテンシーを悪化させる場合があります。
+- メモリ limits は事後的に適用され、OOM による終了を引き起こす場合があります。使用量が一時的にも値を超えないことを保証するものではありません。普遍的な比率ではなく、測定したワークロードの動作に基づいて requests/limits のサイズを決めてください。
 
-#### Understanding QoS Classes
+#### QoS クラスの理解
 
-Kubernetes QoS (Quality of Service) classes を理解し、活用します。
+Kubernetes QoS (Quality of Service) クラスを理解して活用してください。
 
-- **Guaranteed**: Request = Limit (highest priority)
-- **Burstable**: Request < Limit
-- **BestEffort**: No request and limit (lowest priority)
+ここで示すコンテナレベルのリソース設定では、次のようになります。
 
-resources が不足している場合、BestEffort pods が最初に evict され、次に Burstable pods が evict されます。
+- **Guaranteed**: すべてのコンテナにゼロ以外の CPU とメモリ requests があり、それぞれ対応する limits と等しい
+- **Burstable**: CPU/メモリの request または limit が少なくとも 1 つ設定されているが、Guaranteed の条件を満たさない
+- **BestEffort**: どのコンテナにも CPU/メモリ requests または limits が設定されていない
 
-### Namespaces and Resource Quotas
+QoS は Pod Priority ではなく、絶対的な退避順序を定めるものでもありません。ノードに負荷がかかった場合、kubelet は使用量が requests を超えているか、Pod Priority、超過使用量の相対値を考慮します。ディスクプレッシャーによる退避も異なります。CPU/メモリの QoS では ephemeral-storage requests が分類されないためです。Pod レベルのリソースを使用する場合は、[最新の QoS ルール](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)を確認してください。
 
-#### Namespace-based Separation
+### 名前空間とリソースクォータ
 
-namespaces を使用して resources を論理的に分離します。
+#### 名前空間による分離
 
-- team、environment、application ごとに namespaces を作成する
-- namespace ごとに resource usage を monitor する
+名前空間を使ってリソースを論理的に分離します。
 
-#### Set Resource Quotas
+- チーム、環境、アプリケーションごとに名前空間を作成します
+- 名前空間ごとのリソース使用量を監視します
 
-ResourceQuota を使用して namespace ごとの resource usage を制限します。
+#### リソースクォータの設定
+
+ResourceQuota は、既存の名前空間内で、受け入れられるリソース requests/limits とオブジェクト数を制限します。支出上限でも、実行時 CPU メーターでもありません。最初に `team-a` 名前空間を作成してください。CPU/メモリのクォータによって、作成するコンテナに requests/limits が必要になる場合があります。LimitRange のデフォルト設定はワークロードの担当者と調整してください。
 
 ```yaml
 apiVersion: v1
@@ -1017,9 +823,9 @@ spec:
     persistentvolumeclaims: "5"
 ```
 
-#### Set LimitRange
+#### LimitRange の設定
 
-LimitRange を使用して namespace 内の containers に default resource limits を設定します。
+LimitRange を使って、名前空間内のコンテナに対するデフォルトのリソース上限を設定します。
 
 ```yaml
 apiVersion: v1
@@ -1038,14 +844,14 @@ spec:
     type: Container
 ```
 
-### Cost Allocation and Tagging
+### コスト配分とタグ付け
 
-#### Resource Tagging
+#### リソースのタグ付け
 
-AWS resources に tag を付けて costs を track し、allocate します。
+AWS リソースタグを適用し、課金担当者を通じて対象の課金キーを有効化してください。EKS クラスターのタグは、EC2 インスタンス、ASG、EBS ボリューム、ロードバランサーに自動的に伝播しません。実際のタグ適用範囲と課金処理の遅延を確認してください。以下の明示的なタグ付け例は、クラスターコストを完全に配分できることを示すものではありません。
 
-- team、project、environment、cost center などで tag 付けする
-- consistent tagging strategy を実装する
+- チーム、プロジェクト、環境、コストセンターなどでタグ付けする
+- 一貫したタグ付け戦略を実施する
 
 ```bash
 # Tag EKS cluster
@@ -1059,9 +865,9 @@ aws ec2 create-tags \
   --tags Key=Team,Value=DevOps Key=Environment,Value=Production Key=CostCenter,Value=123456
 ```
 
-#### Kubernetes Labels and Annotations
+#### Kubernetes のラベルとアノテーション
 
-Kubernetes resources に labels と annotations を付けて costs を track し、allocate します。
+Kubernetes のラベル/アノテーションは、AWS とは別のメタデータシステムです。コストツールは選択されたワークロードラベルでグループ化できます。Pod 単位のグループ化を想定する場合は、Deployment のラベルを Pod テンプレートにも設定する必要があります。名前空間のラベルが Pod や AWS リソースに自動的に継承されることはありません。AWS の分割コスト配分と、生成される EKS Pod コスト属性には、別途課金設定が必要です。
 
 ```yaml
 apiVersion: apps/v1
@@ -1091,95 +897,62 @@ spec:
         image: app:latest
 ```
 
-#### Using Kubecost
+#### Kubecost の使用
 
-Kubecost を使用して Kubernetes resource costs を track し、最適化します。
+Kubecost を使って Kubernetes リソースコストを追跡し、最適化します。
 
-```bash
-# Install Kubecost
-helm repo add kubecost https://kubecost.github.io/cost-analyzer/
-helm install kubecost kubecost/cost-analyzer \
-  --namespace kubecost \
-  --create-namespace \
-  --set kubecostToken="<your-token>"
-```
+以下のインストール手順に従ってください。重複したコレクターをインストールせず、所有する Kubecost/OpenCost デプロイを 1 つ選択します。リソースベースの配分は、課金データセットおよび合意済みの共有コストポリシーと照合するまでは推定値です。
 
-Kubecost は次の features を提供します。
+Kubecost が提供する機能:
 
-- namespace、deployment、service、label 別の cost analysis
-- Cost optimization recommendations
-- Cost allocation and chargeback reports
-## Cost Monitoring and Analysis
+- 名前空間、Deployment、Service、ラベル別のコスト分析
+- コスト最適化の推奨事項
+- コスト配分と部門振替レポート
 
-コストを効果的に最適化するには、継続的に costs を monitor して analyze する必要があります。次の tools と strategies を使用して EKS cluster costs を monitor および analyze できます。
+## コストの監視と分析
 
-```mermaid
-flowchart TD
-    CostMonitoring[Cost Monitoring and Analysis] --> CostExplorer[AWS Cost Explorer]
-    CostMonitoring --> KubecostTool[Kubecost]
-    CostMonitoring --> ContainerInsights[CloudWatch Container Insights]
-    CostMonitoring --> CustomDashboard[Custom Cost Dashboard]
+コストを効果的に最適化するには、継続的な監視と分析が必要です。次のツールと戦略を使って EKS クラスターのコストを監視・分析できます。
 
-    CostExplorer --> CostAnalysis[Cost Analysis]
-    CostExplorer --> AnomalyDetection[Cost Anomaly Detection]
-    CostExplorer --> Budgets[Cost Budget Setting]
+![EKS のコスト監視と分析を 4 つのツールに分岐して示す図: AWS Cost Explorer、Kubecost、CloudWatch Container Insights、カスタムコストダッシュボード。コスト分析、異常検出、予算、Kubecost のダッシュボードとアラート、リソース使用状況の監視、最適化のインサイト、Grafana ダッシュボード、コスト最適化スコアなどの主要機能にそれぞれ関連付けている。](../.gitbook/assets/en-eks-07-eks-cost-optimization-6.png)
 
-    KubecostTool --> KubecostDashboard[Kubecost Dashboard]
-    KubecostTool --> KubecostAlerts[Kubecost Alerts]
-
-    ContainerInsights --> ResourceUsage[Resource Usage Monitoring]
-    ContainerInsights --> CostInsights[Cost Optimization Insights]
-
-    CustomDashboard --> GrafanaDashboard[Grafana Dashboard]
-    CustomDashboard --> OptimizationScore[Cost Optimization Score]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CostExplorer,AnomalyDetection,Budgets,ContainerInsights,ResourceUsage,CostInsights awsService;
-    class KubecostTool,KubecostDashboard,KubecostAlerts k8sComponent;
-    class GrafanaDashboard grafana;
-    class CostMonitoring,CostAnalysis,CustomDashboard,OptimizationScore default;
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-6.html)
 
 ### AWS Cost Explorer
 
-AWS Cost Explorer は、AWS costs と usage を visualize、understand、manage するための tool です。
+AWS Cost Explorer は、AWS のコストと使用状況を可視化、理解、管理するためのツールです。
 
-#### Cost Analysis
+#### コスト分析
 
-AWS Cost Explorer を使用して EKS cluster costs を analyze します。
+AWS Cost Explorer を使って EKS クラスターのコストを分析します。
 
-- service 別の cost analysis
-- tag 別の cost analysis
-- 時間の経過に伴う cost trend analysis
+- サービス別のコスト分析
+- タグ別のコスト分析
+- 時系列のコスト傾向分析
 
 ```bash
 # Get cost data using AWS CLI
 aws ce get-cost-and-usage \
   --time-period Start=2025-06-01,End=2025-07-01 \
   --granularity MONTHLY \
-  --metrics "BlendedCost" "UnblendedCost" "UsageQuantity" \
+  --metrics "UnblendedCost" "AmortizedCost" \
   --group-by Type=DIMENSION,Key=SERVICE Type=TAG,Key=Environment
 ```
 
+2025 年の日付は構文の過去例であり、現行のコストレポートではありません。排他的な終了日を設定した、利用可能な UTC 課金期間を選択してください。`NextPageToken` がある場合は、最初のレスポンスだけで完了とせず、後続ページも取得してください。コストの基準はそれぞれ別に比較し、異なる基準の値を合算したり、互換性のない単位の `UsageQuantity` を集計したりしないでください。サービス/タグによるグループ化にはタグなしの値も含まれ、クラスター固有の集計になるとは限りません。
+
 #### Cost Anomaly Detection
 
-AWS Cost Anomaly Detection を使用して abnormal cost increases を検出します。
+AWS Cost Anomaly Detection を使って異常なコスト増加を検出します。
 
-1. AWS Management Console に log in します
-2. AWS Cost Management service に navigate します
-3. "Cost Anomaly Detection" を選択します
-4. "Create anomaly monitor" をクリックします
-5. monitor type と notification preferences を設定します
+1. AWS Management Console にサインインします
+2. AWS Cost Management サービスに移動します
+3. 「Cost Anomaly Detection」を選択します
+4. 「Create anomaly monitor」をクリックします
+5. モニターのタイプと通知設定を構成します
 
-#### Cost Budget Setting
+#### コスト予算の設定
 
-AWS Budgets を使用して cost budgets を設定し、超過時に alerts を受け取ります。
+この 1,000 USD/80% の例は、実際の月次予算通知を作成します。承認済みの値にアカウントとメールアドレスを置き換えてください。正規の Budgets タグフィルター（例: `user:Environment$Production`）が課金構成と一致することを確認してください。このフィルターはサービスを問わずタグ付きコストを選択します。Service を EKS に限定すると、EC2、ストレージ、その他のクラスターコストが除外されます。タグなし/共有コストには別途配分が必要です。Budgets は遅延する課金データを処理するものであり、厳格な支出上限ではありません。既存の予算は所有者と照合してください。ここでは過去の固定有効期限は設定していません。
 
 ```bash
 # Create budget using AWS CLI
@@ -1192,7 +965,7 @@ aws budgets create-budget \
 budget.json:
 ```json
 {
-  "BudgetName": "EKS Cluster Budget",
+  "BudgetName": "Tagged Production Workloads",
   "BudgetLimit": {
     "Amount": "1000",
     "Unit": "USD"
@@ -1201,14 +974,7 @@ budget.json:
   "CostFilters": {
     "TagKeyValue": [
       "user:Environment$Production"
-    ],
-    "Service": [
-      "Amazon Elastic Kubernetes Service"
     ]
-  },
-  "TimePeriod": {
-    "Start": 1625097600,
-    "End": 1627776000
   },
   "TimeUnit": "MONTHLY"
 }
@@ -1236,232 +1002,231 @@ notifications.json:
 
 ### Kubecost
 
-Kubecost は Kubernetes cluster costs の monitoring と optimization に特化した tool です。
+Kubecost は、Kubernetes クラスターのコストを監視・最適化するための専用ツールです。
 
-#### Kubecost Installation
+#### Kubecost のインストール
+
+確認済みの chart/application は、以下の現行リポジトリの **3.3.1** です。Kubecost 3.x は ClickHouse と finops-agent による直接収集を使用します。2.x の `cost-analyzer` インストールや、同梱 Prometheus/node-exporter の値を再利用しないでください。適用する前に、[chart のドキュメント](https://github.com/kubecost/cost-analyzer-helm-chart)に従って、ライセンス、Kubernetes 互換性、ストレージクラス/PVC サイズ、クラスター ID、ネットワーク収集、アクセス制御を確認してください。既存の 2.x リリースについては、文書化された移行手順に従ってください。これはインプレースアップグレードの手順ではありません。実際にインストールしたことや、本番利用の準備が整っていることを主張するものではありません。[FinOps プラットフォームガイド](../ops/13-finops-cost-platform.md)では OpenCost と課金データの照合についても説明しています。
 
 ```bash
-helm repo add kubecost https://kubecost.github.io/cost-analyzer/
-helm install kubecost kubecost/cost-analyzer \
-  --namespace kubecost \
-  --create-namespace \
-  --set kubecostToken="<your-token>"
+helm repo add kubecost https://kubecost.github.io/kubecost/
+helm repo update kubecost
+helm show values kubecost/kubecost --version 3.3.1 > kubecost-values.yaml
+# Edit this file for the reviewed cluster ID, storage, license, and collection settings.
+helm template kubecost kubecost/kubecost --version 3.3.1 \
+  --namespace kubecost -f kubecost-values.yaml > kubecost-rendered.yaml
+# Install a NEW release only after reviewing the rendered resources and prerequisites.
+helm install kubecost kubecost/kubecost --version 3.3.1 \
+  --namespace kubecost --create-namespace -f kubecost-values.yaml
 ```
 
-#### Kubecost Dashboard
+#### Kubecost ダッシュボード
 
-Kubecost dashboard は次の information を提供します。
+Kubecost ダッシュボードでは、次の情報を確認できます。
 
-- namespace、deployment、service、node 別の cost
-- Resource efficiency and utilization
-- Cost optimization recommendations
-- Cost allocation and chargeback reports
+- 名前空間、Deployment、Service、ノード別のコスト
+- リソース効率と使用率
+- コスト最適化の推奨事項
+- コスト配分と部門振替レポート
 
-#### Kubecost Alerts
+#### Kubecost アラート
 
-cost anomalies または budget overruns の notifications を受け取るために Kubecost alerts を設定します。
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cost-analyzer-alerts
-  namespace: kubecost
-data:
-  alerts.json: |
-    {
-      "alerts": [
-        {
-          "name": "Budget Warning",
-          "description": "Monthly spend is approaching budget",
-          "type": "budget",
-          "threshold": 0.8,
-          "window": "month",
-          "aggregation": "namespace",
-          "filter": {
-            "namespace": "team-a"
-          },
-          "budget": 1000
-        }
-      ]
-    }
-```
+インストール済み Kubecost のエディション/バージョンで文書化されているアラート機能を使い、受信者、認証情報、予算期間、集計、配信方法を明示的に設定してください。任意に作成した `cost-analyzer-alerts` ConfigMap と `alerts.json` は、自動的に読み込まれるわけではありません。以前の例では有効なスキーマやマウントも示されていませんでした。上記の AWS Budgets の例は、これとは別の具体的な課金アラートです。[FinOps ガイド](../ops/13-finops-cost-platform.md)では、明示的なコスト配分レポートのワークフローを説明しています。アラートに依存する前に合成テストで配信を検証し、しきい値超過だけでなく、データの欠落/陳腐化も監視してください。
 
 ### CloudWatch Container Insights
 
-CloudWatch Container Insights を使用して EKS cluster resource usage を monitor します。
+CloudWatch Container Insights を使って EKS クラスターのリソース使用状況を監視します。
 
-#### Enable Container Insights
+#### Container Insights の有効化
 
-```bash
-# Enable Container Insights
-eksctl utils update-cluster-logging \
-  --enable-types containerinsights \
-  --cluster my-cluster \
-  --region us-west-2
-```
+Container Insights は CloudWatch agent/observability add-on が収集するノード/ワークロードのテレメトリです。`containerinsights` は `eksctl utils update-cluster-logging` の EKS コントロールプレーンログタイプではありません。[監視ガイド](06-eks-monitoring-logging.md)に従い、互換性のあるアドオン、IAM 関連付け、設定、プラットフォーム固有の収集経路を選択してください。コレクターの所有者は 1 つに統一し、メトリクス/ログが実際に配信されていることを確認してください。アドオン/agent のテレメトリ自体にも料金が発生する場合があります。
 
-#### Resource Usage Monitoring
+#### リソース使用状況の監視
 
-CloudWatch dashboard では次の metrics を monitor できます。
+CloudWatch ダッシュボードでは、次のメトリクスを監視できます。
 
-- CPU と memory usage
-- Disk and network I/O
-- Container restart count
-- Node status
+- CPU とメモリの使用量
+- ディスクとネットワークの I/O
+- コンテナの再起動回数
+- ノードの状態
 
-#### Cost Optimization Insights
+#### コスト最適化のインサイト
 
-CloudWatch Container Insights data を analyze して cost optimization opportunities を特定します。
+CloudWatch Container Insights のデータを分析し、コスト最適化の機会を特定します。
 
-- over-provisioned resources を特定する
-- resource utilization が低い nodes を特定する
-- resource requests と actual usage の差異を analyze する
+- 過剰にプロビジョニングされたリソースを特定する
+- リソース使用率の低いノードを特定する
+- リソース requests と実際の使用量との差を分析する
 
-### Custom Cost Dashboard
+### カスタムコストダッシュボード
 
-custom cost dashboards を作成して EKS cluster costs を包括的に monitor できます。
+EKS クラスターのコストを総合的に監視するカスタムコストダッシュボードを作成できます。
 
-#### Grafana Dashboard
+#### Grafana ダッシュボード
 
-Prometheus と Grafana を使用して custom cost dashboards を作成します。
+Prometheus と Grafana を使ってカスタムコストダッシュボードを作成します。
 
-1. Prometheus で resource usage metrics を収集します
-2. Grafana で cost dashboard を作成します
-3. AWS Cost Explorer API と統合して actual cost data を表示します
+1. Prometheus でリソース使用量メトリクスを収集します
+2. Grafana でコストダッシュボードを作成します
+3. Cost Explorer/CUR の結果には、別途実装した認証済みの課金データパイプラインまたはサポート対象のデータソースを使用します。パネルを追加しても Prometheus の使用量メトリクスが実際の課金データになるわけではありません。ブラウザーに表示されるダッシュボード JSON に課金認証情報を含めないでください
 
-#### Cost Optimization Score
+#### コスト最適化スコア
 
-cost optimization scores を計算して cluster cost efficiency を track します。
+数式、対象範囲、期間を文書化したうえで、以下を個別の指標として追跡してください。普遍的なコスト最適化スコアは存在せず、これらの比率だけで無駄や金銭的な節約が証明されるわけではありません。
 
-- Resource request to usage ratio
-- Node utilization
-- Spot instance usage ratio
-- Idle resource ratio
+- リソース requests と使用量の比率
+- ノード使用率
+- Spot インスタンス利用率
+- アイドルリソース率
 
-## Cost Optimization Best Practices
+## コスト最適化のベストプラクティス
 
-EKS cluster costs を最適化するための best practices を見てみましょう。
+EKS クラスターのコストを最適化するためのベストプラクティスを見ていきましょう。
 
-```mermaid
-flowchart TD
-    BestPractices[Cost Optimization Best Practices] --> GeneralPractices[General Best Practices]
-    BestPractices --> WorkloadSpecific[Workload-specific Optimization]
-    BestPractices --> FinancialServices[Cost Optimization for Financial Services]
+![EKS のコスト最適化のベストプラクティスを、一般的なベストプラクティス、ワークロード別の最適化、金融サービス向けのコスト最適化に分岐して示す図。一般的なベストプラクティスの下に、測定、分析、最適化、監視、反復からなる継続的なコスト最適化のサイクルを示す。](../.gitbook/assets/en-eks-07-eks-cost-optimization-7.png)
 
-    GeneralPractices --> ContinuousOpt[Continuous Cost Optimization]
-    GeneralPractices --> CostCulture[Building Cost-aware Culture]
-    GeneralPractices --> Automation[Utilizing Automation]
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-07-eks-cost-optimization-7.html)
 
-    WorkloadSpecific --> DevTest[Development and Test Environments]
-    WorkloadSpecific --> BatchWorkloads[Batch Workloads]
-    WorkloadSpecific --> WebApps[Web Applications]
-    WorkloadSpecific --> DBWorkloads[Database Workloads]
+### 一般的なベストプラクティス
 
-    FinancialServices --> ComplianceCost[Regulatory Compliance Cost Management]
-    FinancialServices --> HABalance[High Availability and Cost Balance]
-    FinancialServices --> SecurityBalance[Security Requirements and Cost Balance]
+#### 継続的なコスト最適化
 
-    ContinuousOpt --> Measure[Measure]
-    ContinuousOpt --> Analyze[Analyze]
-    ContinuousOpt --> Optimize[Optimize]
-    ContinuousOpt --> Monitor[Monitor]
-    ContinuousOpt --> Iterate[Iterate]
+コスト最適化は一度きりの作業ではなく、継続的なプロセスです。
 
-    DevTest --> AutoShutdown[Auto shutdown environments when not in use]
-    DevTest --> DevSpot[Use spot instances]
-    DevTest --> ResourceLimits[Set resource limits]
+1. **測定**: 現在のコストとリソース使用量を測定します
+2. **分析**: コスト要因と最適化の機会を分析します
+3. **最適化**: コスト最適化戦略を実施します
+4. **監視**: 結果を監視し、必要に応じて調整します
+5. **反復**: このプロセスを繰り返します
 
-    BatchWorkloads --> BatchSpot[Use spot instances]
-    BatchWorkloads --> OffPeak[Schedule runs during off-peak hours]
-    BatchWorkloads --> ResourceRelease[Release resources after job completion]
+#### コストを意識する文化の醸成
 
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+組織内でコストを意識する文化を醸成します。
 
-    %% Class application
-    class DevSpot,BatchSpot awsService;
-    class ResourceLimits,ResourceRelease k8sComponent;
-    class BestPractices,GeneralPractices,WorkloadSpecific,FinancialServices,ContinuousOpt,CostCulture,Automation,DevTest,BatchWorkloads,WebApps,DBWorkloads,ComplianceCost,HABalance,SecurityBalance,Measure,Analyze,Optimize,Monitor,Iterate,AutoShutdown,OffPeak default;
-```
+- チームがコストを把握できるようにする
+- コスト最適化目標を設定する
+- コスト最適化の成果を認め、報奨する
+- コスト最適化のベストプラクティスを共有する
 
-### General Best Practices
+#### 自動化の活用
 
-#### Continuous Cost Optimization
+コスト最適化に自動化を活用します。
 
-Cost optimization は一度きりの task ではなく、継続的な process です。
+- オートスケーリングを導入する
+- 使用量に基づいてリソースをプロビジョニングする
+- コスト異常の検出とアラートを自動化する
+- 候補を自動的に特定し、所有者、保持期間、依存関係、復旧を確認した後にのみ削除する
 
-1. **Measure**: current costs と resource usage を測定します
-2. **Analyze**: cost drivers と optimization opportunities を analyze します
-3. **Optimize**: cost optimization strategies を実装します
-4. **Monitor**: results を monitor し、必要に応じて調整します
-5. **Iterate**: process を繰り返します
+### ワークロード別の最適化
 
-#### Building Cost-aware Culture
+#### 開発/テスト環境
 
-organization 内に cost-aware culture を構築します。
+開発/テスト環境のコストを最適化します。
 
-- teams に cost visibility を提供する
-- cost optimization goals を設定する
-- cost optimization achievements を認識し、報酬を与える
-- cost optimization best practices を共有する
+- 使用していないときに環境を自動停止する
+- Spot インスタンスを使用する
+- リソース limits を設定する
+- 共有環境の利用を検討する
 
-#### Utilizing Automation
-
-automation を活用してコストを最適化します。
-
-- auto-scaling を実装する
-- usage-based resource provisioning
-- cost anomaly detection と alerting を自動化する
-- idle resources を自動的に特定して削除する
-
-### Workload-specific Optimization
-
-#### Development and Test Environments
-
-development と test environments のコストを最適化します。
-
-- 使用していない environments を auto shutdown する
-- spot instances を使用する
-- resource limits を設定する
-- shared environments の使用を検討する
-
-```bash
-# CronJob for auto-shutdown of dev environment
-kubectl apply -f - <<EOF
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dev-app-scaler
+  namespace: dev
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dev-app-scaler
+  namespace: dev
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  resourceNames: ["dev-app"]
+  verbs: ["get"]
+- apiGroups: ["apps"]
+  resources: ["deployments/scale"]
+  resourceNames: ["dev-app"]
+  verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dev-app-scaler
+  namespace: dev
+subjects:
+- kind: ServiceAccount
+  name: dev-app-scaler
+  namespace: dev
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dev-app-scaler
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: dev-env-shutdown
-  namespace: kube-system
+  name: dev-app-shutdown
+  namespace: dev
 spec:
-  schedule: "0 20 * * 1-5"  # Weekdays at 8 PM
+  suspend: true
+  schedule: "0 20 * * 1-5"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 1800
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
   jobTemplate:
     spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
       template:
         spec:
-          serviceAccountName: cluster-admin
+          serviceAccountName: dev-app-scaler
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
           containers:
           - name: kubectl
-            image: bitnami/kubectl:latest
-            command:
-            - /bin/sh
-            - -c
-            - kubectl scale deployment -n dev --all --replicas=0
-          restartPolicy: OnFailure
-EOF
+            image: registry.k8s.io/kubectl:v1.36.2
+            command: ["kubectl"]
+            args: ["scale", "deployment/dev-app", "--namespace=dev", "--current-replicas=3", "--replicas=0"]
+            env:
+            - name: HOME
+              value: /tmp
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 128Mi
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          volumes:
+          - name: tmp
+            emptyDir: {}
 ```
 
-#### Batch Workloads
+この CronJob はデフォルトで**一時停止状態**であり、既存の `dev/dev-app` Deployment のみを対象とし、レプリカ数が 3 であることを想定しています。サーバーとのバージョンスキューがサポート範囲内の kubectl バージョンを使用してください。有効にする前に UTC のスケジュールと復元手順を合意し、名前と事前条件を慎重に調整してください。HPA または GitOps がレプリカ数を管理している場合、競合させずに、その所有者とスケジュールを調整してください。Deployment を直接スケールダウンしても、PDB による退避許可チェックは適用されません。承認済みの開発環境の停止に限って使用してください。Pod を停止しても、EKS コントロールプレーン料金、保持されたストレージ、スケールダウンできないノードは停止しません。
 
-batch workloads のコストを最適化します。
+#### バッチワークロード
 
-- spot instances を使用する
-- off-peak hours に runs を schedule する
-- resource requests を最適化する
-- job completion 後に resources を release する
+バッチワークロードのコストを最適化します。
+
+- Spot インスタンスを使用する
+- ジョブの期限と利用可能な容量に合わせてスケジュールする。オンデマンドコンピューティングには一般的な時間帯別割引はありません
+- リソース requests を最適化する
+- ジョブ完了後にリソースを解放する
 
 ```yaml
 apiVersion: batch/v1
@@ -1472,7 +1237,7 @@ spec:
   template:
     spec:
       nodeSelector:
-        kubernetes.io/lifecycle: spot
+        eks.amazonaws.com/capacityType: SPOT
       containers:
       - name: batch-processor
         image: batch-processor:latest
@@ -1487,14 +1252,16 @@ spec:
   backoffLimit: 4
 ```
 
-#### Web Applications
+この Job は **managed node group の Spot ノード**を選択します。Karpenter では代わりに `karpenter.sh/capacity-type: spot` を使用します。対象ノードに実際に設定されているラベルを選択してください。アプリケーションイメージはプレースホルダーです。冪等な再試行/チェックポイント処理を実装し、ノードに taint がある場合は許容されることを確認してください。Job 完了後の TTL は Kubernetes オブジェクトをクリーンアップしますが、PVC、ボリューム、課金対象ノードが必ず削除されるわけではありません。
 
-web applications のコストを最適化します。
+#### Web アプリケーション
 
-- auto-scaling を実装する
-- CDN を使用して traffic を削減する
-- caching strategy を実装する
-- serverless architecture を検討する
+Web アプリケーションのコストを最適化します。
+
+- オートスケーリングを導入する
+- CDN を使用してトラフィックを削減する
+- キャッシュ戦略を導入する
+- サーバーレスアーキテクチャを検討する
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -1523,68 +1290,74 @@ spec:
         averageUtilization: 80
 ```
 
-#### Database Workloads
+#### データベースワークロード
 
-database workloads のコストを最適化します。
+データベースワークロードのコストを最適化します。
 
-- 適切な instance type を選択する
-- storage auto-scaling を設定する
-- read replicas の使用を検討する
-- caching layer の追加を検討する
+- 適切なインスタンスタイプを選択する
+- ストレージの自動スケーリングを設定する
+- リードレプリカの使用を検討する
+- キャッシュレイヤーの追加を検討する
 
-### Cost Optimization for Financial Services
+### 金融サービス向けのコスト最適化
 
-financial services industry で EKS を使用する際に検討すべき追加の cost optimization strategies:
+金融サービス業界で EKS を利用する際に検討できる、追加のコスト最適化戦略:
 
-#### Regulatory Compliance Cost Management
+#### 規制コンプライアンスに関するコスト管理
 
-regulatory compliance requirements を満たしながらコストを最適化します。
+規制コンプライアンス要件を満たしながらコストを最適化します。
 
-- regulatory requirements を満たす最小限の resources を provision する
-- compliance automation により operational costs を削減する
-- regulated environments と non-regulated environments を分離する
+- 規制要件を満たすための最小限のリソースをプロビジョニングする
+- コンプライアンスの自動化によって運用コストを削減する
+- 規制対象環境と非規制環境を分離する
 
-#### High Availability and Cost Balance
+#### 高可用性とコストのバランス
 
-high availability requirements とコストの balance を維持します。
+高可用性要件とコストのバランスを保ちます。
 
-- critical workloads に Multi-AZ deployment を使用する
-- non-critical workloads には single-AZ deployment を検討する
-- disaster recovery environments に cost-efficient な approach を実装する
+- 重要なワークロードにはマルチ AZ デプロイを使用する
+- 重要度の低いワークロードではシングル AZ デプロイを検討する
+- 災害復旧環境にコスト効率の高いアプローチを導入する
 
-#### Security Requirements and Cost Balance
+#### セキュリティ要件とコストのバランス
 
-security requirements とコストの balance を維持します。
+セキュリティ要件とコストのバランスを保ちます。
 
-- risk-based approach を使用して security controls を実装する
-- security automation により operational costs を削減する
-- cost-efficient な security tools and services を選択する
+- リスクベースのアプローチでセキュリティ制御を導入する
+- セキュリティの自動化によって運用コストを削減する
+- コスト効率の高いセキュリティツールとサービスを選択する
 
-## Conclusion
+## まとめ
 
-Amazon EKS cluster costs を効果的に最適化するには、compute、storage、networking、operational costs を対象とする包括的な approach が必要です。このドキュメントで扱った strategies と best practices を実装することで、performance や stability を犠牲にすることなく EKS costs を大幅に削減できます。
+Amazon EKS クラスターのコストを効果的に最適化するには、コンピューティング、ストレージ、ネットワーク、運用コストを網羅した総合的なアプローチが必要です。それぞれの変更を、測定された課金額とワークロードの SLO に照らして評価してください。コスト削減や、パフォーマンス/安定性が変わらないことは保証されません。
 
-Key Points:
+要点:
 
-1. **EKS Cost Components**: EKS cluster cost、compute cost、storage cost、networking cost、その他の costs
-2. **Compute Cost Optimization**: 適切な instance types の選択、spot instances の活用、Savings Plans と Reserved Instances の使用、auto-scaling の最適化
-3. **Storage Cost Optimization**: EBS volume optimization、EFS cost optimization、S3 cost optimization
-4. **Networking Cost Optimization**: Data transfer optimization、load balancer optimization、NAT gateway optimization
-5. **Resource Management and Governance**: Resource requests and limits optimization、namespaces and resource quotas、cost allocation and tagging
-6. **Cost Monitoring and Analysis**: AWS Cost Explorer、Kubecost、CloudWatch Container Insights、custom cost dashboards
-7. **Cost Optimization Best Practices**: General best practices、workload-specific optimization、financial services 向け cost optimization
+1. **EKS のコスト要素**: EKS クラスターのコスト、コンピューティングコスト、ストレージコスト、ネットワークコスト、その他のコスト
+2. **コンピューティングコストの最適化**: 適切なインスタンスタイプの選択、Spot インスタンスの利用、Savings Plans と Reserved Instances の利用、オートスケーリングの最適化
+3. **ストレージコストの最適化**: EBS ボリュームの最適化、EFS のコスト最適化、S3 のコスト最適化
+4. **ネットワークコストの最適化**: データ転送の最適化、ロードバランサーの最適化、NAT ゲートウェイの最適化
+5. **リソース管理とガバナンス**: リソース requests と limits の最適化、名前空間とリソースクォータ、コスト配分とタグ付け
+6. **コストの監視と分析**: AWS Cost Explorer、Kubecost、CloudWatch Container Insights、カスタムコストダッシュボード
+7. **コスト最適化のベストプラクティス**: 一般的なベストプラクティス、ワークロード別の最適化、金融サービス向けのコスト最適化
 
-Cost optimization は継続的な process であり、cluster と workloads の進化に合わせて cost optimization strategies を定期的に review し、調整する必要があります。
+コスト最適化は継続的なプロセスです。クラスターやワークロードの変化に合わせて、コスト最適化戦略を定期的に見直し、調整してください。
 
-## References
+## 参考資料
 
-- [Amazon EKS Pricing](https://aws.amazon.com/eks/pricing/)
-- [AWS Cost Optimization Resources](https://aws.amazon.com/aws-cost-management/)
-- [Kubernetes Resource Management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
-- [AWS Well-Architected Framework - Cost Optimization Pillar](https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html)
-- [Kubecost Documentation](https://www.kubecost.com/kubernetes-cost-optimization/kubernetes-cost-optimization-best-practices/)
-- [EKS Best Practices - Cost Optimization](https://aws.github.io/aws-eks-best-practices/cost-optimization/)
+- [Amazon EKS の料金](https://aws.amazon.com/eks/pricing/)
+- [AWS のコスト最適化リソース](https://aws.amazon.com/aws-cost-management/)
+- [Kubernetes リソース管理](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+- [AWS Well-Architected Framework - コスト最適化の柱](https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html)
+- [Kubecost ドキュメント](https://www.kubecost.com/kubernetes-cost-optimization/kubernetes-cost-optimization-best-practices/)
+- [EKS ベストプラクティス - コスト最適化](https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt.html)
 
-## Quiz
+- [FinOps の原則](https://www.finops.org/framework/principles/)
+- [Karpenter の互換性](https://karpenter.sh/docs/upgrading/compatibility/)
+- [EKS Fargate のリソース割り当て](https://docs.aws.amazon.com/eks/latest/userguide/fargate-pod-configuration.html)
+- [EBS gp3 の上限](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)
+- [リージョン NAT ゲートウェイ](https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateways-regional.html)
 
-この章で学んだ内容を確認するには、[topic quiz](../quizzes/eks/07-eks-cost-optimization-quiz.md) を試してください。
+## クイズ
+
+この章で学んだことを確認するには、[トピック別クイズ](../quizzes/eks/07-eks-cost-optimization-quiz.md)に挑戦してください。

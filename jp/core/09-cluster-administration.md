@@ -1,41 +1,41 @@
 # Kubernetes クラスター管理
 
-> **サポート対象バージョン**: Kubernetes 1.34–1.37 向けの EKS 標準サポート（2026 年 10 月 12 日確認）
-> **最終更新**: October 12, 2026
+> **サポート対象バージョン**: Kubernetes 1.34～1.37 の EKS 標準サポート（2026年10月12日確認）
+> **最終更新日**: 2026年10月16日
 
-Kubernetes クラスター管理は、クラスターのセットアップ、保守、監視、トラブルシューティング、アップグレードを含む重要な作業です。この章では、Kubernetes クラスター管理のさまざまな側面と、Amazon EKS におけるクラスター管理のベストプラクティスを説明します。
+Kubernetes クラスター管理は、クラスターのセットアップ、保守、監視、トラブルシューティング、アップグレードを含む重要な作業です。この章では、Kubernetes クラスター管理のさまざまな側面と、Amazon EKS でクラスターを管理するためのベストプラクティスを説明します。
 
-セルフマネージドの kubeadm 操作と EKS サービス操作は別物です。EKS は control plane ホスト、static Pod manifest、または etcd への直接アクセスを公開しません。以下のブロックは順番に実行する 1 つのスクリプトではなく、別々の例として扱ってください。実際のクラスターのバージョンに対するアップストリームのサポートおよび add-on の互換性を確認してください。
+kubeadm による自己管理操作と EKS サービスの操作は別物です。EKS では、コントロールプレーンのホスト、静的 Pod マニフェスト、etcd への直接アクセスは公開されません。以下の各コードブロックは個別の例として扱い、1つのスクリプトとして順番に実行しないでください。実際のクラスターのバージョンについて、上流のサポート状況とアドオンの互換性を確認してください。
 
 ## 基本概念
 
-- **クラスターライフサイクル管理**: クラスター作成から廃止までのプロセス全体
-- **Control Plane 管理**: API server、scheduler、controller manager などの中核コンポーネントの管理
-- **Node 管理**: worker node の追加、削除、保守
-- **リソース割り当て**: CPU、メモリ、ストレージなどのリソース割り当てと制限の設定
-- **アップグレード戦略**: ダウンタイムを最小化するクラスターおよびアプリケーションのアップグレード戦略
+- **クラスターライフサイクル管理**: クラスターの作成から廃止までの全プロセス
+- **コントロールプレーン管理**: API server、scheduler、controller manager などの主要コンポーネントの管理
+- **ノード管理**: ワーカーノードの追加、削除、保守
+- **リソース割り当て**: CPU、メモリ、ストレージなどのリソース割り当てと上限の設定
+- **アップグレード戦略**: ダウンタイムを最小限に抑えるためのクラスターとアプリケーションのアップグレード戦略
 
 ## 目次
 1. [クラスター管理の概要](#cluster-administration-overview)
-2. [クラスターコンポーネント管理](#cluster-component-management)
+2. [クラスターコンポーネントの管理](#cluster-component-management)
 3. [リソース管理](#resource-management)
 4. [クラスターのネットワーク](#cluster-networking)
-5. [認証および認可管理](#authentication-and-authorization-management)
+5. [認証と認可の管理](#authentication-and-authorization-management)
 6. [クラスターのアップグレード](#cluster-upgrades)
-7. [バックアップとリカバリ](#backup-and-recovery)
-8. [監視とロギング](#monitoring-and-logging)
+7. [バックアップと復旧](#backup-and-recovery)
+8. [監視とログ記録](#monitoring-and-logging)
 9. [トラブルシューティング](#troubleshooting)
 10. [Amazon EKS クラスター管理](#amazon-eks-cluster-administration)
 11. [クラスター管理のベストプラクティス](#cluster-administration-best-practices)
 12. [まとめ](#conclusion)
 
-## 環境セットアップ
+## 環境のセットアップ
 
-クラスター管理には以下のツールが必要です。
+クラスター管理には、次のツールが必要です。
 
-[公式の kubectl インストールガイド](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)を使用し、kubectl を API server と 1 つのマイナーバージョン以内に保ってください。セルフマネージドクラスターでは、対象マイナーの `pkgs.k8s.io` リポジトリから kubeadm/kubelet をインストールします。古い `1.x.y-00` パッケージ例は廃止されています。インストール前に、設定済みリポジトリから正確なパッケージバージョンを選択してください。
+[kubectl の公式インストールガイド](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)に従ってインストールし、kubectl のバージョンを API server のマイナーバージョンから1つ以内に保ちます。自己管理クラスターでは、対象マイナーバージョンの `pkgs.k8s.io` リポジトリから kubeadm/kubelet をインストールしてください。古い `1.x.y-00` パッケージの例は廃止されています。インストール前に、設定済みのリポジトリから正確なパッケージバージョンを選択してください。
 
-[公式 Helm 手順](https://helm.sh/docs/intro/install/)および[k9s リリース](https://github.com/derailed/k9s/releases)から Helm と k9s をインストールし、プラットフォームアーキテクチャとチェックサムを確認してください。EKS 管理には、認証済み AWS CLI と互換性のある eksctl も必要です。
+[Helm の公式手順](https://helm.sh/docs/intro/install/)と[k9s のリリース](https://github.com/derailed/k9s/releases)に従って Helm と k9s をインストールし、プラットフォームのアーキテクチャとチェックサムを確認してください。EKS の管理には、認証済みの AWS CLI と互換性のあるバージョンの eksctl も必要です。
 
 ```bash
 kubectl version --client
@@ -48,29 +48,29 @@ apt-cache madison kubeadm
 
 ## クラスター管理の概要
 
-Kubernetes クラスター管理とは、クラスターのライフサイクル全体を管理するプロセスです。これには以下の主要領域が含まれます。
+Kubernetes クラスター管理とは、クラスターのライフサイクル全体を管理するプロセスです。主な領域は次のとおりです。
 
-1. **クラスターのセットアップと設定**: クラスター作成、node 追加、ネットワーク設定、ストレージ設定など
-2. **運用管理**: リソース監視、パフォーマンス最適化、キャパシティプランニング、トラブルシューティング
-3. **セキュリティ管理**: 認証、認可、network policy、security context など
-4. **アップグレードとパッチ**: クラスターバージョンのアップグレード、セキュリティパッチの適用
-5. **バックアップとリカバリ**: クラスターデータのバックアップ、災害復旧計画
+1. **クラスターのセットアップと構成**: クラスターの作成、ノードの追加、ネットワークのセットアップ、ストレージの構成など
+2. **運用管理**: リソースの監視、パフォーマンスの最適化、キャパシティプランニング、トラブルシューティング
+3. **セキュリティ管理**: 認証、認可、ネットワークポリシー、セキュリティコンテキストなど
+4. **アップグレードとパッチ適用**: クラスターのバージョンアップグレード、セキュリティパッチの適用
+5. **バックアップと復旧**: クラスターデータのバックアップ、災害復旧計画
 
 次の図は、Kubernetes クラスター管理の主な領域と関連ツールを示しています。
 
-## クラスターコンポーネント管理
+## クラスターコンポーネントの管理
 
-Kubernetes クラスターは control plane コンポーネントと node コンポーネントで構成されます。各コンポーネントの管理は、クラスターの安定性とパフォーマンスに不可欠です。
+Kubernetes クラスターは、コントロールプレーンのコンポーネントとノードのコンポーネントで構成されます。各コンポーネントを管理することは、クラスターの安定性とパフォーマンスにとって重要です。
 
-### Control Plane コンポーネント管理
+### コントロールプレーンコンポーネントの管理
 
-![Kubernetes control plane から 5 つのコンポーネント（API server、etcd、scheduler、controller manager、cloud controller manager）へ分岐し、それぞれが認証と認可、データバックアップ、スケジューリングポリシー、controller 状態監視、クラウドリソース管理という担当運用課題と組み合わされているツリー図。](../.gitbook/assets/en-core-09-cluster-administration-0.png)
+![Kubernetes コントロールプレーンから5つのコンポーネント（API server、etcd、scheduler、controller manager、cloud controller manager）に分岐するツリー図。各コンポーネントには、それぞれが担う運用上の関心事項（認証と認可、データバックアップ、スケジューリングポリシー、コントローラーの状態監視、クラウドリソース管理）が対応付けられている。](../.gitbook/assets/en-core-09-cluster-administration-0.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-0.html)
 
-#### API Server 管理
+#### API Server の管理
 
-API server は Kubernetes API を公開する control plane の中核コンポーネントです。
+API server は、Kubernetes API を公開するコントロールプレーンの主要コンポーネントです。
 
 ```bash
 # Check API server logs
@@ -83,9 +83,9 @@ sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml
 kubectl get --raw='/readyz?verbose'
 ```
 
-#### etcd 管理
+#### etcd の管理
 
-etcd は Kubernetes API の状態を保存する分散 key-value store です。
+etcd は、Kubernetes API の状態を保存する分散キーバリューストアです。
 
 ```bash
 # etcd backup
@@ -103,9 +103,9 @@ ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
   endpoint health
 ```
 
-### Node 管理
+### ノード管理
 
-Node はコンテナ化されたアプリケーションを実行する worker machine です。
+ノードは、コンテナ化されたアプリケーションを実行するワーカーマシンです。
 
 ```bash
 # List nodes
@@ -124,7 +124,7 @@ kubectl drain <node-name> --ignore-daemonsets
 kubectl uncordon <node-name>
 ```
 
-### コンポーネント状態の監視
+### コンポーネントの状態監視
 
 ```bash
 # Check control plane component status
@@ -137,46 +137,46 @@ kubectl get pods -n kube-system
 kubectl top nodes
 ```
 
-![クラスター管理者の 5 つの責任領域と、それぞれを遂行するためのツールの対応を示す図。](../.gitbook/assets/en-core-09-cluster-administration-1.png)
+![クラスター管理者の5つの責任領域と、それぞれを実行するために使用するツールを対応付けた図。](../.gitbook/assets/en-core-09-cluster-administration-1.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-1.html)
 
 ### クラスター管理ツール
 
-Kubernetes クラスター管理にはさまざまなツールを使用できます。
+Kubernetes クラスター管理には、さまざまなツールを使用できます。
 
-1. **kubectl**: Kubernetes クラスターと対話するためのコマンドラインツール
-2. **kubeadm**: Kubernetes クラスターを作成・管理するツール
-3. **kops**: Kubernetes クラスターを作成、アップグレード、管理するツール
-4. **eksctl**: Amazon EKS クラスターを作成・管理するツール
+1. **kubectl**: Kubernetes クラスターとやり取りするためのコマンドラインツール
+2. **kubeadm**: Kubernetes クラスターを作成、管理するためのツール
+3. **kops**: Kubernetes クラスターを作成、アップグレード、管理するためのツール
+4. **eksctl**: Amazon EKS クラスターを作成、管理するためのツール
 5. **Helm**: Kubernetes アプリケーションのパッケージマネージャー
-6. **Headlamp**: Kubernetes web UI。旧 Kubernetes Dashboard プロジェクトはアーカイブ済みです
-7. **Prometheus & Grafana**: 監視およびアラートツール
-8. **Fluentd & Elasticsearch**: ロギングツール
+6. **Headlamp**: Kubernetes の Web UI。旧 Kubernetes Dashboard プロジェクトはアーカイブされています
+7. **Prometheus と Grafana**: 監視およびアラートツール
+8. **Fluentd と Elasticsearch**: ログ記録ツール
 
-## クラスターコンポーネント管理
+## クラスターコンポーネントの管理
 
-Kubernetes クラスターは複数のコンポーネントで構成され、これらを効果的に管理することが重要です。
+Kubernetes クラスターは複数のコンポーネントで構成されており、それらを効果的に管理することが重要です。
 
-### Control Plane コンポーネント
+### コントロールプレーンコンポーネント
 
-Control plane コンポーネントはクラスター全体の状態を管理します。
+コントロールプレーンコンポーネントは、クラスター全体の状態を管理します。
 
 1. **kube-apiserver**: Kubernetes API を公開するコンポーネント
-2. **etcd**: クラスターデータを保存する key-value store
-3. **kube-scheduler**: Pod を node にスケジュールするコンポーネント
-4. **kube-controller-manager**: controller を実行するコンポーネント
+2. **etcd**: クラスターのデータを保存するキーバリューストア
+3. **kube-scheduler**: Pod をノードにスケジュールするコンポーネント
+4. **kube-controller-manager**: コントローラーを実行するコンポーネント
 5. **cloud-controller-manager**: クラウドプロバイダーと連携するコンポーネント
 
-次の図は、Kubernetes control plane コンポーネントとその相互作用を示しています。
+次の図は、Kubernetes コントロールプレーンコンポーネントとその相互作用を示しています。
 
-![etcd、kube-scheduler、kube-controller-manager、cloud-controller-manager が中央の kube-apiserver と双方向通信し、worker node の kubelet が container runtime を使用しながら API server と双方向通信する一方、kube-proxy は独立して Service/EndpointSlice の状態を監視するアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-2.png)
+![etcd、kube-scheduler、kube-controller-manager、cloud-controller-manager が中央の kube-apiserver と双方向に通信し、ワーカーノードの kubelet がコンテナランタイムを使用しながら API server と双方向に通信する構成図。kube-proxy は Service/EndpointSlice の状態を独立して監視する。](../.gitbook/assets/en-core-09-cluster-administration-2.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-2.html)
 
-#### Control Plane コンポーネントの監視
+#### コントロールプレーンコンポーネントの監視
 
-Control plane コンポーネントの状態を監視することは重要です。
+コントロールプレーンコンポーネントの状態を監視することが重要です。
 
 ```bash
 # Check control plane component status
@@ -193,11 +193,11 @@ kubectl exec -n kube-system etcd-<node-name> -- etcdctl \
   --key=/etc/kubernetes/pki/etcd/healthcheck-client.key endpoint health
 ```
 
-#### Control Plane コンポーネントの設定
+#### コントロールプレーンコンポーネントの構成
 
-以下の manifest は flag/設定の断片にすぎません。host networking、certificate mount、その他の kubeadm 生成設定は省略されています。実行中の control plane manifest をこの断片で置き換えないでください。image はクラスターのアップグレード計画に合わせてください。
+以下のマニフェストは、フラグと構成の一部のみを示しています。host networking、証明書のマウント、その他の kubeadm 生成設定は省略されているため、この断片で稼働中のコントロールプレーンマニフェストを置き換えないでください。イメージはクラスターのアップグレード計画に合わせてください。
 
-Control plane コンポーネント設定の管理方法:
+コントロールプレーンコンポーネントの構成を管理する方法は次のとおりです。
 
 ```yaml
 # kube-apiserver configuration example
@@ -230,21 +230,21 @@ spec:
     - --service-cluster-ip-range=10.96.0.0/12
     - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
     - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
-    image: registry.k8s.io/kube-apiserver:v1.36.4
+    image: registry.k8s.io/kube-apiserver:v1.36.5
     name: kube-apiserver
 ```
 
-### Node コンポーネント
+### ノードコンポーネント
 
-Node コンポーネントは各 node で実行され、Pod を管理します。
+ノードコンポーネントは各ノードで実行され、Pod を管理します。
 
-1. **kubelet**: 各 node で実行され、Pod と container の稼働を確保する agent
-2. **kube-proxy**: network rule を維持し、接続転送を処理します
-3. **Container Runtime**: container を実行するソフトウェア（containerd、CRI-O、または外部 CRI adapter を使用する Docker Engine）
+1. **kubelet**: 各ノードで実行され、Pod とコンテナが稼働していることを確認するエージェント
+2. **kube-proxy**: ネットワークルールを維持し、接続の転送を処理するコンポーネント
+3. **コンテナランタイム**: コンテナを実行するソフトウェア（containerd、CRI-O、または外部 CRI アダプターを使用した Docker Engine）
 
-#### Node 管理
+#### ノード管理
 
-Node 管理の主要コマンド:
+ノード管理の主なコマンドは次のとおりです。
 
 ```bash
 # List nodes
@@ -266,11 +266,11 @@ kubectl cordon <node-name>
 kubectl drain <node-name> --ignore-daemonsets
 ```
 
-Drain は standalone Pod、PDB、または local data により停止する場合があります。デフォルトで `--force` や `--delete-emptydir-data` を追加するのではなく調査してください。後者は emptyDir データの損失を明示的に許可します。保守前に drain と workload の健全性を待機してください。
+Drain は、スタンドアロン Pod、PDB、またはローカルデータがある場合に停止することがあります。既定で `--force` や `--delete-emptydir-data` を追加するのではなく、原因を調査してください。後者は emptyDir データの損失を明示的に許可します。保守を行う前に、drain の完了とワークロードの正常性を確認してください。
 
-#### Node のトラブルシューティング
+#### ノードのトラブルシューティング
 
-Node のトラブルシューティング用コマンド:
+ノードのトラブルシューティングに使用するコマンドは次のとおりです。
 
 ```bash
 # Check node status
@@ -289,11 +289,11 @@ systemctl status containerd  # When using containerd
 
 ## リソース管理
 
-Kubernetes クラスターのリソースを効果的に管理することは、クラスターの安定性とパフォーマンスの維持に重要です。
+Kubernetes クラスターのリソースを効果的に管理することは、クラスターの安定性とパフォーマンスを維持するうえで重要です。
 
-### Namespace 管理
+### Namespace の管理
 
-ライフサイクル操作の練習には使い捨ての namespace を使用してください。namespace を削除すると、その namespace 内のリソースが削除されます。必要なデータを先に確認してバックアップしてください。`get all` は workload のサブセットにすぎません。
+ライフサイクル操作の練習には、使い捨ての namespace を使用してください。namespace を削除すると、その namespace 内のリソースも削除されます。必要なデータを事前に確認し、バックアップしてください。`get all` で取得できるのはワークロードの一部だけです。
 
 ```bash
 kubectl create namespace admin-demo
@@ -304,7 +304,7 @@ kubectl delete namespace admin-demo
 
 ### ResourceQuota
 
-ResourceQuota は namespace ごとのリソース使用量を制限します。
+ResourceQuota は、namespace ごとのリソース使用量を制限します。
 
 ```yaml
 apiVersion: v1
@@ -321,11 +321,11 @@ spec:
     pods: "10"
 ```
 
-上の例では、`dev` namespace は最大 10 個の Pod、1 CPU と 1Gi メモリの request、2 CPU と 2Gi メモリの limit を持つことができます。
+上記の例では、`dev` namespace で許可される最大数は Pod が10個、requests が CPU 1個とメモリ 1Gi、limits が CPU 2個とメモリ 2Gi です。
 
 ### LimitRange
 
-LimitRange は namespace 内の個々のリソースに対するデフォルト値と制限を設定します。
+LimitRange は、namespace 内の個々のリソースに対して既定値と上限を設定します。
 
 ```yaml
 apiVersion: v1
@@ -350,11 +350,11 @@ spec:
     type: Container
 ```
 
-上の例では、`dev` namespace のすべての container は、500m CPU と 512Mi メモリのデフォルト limit、200m CPU と 256Mi メモリのデフォルト request、1 CPU と 1Gi メモリの最大値、100m CPU と 128Mi メモリの最小値を持ちます。
+上記の例では、`dev` namespace 内のすべてのコンテナに、CPU 500m とメモリ 512Mi の既定の limits、CPU 200m とメモリ 256Mi の既定の requests、CPU 1個とメモリ 1Gi の最大値、CPU 100m とメモリ 128Mi の最小値が設定されます。
 
 ### Horizontal Pod Autoscaler (HPA)
 
-HPA は CPU 使用率または custom metric に基づいて Pod の数を自動調整します。
+HPA は、CPU 使用率またはカスタムメトリクスに基づいて Pod の数を自動的に調整します。
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -377,11 +377,11 @@ spec:
         averageUtilization: 80
 ```
 
-上の例では、`frontend` Deployment は request された CPU の平均 CPU 使用率 80% を目標とします。tolerance、欠損 metric、安定化 window、および scaling policy の影響を受けます。最小 2、最大 10 の replica を維持します。
+上記の例では、`frontend` Deployment の目標 CPU 平均使用率を、要求された CPU の80%に設定しています。ただし、許容差、メトリクスの欠落、安定化期間、スケーリングポリシーの影響を受けます。レプリカ数は最小2、最大10に維持されます。
 
 ### Vertical Pod Autoscaler (VPA)
 
-VPA は Pod の CPU およびメモリ request を自動調整します。
+VPA は、Pod の CPU とメモリの requests を自動的に調整します。
 
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
@@ -397,40 +397,40 @@ spec:
     updateMode: "Recreate"
 ```
 
-上の例では、`frontend` Deployment の Pod は実際のリソース使用量に基づいて CPU とメモリの request が自動調整されます。
+上記の例では、`frontend` Deployment 内の Pod の CPU とメモリの requests が、実際のリソース使用量に基づいて自動的に調整されます。
 ## クラスターのネットワーク
 
-Kubernetes クラスターのネットワークは、Pod、Service、Node 間の通信を管理します。
+Kubernetes クラスターのネットワークは、Pod、Service、ノード間の通信を管理します。
 
 ### クラスターネットワークモデル
 
-Kubernetes ネットワークモデルの基本要件:
+Kubernetes ネットワークモデルの基本要件は次のとおりです。
 
 1. すべての Pod は NAT なしで他のすべての Pod と通信できる
-2. Node agent（kubelet）はその node 上のすべての Pod と通信できる
-3. 外部接続は routing と egress policy に依存し、普遍的な Pod NAT モード要件はない
+2. ノードエージェント（kubelet）は、そのノード上のすべての Pod と通信できる
+3. 外部接続はルーティングとエグレスポリシーによって異なり、Pod に共通する NAT モード要件はない
 
 次の図は、Kubernetes のネットワークコンポーネントと通信フローを示しています。
 
-![client traffic が Ingress 経由で Service に入り、別々の node 上の 2 つの Pod に負荷分散され、それらが相互通信し外部 service に到達するアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-3.png)
+![Ingress 経由でクライアントトラフィックが入り、Service が別々のノード上にある2つの Pod に負荷分散する構成図。Pod 同士が通信し、外部サービスにも到達する。](../.gitbook/assets/en-core-09-cluster-administration-3.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-3.html)
 
-### CNI (Container Network Interface) Plugin
+### CNI (Container Network Interface) プラグイン
 
-Kubernetes は CNI plugin を通じてネットワークを実装します。一般的な CNI plugin:
+Kubernetes は CNI プラグインを通じてネットワークを実装します。一般的な CNI プラグインは次のとおりです。
 
-1. **Calico**: 拡張された network policy およびセキュリティ機能を備えた CNI
-2. **Flannel**: シンプルな overlay networking を提供
+1. **Calico**: 強化されたネットワークポリシーとセキュリティ機能を備えた CNI
+2. **Flannel**: シンプルなオーバーレイネットワークを提供
 3. **Cilium**: eBPF ベースのネットワークおよびセキュリティソリューション
 4. **AWS VPC CNI**: AWS VPC と統合された CNI
-5. **Weave Net (historical)**: アーカイブ済み。新規インストールには保守されている代替手段を選択してください
+5. **Weave Net (歴史的)**: アーカイブ済みです。新規インストールでは、保守されている代替手段を選択してください
 
-#### CNI Plugin のインストールと設定
+#### CNI プラグインのインストールと構成
 
-CNI plugin のインストール例（Calico）:
+CNI プラグイン（Calico）のインストール例:
 
-1 つの CNI または文書化された chaining/migration 構成を選択してください。Calico、Flannel、Cilium の代替手段を同じ稼働中のクラスターに順番にインストールしてはいけません。サポートされる固定バージョンのリリースとプロバイダー固有の手順を使用してください。EKS では[ネットワークの章](./03-services-networking.md)にある VPC CNI または計画された代替 CNI の手順に従ってください。
+CNI は1つ選ぶか、文書化されたチェーン構成または移行構成を使用してください。Calico、Flannel、Cilium の各選択肢を、同じ稼働中のクラスターに順番にインストールしてはいけません。サポート対象でバージョンを固定したリリースと、プロバイダー固有の手順を使用してください。EKS では、[ネットワークの章](./03-services-networking.md)に記載されている VPC CNI または計画済みの代替 CNI の手順に従ってください。
 
 ```bash
 # Inspect the installed networking components before making changes
@@ -441,25 +441,25 @@ kubectl get pods -A -l k8s-app=calico-node
 
 ### Service ネットワーク
 
-Kubernetes Service は Pod セットに安定した endpoint を提供します。
+Kubernetes Service は、Pod の集合に対して安定したエンドポイントを提供します。
 
-1. **ClusterIP**: クラスター内からのみアクセスできる Service
-2. **NodePort**: すべての node の特定 port 経由でアクセスできる Service
-3. **LoadBalancer**: 外部 load balancer 経由でアクセスできる Service
-4. **ExternalName**: 外部 service 用の CNAME record を提供
+1. **ClusterIP**: クラスター内でのみアクセスできる Service
+2. **NodePort**: すべてのノード上の特定のポートからアクセスできる Service
+3. **LoadBalancer**: 外部ロードバランサー経由でアクセスできる Service
+4. **ExternalName**: 外部サービスの CNAME レコードを提供
 
-#### Service CIDR 設定
+#### Service CIDR の構成
 
-Service CIDR は Service IP address 範囲を定義します。
+Service CIDR は、Service の IP アドレス範囲を定義します。
 
 ```bash
 # Set service CIDR in kube-apiserver configuration
 --service-cluster-ip-range=10.96.0.0/12
 ```
 
-### CoreDNS 管理
+### CoreDNS の管理
 
-CoreDNS は Kubernetes の DNS service を提供します。
+CoreDNS は Kubernetes の DNS サービスを提供します。
 
 ```bash
 # Check CoreDNS status
@@ -469,7 +469,7 @@ kubectl get pods -n kube-system -l k8s-app=kube-dns
 kubectl get configmap -n kube-system coredns -o yaml
 ```
 
-CoreDNS 設定例:
+CoreDNS の構成例:
 
 ```yaml
 apiVersion: v1
@@ -501,7 +501,7 @@ data:
 
 ### NetworkPolicy
 
-NetworkPolicy は Pod 間の通信を制御します。
+NetworkPolicy は、Pod 間の通信を制御します。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -534,31 +534,31 @@ spec:
       port: 9090
 ```
 
-上の例では、`role=db` label を持つ Pod は、`role=frontend` label を持つ Pod からの TCP port 3306 の受信トラフィック、および `role=monitoring` label を持つ Pod への TCP port 9090 の送信トラフィックのみを許可します。
+上記の例では、`role=db` ラベルを持つ Pod は、`role=frontend` ラベルを持つ Pod からの TCP ポート3306のインバウンドトラフィックと、`role=monitoring` ラベルを持つ Pod への TCP ポート9090のアウトバウンドトラフィックのみを許可します。
 
-## 認証および認可管理
+## 認証と認可の管理
 
-Kubernetes の認証および認可管理は、クラスターセキュリティの中核要素です。
+Kubernetes の認証と認可の管理は、クラスターセキュリティの中核をなす要素です。
 
-次の図は、Kubernetes の認証および認可フローを示しています。
+次の図は、Kubernetes の認証と認可のフローを示しています。
 
-![request が API server 内の認証、認可、admission control を通過し、各段階でサポートされる具体的な認証方法と認可 mode を示すアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-4.png)
+![API server 内でリクエストが認証、認可、Admission Control を順に通過する構成図。それぞれの段階でサポートされる具体的な認証方式と認可モードを示す。](../.gitbook/assets/en-core-09-cluster-administration-4.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-4.html)
 
 ### 認証
 
-Kubernetes はさまざまな認証方法をサポートします。
+Kubernetes は、さまざまな認証方式をサポートしています。
 
-1. **X.509 Certificates**: client certificate を使用した認証
-2. **Service Account Tokens**: service account に関連付けられた JWT token
-3. **OpenID Connect (OIDC)**: 外部 identity provider 経由の認証
-4. **Webhook Token Authentication**: 外部 service 経由の token 検証
-5. **Authentication Proxy**: authentication proxy 経由の request 処理
+1. **X.509 証明書**: クライアント証明書を使用した認証
+2. **Service Account トークン**: Service Account に関連付けられた JWT トークン
+3. **OpenID Connect (OIDC)**: 外部 ID プロバイダーを介した認証
+4. **Webhook トークン認証**: 外部サービスを介したトークン検証
+5. **認証プロキシ**: 認証プロキシを介したリクエスト処理
 
-#### X.509 Certificate 管理
+#### X.509 証明書の管理
 
-X.509 certificate の作成と管理:
+X.509 証明書の作成と管理:
 
 ```bash
 # Generate a protected private key and CSR
@@ -587,9 +587,9 @@ kubectl wait --for=jsonpath='{.status.certificate}' csr/user-csr --timeout=60s
 kubectl get csr user-csr -o jsonpath='{.status.certificate}' | base64 --decode > user.crt
 ```
 
-#### OIDC 認証設定
+#### OIDC 認証の構成
 
-OIDC 認証設定例:
+OIDC 認証の構成例:
 
 ```bash
 # Add OIDC flags to kube-apiserver configuration
@@ -601,16 +601,16 @@ OIDC 認証設定例:
 
 ### 認可
 
-Kubernetes はさまざまな認可 mode をサポートします。
+Kubernetes は、さまざまな認可モードをサポートしています。
 
-1. **RBAC (Role-Based Access Control)**: role ベースの access control
-2. **ABAC (Attribute-Based Access Control)**: attribute ベースの access control
-3. **Node**: node 認可
-4. **Webhook**: 外部 service 経由の認可
+1. **RBAC (Role-Based Access Control)**: ロールベースのアクセス制御
+2. **ABAC (Attribute-Based Access Control)**: 属性ベースのアクセス制御
+3. **Node**: ノード認可
+4. **Webhook**: 外部サービスを介した認可
 
-#### RBAC 設定
+#### RBAC の構成
 
-RBAC は最も一般的な認可メカニズムです。
+RBAC は、最も一般的な認可メカニズムです。
 
 ```yaml
 # Role example
@@ -641,7 +641,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-上の例では、`user` は `default` namespace の Pod を閲覧する権限を持ちます。
+上記の例では、`user` は `default` namespace 内の Pod を表示する権限を持ちます。
 
 #### ClusterRole と ClusterRoleBinding
 
@@ -674,11 +674,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-上の例では、`user` はクラスター内のすべての node を閲覧する権限を持ちます。
+上記の例では、`user` はクラスター内のすべてのノードを表示する権限を持ちます。
 
-### Service Account 管理
+### Service Account の管理
 
-Service account は Pod が API server と通信するために使用されます。
+Service Account は、Pod が API server と通信するために使用されます。
 
 ```yaml
 # Create service account
@@ -717,9 +717,9 @@ spec:
     image: nginx
 ```
 
-### Security Context
+### SecurityContext
 
-Security context は Pod と container の権限および access control を定義します。
+SecurityContext は、Pod とコンテナの権限およびアクセス制御を定義します。
 
 ```yaml
 apiVersion: v1
@@ -746,57 +746,57 @@ spec:
       readOnlyRootFilesystem: true
 ```
 
-上の例では、Pod は UID 1000 および GID 3000 で実行され、container は権限昇格できず、すべての Linux capability が削除され、root filesystem は読み取り専用で mount されます。
+上記の例では、Pod は UID 1000、GID 3000 で実行されます。また、コンテナは権限を昇格できず、すべての Linux capability が除外され、ルートファイルシステムは読み取り専用でマウントされます。
 
 ## クラスターのアップグレード
 
-Kubernetes クラスターのアップグレードは、新機能、パフォーマンス向上、セキュリティパッチを適用するために必要です。
+新機能、パフォーマンス改善、セキュリティパッチを適用するには、Kubernetes クラスターのアップグレードが必要です。
 
 次の図は、Kubernetes クラスターのアップグレードプロセスを示しています。
 
-![Kubernetes クラスターアップグレードのワークフロー図。計画とバージョン互換性確認、etcd バックアップ、最初の control plane node のアップグレードと機能テスト、残りの control plane および worker node のアップグレード、クラスター検証を経てアップグレード完了に至り、検証で問題が見つかった場合はバックアップから復元するロールバック経路があります。](../.gitbook/assets/en-core-09-cluster-administration-5.png)
+![Kubernetes クラスターのアップグレード手順を示すワークフロー図。計画とバージョン互換性の確認、etcd のバックアップ、最初のコントロールプレーンノードのアップグレードと機能テスト、残りのコントロールプレーンノードとワーカーノードのアップグレードを経て、クラスターの検証が完了するとアップグレード完了となる。検証で問題が見つかった場合は、バックアップから復元するロールバック経路が示されている。](../.gitbook/assets/en-core-09-cluster-administration-5.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-5.html)
 
 ### アップグレード計画
 
-クラスターアップグレードを計画する際の考慮事項:
+クラスターのアップグレードを計画する際は、次の点を考慮してください。
 
-1. **バージョン互換性**: Kubernetes バージョン間の互換性を確認
-2. **アップグレードパス**: サポートされるアップグレードパスを確認
-3. **ダウンタイム**: アップグレード中に予想されるダウンタイムを計画
-4. **ロールバック計画**: 問題発生時に備えたロールバック計画を策定
-5. **アプリケーションへの影響**: アプリケーションに対するアップグレードの影響を評価
+1. **バージョン互換性**: Kubernetes バージョン間の互換性を確認する
+2. **アップグレードパス**: サポート対象のアップグレードパスを確認する
+3. **ダウンタイム**: アップグレード中に予想されるダウンタイムを計画する
+4. **ロールバック計画**: 問題発生時に備えてロールバック計画を作成する
+5. **アプリケーションへの影響**: アップグレードがアプリケーションに与える影響を評価する
 
-### Control Plane のアップグレード
+### コントロールプレーンのアップグレード
 
-kubeadm を使用する control plane のアップグレード:
+kubeadm を使用したコントロールプレーンのアップグレード:
 
-[バージョン固有の kubeadm アップグレード手順](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)を使用してください。対象マイナーの pkgs.k8s.io リポジトリを有効にして、公開済みの正確なパッケージバージョンを選択します。一度にアップグレードするのは 1 つのマイナーバージョンだけです。
+[バージョン固有の kubeadm アップグレード手順](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)を使用してください。対象マイナーバージョンの pkgs.k8s.io リポジトリを有効にし、公開済みの正確なパッケージバージョンを選択してください。アップグレードは一度に1つのマイナーバージョンずつ行います。
 
-1. etcd をバックアップし、workload/add-on の互換性を検証します。最初の control plane node で kubeadm をアップグレードし、`kubeadm upgrade plan` を実行してから `kubeadm upgrade apply <target-version>` を実行します。
-2. 追加の control plane node では、kubeadm をアップグレードして `kubeadm upgrade node` を実行します。
-3. kubelet をアップグレードする前に各 node を drain します。drain が失敗した場合は手順を停止し、原因を解決してください。kubelet/kubectl を互換バージョンにアップグレードし、systemd を reload、kubelet を再起動して Ready と workload を検証し、その後、管理 client から uncordon します。
-4. 各 worker で kubeadm をアップグレードして `kubeadm upgrade node` を実行し、続いて drain/kubelet/検証/uncordon の順序を実行します。Kubernetes のバージョン固有手順の代わりに、汎用的なシステム全体のアップグレードを実行しないでください。
+1. etcd をバックアップし、ワークロードとアドオンの互換性を検証します。最初のコントロールプレーンノードで kubeadm をアップグレードし、`kubeadm upgrade plan` を実行してから、`kubeadm upgrade apply <target-version>` を実行します。
+2. 追加のコントロールプレーンノードでは kubeadm をアップグレードし、`kubeadm upgrade node` を実行します。
+3. kubelet をアップグレードする前に各ノードを drain します。drain に失敗した場合は手順を中止し、原因を解決してください。kubelet/kubectl を互換性のあるバージョンにアップグレードし、systemd を再読み込みして kubelet を再起動します。Ready とワークロードの状態を確認してから、管理クライアントから uncordon します。
+4. 各ワーカーで kubeadm をアップグレードし、`kubeadm upgrade node` を実行してから、drain/kubelet/検証/uncordon の手順を実行します。Kubernetes のバージョン固有の手順の代わりに、システム全体の汎用アップグレードを実行しないでください。
 
-コマンドは明示的に特定した node または管理 client で実行してください。入れ子になった `ssh` session の連続はマルチ node 自動化スクリプトではありません。
+コマンドは、明示的に指定したノードまたは管理クライアントで実行してください。入れ子になった `ssh` セッションの連続は、複数ノードの自動化スクリプトではありません。
 
-### Worker Node のアップグレード
+### ワーカーノードのアップグレード
 
-Worker node のアップグレードプロセス:
+ワーカーノードのアップグレード手順:
 
-[バージョン固有の kubeadm アップグレード手順](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)を使用してください。対象マイナーの pkgs.k8s.io リポジトリを有効にして、公開済みの正確なパッケージバージョンを選択します。一度にアップグレードするのは 1 つのマイナーバージョンだけです。
+[バージョン固有の kubeadm アップグレード手順](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)を使用してください。対象マイナーバージョンの pkgs.k8s.io リポジトリを有効にし、公開済みの正確なパッケージバージョンを選択してください。アップグレードは一度に1つのマイナーバージョンずつ行います。
 
-1. etcd をバックアップし、workload/add-on の互換性を検証します。最初の control plane node で kubeadm をアップグレードし、`kubeadm upgrade plan` を実行してから `kubeadm upgrade apply <target-version>` を実行します。
-2. 追加の control plane node では、kubeadm をアップグレードして `kubeadm upgrade node` を実行します。
-3. kubelet をアップグレードする前に各 node を drain します。drain が失敗した場合は手順を停止し、原因を解決してください。kubelet/kubectl を互換バージョンにアップグレードし、systemd を reload、kubelet を再起動して Ready と workload を検証し、その後、管理 client から uncordon します。
-4. 各 worker で kubeadm をアップグレードして `kubeadm upgrade node` を実行し、続いて drain/kubelet/検証/uncordon の順序を実行します。Kubernetes のバージョン固有手順の代わりに、汎用的なシステム全体のアップグレードを実行しないでください。
+1. etcd をバックアップし、ワークロードとアドオンの互換性を検証します。最初のコントロールプレーンノードで kubeadm をアップグレードし、`kubeadm upgrade plan` を実行してから、`kubeadm upgrade apply <target-version>` を実行します。
+2. 追加のコントロールプレーンノードでは kubeadm をアップグレードし、`kubeadm upgrade node` を実行します。
+3. kubelet をアップグレードする前に各ノードを drain します。drain に失敗した場合は手順を中止し、原因を解決してください。kubelet/kubectl を互換性のあるバージョンにアップグレードし、systemd を再読み込みして kubelet を再起動します。Ready とワークロードの状態を確認してから、管理クライアントから uncordon します。
+4. 各ワーカーで kubeadm をアップグレードし、`kubeadm upgrade node` を実行してから、drain/kubelet/検証/uncordon の手順を実行します。Kubernetes のバージョン固有の手順の代わりに、システム全体の汎用アップグレードを実行しないでください。
 
-コマンドは明示的に特定した node または管理 client で実行してください。入れ子になった `ssh` session の連続はマルチ node 自動化スクリプトではありません。
+コマンドは、明示的に指定したノードまたは管理クライアントで実行してください。入れ子になった `ssh` セッションの連続は、複数ノードの自動化スクリプトではありません。
 
 ### アップグレードの検証
 
-アップグレード後にクラスター状態を検証します。
+アップグレード後にクラスターの状態を検証します。
 
 ```bash
 # Check node versions
@@ -813,17 +813,17 @@ kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80
 kubectl get svc nginx
 ```
-## バックアップとリカバリ
+## バックアップと復旧
 
-Kubernetes クラスターのバックアップとリカバリは、災害復旧計画の重要な一部です。
+Kubernetes クラスターのバックアップと復旧は、災害復旧計画の重要な要素です。
 
-次の図は、Kubernetes クラスターのバックアップとリカバリのプロセスを示しています。
+次の図は、Kubernetes クラスターのバックアップと復旧のプロセスを示しています。
 
-![スケジュールされた etcd snapshot と resource YAML backup の両方が backup storage に保存され、後に災害復旧時の etcd restore と resource restore に供給されることを示すアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-6.png)
+![定期的な etcd スナップショットとリソース YAML のバックアップが、どちらもバックアップストレージに保存され、災害復旧時に etcd とリソースの復元に使われる構成図。](../.gitbook/assets/en-core-09-cluster-administration-6.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-6.html)
 
-### etcd バックアップ
+### etcd のバックアップ
 
 etcd は Kubernetes クラスターのすべての状態情報を保存するため、定期的なバックアップが重要です。
 
@@ -839,11 +839,11 @@ ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
 etcdutl snapshot status --write-out=table /backup/etcd-snapshot-2023-01-01-12-00-00.db
 ```
 
-### etcd リカバリ
+### etcd の復旧
 
-etcd snapshot から復元します。
+etcd スナップショットから復元します。
 
-セルフマネージドの災害復旧では、ディストリビューション固有の runbook を使用して、すべての API server と影響を受けた etcd process を停止してください。kubelet だけを停止しても、既存の static Pod container は稼働したままです。互換性のある etcdutl で新しい directory に復元し、リカバリが検証されるまで元データを保持してください。この single-member コマンドは、multi-member HA 復元ではなく説明用です。
+自己管理クラスターの災害復旧では、ディストリビューション固有の手順書に従って、すべての API server と対象の etcd プロセスを停止してください。kubelet だけを停止しても、既存の静的 Pod コンテナは実行され続けます。互換性のある etcdutl を使用して新しいディレクトリに復元し、復旧が検証されるまで元のデータを保持してください。以下の単一メンバー向けコマンドは例示であり、複数メンバーの HA 復元用ではありません。
 
 ```bash
 etcdutl snapshot status "$SNAPSHOT_FILE" --write-out=table
@@ -856,13 +856,13 @@ etcdutl snapshot restore "$SNAPSHOT_FILE" \
   --bump-revision=1000000000 --mark-compacted
 ```
 
-SNAPSHOT_FILE には検証済みの snapshot を設定してください。HA では、各 member の固有の name/peer URL と同じ完全な membership list を使用して、すべての member で同じ snapshot を復元します。snapshot 以降の変更を超える revision bump を選択してください。適切な所有権と certificate で復元先 path を指すように etcd manifest/service を更新し、quorum/health を検証してから API server/controller を再起動します。[公式リカバリガイド](https://etcd.io/docs/v3.6/op-guide/recovery/)を参照してください。EKS ユーザーは管理された control plane etcd を直接復元できません。
+SNAPSHOT_FILE には検証済みのスナップショットを設定します。HA の場合は、同じ完全なメンバーリストを使い、メンバーごとに固有の名前と peer URL を指定して、すべてのメンバーに同じスナップショットを復元してください。リビジョンの増加値は、スナップショット取得後の変更数を上回る値にします。etcd のマニフェストまたは Service を、所有権と証明書が正しい復元先パスに更新し、クォーラムと正常性を確認してから、API server とコントローラーを再起動してください。[公式の復旧ガイド](https://etcd.io/docs/v3.6/op-guide/recovery/)を参照してください。EKS ユーザーは、管理対象のコントロールプレーン etcd を直接復元できません。
 
-### リソースバックアップ
+### リソースのバックアップ
 
-これらの export は保護対象の inventory であり、完全で移植可能な restore 計画ではありません。Secret を含むため、制限された権限と暗号化が必要です。また PV data は含まれません。`umask 077` を使用し、各コマンドの失敗を確認してください。CRD/dependency は順序どおりに復元し、必要に応じて server 所有の metadata を削除します。`kubectl get all` が返す resource kind はサブセットだけです。
+これらのエクスポートは保護されたインベントリであり、完全な移植可能な復元計画ではありません。Secret が含まれるため、アクセス制限と暗号化が必要であり、PV データは含まれません。`umask 077` を使用し、すべてのコマンドの失敗を確認してください。CRD と依存リソースは順序に従って復元し、必要に応じてサーバー管理のメタデータを削除してください。`kubectl get all` で取得できるのは一部のリソース種別のみです。
 
-Kubernetes resource を YAML file としてバックアップします。
+Kubernetes リソースを YAML ファイルとしてバックアップします。
 
 ```bash
 # Export listable resources (includes sensitive Secrets)
@@ -884,9 +884,9 @@ done
 
 ### バックアップの自動化
 
-セルフマネージド kubeadm の例のみ: ツール image は互換性のある etcdctl を含む検証済み image に置き換え、control plane の label/taint と certificate path を一致させ、backup PVC を作成してください。選択した host は、表示された loopback address で etcd を公開し、PVC mount を許可する必要があります。これは管理された EKS control plane では実行されません。snapshot を検証して保護された外部 storage にコピーしてください。クラスター内 PVC だけでは災害復旧になりません。
+自己管理 kubeadm の例に限ります。ツールのイメージは、互換性のある etcdctl を含む検証済みイメージに置き換え、コントロールプレーンのラベル/taint と証明書のパスを合わせ、バックアップ用 PVC を作成してください。選択したホストでは、図示されたループバックアドレスで etcd にアクセスでき、PVC をマウントできる必要があります。これは、管理対象の EKS コントロールプレーンでは実行されません。スナップショットを検証して保護された外部ストレージにコピーしてください。クラスター内の PVC だけでは災害復旧になりません。
 
-CronJob でバックアップタスクを自動化します。
+CronJob を使用してバックアップタスクを自動化します。
 
 ```yaml
 apiVersion: batch/v1
@@ -954,25 +954,25 @@ spec:
               claimName: etcd-backup-pvc
 ```
 
-## 監視とロギング
+## 監視とログ記録
 
-効果的な監視とロギングはクラスター管理の中核要素です。
+効果的な監視とログ記録は、クラスター管理の中核をなす要素です。
 
-次の図は、Kubernetes クラスターの監視およびロギングアーキテクチャを示しています。
+次の図は、Kubernetes クラスターの監視とログ記録のアーキテクチャを示しています。
 
-![API server と node metric が kube-state-metrics および Node Exporter を経由して Prometheus に流れ、その後 Alertmanager と Grafana に流れる一方、Pod log が Fluentd/Fluent Bit を経由して Elasticsearch（Kibana を伴う）と Loki に流れ、Loki も Grafana に供給するアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-7.png)
+![API server とノードのメトリクスが kube-state-metrics と Node Exporter を経由して Prometheus に流れ、さらに Alertmanager と Grafana に送られる構成図。Pod ログは Fluentd/Fluent Bit から Elasticsearch に送られ、Kibana と Loki で利用される。Loki から Grafana にもデータが送られる。](../.gitbook/assets/en-core-09-cluster-administration-7.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-7.html)
 
 ### 監視ツール
 
-Kubernetes クラスター監視用ツール:
+Kubernetes クラスターの監視に使用するツール:
 
-1. **Prometheus**: metric の収集と保存
-2. **Grafana**: metric の可視化
-3. **Alertmanager**: alert 管理
-4. **kube-state-metrics**: Kubernetes object metric の生成
-5. **metrics-server**: リソース使用量 metric の提供
+1. **Prometheus**: メトリクスの収集と保存
+2. **Grafana**: メトリクスの可視化
+3. **Alertmanager**: アラート管理
+4. **kube-state-metrics**: Kubernetes オブジェクトのメトリクスを生成
+5. **metrics-server**: リソース使用状況のメトリクスを提供
 
 #### Prometheus と Grafana のインストール
 
@@ -989,29 +989,31 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   --create-namespace
 ```
 
-#### 主要な監視 metric
+#### 主な監視メトリクス
 
-監視すべき主要 metric:
+監視すべき主なメトリクス:
 
-1. **Node Metrics**: CPU、メモリ、disk、network 使用量
-2. **Pod Metrics**: CPU、メモリ使用量、restart 回数
-3. **Container Metrics**: CPU、メモリ使用量、filesystem 使用量
-4. **API Server Metrics**: request latency、request count、error rate
-5. **etcd Metrics**: disk I/O、leader 変更、commit latency
+1. **ノードメトリクス**: CPU、メモリ、ディスク、ネットワークの使用量
+2. **Pod メトリクス**: CPU、メモリの使用量、再起動回数
+3. **コンテナメトリクス**: CPU、メモリ、ファイルシステムの使用量
+4. **API Server メトリクス**: リクエストのレイテンシ、リクエスト数、エラー率
+5. **etcd メトリクス**: ディスク I/O、リーダーの変更、コミットレイテンシ
 
-### ロギングツール
+### ログ記録ツール
 
-Kubernetes クラスターのロギング用ツール:
+Kubernetes クラスターのログ記録に使用するツール:
 
-1. **Elasticsearch**: log の保存と検索
-2. **Fluentd/Fluent Bit**: log の収集と転送
-3. **Kibana**: log の可視化
-4. **Loki**: log aggregation system
-5. **Grafana**: log の可視化
+1. **Elasticsearch**: ログの保存と検索
+2. **Fluentd/Fluent Bit**: ログの収集と転送
+3. **Kibana**: ログの可視化
+4. **Loki**: ログ集約システム
+5. **Grafana**: ログの可視化
 
-#### EFK（Elasticsearch、Fluentd、Kibana）Stack のインストール
+#### EFK (Elasticsearch、Fluentd、Kibana) スタックのインストール
 
-スタンドアロンの Elastic Stack Helm-chart リポジトリはアーカイブ済みです。保守対象の deployment には Elastic Cloud on Kubernetes（ECK）を使用し、Elasticsearch/Kibana resource と互換性のある log collector を定義してください。operator のインストールだけでは EFK stack は作成されません。
+Helm を使用して EFK スタックをインストールします。
+
+単独の Elastic Stack Helm Chart リポジトリはアーカイブされています。保守されている環境をデプロイするには、Elastic Cloud on Kubernetes (ECK) を使用し、Elasticsearch/Kibana リソースと互換性のあるログ収集ツールを定義してください。Operator をインストールしただけでは EFK スタックは作成されません。
 
 ```bash
 helm repo add elastic https://helm.elastic.co
@@ -1020,13 +1022,13 @@ helm upgrade --install elastic-operator elastic/eck-operator \
   --version "${ECK_CHART_VERSION:?Select a supported ECK chart version}"
 ```
 
-Dashboard は ClusterIP/認証済みアクセスの背後に置き、[ECK guide](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart)に従って storage、TLS、credential、collector parsing、RBAC を設定してください。
+ダッシュボードへのアクセスは ClusterIP または認証で保護してください。[ECK ガイド](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart)に従い、ストレージ、TLS、認証情報、収集ツールのパース、RBAC を構成してください。
 
-#### Log 収集の設定
+#### ログ収集の構成
 
-この例は Docker JSON を前提にせず、CRI log envelope を parse します。collector image には metadata/output plugin が含まれている必要があり、node log と書き込み可能な position-file storage を mount し、スコープを限定した metadata RBAC を受け取る必要があります。実際の Elasticsearch service に対して TLS/認証を設定してください。placeholder host だけでは完全な ECK 統合にはなりません。選択した collector に従って partial/multiline record を処理してください。
+この例では、Docker JSON を前提とせず、CRI のログエンベロープをパースします。収集ツールのイメージにはメタデータ/出力プラグインが含まれている必要があります。また、ノードログと書き込み可能な position ファイル用ストレージをマウントし、スコープを限定したメタデータ用 RBAC を付与してください。実際の Elasticsearch Service に合わせて TLS/認証を構成してください。プレースホルダーのホストだけでは、ECK との統合は完了しません。部分的なレコードや複数行レコードは、選択した収集ツールに応じて処理してください。
 
-Fluentd 設定例:
+Fluentd の構成例:
 
 ```yaml
 apiVersion: v1
@@ -1068,11 +1070,11 @@ data:
 
 ## トラブルシューティング
 
-Kubernetes クラスターのトラブルシューティングは、クラスター管理の重要な一部です。
+Kubernetes クラスターのトラブルシューティングは、クラスター管理の重要な要素です。
 
 ### Pod のトラブルシューティング
 
-Pod のトラブルシューティング用コマンド:
+Pod のトラブルシューティングに使用するコマンド:
 
 ```bash
 # Check pod status
@@ -1090,9 +1092,9 @@ kubectl logs <pod-name> --previous  # Logs from previous container
 kubectl exec -it <pod-name> -- /bin/sh
 ```
 
-### Node のトラブルシューティング
+### ノードのトラブルシューティング
 
-Node のトラブルシューティング用コマンド:
+ノードのトラブルシューティングに使用するコマンド:
 
 ```bash
 # Check node status
@@ -1118,7 +1120,7 @@ free -m
 
 ### ネットワークのトラブルシューティング
 
-ネットワークのトラブルシューティング用コマンド:
+ネットワークのトラブルシューティングに使用するコマンド:
 
 ```bash
 # Check service status
@@ -1141,9 +1143,9 @@ kubectl get networkpolicy
 kubectl describe networkpolicy <policy-name>
 ```
 
-### Control Plane のトラブルシューティング
+### コントロールプレーンのトラブルシューティング
 
-Control plane のトラブルシューティング用コマンド:
+コントロールプレーンのトラブルシューティングに使用するコマンド:
 
 ```bash
 # Check component status
@@ -1164,19 +1166,19 @@ kubectl logs -n kube-system etcd-<node-name>
 
 ## Amazon EKS クラスター管理
 
-Amazon EKS は、クラスター管理の多くの側面を自動化するマネージド Kubernetes service です。
+Amazon EKS は、クラスター管理の多くの側面を自動化するマネージド Kubernetes サービスです。
 
-次の図は、Amazon EKS クラスターアーキテクチャと管理コンポーネントを示しています。
+次の図は、Amazon EKS クラスターのアーキテクチャと管理コンポーネントを示しています。
 
-![ユーザーが AWS console、CLI、または API を通じて Amazon EKS を管理し、EKS が control plane、managed node group、Fargate を実行し、control plane が AWS IAM、VPC、CloudWatch を使用し、VPC CNI、CoreDNS、kube-proxy add-on を含むことを示すアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-8.png)
+![ユーザーが AWS コンソール、CLI、または API から Amazon EKS を管理し、EKS がコントロールプレーン、マネージドノードグループ、Fargate を実行する構成図。コントロールプレーンは AWS IAM、VPC、CloudWatch を使用し、VPC CNI、CoreDNS、kube-proxy の各アドオンも示されている。](../.gitbook/assets/en-core-09-cluster-administration-8.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-8.html)
 
-### EKS クラスター設定
+### EKS クラスターの構成
 
-endpoint access を変更する前に実際の管理者 CIDR を設定し、private access が到達可能なままであることを検証してください。バージョンアップグレードは、互換性のある add-on/node を備えた次にサポートされるマイナーバージョンでなければなりません。例を downgrade やマイナー version のスキップに使用しないでください。返された update ID を poll し、失敗した場合は依存する変更を停止してください。
+エンドポイントアクセスを変更する前に、実際の管理者 CIDR を設定し、プライベートアクセスが引き続き到達可能であることを確認してください。バージョンアップグレードの対象は、互換性のあるアドオン/ノードを備えた次のサポート対象マイナーバージョンでなければなりません。この例をダウングレードやマイナーバージョンのスキップに使用しないでください。返された更新 ID をポーリングし、失敗した場合は依存する変更を中止してください。
 
-EKS クラスター設定の管理:
+EKS クラスター構成の管理:
 
 ```bash
 # Check EKS cluster information
@@ -1193,9 +1195,9 @@ aws eks update-cluster-version \
   --kubernetes-version "${TARGET_VERSION:?Select the next EKS-supported minor version}"
 ```
 
-### EKS Node Group 管理
+### EKS Node Group の管理
 
-EKS node group 管理:
+EKS Node Group の管理:
 
 ```bash
 # Check node group information
@@ -1215,11 +1217,11 @@ aws eks update-nodegroup-version \
   --nodegroup-name my-nodegroup
 ```
 
-### EKS Add-on 管理
+### EKS アドオンの管理
 
-現在のバージョンを `aws eks describe-cluster --name my-cluster --query cluster.version --output text` で読み取り、add-on の検出に使用して互換性のある固定バージョンを選択してください。create/update の前に既存の設定/IAM を確認し、すでに管理されている add-on を再度 create しないでください。削除例では `--preserve` を使用して、EKS 管理を削除しても CNI が実行され続けるようにしています。稼働中のネットワークを uninstall することは別の、影響の大きい操作です。
+`aws eks describe-cluster --name my-cluster --query cluster.version --output text` を使用して現在のバージョンを読み取り、アドオンの検出に使い、互換性のあるバージョンを固定して選択してください。作成/更新の前に既存の構成/IAM を確認し、すでに管理されているアドオンを再作成しないでください。削除の例では `--preserve` を使用して、EKS による管理を解除しても CNI の稼働を維持します。稼働中のネットワークをアンインストールする操作は、別の中断を伴う操作です。
 
-EKS add-on 管理:
+EKS アドオンの管理:
 
 ```bash
 # Check available add-ons
@@ -1246,16 +1248,16 @@ aws eks delete-addon \
 
 ### EKS クラスターのアップグレード
 
-EKS クラスターのアップグレードプロセス:
+EKS クラスターのアップグレード手順:
 
-1. **Control Plane のアップグレード**:
+1. **コントロールプレーンのアップグレード**:
    ```bash
    aws eks update-cluster-version \
      --name my-cluster \
      --kubernetes-version "${TARGET_VERSION:?Select the next EKS-supported minor version}"
    ```
 
-2. **Add-on のアップグレード**:
+2. **アドオンのアップグレード**:
    ```bash
    aws eks update-addon \
      --cluster-name my-cluster \
@@ -1272,16 +1274,16 @@ EKS クラスターのアップグレードプロセス:
 
 ### EKS クラスターの監視
 
-Control plane logging は api/audit/authenticator/controllerManager/scheduler log を export します。Container Insights には CloudWatch agent/add-on とスコープを限定した telemetry IAM 権限が必要です。update-cluster-logging では有効になりません。CloudWatch observability add-on は CloudWatch/Fluent Bit コンポーネントをインストールし、Prometheus/Grafana はインストールしません。[公式 add-on セットアップ](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)を参照してください。
+コントロールプレーンのログ記録では、api/audit/authenticator/controllerManager/scheduler のログがエクスポートされます。Container Insights を利用するには、CloudWatch agent/アドオンと、スコープを限定したテレメトリ用 IAM 権限が必要です。`update-cluster-logging` では有効になりません。CloudWatch observability アドオンがインストールするのは CloudWatch/Fluent Bit コンポーネントであり、Prometheus/Grafana ではありません。[公式アドオンのセットアップ手順](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)を参照してください。
 
-EKS クラスター監視ツール:
+EKS クラスターの監視ツール:
 
-1. **Amazon CloudWatch**: metric、log、alert
-2. **AWS CloudTrail**: API call logging
-3. **Amazon Managed Grafana**: metric の可視化
-4. **Amazon Managed Service for Prometheus**: metric の収集と保存
+1. **Amazon CloudWatch**: メトリクス、ログ、アラート
+2. **AWS CloudTrail**: API 呼び出しのログ記録
+3. **Amazon Managed Grafana**: メトリクスの可視化
+4. **Amazon Managed Service for Prometheus**: メトリクスの収集と保存
 
-EKS control plane logging を有効化します。
+EKS コントロールプレーンのログ記録を有効にします。
 
 ```bash
 # Enable EKS control-plane logs
@@ -1293,71 +1295,71 @@ eksctl utils update-cluster-logging \
 
 ## クラスター管理のベストプラクティス
 
-Kubernetes と EKS クラスター管理のベストプラクティス:
+Kubernetes と EKS のクラスター管理に関するベストプラクティス:
 
-### クラスター設定のベストプラクティス
+### クラスター構成のベストプラクティス
 
-1. **Infrastructure as Code (IaC)**: Terraform、AWS CDK、eksctl などを使用してクラスター設定を管理
-2. **Version Control**: クラスター設定を version control system に保存
-3. **複数環境**: 開発、staging、本番環境を分離
-4. **ネットワーク分離**: 適切なネットワーク分離と security group を設定
-5. **最小権限の原則**: 必要最小限の権限のみを付与
+1. **Infrastructure as Code (IaC)**: Terraform、AWS CDK、eksctl などを使ってクラスター構成を管理する
+2. **バージョン管理**: クラスター構成をバージョン管理システムに保存する
+3. **複数環境**: 開発、ステージング、本番環境を分離する
+4. **ネットワーク分離**: 適切なネットワーク分離とセキュリティグループを構成する
+5. **最小権限の原則**: 必要最小限の権限のみを付与する
 
 ### 運用のベストプラクティス
 
-1. **定期的なバックアップ**: etcd と重要な resource を定期的にバックアップ
-2. **監視とアラート**: 包括的な監視およびアラート system を構築
-3. **集中ロギング**: log を集約して分析
-4. **自動化**: 反復作業を自動化
-5. **災害復旧計画**: 明確な災害復旧計画を策定・テスト
+1. **定期的なバックアップ**: etcd と重要なリソースを定期的にバックアップする
+2. **監視とアラート**: 包括的な監視およびアラートシステムを構築する
+3. **ログの一元管理**: ログを一元化して分析する
+4. **自動化**: 繰り返しの作業を自動化する
+5. **災害復旧計画**: 明確な災害復旧計画を策定し、テストする
 
 ### セキュリティのベストプラクティス
 
-1. **定期的な更新**: クラスターと node を定期的に更新
-2. **NetworkPolicy**: 適切な network policy を設定
-3. **暗号化**: 保存中および転送中のデータを暗号化
-4. **Security Context**: 適切な security context を設定
-5. **Image Scanning**: container image の脆弱性を scan
+1. **定期的な更新**: クラスターとノードを定期的に更新する
+2. **NetworkPolicy**: 適切なネットワークポリシーを構成する
+3. **暗号化**: 保存時と転送中のデータを暗号化する
+4. **SecurityContext**: 適切なセキュリティコンテキストを構成する
+5. **イメージスキャン**: コンテナイメージの脆弱性をスキャンする
 
 ### リソース管理のベストプラクティス
 
-1. **Resource Request と Limit**: すべての Pod に適切な resource request と limit を設定
-2. **Namespace 分離**: workload を namespace ごとに分離
-3. **ResourceQuota**: namespace ごとに resource quota を設定
-4. **HPA と VPA**: autoscaling を設定
-5. **Node Affinity と Taint**: workload の配置を最適化
+1. **リソース requests と limits**: すべての Pod に適切なリソース requests と limits を設定する
+2. **Namespace の分離**: ワークロードを namespace ごとに分離する
+3. **ResourceQuota**: namespace ごとに ResourceQuota を設定する
+4. **HPA と VPA**: オートスケーリングを構成する
+5. **ノードアフィニティと taint**: ワークロードの配置を最適化する
 
 ### EKS 固有のベストプラクティス
 
-1. **Managed Node Group**: 可能な場合は managed node group を使用
-2. **Fargate**: serverless workload に Fargate を使用
-3. **EKS Add-on**: 公式 EKS add-on を使用
-4. **IAM Roles for Service Accounts (IRSA)**: Pod ごとに IAM 権限を管理
-5. **VPC CNI Customization**: ネットワーク要件に応じて VPC CNI を設定
+1. **マネージドノードグループ**: 可能な場合はマネージドノードグループを使用する
+2. **Fargate**: サーバーレスワークロードには Fargate を使用する
+3. **EKS アドオン**: 公式の EKS アドオンを使用する
+4. **Service Account 向け IAM ロール (IRSA)**: Pod ごとに IAM 権限を管理する
+5. **VPC CNI のカスタマイズ**: ネットワーク要件に応じて VPC CNI を構成する
 
 ## まとめ
 
-Kubernetes クラスター管理は、クラスターの安定性、セキュリティ、パフォーマンスを維持する上で重要な役割を担います。この章では、クラスターコンポーネント管理、リソース管理、ネットワーク、認証および認可管理、アップグレード、バックアップとリカバリ、監視とロギング、トラブルシューティングを含む、クラスター管理のさまざまな側面を取り上げました。
+Kubernetes クラスター管理は、クラスターの安定性、セキュリティ、パフォーマンスを維持するうえで重要な役割を果たします。この章では、クラスターコンポーネントの管理、リソース管理、ネットワーク、認証と認可の管理、アップグレード、バックアップと復旧、監視とログ記録、トラブルシューティングなど、クラスター管理のさまざまな側面を扱いました。
 
-Amazon EKS を使用すると、Kubernetes control plane 管理の複雑さが軽減され、AWS service との統合によりクラスター管理が簡素化されます。ただし、効果的なクラスター管理には、Kubernetes の基本概念とベストプラクティスを理解することが引き続き重要です。
+Amazon EKS を使用すると、Kubernetes コントロールプレーン管理の複雑さが軽減され、AWS サービスとの統合によってクラスター管理が簡素化されます。ただし、クラスターを効果的に管理するには、Kubernetes の基本概念とベストプラクティスを理解しておくことも重要です。
 
-クラスター管理は、クラスター要件と workload 特性に応じて継続的に調整すべき進行中のプロセスです。監視ツールを使用してクラスター状態を追跡し、自動化によって反復作業を最小化し、ベストプラクティスに従ってクラスターの安定性とセキュリティを維持することが重要です。
+クラスター管理は継続的なプロセスであり、クラスターの要件やワークロードの特性に応じて、常に調整していく必要があります。監視ツールを使ってクラスターの状態を追跡し、自動化によって繰り返しの作業を最小限に抑え、ベストプラクティスに従ってクラスターの安定性とセキュリティを維持することが重要です。
 
 ## クラスターのネットワーク
 
-Kubernetes クラスターのネットワークは、Pod 間通信、service discovery、外部アクセスを管理します。
+Kubernetes クラスターのネットワークは、Pod 間通信、Service 検出、外部アクセスを管理します。
 
 ### ネットワークアーキテクチャ
 
-![クラスターのネットワークが Pod network、Service network、Ingress、network policy に分割され、それぞれ CNI plugin、Service type（ClusterIP、NodePort、LoadBalancer）、ingress controller、network security によって実装されることを示すアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-9.png)
+![クラスターのネットワークを Pod ネットワーク、Service ネットワーク、Ingress、NetworkPolicy に分け、それぞれを CNI プラグイン、Service の種類（ClusterIP、NodePort、LoadBalancer）、Ingress controller、ネットワークセキュリティで実装する構成図。](../.gitbook/assets/en-core-09-cluster-administration-9.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-9.html)
 
-### CNI Plugin 管理
+### CNI プラグインの管理
 
-CNI（Container Network Interface）plugin は Kubernetes クラスターのネットワークを処理します。
+CNI (Container Network Interface) プラグインは、Kubernetes クラスターのネットワークを処理します。
 
-1 つの CNI または文書化された chaining/migration 構成を選択してください。Calico、Flannel、Cilium の代替手段を同じ稼働中のクラスターに順番にインストールしてはいけません。サポートされる固定バージョンのリリースとプロバイダー固有の手順を使用してください。EKS では[ネットワークの章](./03-services-networking.md)にある VPC CNI または計画された代替 CNI の手順に従ってください。
+CNI は1つ選ぶか、文書化されたチェーン構成または移行構成を使用してください。Calico、Flannel、Cilium の各選択肢を、同じ稼働中のクラスターに順番にインストールしてはいけません。サポート対象でバージョンを固定したリリースと、プロバイダー固有の手順を使用してください。EKS では、[ネットワークの章](./03-services-networking.md)に記載されている VPC CNI または計画済みの代替 CNI の手順に従ってください。
 
 ```bash
 # Inspect the installed networking components before making changes
@@ -1366,15 +1368,15 @@ kubectl get pods -A -l k8s-app=calico-node
 ```
 
 
-### CNI Plugin の比較
+### CNI プラグインの比較
 
-| CNI Plugin | ネットワークモデル | NetworkPolicy サポート | パフォーマンス | 機能 |
+| CNI プラグイン | ネットワークモデル | NetworkPolicy のサポート | パフォーマンス | 機能 |
 |-----------|---------------|----------------------|-------------|----------|
-| **Calico** | BGP | はい | 高 | network policy に強い、routing ベース |
-| **Flannel** | VXLAN/host-gateway | いいえ | 中 | セットアップが簡単、機能は限定的 |
-| **Cilium** | eBPF | はい | 非常に高 | L3-L7 policy、高パフォーマンス |
-| **Weave Net** | VXLAN | はい | 中 | 暗号化サポート、マルチクラスター |
-| **AWS VPC CNI** | AWS VPC | サポートされるバージョン/設定でははい | workload に依存 | ネイティブ EKS 統合 |
+| **Calico** | BGP | あり | 高い | ネットワークポリシーに強く、ルーティングベース |
+| **Flannel** | VXLAN/ホストゲートウェイ | なし | 中程度 | セットアップが簡単で、機能は限定的 |
+| **Cilium** | eBPF | あり | 非常に高い | L3-L7 ポリシー、高いパフォーマンス |
+| **Weave Net** | VXLAN | あり | 中程度 | 暗号化をサポート、マルチクラスター対応 |
+| **AWS VPC CNI** | AWS VPC | あり（サポート対象のバージョン/構成の場合） | ワークロードに依存 | EKS とのネイティブな統合 |
 
 ### ネットワークのトラブルシューティング
 
@@ -1398,21 +1400,21 @@ kubectl get endpointslices -l kubernetes.io/service-name=<service-name>
 # Check network policies
 kubectl describe networkpolicy -n <namespace>
 ```
-## 認証および認可管理
+## 認証と認可の管理
 
-Kubernetes の認証および認可管理は、クラスターセキュリティの中核要素です。RBAC（Role-Based Access Control）は user と service account の権限管理に使用されます。
+Kubernetes の認証と認可の管理は、クラスターセキュリティの中核をなす要素です。RBAC (Role-Based Access Control) を使用して、ユーザーと Service Account の権限を管理します。
 
-### 認証方法
+### 認証方式
 
-Kubernetes はさまざまな認証方法をサポートします。
+Kubernetes は、さまざまな認証方式をサポートしています。
 
-1. **X.509 Certificates**: client certificate を使用した認証
-2. **Service Account Tokens**: Pod 内からの API server access に使用
-3. **OpenID Connect (OIDC)**: 外部 identity provider との統合
-4. **Webhook Token Authentication**: 外部 authentication service との統合
-5. **Authentication Proxy**: proxy 経由の認証
+1. **X.509 証明書**: クライアント証明書を使用した認証
+2. **Service Account トークン**: Pod 内からの API server アクセスに使用
+3. **OpenID Connect (OIDC)**: 外部 ID プロバイダーとの統合
+4. **Webhook トークン認証**: 外部認証サービスとの統合
+5. **認証プロキシ**: プロキシを介した認証
 
-### RBAC 設定
+### RBAC の構成
 
 ```yaml
 # role.yaml - namespace-scoped role
@@ -1472,9 +1474,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-### User Certificate の作成
+### ユーザー証明書の作成
 
-セルフマネージドの client-certificate 認証では、CSR を送信し、権限のある approver が要求された identity/group を検証する必要があります。クラスター CA private key を配布しないでください。EKS の user access には IAM/access entry を使用してください。
+自己管理クラスターでクライアント証明書認証を行う場合は、CSR を送信し、認可された承認者が要求された ID とグループを確認してください。クラスター CA の秘密鍵を配布しないでください。EKS のユーザーアクセスには IAM/access entry を使用してください。
 
 ```bash
 umask 077
@@ -1500,7 +1502,7 @@ kubectl config set-credentials jane --client-certificate=jane.crt --client-key=j
 kubectl config set-context jane-context --cluster=kubernetes --user=jane
 ```
 
-### Service Account 管理
+### Service Account の管理
 
 ```bash
 # Create service account
@@ -1515,7 +1517,7 @@ kubectl create rolebinding app-service-account-binding \
 kubectl describe serviceaccount app-service-account
 ```
 
-### 権限の検証
+### 権限の確認
 
 ```bash
 # Check user permissions
@@ -1526,32 +1528,32 @@ kubectl auth can-i create deployments --as jane --namespace production
 ```
 ## クラスターのアップグレード
 
-Kubernetes クラスターのアップグレードは、新機能、セキュリティパッチ、bug fix を適用するために必要です。アップグレードは慎重に計画・実行する必要があります。
+新機能、セキュリティパッチ、バグ修正を適用するには、Kubernetes クラスターのアップグレードが必要です。アップグレードは慎重に計画し、実施する必要があります。
 
 ### アップグレード計画
 
-![アップグレード計画を、バージョン互換性確認、バックアップ作成、アップグレード戦略の選択、ダウンタイムの計画という 4 つの作業に分け、それぞれ API 変更の確認、etcd バックアップ、in-place と blue/green の比較、ユーザーとのコミュニケーションという具体的なアクションにつながることを示すツリー図。](../.gitbook/assets/en-core-09-cluster-administration-10.png)
+![アップグレード計画を4つの作業に分けたツリー図。バージョン互換性の確認、バックアップの作成、アップグレード戦略の選択、ダウンタイムの計画が、それぞれ API 変更のレビュー、etcd バックアップ、インプレースか Blue/Green かの選択、ユーザーへの連絡という具体的なアクションにつながる。](../.gitbook/assets/en-core-09-cluster-administration-10.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-10.html)
 
 ### アップグレード戦略の比較
 
-| 戦略 | 説明 | 利点 | 欠点 | 適した環境 |
+| 戦略 | 説明 | メリット | デメリット | 適した環境 |
 |----------|-------------|------------|---------------|---------------------|
-| **In-place Upgrade** | 既存クラスターを直接アップグレード | リソース効率が高い、手順が簡単 | ロールバックが複雑、ダウンタイムの可能性 | 開発、テスト環境 |
-| **Blue/Green Deployment** | 新バージョンクラスターを作成して切り替え | 安全なロールバック、検証可能 | リソース重複、コスト増加 | 本番環境 |
-| **Canary Deployment** | 一部の workload のみ新クラスターに移動 | 段階的な検証、リスク軽減 | 管理が複雑、二重運用 | 重要な本番環境 |
+| **インプレースアップグレード** | 既存クラスターを直接アップグレードする | リソース効率がよく、手順が簡単 | ロールバックが複雑で、ダウンタイムの可能性がある | 開発、テスト環境 |
+| **Blue/Green デプロイ** | 新バージョンのクラスターを作成して切り替える | 安全にロールバックでき、検証可能 | リソースが重複し、コストが増加 | 本番環境 |
+| **カナリアデプロイ** | 一部のワークロードのみを新しいクラスターに移行する | 段階的に検証でき、リスクを低減 | 管理が複雑で、二重運用が必要 | 重要な本番環境 |
 
 ### kubeadm を使用したアップグレード
 
-[バージョン固有の kubeadm アップグレード手順](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)を使用してください。対象マイナーの pkgs.k8s.io リポジトリを有効にして、公開済みの正確なパッケージバージョンを選択します。一度にアップグレードするのは 1 つのマイナーバージョンだけです。
+[バージョン固有の kubeadm アップグレード手順](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)を使用してください。対象マイナーバージョンの pkgs.k8s.io リポジトリを有効にし、公開済みの正確なパッケージバージョンを選択してください。アップグレードは一度に1つのマイナーバージョンずつ行います。
 
-1. etcd をバックアップし、workload/add-on の互換性を検証します。最初の control-plane node で kubeadm をアップグレードし、`kubeadm upgrade plan` を実行してから `kubeadm upgrade apply <target-version>` を実行します。
-2. 追加の control-plane node では、kubeadm をアップグレードして `kubeadm upgrade node` を実行します。
-3. kubelet をアップグレードする前に各 node を drain します。drain が失敗した場合は手順を停止し、原因を解決してください。kubelet/kubectl を互換バージョンにアップグレードし、systemd を reload、kubelet を再起動して Ready と workload を検証し、その後、管理 client から uncordon します。
-4. 各 worker で kubeadm をアップグレードして `kubeadm upgrade node` を実行し、続いて drain/kubelet/検証/uncordon の順序を実行します。Kubernetes のバージョン固有手順の代わりに、汎用的なシステム全体のアップグレードを実行しないでください。
+1. etcd をバックアップし、ワークロードとアドオンの互換性を検証します。最初のコントロールプレーンノードで kubeadm をアップグレードし、`kubeadm upgrade plan` を実行してから、`kubeadm upgrade apply <target-version>` を実行します。
+2. 追加のコントロールプレーンノードでは kubeadm をアップグレードし、`kubeadm upgrade node` を実行します。
+3. kubelet をアップグレードする前に各ノードを drain します。drain に失敗した場合は手順を中止し、原因を解決してください。kubelet/kubectl を互換性のあるバージョンにアップグレードし、systemd を再読み込みして kubelet を再起動します。Ready とワークロードの状態を確認してから、管理クライアントから uncordon します。
+4. 各ワーカーで kubeadm をアップグレードし、`kubeadm upgrade node` を実行してから、drain/kubelet/検証/uncordon の手順を実行します。Kubernetes のバージョン固有の手順の代わりに、システム全体の汎用アップグレードを実行しないでください。
 
-コマンドは明示的に特定した node または管理 client で実行してください。入れ子になった `ssh` session の連続はマルチ node 自動化スクリプトではありません。
+コマンドは、明示的に指定したノードまたは管理クライアントで実行してください。入れ子になった `ssh` セッションの連続は、複数ノードの自動化スクリプトではありません。
 
 ### アップグレード後の検証
 
@@ -1568,15 +1570,15 @@ kubectl get --raw='/readyz?verbose'
 # Check workload status
 kubectl get pods -A
 ```
-## バックアップとリカバリ
+## バックアップと復旧
 
-Kubernetes クラスターのバックアップとリカバリは、災害復旧計画の重要な一部です。主なバックアップ対象は etcd database、persistent volume data、Kubernetes resource 定義です。
+Kubernetes クラスターのバックアップと復旧は、災害復旧計画の重要な要素です。主なバックアップ対象は、etcd データベース、PersistentVolume データ、Kubernetes リソース定義です。
 
-### etcd のバックアップとリカバリ
+### etcd のバックアップと復旧
 
-etcd はクラスターのすべての状態情報を保存する中核コンポーネントです。
+etcd は、クラスターのすべての状態情報を保存する主要コンポーネントです。
 
-セルフマネージドの災害復旧では、ディストリビューション固有の runbook を使用して、すべての API server と影響を受けた etcd process を停止してください。kubelet だけを停止しても、既存の static Pod container は稼働したままです。互換性のある etcdutl で新しい directory に復元し、リカバリが検証されるまで元データを保持してください。この single-member コマンドは、multi-member HA 復元ではなく説明用です。
+自己管理クラスターの災害復旧では、ディストリビューション固有の手順書に従って、すべての API server と対象の etcd プロセスを停止してください。kubelet だけを停止しても、既存の静的 Pod コンテナは実行され続けます。互換性のある etcdutl を使用して新しいディレクトリに復元し、復旧が検証されるまで元のデータを保持してください。以下の単一メンバー向けコマンドは例示であり、複数メンバーの HA 復元用ではありません。
 
 ```bash
 etcdutl snapshot status "$SNAPSHOT_FILE" --write-out=table
@@ -1589,9 +1591,9 @@ etcdutl snapshot restore "$SNAPSHOT_FILE" \
   --bump-revision=1000000000 --mark-compacted
 ```
 
-SNAPSHOT_FILE には検証済みの snapshot を設定してください。HA では、各 member の固有の name/peer URL と同じ完全な membership list を使用して、すべての member で同じ snapshot を復元します。snapshot 以降の変更を超える revision bump を選択してください。適切な所有権と certificate で復元先 path を指すように etcd manifest/service を更新し、quorum/health を検証してから API server/controller を再起動します。[公式リカバリガイド](https://etcd.io/docs/v3.6/op-guide/recovery/)を参照してください。EKS ユーザーは管理された control plane etcd を直接復元できません。
+SNAPSHOT_FILE には検証済みのスナップショットを設定します。HA の場合は、同じ完全なメンバーリストを使い、メンバーごとに固有の名前と peer URL を指定して、すべてのメンバーに同じスナップショットを復元してください。リビジョンの増加値は、スナップショット取得後の変更数を上回る値にします。etcd のマニフェストまたは Service を、所有権と証明書が正しい復元先パスに更新し、クォーラムと正常性を確認してから、API server とコントローラーを再起動してください。[公式の復旧ガイド](https://etcd.io/docs/v3.6/op-guide/recovery/)を参照してください。EKS ユーザーは、管理対象のコントロールプレーン etcd を直接復元できません。
 
-### Kubernetes リソースバックアップ
+### Kubernetes リソースのバックアップ
 
 ```bash
 # Export selected resources, not a full cluster backup
@@ -1608,11 +1610,11 @@ for resource in deployments services configmaps secrets; do
 done
 ```
 
-### Velero を使用したバックアップとリカバリ
+### Velero を使用したバックアップと復旧
 
-公式 matrix を使用して、互換性のある Velero/AWS plugin バージョンを選択してください。IRSA の例では、設定済みのクラスター OIDC provider と、velero ServiceAccount を信頼するスコープを限定した role を前提としています。インストール前に backup bucket、volume snapshot/file-backup サポート、暗号化、restore 権限を設定してください。すべての PVC が自動的に保護されるわけではありません。
+公式の互換性マトリックスを使用して、互換性のある Velero/AWS プラグインのバージョンを選択してください。IRSA の例では、クラスターに OIDC プロバイダーが構成され、velero ServiceAccount を信頼するスコープ限定のロールがあることを前提としています。インストール前に、バックアップ用バケット、ボリュームスナップショット/ファイルバックアップのサポート、暗号化、復元権限を構成してください。すべての PVC が自動的に保護されるわけではありません。
 
-Velero は Kubernetes クラスター resource と persistent volume をバックアップおよびリカバリするためのツールです。
+Velero は、Kubernetes クラスターのリソースと PersistentVolume をバックアップおよび復旧するためのツールです。
 
 ```bash
 # Install Velero (using AWS S3 backup storage)
@@ -1640,19 +1642,20 @@ velero restore create --from-backup full-cluster-backup
 
 ### バックアップ戦略の比較
 
-| バックアップ方法 | バックアップ対象 | 利点 | 欠点 | リカバリ時間 |
+| バックアップ方法 | バックアップ対象 | メリット | デメリット | 復旧時間 |
 |--------------|---------------|------------|---------------|---------------|
-| **etcd Snapshot** | クラスター状態 | 組み込み機能、完全な状態保持 | volume data は含まれない、手動プロセス | 中 |
-| **Resource YAML Backup** | Kubernetes object | 実装が簡単、選択的 restore | volume data は含まれない、関係性が複雑 | 遅い |
-| **Velero** | resource と volume | 自動化、スケジューリング、volume snapshot | 追加ツールのインストールが必要 | 速い |
-| **Cloud Provider Snapshots** | サポートされる disk/filesystem | backend ネイティブのリカバリポイント | Kubernetes/EKS クラスター全体は取得しない | data/backend に依存 |
-## 監視とロギング
+| **etcd スナップショット** | クラスターの状態 | 組み込み機能で、完全な状態を保持できる | ボリュームデータは含まれず、手動での作業が必要 | 中程度 |
+| **リソース YAML のバックアップ** | Kubernetes オブジェクト | 実装が簡単で、選択的に復元できる | ボリュームデータは含まれず、リソース間の関係が複雑 | 遅い |
+| **Velero** | リソースとボリューム | 自動化、スケジューリング、ボリュームスナップショット | 追加ツールのインストールが必要 | 速い |
+| **クラウドプロバイダーのスナップショット** | 対応するディスク/ファイルシステム | バックエンドネイティブの復旧ポイント | Kubernetes/EKS クラスター全体は取得できない | データ/バックエンドによる |
 
-効果的なクラスター管理には、包括的な監視およびロギング system が必要です。これにより問題を早期に検出・解決できます。
+## 監視とログ記録
+
+効果的なクラスター管理には、包括的な監視とログ記録のシステムが必要です。これにより、問題を早期に検出して解決できます。
 
 ### 監視アーキテクチャ
 
-![Kubernetes 監視が metric 収集、log 収集、alert、可視化に分割され、それぞれ Prometheus（kube-state-metrics と node-exporter を伴う）、Elasticsearch と Kibana に log を送る Fluentd/Fluent Bit、Alertmanager、Grafana によって処理されることを示すアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-11.png)
+![Kubernetes の監視をメトリクス収集、ログ収集、アラート、可視化に分けた構成図。それぞれ Prometheus と kube-state-metrics/node-exporter、Fluentd/Fluent Bit によるログの Elasticsearch への送信と Kibana、Alertmanager、Grafana が担う。](../.gitbook/assets/en-core-09-cluster-administration-11.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-11.html)
 
@@ -1677,9 +1680,9 @@ kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
 # Obtain credentials from the configured Grafana Secret; do not assume a published default password
 ```
 
-### EFK Stack のインストール（Elasticsearch、Fluentd、Kibana）
+### EFK スタックのインストール (Elasticsearch、Fluentd、Kibana)
 
-スタンドアロンの Elastic Stack Helm-chart リポジトリはアーカイブ済みです。保守対象の deployment には Elastic Cloud on Kubernetes（ECK）を使用し、Elasticsearch/Kibana resource と互換性のある log collector を定義してください。operator のインストールだけでは EFK stack は作成されません。
+単独の Elastic Stack Helm Chart リポジトリはアーカイブされています。保守されている環境をデプロイするには、Elastic Cloud on Kubernetes (ECK) を使用し、Elasticsearch/Kibana リソースと互換性のあるログ収集ツールを定義してください。Operator をインストールしただけでは EFK スタックは作成されません。
 
 ```bash
 helm repo add elastic https://helm.elastic.co
@@ -1688,18 +1691,18 @@ helm upgrade --install elastic-operator elastic/eck-operator \
   --version "${ECK_CHART_VERSION:?Select a supported ECK chart version}"
 ```
 
-Dashboard は ClusterIP/認証済みアクセスの背後に置き、[ECK guide](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart)に従って storage、TLS、credential、collector parsing、RBAC を設定してください。
+ダッシュボードへのアクセスは ClusterIP または認証で保護してください。[ECK ガイド](https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/install-using-helm-chart)に従い、ストレージ、TLS、認証情報、収集ツールのパース、RBAC を構成してください。
 
-### 主要な監視 metric
+### 主な監視メトリクス
 
-| metric type | 説明 | 主要 metric | 監視ツール |
+| メトリクスの種類 | 説明 | 主なメトリクス | 監視ツール |
 |-------------|-------------|-------------|-----------------|
-| **Node Metrics** | node レベルのリソース使用量 | CPU、メモリ、disk、network | node-exporter、Prometheus |
-| **Pod Metrics** | container のリソース使用量 | CPU、メモリ使用量、limit | cAdvisor、Prometheus |
-| **Cluster Metrics** | クラスター状態と resource | Pod 数、node/object 状態、desired/current replica | kube-state-metrics |
-| **Application Metrics** | custom application metric | request count、latency、error rate | Prometheus client library |
+| **ノードメトリクス** | ノードレベルのリソース使用状況 | CPU、メモリ、ディスク、ネットワーク | node-exporter、Prometheus |
+| **Pod メトリクス** | コンテナのリソース使用状況 | CPU、メモリ使用量、limits | cAdvisor、Prometheus |
+| **クラスターのメトリクス** | クラスターの状態とリソース | Pod 数、ノード/オブジェクトの状態、desired/current レプリカ数 | kube-state-metrics |
+| **アプリケーションメトリクス** | カスタムアプリケーションメトリクス | リクエスト数、レイテンシ、エラー率 | Prometheus クライアントライブラリ |
 
-### Log の収集と分析
+### ログの収集と分析
 
 ```bash
 # Check logs for a specific pod
@@ -1718,11 +1721,11 @@ kubectl logs -f <pod-name> -n <namespace>
 kubectl logs -l app=nginx -n <namespace>
 ```
 
-### Alert 設定
+### アラートの構成
 
-Prometheus Alertmanager を使用して alert を設定できます。
+Prometheus Alertmanager を使用してアラートを構成できます。
 
-key `url` を持つ保護された `slack-webhook` Secret を monitoring に作成してから、これらの Helm value を既存の kube-prometheus-stack release にマージしてください。webhook URL を commit しないでください。スタンドアロンの ConfigMap は operator により自動的には使用されません。
+monitoring namespace に、キー `url` を持つ保護された `slack-webhook` Secret を作成し、これらの Helm values を既存の kube-prometheus-stack リリースにマージしてください。Webhook URL をコミットしないでください。単独の ConfigMap は Operator に自動で読み込まれません。
 
 ```yaml
 # alertmanager-values.yaml
@@ -1749,14 +1752,14 @@ alertmanager:
         text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
 ```
 
-アップグレード時は現在の chart version と他の value を維持してください。通知に依存する前に Alertmanager の reload/status を検証します。
+アップグレード時は、現在の Chart バージョンとその他の values を維持してください。通知を信頼する前に、Alertmanager の再読み込みと状態を確認してください。
 ## トラブルシューティング
 
-Kubernetes クラスターのトラブルシューティングは system administrator と operator にとって重要なスキルです。効果的なトラブルシューティングには体系的なアプローチが必要です。
+Kubernetes クラスターのトラブルシューティングは、システム管理者やオペレーターにとって重要なスキルです。効果的なトラブルシューティングには、体系的なアプローチが必要です。
 
-### トラブルシューティングの方法論
+### トラブルシューティングの方法
 
-![問題の特定から文書化までの 6 段階のトラブルシューティング手順を示し、情報収集段階が log、event、resource status の確認に分岐するワークフロー図。](../.gitbook/assets/en-core-09-cluster-administration-12.png)
+![問題の特定から記録までの6段階のトラブルシューティング手順を示すワークフロー図。情報収集の段階は、ログ、イベント、リソース状態の確認に分岐する。](../.gitbook/assets/en-core-09-cluster-administration-12.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-12.html)
 
@@ -1764,11 +1767,11 @@ Kubernetes クラスターのトラブルシューティングは system adminis
 
 | 問題の種類 | 症状 | 診断コマンド | 一般的な解決策 |
 |-------------|----------|---------------------|-----------------|
-| **Pod が起動しない** | Pod が Pending または ContainerCreating 状態 | `kubectl describe pod <pod-name>` | リソース制約、image の可用性、volume mount を確認 |
-| **Service 接続の問題** | service 経由で Pod にアクセスできない | `kubectl describe svc <service-name>`, `kubectl get endpointslices -l kubernetes.io/service-name=<service-name>` | label selector、Pod 状態、network policy を確認 |
-| **Node の問題** | Node が NotReady 状態 | `kubectl describe node <node-name>`, `kubectl get events` | kubelet 状態、system resource、network 接続を確認 |
-| **DNS の問題** | service name で接続できない | `kubectl exec -it <pod-name> -- nslookup kubernetes.default` | CoreDNS Pod、kube-dns service、network policy を確認 |
-| **認証/認可の問題** | API server access が拒否される | `kubectl auth can-i <verb> <resource>` | RBAC 設定、certificate 有効性、service account を確認 |
+| **Pod が起動しない** | Pod が Pending または ContainerCreating 状態 | `kubectl describe pod <pod-name>` | リソースの制約、イメージの有無、ボリュームマウントを確認する |
+| **Service 接続の問題** | Service 経由で Pod にアクセスできない | `kubectl describe svc <service-name>`, `kubectl get endpointslices -l kubernetes.io/service-name=<service-name>` | ラベルセレクター、Pod の状態、NetworkPolicy を確認する |
+| **ノードの問題** | ノードが NotReady 状態 | `kubectl describe node <node-name>`, `kubectl get events` | kubelet の状態、システムリソース、ネットワーク接続を確認する |
+| **DNS の問題** | Service 名で接続できない | `kubectl exec -it <pod-name> -- nslookup kubernetes.default` | CoreDNS Pod、kube-dns Service、NetworkPolicy を確認する |
+| **認証/認可の問題** | API server へのアクセスが拒否される | `kubectl auth can-i <verb> <resource>` | RBAC の設定、証明書の有効性、Service Account を確認する |
 
 ### Pod のトラブルシューティング
 
@@ -1790,7 +1793,7 @@ kubectl exec -it <pod-name> -- /bin/sh
 kubectl get events --field-selector involvedObject.name=<pod-name>
 ```
 
-### Node のトラブルシューティング
+### ノードのトラブルシューティング
 
 ```bash
 # Check node status
@@ -1829,11 +1832,11 @@ curl <service-name>:<port>
 ```
 ## Amazon EKS クラスター管理
 
-Amazon EKS（Elastic Kubernetes Service）は、AWS が control plane を管理する AWS 上のマネージド Kubernetes service です。node に関する顧客の責任は、managed node group、Auto Mode、Fargate、またはセルフマネージド compute によって異なります。workload のセキュリティと設定は引き続き顧客の責任です。
+Amazon EKS (Elastic Kubernetes Service) は、AWS がコントロールプレーンを管理する AWS 上のマネージド Kubernetes サービスです。ノードに対するお客様の責任範囲は、マネージドノードグループ、Auto Mode、Fargate、自己管理コンピューティングのいずれを使用するかによって異なります。ワークロードのセキュリティと構成は、引き続きお客様の責任です。
 
 ### EKS クラスターアーキテクチャ
 
-![Amazon EKS クラスターが、AWS 管理の control plane（API server、etcd、scheduler）と、data plane（EC2 Auto Scaling group を持つ managed node group、セルフマネージド node、Fargate）、networking（VPC CNI と AWS VPC）、security（IAM role と policy による IAM 認証）を含む顧客責任領域に分割されることを示すアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-13.png)
+![Amazon EKS クラスターを、AWS が管理するコントロールプレーン（API server、etcd、scheduler）と、お客様の責任範囲（データプレーン、つまり EC2 Auto Scaling グループを備えたマネージドノードグループ、自己管理ノード、Fargate、ネットワーク、つまり VPC CNI と AWS VPC、セキュリティ、つまり IAM ロールと策略を使った IAM 認証）に分けた構成図。](../.gitbook/assets/en-core-09-cluster-administration-13.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-13.html)
 
@@ -1860,7 +1863,7 @@ aws eks create-cluster \
   --resources-vpc-config "subnetIds=${EKS_SUBNET_IDS:?Set two or more appropriate subnets},securityGroupIds=${EKS_SECURITY_GROUP_ID:?Set the intended security group},endpointPrivateAccess=true,endpointPublicAccess=true,publicAccessCidrs=${ADMIN_CIDR:?Set an approved administrator public CIDR}"
 ```
 
-### Node Group 管理
+### Node Group の管理
 
 ```bash
 # Create managed node group
@@ -1904,9 +1907,9 @@ aws eks update-nodegroup-version \
   --nodegroup-name my-nodegroup
 ```
 
-### EKS クラスターの認証および認可
+### EKS クラスターの認証と認可
 
-クラスターは `API` または `API_AND_CONFIG_MAP` 認証 mode を使用する必要があります。既存の administrator/node access を維持しながら、legacy aws-auth mapping からの移行を計画してください。この例では、viewer role に default namespace のみへの access を付与します。
+クラスターでは、認証モードとして `API` または `API_AND_CONFIG_MAP` を使用する必要があります。既存の管理者/ノードアクセスを維持しながら、従来の aws-auth マッピングからの移行を計画してください。この例では、viewer ロールに default namespace のみへのアクセスを許可します。
 
 ```bash
 aws eks describe-cluster --name my-cluster --query cluster.accessConfig.authenticationMode
@@ -1918,11 +1921,11 @@ aws eks associate-access-policy --cluster-name my-cluster \
   --access-scope type=namespace,namespaces=default
 ```
 
-[EKS access-entry guide](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)を参照してください。EKS access entry を管理する権限と Kubernetes workload の権限は別個です。
+[EKS access entry ガイド](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)を参照してください。EKS access entry の管理権限と Kubernetes ワークロードの権限は別です。
 
 ### EKS クラスターの監視
 
-Control plane logging は api/audit/authenticator/controllerManager/scheduler log を export します。Container Insights には CloudWatch agent/add-on とスコープを限定した telemetry IAM 権限が必要です。update-cluster-logging では有効になりません。CloudWatch observability add-on は CloudWatch/Fluent Bit コンポーネントをインストールし、Prometheus/Grafana はインストールしません。[公式 add-on セットアップ](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)を参照してください。
+コントロールプレーンのログ記録では、api/audit/authenticator/controllerManager/scheduler のログがエクスポートされます。Container Insights を利用するには、CloudWatch agent/アドオンと、スコープを限定したテレメトリ用 IAM 権限が必要です。`update-cluster-logging` では有効になりません。CloudWatch observability アドオンがインストールするのは CloudWatch/Fluent Bit コンポーネントであり、Prometheus/Grafana ではありません。[公式アドオンのセットアップ手順](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html)を参照してください。
 
 ```bash
 # Enable EKS control-plane logs
@@ -1939,82 +1942,82 @@ aws eks create-addon \
 ```
 ## クラスター管理のベストプラクティス
 
-効果的な Kubernetes クラスター管理のベストプラクティスは、安定性、セキュリティ、パフォーマンスを確保する上で重要です。
+効果的な Kubernetes クラスター管理のベストプラクティスは、安定性、セキュリティ、パフォーマンスの確保に役立ちます。
 
 ### クラスターセットアップのベストプラクティス
 
-1. **Multi-Availability Zone Configuration**: 高可用性のため、複数の availability zone に node を分散
-2. **適切なサイジング**: workload に適した node type と数を選択
-3. **Autoscaling 設定**: cluster autoscaler と horizontal pod autoscaler を有効化
-4. **NetworkPolicy の適用**: default deny policy から開始し、必要な通信のみ許可
-5. **ResourceQuota の設定**: namespace ごとに resource limit を設定
+1. **複数アベイラビリティーゾーン構成**: 高可用性のため、複数のアベイラビリティーゾーンにノードを分散する
+2. **適切なサイジング**: ワークロードに適したノードの種類と数を選択する
+3. **オートスケーリングの構成**: Cluster Autoscaler と Horizontal Pod Autoscaler を有効にする
+4. **NetworkPolicy の適用**: デフォルト拒否ポリシーから始め、必要な通信のみを許可する
+5. **ResourceQuota の設定**: namespace ごとにリソース上限を設定する
 
 ### 運用のベストプラクティス
 
-1. **宣言的設定の使用**: すべての resource を YAML file として定義し、version control する
-2. **GitOps の採用**: Git を single source of truth として使用し、自動 deployment pipeline を構築
-3. **定期的なバックアップ**: etcd data と persistent volume data を定期的にバックアップ
-4. **監視とアラート**: 包括的な監視 system を構築し、主要 metric の alert を設定
-5. **集中ロギング**: 分析しやすいようにすべての log を中央 logging system に収集
+1. **宣言的構成の使用**: すべてのリソースを YAML ファイルで定義し、バージョン管理する
+2. **GitOps の採用**: Git を信頼できる唯一の情報源として使用し、自動化されたデプロイパイプラインを構築する
+3. **定期的なバックアップ**: etcd データと PersistentVolume データを定期的にバックアップする
+4. **監視とアラート**: 包括的な監視システムを構築し、主要なメトリクスにアラートを設定する
+5. **ログの一元管理**: 分析しやすいよう、すべてのログを一元的なログシステムに集約する
 
 ### セキュリティのベストプラクティス
 
-1. **最小権限の原則**: RBAC を使用して必要最小限の権限のみを付与
-2. **ネットワークセグメンテーション**: network policy を使用して Pod 間通信を制限
-3. **Image Scanning**: 脆弱性検出のための container image scanning を実装
-4. **Secret 管理**: 外部 secret 管理ツール（例: AWS Secrets Manager、HashiCorp Vault）を使用
-5. **定期的なセキュリティ監査**: クラスター設定と権限を定期的に監査
+1. **最小権限の原則**: RBAC を使用し、必要最小限の権限のみを付与する
+2. **ネットワークのセグメンテーション**: NetworkPolicy を使用して Pod 間通信を制限する
+3. **イメージスキャン**: 脆弱性を検出するため、コンテナイメージのスキャンを導入する
+4. **Secret の管理**: 外部の Secret 管理ツール（AWS Secrets Manager、HashiCorp Vault など）を使用する
+5. **定期的なセキュリティ監査**: クラスターの構成と権限を定期的に監査する
 
 ### アップグレードのベストプラクティス
 
-1. **段階的アップグレード**: 一度にすべてではなく段階的にアップグレード
-2. **テスト環境を先に**: 本番前にテスト環境でアップグレードを検証
-3. **バックアップの作成**: アップグレード前に完全なバックアップを実行
-4. **ロールバック計画**: 問題発生時に以前の version にロールバックする計画を策定
-5. **アップグレード window の設定**: 使用量が少ない時間帯にアップグレードを実行
+1. **段階的なアップグレード**: 一度にすべてをアップグレードするのではなく、段階的に行う
+2. **最初にテスト環境で検証**: 本番環境に適用する前に、テスト環境でアップグレードを検証する
+3. **バックアップの作成**: アップグレード前に完全なバックアップを実施する
+4. **ロールバック計画**: 問題発生時に以前のバージョンへ戻す計画を作成する
+5. **アップグレード時間帯の設定**: 利用の少ない時間帯にアップグレードを実施する
 
 ### コスト最適化のベストプラクティス
 
-1. **適切な Node Size の選択**: workload に最適な node type を選択
-2. **Spot Instance の活用**: 重要でない workload に spot instance を使用
-3. **Autoscaling の設定**: 需要に基づく自動 scale up/down を設定
-4. **Resource Request と Limit の最適化**: 実際の使用量に基づいて resource request と limit を設定
-5. **Idle Resource の特定**: idle resource を定期的に特定して削除
+1. **適切なノードサイズの選択**: ワークロードに適したノードタイプを選択する
+2. **Spot Instance の活用**: 重要度の低いワークロードには Spot Instance を使用する
+3. **オートスケーリングの構成**: 需要に応じて自動的にスケールアップ/ダウンするよう設定する
+4. **リソース requests と limits の最適化**: 実際の使用状況に基づいてリソース requests と limits を設定する
+5. **アイドル状態のリソースの特定**: アイドル状態のリソースを定期的に特定して削除する
 
-### ドキュメントのベストプラクティス
+### ドキュメント作成のベストプラクティス
 
-1. **アーキテクチャの文書化**: クラスターアーキテクチャ、networking、security 設定を文書化
-2. **運用手順の文書化**: 一般的な運用作業、トラブルシューティング手順、緊急対応計画を文書化
-3. **変更管理**: すべてのクラスター変更を記録・追跡
-4. **Runbook の作成**: 一般的なシナリオ向けの段階的な guide を提供
-5. **知識共有**: チーム内で定期的な知識共有とトレーニング session を実施
+1. **アーキテクチャの文書化**: クラスターアーキテクチャ、ネットワーク、セキュリティ設定を文書化する
+2. **運用手順の文書化**: 一般的な運用タスク、トラブルシューティング手順、緊急対応計画を文書化する
+3. **変更管理**: すべてのクラスター変更を記録し、追跡する
+4. **手順書の作成**: 一般的なシナリオについて、段階的なガイドを用意する
+5. **知識の共有**: チーム内で定期的に知識共有やトレーニングを行う
 ## まとめ
 
-Kubernetes クラスター管理は、さまざまな側面を含む複雑な作業です。クラスターのセットアップから運用、監視、トラブルシューティング、アップグレードまで、体系的なアプローチが必要です。
+Kubernetes クラスター管理は、さまざまな側面を含む複雑な作業です。クラスターのセットアップから運用、監視、トラブルシューティング、アップグレードまで、体系的に取り組む必要があります。
 
-効果的なクラスター管理のため、次の主要領域に注力してください。
+効果的なクラスター管理では、次の主要な領域に注力してください。
 
-1. **クラスターコンポーネント管理**: control plane および node コンポーネントの安定した運用
-2. **リソース管理**: 効率的なリソース割り当てと使用
-3. **ネットワーク**: 安全で効率的なネットワーク設定
-4. **セキュリティ**: 適切な認証および認可管理
-5. **バックアップとリカバリ**: データ損失の防止と災害復旧計画
-6. **監視とロギング**: クラスター状態とパフォーマンスの監視
-7. **トラブルシューティング**: 体系的なトラブルシューティングアプローチ
+1. **クラスターコンポーネントの管理**: コントロールプレーンとノードコンポーネントの安定運用
+2. **リソース管理**: リソースの効率的な割り当てと利用
+3. **ネットワーク**: 安全で効率的なネットワーク構成
+4. **セキュリティ**: 適切な認証と認可の管理
+5. **バックアップと復旧**: データ損失の防止と災害復旧計画
+6. **監視とログ記録**: クラスターの状態とパフォーマンスの監視
+7. **トラブルシューティング**: 体系的なトラブルシューティングのアプローチ
 
-Amazon EKS のようなマネージド Kubernetes service を使用する場合、service provider と user 間の責任共有モデルを理解することが重要です。AWS が control plane を管理し、compute の責任は mode によって異なります。顧客は引き続きアプリケーション設定とセキュリティを管理します。
+Amazon EKS などのマネージド Kubernetes サービスを使用する場合は、サービスプロバイダーとユーザー間の責任共有モデルを理解することが重要です。AWS はコントロールプレーンを管理し、コンピューティングに関する責任はモードによって異なります。お客様は引き続きアプリケーションの構成とセキュリティを管理します。
 
-ベストプラクティスに従い、適切なツールを活用することで、安定し、安全で、効率的な Kubernetes クラスターを運用できます。クラスター管理能力を高めるための継続的な学習と改善が重要です。
+ベストプラクティスに従い、適切なツールを活用することで、安定して安全かつ効率的な Kubernetes クラスターを運用できます。クラスター管理能力を高めるには、継続的に学び、改善していくことが重要です。
 
 ---
 
 > **参考資料**:
 > - [Kubernetes 公式ドキュメント: クラスター管理](https://kubernetes.io/docs/tasks/administer-cluster/)
 > - [Amazon EKS ユーザーガイド](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html)
-> - [Kubernetes ベストプラクティス: クラスター管理](https://kubernetes.io/docs/setup/best-practices/)
-> - [etcd ドキュメント: バックアップとリカバリ](https://etcd.io/docs/v3.5/op-guide/recovery/)
+> - [Kubernetes のベストプラクティス: クラスター管理](https://kubernetes.io/docs/setup/best-practices/)
+> - [etcd ドキュメント: バックアップと復旧](https://etcd.io/docs/v3.6/op-guide/recovery/)
 > - [Prometheus ドキュメント](https://prometheus.io/docs/introduction/overview/)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[クラスター管理クイズ](../quizzes/core/09-cluster-administration-quiz.md)に挑戦してください。
+この章で学んだことを確認するには、[クラスター管理クイズ](../quizzes/core/09-cluster-administration-quiz.md)に挑戦してください。

@@ -1,53 +1,51 @@
-# AWS Load Balancer Controller
+# Controlador de AWS Load Balancer
 
-> **Base de revisión**: AWS Load Balancer Controller / chart Helm v3.5.0
-> **Última actualización**: 11 de septiembre de 2026
+> **Base de revisión**: AWS Load Balancer Controller / Helm chart v3.6.0
+> **Última actualización**: 16 de octubre de 2026
 
 ## Descripción general
 
-AWS Load Balancer Controller administra los Elastic Load Balancers (ELB) de AWS para clústeres Kubernetes. Integra automáticamente los recursos Ingress y Service con Application Load Balancer (ALB) y Network Load Balancer (NLB).
+AWS Load Balancer Controller es un controlador que administra los Elastic Load Balancers (ELB) de AWS para los clústeres de Kubernetes. Integra automáticamente los recursos Ingress y Service de Kubernetes con los Application Load Balancer (ALB) y Network Load Balancer (NLB) de AWS.
 
-### Funciones principales
+### Características principales
 
-- **Application Load Balancer (ALB)**: Tráfico HTTP/HTTPS y enrutamiento por ruta o host
-- **Network Load Balancer (NLB)**: Tráfico TCP/UDP y balanceo L4 de alto rendimiento
-- **TargetGroupBinding**: Conecta grupos de destino existentes con Services de Kubernetes
-- **Integración con AWS WAF**: Aplicación de un firewall de aplicaciones web
-- **AWS Shield**: Protección DDoS
+- **Application Load Balancer (ALB)**: tráfico HTTP/HTTPS, enrutamiento basado en rutas y en hosts
+- **Network Load Balancer (NLB)**: tráfico TCP/UDP, balanceo de carga L4 de alto rendimiento
+- **TargetGroupBinding**: conecta los grupos de destino existentes con los Services de Kubernetes
+- **Integración con AWS WAF**: aplicación de reglas de Web Application Firewall
+- **AWS Shield**: protección contra DDoS
 
-![Diagrama que muestra cómo los recursos Ingress y Service de un clúster EKS activan AWS Load Balancer Controller, que crea un Application Load Balancer y un Network Load Balancer, cada uno con su propio grupo de destino, mientras TargetGroupBinding vincula directamente un grupo de destino existente y ambos grupos registran los mismos Pods de backend.](../.gitbook/assets/en-networking-03-aws-lb-controller-0.png)
+![Diagrama que muestra los recursos Ingress y Service de un clúster de EKS que activan AWS Load Balancer Controller, el cual crea un Application Load Balancer y un Network Load Balancer, cada uno con su propio grupo de destino, mientras que TargetGroupBinding vincula directamente un grupo de destino existente; ambos grupos de destino registran los mismos Pods de backend.](../.gitbook/assets/en-networking-03-aws-lb-controller-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-03-aws-lb-controller-0.html)
 
 ## Arquitectura
 
-### Funcionamiento del controlador
+### Cómo funciona el controlador
 
-![El controlador reacciona a un nuevo Ingress o Service creando ALB/NLB, grupo de destino y reglas mediante ELBv2; actualiza el estado y continúa registrando destinos cuando cambian los Pods.](../.gitbook/assets/en-networking-03-aws-lb-controller-1.png)
+![Secuencia en la que AWS Load Balancer Controller reacciona ante un nuevo Ingress o Service creando el ALB o NLB, el grupo de destino y las reglas de escucha mediante la API ELBv2; actualiza el estado del recurso y sigue registrando destinos a medida que cambian los Pods.](../.gitbook/assets/en-networking-03-aws-lb-controller-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-03-aws-lb-controller-1.html)
 
-### Estructura de componentes
+### Estructura de los componentes
 
-Instale el chart completo publicado, incluidos RBAC, CRD, sondas y certificados de webhook. El controlador observa objetos y llama a las API de AWS; el tráfico de aplicaciones pasa por el balanceador y sus destinos, no por su Pod. Con elección de líder, una réplica reconcilia y las demás aportan reserva y disponibilidad del webhook. El número de réplicas no garantiza distribución entre nodos o zonas de disponibilidad.
+Instale el chart publicado completo, incluidos RBAC, CRD, sondas y certificados de webhook. El controlador observa los objetos de Kubernetes y llama a las API de AWS; el tráfico de las aplicaciones pasa por el balanceador de carga y sus destinos, no por el pod del controlador. Con la elección de líder, una réplica realiza la reconciliación mientras las demás ofrecen capacidad en espera y disponibilidad del webhook. El número de réplicas, por sí solo, no garantiza la distribución entre nodos o zonas de disponibilidad.
 
 ## Requisitos previos
 
 ### Propiedad y compatibilidad
 
-Este capítulo configura el **controlador de código abierto autogestionado**. EKS Auto Mode ofrece su propio balanceo administrado: los Services NLB usan `eks.amazonaws.com/nlb`, IngressClass ALB usa `eks.amazonaws.com/alb` y su API TargetGroupBinding difiere de `elbv2.k8s.aws/v1beta1`. Consulte la migración de Auto Mode en vez de cambiar la clase o copiar todas las anotaciones. Las clases explícitas evitan ambigüedad cuando coexisten ambos modelos.
+Este capítulo configura el **controlador de código abierto autoadministrado**. EKS Auto Mode proporciona su propio balanceo de carga administrado: los Services NLB usan `eks.amazonaws.com/nlb`, la IngressClass ALB usa `eks.amazonaws.com/alb` y su API TargetGroupBinding es distinta de `elbv2.k8s.aws/v1beta1`. Consulte la guía de migración de Auto Mode en lugar de cambiar una clase o copiar todas las anotaciones tal cual. Las clases explícitas evitan ambigüedades cuando están presentes ambos modelos.
 
-Use una versión de EKS Kubernetes actualmente soportada y compruebe todos los controladores que comparten CRD globales. LBC **v3.5.0** se publicó el **2026-08-03**; el chart verificado **3.5.0** lo incluye. Los usuarios de Gateway API necesitan CRD **v1.6.0** antes de actualizar; los CRD Gateway específicos de LBC usan `gateway.k8s.aws/v1`. Esto no implica compatibilidad con cualquier versión más reciente. El antiguo mínimo genérico «Kubernetes 1.22+» no es una matriz actual de soporte de EKS.
+Use una versión de Kubernetes de EKS que tenga soporte vigente y verifique todos los controladores que compartan CRD de ámbito de clúster. **v3.6.0** de LBC se publicó el **2026-10-05**; el chart **3.6.0** verificado incluye ese controlador. v3.6.0 conserva la misma base de CRD de Gateway API **v1.6.0** que v3.5.0, por lo que quienes usen Gateway API necesitan los CRD v1.6.0 antes de actualizar. Las notas de la versión solicitan aplicar los CRD de LBC más recientes proporcionados por AWS (la salida de `helm show crds` del chart) antes de actualizar el controlador, y los CRD de Gateway específicos de LBC usan `gateway.k8s.aws/v1`. Esto no significa que una versión cualquiera más reciente de Gateway API o Kubernetes sea compatible. El antiguo requisito genérico de instalación de “Kubernetes 1.22+” no es una matriz vigente de compatibilidad con EKS.
 
-El webhook necesita acceso TCP 9443 desde el plano de control. Especifique región/VPC cuando IMDS esté restringido o se ejecute en Fargate/Hybrid Nodes; elija credenciales compatibles con ese cómputo. Los destinos IP necesitan direcciones de Pods enrutables en la VPC y descubrimiento de endpoints/ENI compatible. Amazon VPC CNI es habitual en EKS, pero no es la única configuración posible. Los destinos de instancia requieren un Service con NodePort y una red de nodos adecuada.
+El webhook del controlador necesita conectividad TCP en el puerto 9443 desde el plano de control. Configure explícitamente los valores de región y VPC cuando IMDS esté restringido o el controlador se ejecute en Fargate o Hybrid Nodes; elija un mecanismo de credenciales compatible con ese tipo de cómputo. Los destinos IP necesitan direcciones de pod enrutables desde la VPC y detección compatible de endpoints/ENI. Amazon VPC CNI es la opción común en EKS, pero no es la única configuración posible de CNI. Los destinos de tipo instancia requieren un Service compatible con NodePort y una red de nodos adecuada.
 
+### 1. Crear la política de IAM
 
+Use la política de IAM incluida con **v3.6.0** y la partición de AWS correcta. Revise sus permisos amplios de detección y de grupos de seguridad, las condiciones sobre recursos/etiquetas y las características habilitadas en esta implementación. Guarde la política revisada antes de crearla. No considere que la política original garantiza el mínimo privilegio ni copie una política antigua de v2.8 en una instalación actual. Las credenciales de AWS del controlador pueden usar **IRSA o EKS Pod Identity** en los nodos compatibles; son independientes del RBAC de la API de Kubernetes.
 
-### 1. Crear la política IAM
-
-Use la política incluida en **v3.5.0** y la partición AWS correcta. Revise permisos amplios de descubrimiento y grupos de seguridad, condiciones de recursos/etiquetas y funciones activas. Guarde la política revisada antes de crearla. La política upstream no garantiza mínimo privilegio; no copie una antigua v2.8. Las credenciales AWS del controlador pueden usar **IRSA o EKS Pod Identity** en nodos compatibles y son independientes de RBAC de Kubernetes.
-
-### 2. Configurar IRSA
+### 2. Configuración de IRSA
 
 ```bash
 export AWS_REGION=us-east-1
@@ -64,7 +62,7 @@ eksctl utils associate-iam-oidc-provider --cluster "$CLUSTER_NAME" \
   --region "$AWS_REGION" --approve
 
 curl --fail --location --output iam-policy-upstream.json \
-  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.6.0/docs/install/iam_policy.json
 export REVIEWED_POLICY_FILE=iam-policy-reviewed.json
 test -s "$REVIEWED_POLICY_FILE"
 export CONTROLLER_POLICY_ARN="$(aws iam create-policy \
@@ -75,7 +73,7 @@ eksctl create iamserviceaccount --cluster "$CLUSTER_NAME" --region "$AWS_REGION"
   --attach-policy-arn "$CONTROLLER_POLICY_ARN" --approve
 ```
 
-Reutilice políticas y roles revisados. Un rol IRSA reutilizado necesita confianza para el proveedor OIDC de este clúster y la cuenta de servicio prevista. Revise propiedad y anotaciones de una cuenta existente antes de modificarla. Pod Identity usa su propio agente, asociación y confianza; no copie claves estáticas en los values.
+Reutilice las políticas y los roles existentes que ya se hayan revisado en lugar de volver a crearlos. Un rol IRSA reutilizado necesita una instrucción de confianza para el proveedor OIDC de este clúster y la cuenta de servicio prevista. Si la cuenta de servicio ya existe, revise su propiedad y sus anotaciones antes de cambiarla. Pod Identity usa su propio agente/asociación y configuración de confianza del rol; no copie claves de acceso estáticas en los valores del chart.
 
 ## Instalación
 
@@ -84,17 +82,17 @@ Reutilice políticas y roles revisados. Un rol IRSA reutilizado necesita confian
 ```bash
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update eks
-helm pull eks/aws-load-balancer-controller --version 3.5.0
+helm pull eks/aws-load-balancer-controller --version 3.6.0
 
 # Review cluster-wide CRD changes and other controllers before applying.
 curl --fail --location --output gateway-api-v1.6.0.yaml \
   https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml
 kubectl apply --server-side -f gateway-api-v1.6.0.yaml
-helm show crds ./aws-load-balancer-controller-3.5.0.tgz > lbc-crds.yaml
+helm show crds ./aws-load-balancer-controller-3.6.0.tgz > lbc-crds.yaml
 kubectl apply --server-side -f lbc-crds.yaml
 
 # Save the values below as controller-values.yaml and replace its cluster/region/VPC.
-helm install aws-load-balancer-controller ./aws-load-balancer-controller-3.5.0.tgz \
+helm install aws-load-balancer-controller ./aws-load-balancer-controller-3.6.0.tgz \
   -n kube-system -f controller-values.yaml --wait --timeout 5m
 ```
 
@@ -160,7 +158,7 @@ clusterSecretsPermissions:
   allowAllSecrets: false
 ```
 
-Los recursos son ejemplos, no tamaños de producción medidos. Los releases existentes requieren un `helm upgrade` revisado con values guardados; Helm no actualiza los CRD automáticamente. Con `enableServiceMutatorWebhook: false`, los NLB seleccionan explícitamente `service.k8s.aws/nlb`. El webhook predeterminado modifica Services LoadBalancer recién creados, no uno existente cuyo tipo cambia después. `keepTLSSecret: true` reutiliza el Secret del webhook administrado por Helm cuando existe; coordine el bundle CA y el certificado del Pod durante GitOps/rotación, o use cert-manager compatible instalado aparte. No elimine CRD compartidos para forzar una actualización.
+Los valores de recursos son ejemplos, no mediciones del dimensionamiento de producción. Las versiones instaladas requieren un `helm upgrade` revisado con los valores guardados; Helm no actualiza los CRD automáticamente. Con `enableServiceMutatorWebhook: false`, los Services NLB de este capítulo seleccionan explícitamente `service.k8s.aws/nlb`. De lo contrario, el webhook predeterminado modifica los Services LoadBalancer recién creados, pero no un Service existente cuyo tipo se cambia más adelante. `keepTLSSecret: true` reutiliza el Secret del webhook administrado por Helm cuando está disponible; coordine el paquete de CA y el certificado del pod durante las operaciones de GitOps o la rotación, o use un cert-manager compatible instalado por separado. No elimine CRD compartidos para forzar una actualización.
 
 ### Verificar la instalación
 
@@ -180,7 +178,7 @@ kubectl get ingressclass
 
 ## Application Load Balancer (ALB)
 
-Cada manifiesto siguiente es independiente. Sustituya ID de cuentas/recursos, dominios, subredes, grupos y ARN de certificados por valores verificados de la región correcta. Cree primero namespaces, Services y backends listos; el puerto Service 80 y el destino 8080 tienen roles distintos. Declarar containerPort no hace que una aplicación escuche ni implemente /health. El endpoint de salud, puerto real, protocolo HTTP/TLS, grupos y NetworkPolicies deben coincidir. La imagen inicial muestra **destinos IP**; los de instancia registran nodos y usan NodePorts. Este controlador también reconcilia TargetGroupBinding, y la secuencia es ilustrativa, no una transacción atómica.
+Considere cada manifiesto siguiente como un ejemplo independiente. Sustituya los ID de cuenta y recursos, los dominios, las subredes, los grupos de seguridad y los ARN de certificados por valores verificados de la región correcta. Cree primero los espacios de nombres, Services y cargas de trabajo de backend listas que se mencionan; el puerto 80 del Service y el puerto de destino 8080 cumplen funciones distintas. Declarar un containerPort no hace que una aplicación escuche ni que implemente /health. El endpoint de comprobación de estado, el puerto de destino real, el protocolo HTTP/TLS, los grupos de seguridad y las NetworkPolicies deben ser coherentes. La imagen de la descripción general ilustra **destinos IP**; los destinos de tipo instancia registran nodos y usan NodePorts. Este controlador también reconcilia TargetGroupBinding, y el diagrama de secuencia es ilustrativo, no representa una transacción atómica.
 
 ### Configuración básica de Ingress
 
@@ -314,7 +312,7 @@ spec:
                   number: 80
 ```
 
-### Enrutamiento por ruta
+### Enrutamiento basado en rutas
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -381,7 +379,7 @@ spec:
 
 ### Configuración de autenticación
 
-Los ejemplos requieren certificado HTTPS y aplicación del proveedor de identidad existentes. Configure callback `https://app.example.com/oauth2/idpresponse`, flujo de código de autorización, scopes y secreto de cliente. El ALB debe alcanzar los endpoints de token/información de usuario por IPv4; un ALB interno puede necesitar salida/NAT. La autenticación solo ocurre en listeners HTTPS. `allow` para solicitudes no autenticadas no protege el backend. Restrinja el acceso directo y valide las claims de usuario firmadas por ALB según la aplicación.
+Estos ejemplos requieren un certificado HTTPS existente y una aplicación de proveedor de identidad. Configure la URL de retorno `https://app.example.com/oauth2/idpresponse`, el flujo de código de autorización, los ámbitos permitidos y el secreto de cliente requerido. El ALB debe poder acceder a los endpoints de token e información de usuario del proveedor mediante IPv4; un ALB interno puede necesitar una ruta de salida/NAT adecuada. La autenticación se realiza solo en los listeners HTTPS. El valor `allow` para solicitudes no autenticadas no protege el backend. Restrinja el acceso directo al backend y verifique las declaraciones de usuario firmadas por el ALB según lo requiera la aplicación.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -467,7 +465,7 @@ stringData:
   clientSecret: your-client-secret
 ```
 
-El Secret OIDC debe estar en el namespace del Ingress. El chart usa `clusterSecretsPermissions.allowAllSecrets: false`; conceda solo acceso al Secret necesario. v3.5.0 lo observa mediante selector `metadata.name`, por lo que el Role puede limitar `resourceNames`. Cree el Secret real mediante el proceso aprobado; no publique un secreto real en Git.
+El Secret OIDC debe estar en el espacio de nombres de Ingress. El valor predeterminado del chart es `clusterSecretsPermissions.allowAllSecrets: false`; conceda a este controlador solo el acceso necesario a los Secret. v3.6.0 observa un Secret mediante un selector de campo `metadata.name`, por lo que el Role puede limitarse con `resourceNames`. Cree el Secret real mediante el flujo de trabajo aprobado de administración de secretos; no incluya un secreto de cliente real en el repositorio.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -504,7 +502,7 @@ roleRef:
 
 ## Network Load Balancer (NLB)
 
-### Configuración básica del Service NLB
+### Configuración básica de un Service NLB
 
 ```yaml
 apiVersion: v1
@@ -543,9 +541,9 @@ spec:
 
 ### Grupos de destino ponderados
 
-El Service asigna peso 90 a su grupo implícito y 10 al backend existente `service-canary:8080`. Ambos necesitan endpoints listos y configuración compatible; la anotación no crea la aplicación canary. El sufijo indica protocolo y puerto del listener: **`actions.TCP-80`**.
+El Service siguiente asigna un peso de 90 a su propio grupo de destino implícito y un peso de 10 al backend existente `service-canary:8080`. Ambos Services deben tener los endpoints listos previstos y una configuración de destinos compatible; esta anotación no crea la carga de trabajo canary. El sufijo de la anotación corresponde al protocolo y puerto del listener: **`actions.TCP-80`**.
 
-Los pesos relativos van de **0 a 999** y se aplican a conexiones nuevas. Los cambios ordinarios conservan conexiones existentes; **poner el peso de un grupo en 0 cierra sus conexiones existentes tras un breve período**, además de impedir nuevas. No es un drenaje garantizado sin interrupciones. Los listeners TLS necesitan protocolos compatibles y no admiten afinidad de grupo de destino.
+Los pesos son valores relativos de **0 a 999** y se aplican a las conexiones nuevas. Los cambios de peso habituales conservan las conexiones existentes; **si se establece en 0 el peso de un grupo de destino, sus conexiones existentes se cierran tras un breve periodo**, además de dejar de aceptar conexiones nuevas. No describa esto como un drenaje con tiempo de inactividad cero garantizado. Los listeners TLS requieren protocolos de grupo de destino compatibles y no admiten afinidad de grupo de destino.
 
 ```yaml
 apiVersion: v1
@@ -570,7 +568,7 @@ spec:
     protocol: TCP
 ```
 
-### NLB con terminación TLS
+### Terminación TLS en NLB
 
 ```yaml
 apiVersion: v1
@@ -634,7 +632,7 @@ spec:
       targetPort: 8080
 ```
 
-### NLB con soporte UDP
+### Compatibilidad con UDP en NLB
 
 ```yaml
 apiVersion: v1
@@ -664,9 +662,9 @@ spec:
 
 ### Proxy Protocol v2
 
-Proxy Protocol v2 transmite la dirección original del cliente como metadatos binarios de conexión; **no** conserva la dirección origen del paquete IP. El ejemplo desactiva la conservación a nivel de paquete para mostrar la diferencia. El backend debe interpretar Proxy Protocol antes de los datos de aplicación, también en las conexiones de salud correspondientes. Un servidor HTTP/TLS ordinario no procesa ese prefijo sin configuración.
+Proxy Protocol v2 transmite la dirección original del cliente como metadatos binarios de conexión; **no** conserva la dirección de origen del paquete IP. El ejemplo deshabilita la conservación de la IP del cliente a nivel de paquete para dejar clara la diferencia. El backend debe analizar Proxy Protocol antes de los datos de la aplicación, incluidas las conexiones de comprobación de estado aplicables. Un servidor HTTP/TLS normal no puede consumir ese prefijo sin configuración.
 
-`preserve_client_ip.enabled` controla la conservación del origen donde el tipo/protocolo/ruta lo permita. Con destinos instancia/NodePort, `externalTrafficPolicy: Local` puede evitar un SNAT posterior de kube-proxy, pero no sustituye universalmente la conservación del NLB. La traducción entre familias IP y las rutas transit/hairpin no soportadas necesitan evaluación aparte.
+`preserve_client_ip.enabled` controla la conservación del origen del paquete por parte del NLB cuando sea compatible con el tipo de destino, el protocolo y la ruta de red. Con destinos de tipo instancia/NodePort, `externalTrafficPolicy: Local` puede evitar un salto posterior de SNAT de kube-proxy; no sustituye de manera universal la conservación del NLB. La traducción entre familias IP y las rutas de tránsito o hairpin no compatibles requieren consideración aparte.
 
 ```yaml
 apiVersion: v1
@@ -696,7 +694,7 @@ spec:
 
 ## IngressClass e IngressClassParams
 
-La clase opcional se llama `alb-platform` para no sobrescribir `alb`, propiedad del chart. Etiquete los namespaces con `alb-enabled=true` y configure Ingress `spec.ingressClassName: alb-platform`. No la haga predeterminada del clúster salvo que esa sea la política. IngressClassParams prevalece sobre las anotaciones correspondientes.
+Esta clase opcional se llama `alb-platform` para evitar sobrescribir la clase `alb` que administra el chart. Etiquete los espacios de nombres previstos con `alb-enabled=true` y establezca `spec.ingressClassName: alb-platform` en su Ingress. No la convierta en la clase predeterminada del clúster salvo que esa sea la política prevista. La configuración de IngressClassParams tiene prioridad sobre las anotaciones correspondientes.
 
 ### Definición de IngressClass
 
@@ -759,9 +757,9 @@ spec:
     name: my-default-group
 ```
 
-## TargetGroupBinding {#targetgroupbinding}
+## TargetGroupBinding
 
-El CRD TargetGroupBinding conecta directamente grupos de destino AWS existentes con Services de Kubernetes.
+El CRD TargetGroupBinding permite conectar directamente los grupos de destino de AWS existentes con los Services de Kubernetes.
 
 ### TargetGroupBinding básico
 
@@ -794,9 +792,9 @@ spec:
             protocol: TCP
 ```
 
-TGB administra registros, no el ciclo del balanceador/listener existente. Mantenga coherentes puerto Service, protocolo/familia IP del grupo, puerto backend y reglas de seguridad. `nodeSelector` solo filtra destinos de **instancia**, no Pods en modo IP. Limite creación/actualización a operadores de confianza: el IAM del controlador puede permitir referencias a otros grupos de la cuenta.
+Un TGB administra los registros, no el ciclo de vida del balanceador de carga o del listener existentes. Mantenga coherentes el puerto del Service, el protocolo/la familia IP del grupo de destino, el puerto de destino del backend y las reglas del grupo de seguridad. `nodeSelector` solo filtra los destinos de **tipo instancia**; no elige Pods en modo IP. Restrinja la creación y actualización de TGB a operadores de confianza, ya que los permisos de IAM del controlador pueden permitir referencias a otros grupos de destino de la cuenta.
 
-Si varios clústeres o TGB comparten un grupo, configure `spec.multiClusterTargetGroup: true` **desde la creación en todos los TGB participantes**. `false` presupone propiedad completa y puede dar de baja destinos ajenos. No cambie el indicador a la ligera después: el cambio documentado puede dejar destinos sin gestionar. Usar grupos separados por clúster es otro modelo.
+Cuando varios clústeres o TGB comparten un grupo de destino, configure `spec.multiClusterTargetGroup: true` **desde la creación en todos los TGB participantes**. El valor predeterminado `false` supone la propiedad exclusiva y puede anular el registro de destinos de otros clústeres. No cambie esta marca a la ligera después de crear el recurso; el cambio documentado puede dejar destinos huérfanos. Usar grupos de destino separados por clúster es otro modelo de propiedad.
 
 ### TargetGroupBinding avanzado
 
@@ -842,7 +840,7 @@ spec:
   #     node-type: compute
 ```
 
-### TargetGroupBinding de varios puertos
+### TargetGroupBinding para varios puertos
 
 ```yaml
 # Separate TargetGroupBindings for multiple ports
@@ -872,7 +870,7 @@ spec:
 
 ## Integración con WAF y Shield
 
-Utilice una Web ACL regional existente en la región del ALB y configure sus reglas previstas. Los valores de instalación habilitan WAF v2 pero deshabilitan la integración con Shield; para utilizar el ejemplo de Shield Advanced, prepare primero la suscripción/permisos necesarios y habilite la integración del controlador con Shield. Su anotación por sí sola no activa una suscripción de pago ni anula una función del controlador deshabilitada. Estas integraciones de ALB no implican que WAF inspeccione tráfico TCP/UDP arbitrario de NLB. El ejemplo de registros de acceso en S3 también requiere un bucket de destino existente y la política de bucket documentada para entrega de registros de ALB.
+Use una Web ACL regional existente en la región del ALB y configure las reglas previstas. Los valores de instalación habilitan WAF v2, pero deshabilitan la integración con Shield; para usar el ejemplo de Shield Advanced, primero organice la suscripción y los permisos necesarios, y habilite la integración de Shield del controlador. La anotación por sí sola no activa una suscripción de pago ni anula la deshabilitación de una característica del controlador. Estas integraciones de ALB no implican que WAF inspeccione tráfico TCP/UDP arbitrario de NLB. El ejemplo de registros de acceso en S3 también requiere un bucket de destino existente y la política documentada del bucket para la entrega de registros de ALB.
 
 ### Integración con AWS WAF v2
 
@@ -932,78 +930,79 @@ spec:
                   number: 80
 ```
 
-## Actualizaciones destacadas
+## Actualizaciones de versión destacadas
 
-- **v2.16.0 — 2025-11-20:** ALB Target Optimizer y grupos ponderados NLB. Target Optimizer necesita agente y configuración de control de destinos; instalar LBC no lo activa.
-- **v2.17.0 — 2025-12-19:** Global Accelerator mediante el único CRD `aga.k8s.aws/v1beta1` `GlobalAccelerator`, con listeners, grupos y endpoints anidados; Gateway API en candidato a GA. Global Accelerator requiere IAM y configuración adicionales.
-- **v3.5.0 — 2026-08-03:** Conformidad Gateway API v1.6.0 y TCPRoute/UDPRoute v1 estables. Los recursos Gateway de LBC usan `gateway.k8s.aws/v1`; v1beta1 todavía servido está obsoleto.
+- **v2.16.0 (2025-11-20):** ALB Target Optimizer y grupos de destino ponderados de NLB. Target Optimizer requiere su agente de control de destinos y su configuración; no se habilita simplemente con instalar LBC.
+- **v2.17.0 (2025-12-19):** compatibilidad con Global Accelerator mediante el único CRD `GlobalAccelerator` de `aga.k8s.aws/v1beta1`, con listeners, grupos de endpoints y endpoints anidados; Gateway API alcanza el estado de candidato a versión GA. Global Accelerator requiere permisos IAM adicionales y configuración de la característica.
+- **v3.5.0 (2026-08-03):** conformidad con Gateway API v1.6.0 y compatibilidad estable con v1 TCPRoute/UDPRoute. Los recursos de configuración de Gateway de LBC usan `gateway.k8s.aws/v1`; la versión v1beta1 que sigue ofreciéndose está obsoleta.
+- **v3.6.0 (2026-10-05):** la base de CRD de Gateway API se mantiene en v1.6.0 y la versión recomienda aplicar los CRD de LBC más recientes proporcionados por AWS antes de actualizar. Añade el registro IP basado en Pod-AZ, opcional, para TargetGroupBinding entre cuentas, así como la anotación Ingress `frontend-nlb-status-only`.
 
-v3.5 admite QUIC/TCP_QUIC y validación JWT de ALB. Son funciones distintas con restricciones de protocolo. JWT solo funciona con HTTPS y su JSON usa **`jwksEndpoint`**, no `jwksUri`. Añada lo siguiente al Ingress HTTPS con certificado válido, JWKS fiable y accesible, e issuer/claims revisados:
+La versión actual v3.6 admite la configuración QUIC/TCP_QUIC y la validación JWT de ALB. Son características distintas con restricciones específicas de protocolo. La validación JWT solo funciona con HTTPS y su JSON usa **`jwksEndpoint`**, no `jwksUri`. Añada lo siguiente a las anotaciones de un Ingress HTTPS que tenga un certificado válido, un endpoint JWKS de confianza accesible y un emisor/declaraciones revisados:
 
 ```yaml
 alb.ingress.kubernetes.io/jwt-validation: >-
   {"issuer":"https://accounts.example.com","jwksEndpoint":"https://accounts.example.com/.well-known/jwks.json"}
 ```
 
-Es un fragmento de anotaciones, no un objeto completo. Valide audience y demás claims requeridas en vez de asumir que una firma válida basta para autorizar. Consulte la [guía de Gateway API](./04-gateway-api.md) para la configuración Gateway independiente.
+Este es un fragmento de anotación, no un objeto de Kubernetes completo. Valide la audiencia y las demás declaraciones requeridas por la aplicación, en lugar de suponer que la validación de la firma basta para autorizar el acceso. Consulte la [guía de Gateway API](./04-gateway-api.md) para ver la configuración de Gateway correspondiente.
 
 ## Referencia de anotaciones
 
-### Anotaciones de Ingress ALB
+### Anotaciones de Ingress para ALB
 
-| Anotación | Descripción | Predeterminado |
+| Anotación | Descripción | Valor predeterminado |
 |------------|-------------|---------|
 | `alb.ingress.kubernetes.io/scheme` | internet-facing o internal | internal |
 | `alb.ingress.kubernetes.io/target-type` | ip o instance | instance |
 | `alb.ingress.kubernetes.io/subnets` | ID o nombres de subredes | Detección automática |
 | `alb.ingress.kubernetes.io/security-groups` | ID de grupos de seguridad | Creación automática |
-| `alb.ingress.kubernetes.io/listen-ports` | Puertos de listeners en JSON | HTTP 80, o HTTPS 443 si se especifica certificate-arn |
-| `alb.ingress.kubernetes.io/certificate-arn` | ARN del certificado ACM | - |
+| `alb.ingress.kubernetes.io/listen-ports` | JSON de puertos de escucha | HTTP 80, o HTTPS 443 si se especifica certificate-arn |
+| `alb.ingress.kubernetes.io/certificate-arn` | ARN del certificado de ACM | - |
 | `alb.ingress.kubernetes.io/ssl-redirect` | Puerto de redirección SSL | - |
 | `alb.ingress.kubernetes.io/ssl-policy` | Política SSL | ELBSecurityPolicy-2016-08 |
-| `alb.ingress.kubernetes.io/healthcheck-path` | Ruta de comprobación de salud | / |
-| `alb.ingress.kubernetes.io/healthcheck-port` | Puerto de comprobación de salud | traffic-port |
-| `alb.ingress.kubernetes.io/healthcheck-protocol` | Protocolo de comprobación de salud | HTTP |
-| `alb.ingress.kubernetes.io/healthcheck-interval-seconds` | Intervalo de comprobación de salud | 15 |
-| `alb.ingress.kubernetes.io/healthcheck-timeout-seconds` | Timeout de comprobación de salud | 5 |
-| `alb.ingress.kubernetes.io/healthy-threshold-count` | Umbral para estado saludable | 2 |
-| `alb.ingress.kubernetes.io/unhealthy-threshold-count` | Umbral para estado no saludable | 2 |
+| `alb.ingress.kubernetes.io/healthcheck-path` | Ruta de comprobación de estado | / |
+| `alb.ingress.kubernetes.io/healthcheck-port` | Puerto de comprobación de estado | traffic-port |
+| `alb.ingress.kubernetes.io/healthcheck-protocol` | Protocolo de comprobación de estado | HTTP |
+| `alb.ingress.kubernetes.io/healthcheck-interval-seconds` | Intervalo de comprobación de estado | 15 |
+| `alb.ingress.kubernetes.io/healthcheck-timeout-seconds` | Tiempo de espera de comprobación de estado | 5 |
+| `alb.ingress.kubernetes.io/healthy-threshold-count` | Umbral de estado saludable | 2 |
+| `alb.ingress.kubernetes.io/unhealthy-threshold-count` | Umbral de estado no saludable | 2 |
 | `alb.ingress.kubernetes.io/group.name` | Nombre del grupo Ingress | - |
 | `alb.ingress.kubernetes.io/group.order` | Prioridad dentro del grupo | 0 |
 | `alb.ingress.kubernetes.io/ip-address-type` | ipv4 o dualstack | ipv4 |
 | `alb.ingress.kubernetes.io/load-balancer-attributes` | Atributos del LB | - |
-| `alb.ingress.kubernetes.io/target-group-attributes` | Atributos del TG | - |
+| `alb.ingress.kubernetes.io/target-group-attributes` | Atributos del grupo de destino | - |
 | `alb.ingress.kubernetes.io/tags` | Etiquetas de recursos | - |
-| `alb.ingress.kubernetes.io/wafv2-acl-arn` | ARN de WebACL WAF v2 | - |
-| `alb.ingress.kubernetes.io/shield-advanced-protection` | Protección Shield | false |
+| `alb.ingress.kubernetes.io/wafv2-acl-arn` | ARN de WebACL de WAF v2 | - |
+| `alb.ingress.kubernetes.io/shield-advanced-protection` | Protección de Shield | false |
 | `alb.ingress.kubernetes.io/auth-type` | Tipo de autenticación (none, cognito, oidc) | none |
 
-### Anotaciones de Service NLB
+### Anotaciones de Service para NLB
 
-| Anotación | Descripción | Predeterminado |
+| Anotación | Descripción | Valor predeterminado |
 |------------|-------------|---------|
 | `service.beta.kubernetes.io/aws-load-balancer-type` | external (NLB) o nlb | - |
 | `service.beta.kubernetes.io/aws-load-balancer-nlb-target-type` | ip o instance | instance |
 | `service.beta.kubernetes.io/aws-load-balancer-scheme` | internet-facing o internal | internal |
 | `service.beta.kubernetes.io/aws-load-balancer-subnets` | ID de subredes | Detección automática |
-| `service.beta.kubernetes.io/aws-load-balancer-ssl-cert` | ARN del certificado ACM | - |
+| `service.beta.kubernetes.io/aws-load-balancer-ssl-cert` | ARN del certificado de ACM | - |
 | `service.beta.kubernetes.io/aws-load-balancer-ssl-ports` | Puertos con SSL habilitado | - |
 | `service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy` | Política SSL | - |
 | `service.beta.kubernetes.io/aws-load-balancer-backend-protocol` | Protocolo del backend | - |
 | `service.beta.kubernetes.io/aws-load-balancer-proxy-protocol` | Proxy Protocol | - |
 | `service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled` | Obsoleta; use aws-load-balancer-attributes | false |
-| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol` | Protocolo de comprobación de salud | TCP |
-| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-path` | Ruta de comprobación de salud | - |
-| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-port` | Puerto de comprobación de salud | - |
+| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol` | Protocolo de comprobación de estado | TCP |
+| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-path` | Ruta de comprobación de estado | - |
+| `service.beta.kubernetes.io/aws-load-balancer-healthcheck-port` | Puerto de comprobación de estado | - |
 | `service.beta.kubernetes.io/aws-load-balancer-attributes` | Atributos del LB | - |
-| `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes` | Atributos del TG | - |
+| `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes` | Atributos del grupo de destino | - |
 | `service.beta.kubernetes.io/aws-load-balancer-security-groups` | Grupos de seguridad | Creación automática |
 
-## Buenas prácticas en EKS
+## Prácticas recomendadas para EKS
 
 ### 1. Etiquetado de subredes
 
-Las etiquetas de rol permiten seleccionar claramente subredes públicas/privadas. En LBC autogestionado v2.12.1+, si no hay subredes con etiquetas de rol coincidentes, `SubnetDiscoveryByReachability` puede clasificarlas por sus tablas de rutas. También se pueden usar ID explícitos o filtros de IngressClassParams. Auto Mode sigue exigiendo sus etiquetas documentadas. Compruebe filtrado por etiqueta de clúster, IP disponibles y una subred elegible por AZ; un ALB ordinario necesita al menos dos AZ. Etiquetar no cambia rutas ni convierte una subred en pública.
+Las etiquetas de función son una forma clara de seleccionar las subredes públicas/privadas previstas. En LBC autoadministrado v2.12.1 y posteriores, si no hay subredes con etiquetas de función coincidentes, el comportamiento predeterminado `SubnetDiscoveryByReachability` puede clasificarlas a partir de las tablas de rutas. También se pueden especificar explícitamente los ID de subred o usar filtros de etiquetas de IngressClassParams. EKS Auto Mode sigue exigiendo las etiquetas de subred documentadas. Compruebe el filtrado de etiquetas del clúster, las IP disponibles y que haya una subred apta por cada zona de disponibilidad seleccionada; un ALB normal requiere al menos dos zonas de disponibilidad. Etiquetar una subred no cambia su tabla de rutas ni la convierte en pública.
 
 ```bash
 # Public subnets (for internet-facing ALB/NLB)
@@ -1022,7 +1021,7 @@ aws ec2 create-tags \
   --tags Key=kubernetes.io/cluster/my-cluster,Value=shared
 ```
 
-### 2. Gestión de grupos de seguridad
+### 2. Administración de grupos de seguridad
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1057,9 +1056,9 @@ spec:
                   number: 80
 ```
 
-### 3. Optimización de costes
+### 3. Optimización de costos
 
-IngressGroup comparte ALB y reglas. Úselo solo dentro de una frontera de confianza: quien pueda crear un Ingress que entre en el grupo puede alterar rutas y prioridades. Aplique RBAC/admisión y revise anotaciones combinadas/exclusivas. Pertenecer al grupo no aísla namespaces ni garantiza costes incondicionalmente.
+IngressGroup comparte un ALB y su espacio de reglas. Úselo únicamente dentro de un límite de confianza: un usuario capaz de crear un Ingress que se una al grupo puede afectar el enrutamiento y la prioridad. Aplique controles RBAC o de admisión y revise la configuración de anotaciones combinadas o exclusivas. La pertenencia a un grupo no es una característica de aislamiento entre espacios de nombres ni una garantía incondicional de ahorro de costos.
 
 ```yaml
 # Share ALB using Ingress groups
@@ -1146,11 +1145,11 @@ spec:
                   number: 80
 ```
 
-## Resolución de problemas
+## Solución de problemas
 
-Obtenga las variables del namespace y del inventario reales. Revise el motivo del evento/error antes de modificar infraestructura. La comprobación opcional con exec necesita curl en la imagen; de lo contrario use un contenedor de diagnóstico aprobado. Proteja logs y credenciales. Un 502 puede deberse a reset, respuesta mal formada o TLS: consulte los detalles del log ALB, sin asumir el mismo estado HTTP para cualquier destino no saludable.
+Establezca las variables con nombre que aparecen a continuación a partir del inventario real de espacios de nombres y recursos. Inspeccione el motivo del evento o error del controlador antes de cambiar la infraestructura. La comprobación de estado opcional con exec presupone que la imagen de la aplicación contiene curl; de lo contrario, use un contenedor de diagnóstico aprobado. Proteja los registros y las credenciales al recopilar evidencias. Un 502 puede deberse a un restablecimiento de conexión, una respuesta malformada o problemas de TLS; inspeccione los detalles de error de los registros de acceso de ALB en lugar de suponer que todos los destinos no saludables producen el mismo estado HTTP.
 
-### Problemas habituales
+### Problemas comunes
 
 #### 1. No se crea el ALB
 
@@ -1202,7 +1201,7 @@ aws elbv2 describe-target-health --target-group-arn "$TARGET_GROUP_ARN"
 # - Verify ALB -> Pod communication allowed
 ```
 
-#### 4. Problemas de certificados SSL
+#### 4. Problemas con el certificado SSL
 
 ```bash
 # Check ACM certificate status
@@ -1214,7 +1213,7 @@ aws acm describe-certificate --certificate-arn "$ACM_CERTIFICATE_ARN"
 # Verify region (must be same region as ALB)
 ```
 
-### Comandos de diagnóstico
+### Comandos de depuración
 
 ```bash
 # Controller detailed logs
@@ -1242,16 +1241,16 @@ aws elbv2 describe-target-groups --query 'TargetGroups[?contains(TargetGroupName
 ## Referencias
 
 - [Documentación de AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-- [Repositorio GitHub](https://github.com/kubernetes-sigs/aws-load-balancer-controller)
-- [Guía de usuario de EKS](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
+- [Repositorio de GitHub](https://github.com/kubernetes-sigs/aws-load-balancer-controller)
+- [Guía del usuario de EKS](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
 - [Documentación de ALB](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/)
 - [Documentación de NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/)
 
-- [Release LBC v3.5.0](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.5.0)
-- [Anotaciones Ingress de LBC v3.5.0](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress/annotations.md)
-- [Anotaciones Service de LBC v3.5.0](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/annotations.md)
-- [Propiedad de TargetGroupBinding](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
-- [Descubrimiento de subredes](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/subnet_discovery.md)
-- [Pesos y conexiones de listeners NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
-- [Requisitos de autenticación ALB](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html)
+- [Versión v3.6.0 de LBC](https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/tag/v3.6.0)
+- [Anotaciones de Ingress de LBC v3.6.0](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/ingress/annotations.md)
+- [Anotaciones de Service de LBC v3.6.0](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/service/annotations.md)
+- [Propiedad de TargetGroupBinding](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
+- [Detección de subredes](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/deploy/subnet_discovery.md)
+- [Pesos de listeners y conexiones de NLB](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+- [Requisitos previos para la autenticación de ALB](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html)
 - [NLB de EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html)

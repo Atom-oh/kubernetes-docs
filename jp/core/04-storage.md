@@ -1,27 +1,29 @@
 # ストレージ
 
-> **対応バージョン**: Kubernetes 1.32, 1.33, 1.34
-> **最終更新**: February 19, 2026
+> **サポート対象バージョン**: Kubernetes 1.35、1.36、1.37
+> **最終更新日**: 2026年10月16日
 
-Kubernetes では、ストレージはコンテナ化アプリケーションのデータを保存・管理するうえで重要な要素です。この章では、Volumes、Persistent Volumes、Persistent Volume Claims、Storage Classes を含む Kubernetes のストレージ概念を詳しく説明します。
+Kubernetesでは、ストレージはコンテナ化されたアプリケーションのデータを保存・管理するうえで重要な要素です。この章では、Volumes、Persistent Volumes、Persistent Volume Claims、Storage Classesなど、Kubernetesのストレージに関する概念を詳しく見ていきます。
 
 ## ラボ環境のセットアップ
 
-このドキュメントの例に従うには、次のツールと環境が必要です。
+このドキュメントの例を実行するには、次のツールと環境が必要です。
 
 ### 必要なツール
-- kubectl v1.34 以降
-- 動作する Kubernetes クラスター（EKS、minikube、kind など）
-- ストレージプロビジョナー（EKS 用の EBS CSI driver）
+- APIサーバーとマイナーバージョンが1つ以内のkubectl
+- 稼働中のKubernetesクラスター（EKS、minikube、kindなど）
+- ストレージプロビジョナー（EKSの場合はEBS CSI driver）
 
-### ストレージ例のセットアップ
+最初の例ではデフォルトのStorageClassが必要です。デフォルトがない場合は、`storageClassName`をインストール済みのクラスに設定してください。以下のEKS EBSの例では、IAM権限を持つEC2ノード上の標準EBS CSI driverを使用します。Auto Modeでは`ebs.csi.eks.amazonaws.com`を使用します。EBSはFargateまたはHybrid Nodesにはマウントできません。以降のマニフェストは、それぞれに記載された前提条件を持つ独立した例として扱ってください。
+
+### ストレージのサンプルセットアップ
 
 ```bash
 # Create namespace
 kubectl create namespace storage-demo
 
 # Create a simple PVC and Pod
-kubectl -n storage-demo apply -f - <<EOF
+kubectl -n storage-demo apply -f - <<'EOF'
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -41,7 +43,7 @@ spec:
   containers:
   - name: data-container
     image: busybox
-    command: ["sh", "-c", "while true; do echo \$(date) >> /data/output.txt; sleep 5; done"]
+    command: ["sh", "-c", "while true; do echo $(date) >> /data/output.txt; sleep 5; done"]
     volumeMounts:
     - name: data-volume
       mountPath: /data
@@ -69,38 +71,38 @@ kubectl -n storage-demo get pvc,pod
 10. [Block Volume Mode](#block-volume-mode)
 11. [Volume Cloning](#volume-cloning)
 12. [Storage ResourceQuota](#storage-resourcequota)
-13. [Storage Options in EKS (English)](https://www.atomai.click/kubernetes-docs/en/core/04-storage#storage-options-in-eks)
+13. [EKSのストレージオプション](#storage-options-in-eks)
 
 ## Volumes
 
-> **重要な概念**: Kubernetes Volumes は、Pod 内のコンテナがデータを保存・共有できるディレクトリであり、コンテナが再起動してもデータを維持します。
+> **重要な概念**: KubernetesのVolumesは、Pod内のコンテナがデータを保存・共有するためのディレクトリです。コンテナが再起動してもデータを保持できます。
 
-Kubernetes Volumes は、Pod 内のコンテナがデータを保存・共有できるディレクトリです。Volumes は Pod のライフサイクルに紐付き、Pod が削除されると Volume も削除されます（一部の Volume タイプを除く）。
+KubernetesのVolumesは、Pod内のコンテナがデータを保存・共有するためのディレクトリです。マウントの存続期間はPodの存続期間に対応しますが、バックエンドデータが保持されるかどうかはボリュームの種類によって異なります。emptyDirのデータはPodとともに削除されますが、永続ストレージはPodより長く存続できます。
 
-### Kubernetes ストレージアーキテクチャ
+### Kubernetesストレージアーキテクチャ
 
-![Pods は PersistentVolumeClaim を通じてストレージを要求し、StorageClass がプロビジョニングした PersistentVolume にバインドされます。CSI Driver はその Volume を基盤となるクラウド、ローカル、または NFS バックエンドストレージにアタッチします。](../.gitbook/assets/en-core-04-storage-0.png)
+![PodはPersistentVolumeClaimを通じてストレージを要求します。PersistentVolumeClaimはStorageClassによってプロビジョニングされたPersistentVolumeにバインドされ、CSI Driverがそのボリュームをクラウド、ローカル、またはNFSの基盤ストレージにアタッチします。](../.gitbook/assets/en-core-04-storage-0.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-0.html)
 
-### Volumes が必要な理由
+### Volumesが必要な理由
 
-1. **コンテナ再起動時のデータ永続性**: コンテナが再起動するとファイルシステムはリセットされますが、Volumes を使用するとデータを永続化できます。
-2. **コンテナ間のデータ共有**: 同じ Pod 内の複数のコンテナは Volumes を介してデータを共有できます。
+1. **コンテナ再起動後のデータ永続化**: コンテナが再起動するとファイルシステムはリセットされますが、Volumesを使用するとデータを保持できます。
+2. **コンテナ間でのデータ共有**: 同じPod内の複数のコンテナは、Volumesを通じてデータを共有できます。
 
-### 主な Volume タイプの比較
+### 主なボリューム種類の比較
 
-| Volume タイプ | ライフサイクル | データの永続性 | ユースケース | 特徴 |
+| ボリュームの種類 | ライフサイクル | データの永続性 | 用途 | 特徴 |
 |------------|----------|-----------------|----------|----------|
-| **emptyDir** | Pod | 一時的 | 一時データ、キャッシュ、チェックポイント | Pod が削除されるとデータも削除される |
-| **hostPath** | Node | Node レベル | Node ファイルシステムへのアクセス、モニタリング | セキュリティリスクあり - 注意して使用 |
-| **configMap** | 設定 | 設定データ | アプリケーション設定 | 設定データを Volume としてマウント |
-| **secret** | 設定 | 機密データ | 証明書、パスワード | 機密データを Volume としてマウント |
-| **persistentVolumeClaim** | クラスター | 永続的 | データベース、ファイルストレージ | Pod の再起動や再スケジューリング後もデータが保持される |
+| **emptyDir** | Pod | 一時的 | 一時データ、キャッシュ、チェックポイント | Podが削除されるとデータも削除される |
+| **hostPath** | Node | Nodeレベル | Nodeのファイルシステムへのアクセス、監視 | セキュリティリスクがあるため、慎重に使用する |
+| **configMap** | 設定 | 設定データ | アプリケーションの設定 | 設定データをボリュームとしてマウント |
+| **secret** | 設定 | 機密データ | 証明書、パスワード | 機密データをボリュームとしてマウント |
+| **persistentVolumeClaim** | クラスター | 永続的 | データベース、ファイルストレージ | Podの再起動や再スケジュール後もデータが保持される |
 
 ### emptyDir
 
-`emptyDir` Volume は Pod が Node に割り当てられたときに作成され、その Node 上で Pod が実行されている間は存続します。Pod が Node から削除されると、`emptyDir` 内のデータは完全に削除されます。
+`emptyDir`ボリュームは、PodがNodeに割り当てられると作成され、そのNode上でPodが実行されている間存続します。PodがNodeから削除されると、`emptyDir`内のデータは完全に削除されます。
 
 ```yaml
 apiVersion: v1
@@ -121,7 +123,7 @@ spec:
 
 ### hostPath
 
-`hostPath` Volume は Node のファイルシステムのファイルまたはディレクトリを Pod にマウントします。Node のファイルシステムにアクセスする必要がある Pods で役立ちますが、セキュリティリスクがあるため注意して使用する必要があります。
+`hostPath`ボリュームは、Nodeのファイルシステム上のファイルまたはディレクトリをPodにマウントします。Nodeのファイルシステムへのアクセスが必要なPodに便利ですが、セキュリティリスクがあるため慎重に使用してください。
 
 ```yaml
 apiVersion: v1
@@ -163,7 +165,7 @@ spec:
 
 #### configMap
 
-`configMap` Volume は ConfigMap データを Pod にマウントします。ConfigMaps は設定データをキーと値のペアとして保存するために使用されます。
+`configMap`ボリュームは、ConfigMapのデータをPodにマウントします。ConfigMapは、キーと値のペアで設定データを保存するために使用されます。
 
 ```yaml
 apiVersion: v1
@@ -188,7 +190,7 @@ spec:
 
 #### secret
 
-`secret` Volume は Secret データを Pod にマウントします。Secrets はパスワード、トークン、キーなどの機密情報を保存するために使用されます。
+`secret`ボリュームは、SecretのデータをPodにマウントします。Secretsは、パスワード、トークン、キーなどの機密情報を保存するために使用されます。
 
 ```yaml
 apiVersion: v1
@@ -214,7 +216,7 @@ spec:
 
 #### nfs
 
-`nfs` Volume は既存の NFS（Network File System）共有を Pod にマウントします。
+`nfs`ボリュームは、既存のNFS（Network File System）共有をPodにマウントします。
 
 ```yaml
 apiVersion: v1
@@ -237,7 +239,7 @@ spec:
 
 #### persistentVolumeClaim
 
-`persistentVolumeClaim` Volume は PersistentVolumeClaim を Pod にマウントします。これは最もよく使用される Volume タイプの一つです。
+`persistentVolumeClaim`ボリュームは、PersistentVolumeClaimをPodにマウントします。最も一般的に使われるボリューム種類の1つです。
 
 ```yaml
 apiVersion: v1
@@ -257,9 +259,9 @@ spec:
       claimName: my-pvc
 ```
 
-#### CSI (Container Storage Interface)
+#### CSI（Container Storage Interface）
 
-CSI Volumes は Kubernetes と外部ストレージシステムの間に標準インターフェイスを提供します。CSI を使用すると、ストレージベンダーは Kubernetes コードを変更せずに独自のストレージドライバーを開発できます。
+CSI Volumesは、Kubernetesと外部ストレージシステムの間に標準インターフェースを提供します。CSIを使用することで、ストレージベンダーはKubernetesのコードを変更せずに独自のストレージドライバーを開発できます。
 
 ```yaml
 apiVersion: v1
@@ -285,26 +287,29 @@ spec:
 
 ## Persistent Volumes
 
-Persistent Volume（PV）は、管理者がプロビジョニングする、または Storage Class を使用して動的にプロビジョニングされるクラスターのストレージです。PVs は Pods から独立したライフサイクルを持ち、Pods が削除されても保持されます。
+Persistent Volume（PV）は、管理者がプロビジョニングするか、Storage Classを使って動的にプロビジョニングするクラスターのストレージです。PVのライフサイクルはPodとは独立しており、Podが削除されてもPVは保持されます。
 
-![静的プロビジョニングのフローでは、クラスター管理者が物理ストレージに接続した PersistentVolume を作成し、ユーザーの PersistentVolumeClaim がその Volume にバインドされ、Pod はその Claim を Volume として使用します。](../.gitbook/assets/en-core-04-storage-1.png)
+![静的プロビジョニングの流れでは、クラスター管理者が物理ストレージに接続されたPersistentVolumeを作成し、ユーザーのPersistentVolumeClaimがそのボリュームにバインドされ、PodがそのClaimをボリュームとして使用します。](../.gitbook/assets/en-core-04-storage-1.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-1.html)
 
-### PV の作成
+### PVの作成
 
 ```yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: pv0001
+  labels:
+    release: stable
+    environment: dev
 spec:
   capacity:
-    storage: 5Gi
+    storage: 10Gi
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Recycle
+  persistentVolumeReclaimPolicy: Retain
   storageClassName: slow
   mountOptions:
     - hard
@@ -314,37 +319,39 @@ spec:
     server: 172.17.0.2
 ```
 
-### PV アクセスモード
+### PVのアクセスモード
 
-PVs は次のアクセスモードをサポートします。
+PVは次のアクセスモードをサポートします。
 
-- **ReadWriteOnce (RWO)**: Volume を単一の Node が読み取り・書き込み用にマウントできます。
-- **ReadOnlyMany (ROX)**: Volume を複数の Nodes が読み取り専用でマウントできます。
-- **ReadWriteMany (RWX)**: Volume を複数の Nodes が読み取り・書き込み用にマウントできます。
-- **ReadWriteOncePod (RWOP)**: Volume を単一の Pod が読み取り・書き込み用にマウントできます（Kubernetes 1.22 以降）。
+- **ReadWriteOnce（RWO）**: 1つのNodeがボリュームを読み書き可能な状態でマウントできます。
+- **ReadOnlyMany（ROX）**: 複数のNodeがボリュームを読み取り専用でマウントできます。
+- **ReadWriteMany（RWX）**: 複数のNodeがボリュームを読み書き可能な状態でマウントできます。
+- **ReadWriteOncePod（RWOP）**: 1つのPodがボリュームを読み書き可能な状態でマウントできます（CSIのみ。v1.29から安定版）。
 
-### PV 再利用ポリシー
+RWOが書き込み可能なマウントを制限する対象は1つの**Node**であり、1つのPodではありません。同じNode上の複数のPodでボリュームを共有できます。RWOPでは、対応するCSI driverを使用する場合に1つのPodのみが使用できます。アクセスモードはファイルシステムの権限の代わりにはなりません。
 
-PVs には次の再利用ポリシーを設定できます。
+### PVの回収ポリシー
 
-- **Retain**: PVC が削除されても、PV とデータは保持されます。管理者が手動でクリーンアップする必要があります。
-- **Delete**: PVC が削除されると、PV と外部ストレージアセットが自動的に削除されます。
-- **Recycle**: PVC が削除されると、PV 内のデータが削除され、PV が再度利用可能になります（非推奨）。
+PVには次の回収ポリシーを設定できます。
 
-### PV ステータス
+- **Retain**: PVCが削除されても、PVとデータは保持されます。管理者が手動でクリーンアップする必要があります。
+- **Delete**: PVCが削除されると、PVと外部ストレージ資産は自動的に削除されます。
+- **Recycle**: PVCが削除されると、PV内のデータが削除され、PVが再び使用可能になります（非推奨）。
 
-PVs には次のステータスがあります。
+### PVのステータス
 
-- **Available**: Claim にまだバインドされていない利用可能なリソース。
-- **Bound**: Claim にバインド済み。
-- **Released**: Claim は削除されたものの、リソースはまだクラスターによって再利用されていない状態。
-- **Failed**: 自動再利用に失敗。
+PVには次のステータスがあります。
+
+- **Available**: Claimにまだバインドされていない使用可能なリソース。
+- **Bound**: Claimにバインドされている状態。
+- **Released**: Claimは削除されていますが、リソースはまだクラスターによって回収されていない状態。
+- **Failed**: 自動回収に失敗した状態。
 
 ## Persistent Volume Claims
 
-Persistent Volume Claim（PVC）はユーザーによるストレージ要求です。PVCs は PVs に似ていますが、PVCs はユーザーがストレージを要求する方法であり、PVs は管理者がストレージを提供する方法です。
+Persistent Volume Claim（PVC）は、ユーザーによるストレージの要求です。PVCはPVと似ていますが、ユーザーがストレージを要求する方法がPVCであり、管理者がストレージを提供する方法がPVです。
 
-### PVC の作成
+### PVCの作成
 
 ```yaml
 apiVersion: v1
@@ -366,13 +373,13 @@ spec:
       - {key: environment, operator: In, values: [dev]}
 ```
 
-### PVC と PV のバインド
+### PVCとPVのバインド
 
-PVC が作成されると、Kubernetes は PVC の要件（ストレージサイズ、アクセスモード、ストレージクラス、セレクターなど）を満たす PV を見つけてバインドします。適切な PV が存在しない場合、PVC は Pending 状態のままになります。
+PVCが作成されると、KubernetesはPVCの要件（ストレージ容量、アクセスモード、ストレージクラス、セレクターなど）を満たすPVを見つけてバインドします。一致するPVがない場合、適切なStorageClassがあれば動的にプロビジョニングできます。空でないセレクター（上記の例など）を持つPVCは動的にプロビジョニングできないため、一致する静的PVがなければPendingのままになります。WaitForFirstConsumerの場合は、スケジューリングまで意図的にバインドが遅延されます。
 
-### PVC の使用
+### PVCの使用
 
-PVCs は Pods 内の Volumes として使用できます。
+PVCはPodのボリュームとして使用できます。
 
 ```yaml
 apiVersion: v1
@@ -394,53 +401,53 @@ spec:
 
 ## Storage Classes
 
-Storage Classes は、管理者が提供するストレージの「クラス」を記述します。Storage Classes は PVs を動的にプロビジョニングするために使用されます。
+Storage Classesは、管理者が提供するストレージの「クラス」を記述します。Storage Classesは、PVを動的にプロビジョニングするために使用されます。
 
-![ユーザーの PersistentVolumeClaim は StorageClass を参照し、StorageClass は Claim がバインドして Pod が使用する PersistentVolume を動的にプロビジョニングし、最終的に物理ストレージへ接続します。](../.gitbook/assets/en-core-04-storage-2.png)
+![ユーザーのPersistentVolumeClaimがStorageClassを参照し、StorageClassがPersistentVolumeを動的にプロビジョニングします。Claimはそのボリュームにバインドされ、Podが使用し、最終的に物理ストレージに接続されます。](../.gitbook/assets/en-core-04-storage-2.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-2.html)
 
-### Storage Class の作成
+### Storage Classの作成
 
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: standard
-provisioner: kubernetes.io/aws-ebs
+provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  fsType: ext4
+  csi.storage.k8s.io/fstype: ext4
 reclaimPolicy: Delete
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-この例では、AWS EBS gp3 Volumes をプロビジョニングするストレージクラスを作成します。
+この例では、AWS EBS gp3ボリュームをプロビジョニングするStorageClassを作成します。
 
-### Provisioners
+### プロビジョナー
 
-ストレージクラスでは、Volumes のプロビジョニングに使用する Provisioner を指定します。一般的な Provisioners には次のものがあります。
+Storage Classesでは、ボリュームのプロビジョニングに使用するプロビジョナーを指定します。現在のCSIプロビジョナーには次のものがあります。
 
-- `kubernetes.io/aws-ebs`: AWS EBS Volumes
-- `kubernetes.io/gce-pd`: GCE Persistent Disks
-- `kubernetes.io/azure-disk`: Azure Disks
-- `kubernetes.io/azure-file`: Azure File
-- `kubernetes.io/cinder`: OpenStack Cinder Volumes
-- `kubernetes.io/glusterfs`: GlusterFS Volumes
-- `kubernetes.io/rbd`: Ceph RBD Volumes
-- `kubernetes.io/nfs`: NFS Volumes
+- `ebs.csi.aws.com`: AWS EBS
+- `efs.csi.aws.com`: AWS EFS
+- `fsx.csi.aws.com`: FSx for Lustre
+- `pd.csi.storage.gke.io`: Google Persistent Disk
+- `disk.csi.azure.com` / `file.csi.azure.com`: Azure Disk/File
+- `nfs.csi.k8s.io`: NFS CSI driver（既存のNFSサーバーが必要）
 
-### Volume バインドモード
+従来のインツリー型クラウドプラグインは削除または移行されています。適切なCSI driverをインストールしてください。Kubernetesには組み込みの`kubernetes.io/nfs`動的プロビジョナーはありません。
 
-ストレージクラスは次の Volume バインドモードをサポートします。
+### ボリュームのバインドモード
 
-- **Immediate**: デフォルトです。PVC が作成されるとすぐに Volumes がプロビジョニングされます。
-- **WaitForFirstConsumer**: Pod が PVC を使用しようとするまで Volume のプロビジョニングを遅延させます。Volumes が Pods と同じ Zone にプロビジョニングされることを確実にするのに役立ちます。
+Storage Classesは次のボリュームバインドモードをサポートします。
 
-### デフォルト Storage Class
+- **Immediate**: デフォルト。PVCの作成時にボリュームを直ちにプロビジョニングします。
+- **WaitForFirstConsumer**: PodがPVCを使用しようとするまで、ボリュームのプロビジョニングを遅らせます。Podと同じゾーンにボリュームをプロビジョニングするのに役立ちます。
 
-クラスターにはデフォルトのストレージクラスを設定できます。PVC でストレージクラスが指定されていない場合、デフォルトのストレージクラスが使用されます。
+### デフォルトのStorage Class
+
+クラスターにはデフォルトのStorage Classを設定できます。PVCでStorage Classが指定されていない場合、デフォルトのStorage Classが使用されます。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -449,31 +456,36 @@ metadata:
   name: standard
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
-provisioner: kubernetes.io/aws-ebs
+provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
+  encrypted: "true"
+volumeBindingMode: WaitForFirstConsumer
 ```
 
 ## Dynamic Provisioning
 
-Dynamic Provisioning は、PVCs の作成時に PVs を自動的に作成する機能です。これにより、管理者が事前に PVs を作成しなくても、ユーザーは必要なときにストレージを要求できます。
+Dynamic Provisioningは、PVCの作成時にPVを自動作成する機能です。これにより、管理者が事前にPVを作成しなくても、ユーザーは必要なときにストレージを要求できます。
 
-### Dynamic Provisioning の例
+### Dynamic Provisioningの例
 
-1. Storage Class を作成します。
+1. Storage Classを作成します。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: fast
-provisioner: kubernetes.io/aws-ebs
+provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  iopsPerGB: "10"
+  iops: "3000"
+  encrypted: "true"
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
 ```
 
-2. PVC を作成します。
+2. PVCを作成します。
 
 ```yaml
 apiVersion: v1
@@ -489,7 +501,7 @@ spec:
   storageClassName: fast
 ```
 
-3. Pod で PVC を使用します。
+3. PodでPVCを使用します。
 
 ```yaml
 apiVersion: v1
@@ -511,11 +523,13 @@ spec:
 
 ## Volume Snapshots
 
-Kubernetes は PVs の特定時点のコピーを作成する Volume Snapshots をサポートしています。これはバックアップおよび復元のシナリオで役立ちます。
+Kubernetesでは、PVの特定時点のコピーを作成するためにVolume Snapshotsをサポートしています。これはバックアップや復元のシナリオで役立ちます。
 
-![Volume Snapshot は Volume Snapshot Class を参照して既存の PersistentVolumeClaim をキャプチャします。また、その Snapshot をデータソースとして使用する新しい PVC は、その Snapshot から復元された新しい PV にバインドされます。](../.gitbook/assets/en-core-04-storage-3.png)
+![Volume SnapshotはVolume Snapshot Classを参照して既存のPersistentVolumeClaimのスナップショットを取得します。そのスナップショットをデータソースとして使用する新しいPVCは、スナップショットから復元された新しいPVにバインドされます。](../.gitbook/assets/en-core-04-storage-3.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-3.html)
+
+snapshot CRD、snapshot controller、およびスナップショットに対応したCSI driverをインストールしてください。以下の例ではEBSを使用します。ソースPVCと復元先のStorageClassは、同じdriverを使用する必要があります。`readyToUse: true`になるまで待ち、スナップショットの復元サイズ以上の容量を要求してください。ストレージのスナップショットだけではデータベースの整合性は保証されません。書き込みを静止させるか、データベース対応のバックアップを使用してください。
 
 ### Volume Snapshot Class
 
@@ -523,12 +537,12 @@ Kubernetes は PVs の特定時点のコピーを作成する Volume Snapshots �
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:
-  name: csi-hostpath-snapclass
-driver: hostpath.csi.k8s.io
+  name: ebs-snapclass
+driver: ebs.csi.aws.com
 deletionPolicy: Delete
 ```
 
-### Volume Snapshot の作成
+### Volume Snapshotの作成
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
@@ -536,12 +550,12 @@ kind: VolumeSnapshot
 metadata:
   name: new-snapshot
 spec:
-  volumeSnapshotClassName: csi-hostpath-snapclass
+  volumeSnapshotClassName: ebs-snapclass
   source:
     persistentVolumeClaimName: myclaim
 ```
 
-### Snapshot から PVC を作成
+### SnapshotからPVCを作成
 
 ```yaml
 apiVersion: v1
@@ -549,7 +563,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: restore-pvc
 spec:
-  storageClassName: csi-hostpath-sc
+  storageClassName: standard
   dataSource:
     name: new-snapshot
     kind: VolumeSnapshot
@@ -558,45 +572,39 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 100Gi
 ```
 
 ## Volume Expansion
 
-Kubernetes は PVCs のサイズを拡張する機能をサポートしています。このためには、ストレージクラスで `allowVolumeExpansion: true` を設定する必要があります。
+KubernetesではPVCのサイズを拡張できます。そのためには、Storage Classで`allowVolumeExpansion: true`を設定する必要があります。
 
-![PersistentVolumeClaim を拡張するユーザーの要求は StorageClass を通過します。StorageClass は allowVolumeExpansion が有効であることを確認してから、PersistentVolume が基盤のディスクおよび Pod のファイルシステムを拡張します。](../.gitbook/assets/en-core-04-storage-4.png)
+![PersistentVolumeClaimを拡張するユーザーの要求はStorageClassを経由します。StorageClassはallowVolumeExpansionが有効かどうかを確認し、その後PersistentVolumeが基盤ディスクを拡張し、Podのファイルシステムも拡張されます。](../.gitbook/assets/en-core-04-storage-4.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-4.html)
 
-### PVC の拡張
+### PVCの拡張
 
-```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: myclaim
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 16Gi  # Expanded from original 8Gi to 16Gi
-  storageClassName: standard
+拡張に対応したEBS StorageClass上にある既存の100Gi PVCの場合、要求サイズのみを変更します。
+
+```bash
+kubectl patch pvc myclaim --type merge -p '{"spec":{"resources":{"requests":{"storage":"120Gi"}}}}'
 ```
+
+PVCのnamespaceと既存のStorageClassを使用してください。driverとファイルシステムが拡張に対応している必要があります。縮小はサポートされていません。バインド済みPVCのクラスを変更したり、サイズ変更を装うためにPVの容量を直接編集したりしないでください。
 
 ## Projected Volumes
 
-Projected Volumes を使用すると、複数の Volume ソースを単一の Volume マウントに結合できます。これは、secrets、configMaps、downwardAPI、serviceAccountToken を単一のディレクトリで公開する必要がある場合に役立ちます。
+Projected Volumesを使用すると、複数のボリュームソースを1つのボリュームマウントにまとめられます。Secret、ConfigMap、downwardAPI、serviceAccountTokenを1つのディレクトリにまとめて公開する場合に便利です。
 
-### サポートされるソース
+### サポート対象のソース
 
-- **secret**: Secret データをマウント
+- **secret**: Secretデータをマウント
 - **configMap**: 設定データをマウント
-- **downwardAPI**: Pod およびコンテナのメタデータを公開
-- **serviceAccountToken**: 有効期限を設定可能な Service Account トークンをマウント
+- **downwardAPI**: Podとコンテナのメタデータを公開
+- **serviceAccountToken**: 有効期限を設定できるService Accountトークンをマウント
 
-### Projected Volume の例
+### Projected Volumeの例
 
 ```yaml
 apiVersion: v1
@@ -643,15 +651,15 @@ spec:
           audience: api
 ```
 
-この設定では、以下を含む単一の Volume を `/etc/projected` に作成します。
-- secret からの `/etc/projected/db/username` および `/etc/projected/db/password`
-- configMap からの `/etc/projected/config/app.yaml`
-- downwardAPI からの `/etc/projected/labels` および `/etc/projected/cpu-request`
-- 自動ローテーションされる Service Account トークンを含む `/etc/projected/token`
+この設定では、次の内容を含む単一のボリュームが`/etc/projected`に作成されます。
+- Secret由来の`/etc/projected/db/username`と`/etc/projected/db/password`
+- ConfigMap由来の`/etc/projected/config/app.yaml`
+- downwardAPI由来の`/etc/projected/labels`と`/etc/projected/cpu-request`
+- 自動ローテーションされるService Accountトークンを含む`/etc/projected/token`
 
-### Service Account トークンの Projected Volume
+### Service Accountトークンの投影
 
-Service Account トークンの Projected Volume は、有効期間と対象者が限定されたトークンを提供します。
+Service Accountトークンの投影では、有効期間とaudienceが制限されたトークンを提供します。
 
 ```yaml
 apiVersion: v1
@@ -676,22 +684,24 @@ spec:
           audience: my-api-service
 ```
 
+投影されたトークンはローテーションされるため、アプリケーションはファイルを読み直す必要があります。明示的に指定した`audience`は、意図した検証側と一致している必要があります。Kubernetes APIへのアクセスに自動的に有効となるわけではありません。
+
 ## Generic Ephemeral Volumes
 
-Generic Ephemeral Volumes は、Pod のライフサイクルに紐付いた PVC のようなストレージを提供します。emptyDir とは異なり、Dynamic Provisioning を含め、PVCs と StorageClasses のすべての機能を使用します。
+Generic Ephemeral Volumesは、Podのライフサイクルに連動するPVCのようなストレージを提供します。emptyDirとは異なり、Dynamic Provisioningを含むPVCとStorageClassの機能をすべて利用できます。
 
-### emptyDir との違い
+### emptyDirとの違い
 
-| 機能 | emptyDir | Generic Ephemeral Volume |
+| 特徴 | emptyDir | Generic Ephemeral Volume |
 |---------|----------|--------------------------|
-| **ストレージバックエンド** | Node ローカルストレージまたはメモリ | 任意の CSI driver |
-| **プロビジョニング** | 自動、シンプル | StorageClass、Dynamic Provisioning を使用 |
-| **サイズ制限** | sizeLimit（ソフト） | 完全な PVC 容量管理 |
-| **Snapshots** | 非対応 | 対応（CSI driver がサポートする場合） |
-| **ストレージ機能** | 基本 | 完全な CSI 機能（暗号化、IOPS など） |
-| **永続性** | Pod が削除されると失われる | Pod が削除されると失われる |
+| **ストレージバックエンド** | Nodeのローカルストレージまたはメモリー | 任意のCSI driver |
+| **プロビジョニング** | 自動、簡易 | StorageClassを使用した動的プロビジョニング |
+| **サイズ制限** | sizeLimit（ソフト制限） | PVCの容量管理機能をすべて利用 |
+| **スナップショット** | 非対応 | 対応（CSI driverがサポートする場合） |
+| **ストレージ機能** | 基本機能 | CSIの全機能（暗号化、IOPSなど） |
+| **永続性** | Podの削除時に失われる | PVCはPodとともに削除され、バックエンドの動作は回収ポリシーに従う |
 
-### Generic Ephemeral Volume の例
+### Generic Ephemeral Volumeの例
 
 ```yaml
 apiVersion: v1
@@ -724,12 +734,12 @@ spec:
 
 ### ユースケース
 
-1. **CI/CD パイプライン**: ストレージ容量が保証された一時的なビルドアーティファクト
-2. **データ処理**: 特定のパフォーマンス要件を持つスクラッチ領域
-3. **テスト**: CSI 機能を備えた一時データベースまたはキャッシュ
-4. **機械学習**: 高性能ストレージを備えた一時的なモデルチェックポイント
+1. **CI/CDパイプライン**: 容量が保証された一時的なビルド成果物
+2. **データ処理**: 特定のパフォーマンス要件を満たすスクラッチ領域
+3. **テスト**: CSI機能を利用する一時的なデータベースやキャッシュ
+4. **機械学習**: 高性能ストレージ上の一時的なモデルチェックポイント
 
-### Generic Ephemeral Volumes を使用した Deployment
+### Generic Ephemeral Volumesを使用したDeployment
 
 ```yaml
 apiVersion: apps/v1
@@ -765,21 +775,23 @@ spec:
                   storage: 50Gi
 ```
 
+Generic Ephemeral PVCはPodに所有され、Podとともにガベージコレクションされます。基盤データの削除動作はPVの回収ポリシーに従います。`Retain`の場合は、手動でクリーンアップするまでストレージが残ります。Podの消失後も保持する必要があるチェックポイントは、永続ストレージにエクスポートしてください。
+
 ## Block Volume Mode
 
-Kubernetes は、ファイルシステム Volumes に加えて raw Block Volumes をサポートします。Block Volumes は、ファイルシステムを介さない raw ブロックデバイスとしてストレージを提供し、独自のデータレイアウトを管理するアプリケーションで役立ちます。
+Kubernetesでは、ファイルシステムボリュームに加えてraw blockボリュームもサポートしています。Blockボリュームはファイルシステムを介さずにraw blockデバイスとしてストレージを提供するため、独自のデータ配置を管理するアプリケーションに適しています。
 
-### Filesystem と Block Mode
+### FilesystemモードとBlockモードの比較
 
-| 観点 | Filesystem（デフォルト） | Block |
+| 項目 | Filesystem（デフォルト） | Block |
 |--------|---------------------|-------|
 | **volumeMode** | `Filesystem` | `Block` |
-| **マウントタイプ** | ディレクトリとしてマウント | デバイスファイルとして公開 |
-| **ファイルシステム** | ext4、xfs など | なし（raw） |
-| **Pod 内でのアクセス** | `/mnt/data/` | `/dev/xvda` |
-| **ユースケース** | 一般的なアプリケーション | データベース、特殊なアプリケーション |
+| **マウントの種類** | ディレクトリとしてマウント | デバイスファイルとして公開 |
+| **ファイルシステム** | ext4、xfsなど | なし（raw） |
+| **Pod内でのアクセス** | `/mnt/data/` | `/dev/xvda` |
+| **用途** | 一般的なアプリケーション | データベース、特殊用途のアプリケーション |
 
-### Block Volume の PV と PVC
+### BlockモードのPVとPVC
 
 ```yaml
 # PersistentVolume with Block mode
@@ -798,6 +810,13 @@ spec:
   csi:
     driver: ebs.csi.aws.com
     volumeHandle: vol-0123456789abcdef0
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values: [us-west-2a]
 ---
 # PersistentVolumeClaim for Block volume
 apiVersion: v1
@@ -814,7 +833,7 @@ spec:
       storage: 100Gi
 ```
 
-### Pods で Block Volumes を使用する
+### PodでのBlock Volumesの使用
 
 ```yaml
 apiVersion: v1
@@ -834,27 +853,31 @@ spec:
       claimName: block-pvc
 ```
 
-注: Block Volumes では、`volumeMounts` と `mountPath` の代わりに `volumeDevices` と `devicePath` を使用します。
+注: Block Volumesでは、`volumeMounts`と`mountPath`の代わりに`volumeDevices`と`devicePath`を使用します。
 
-### Block Volumes のユースケース
+### Block Volumesのユースケース
 
-1. **データベース**: raw ディスクアクセスの恩恵を受ける MySQL、PostgreSQL、MongoDB
-2. **カスタムファイルシステム**: ZFS や LVM などの特殊なファイルシステムを使用するアプリケーション
-3. **高性能ストレージ**: ファイルシステムのオーバーヘッドなしに直接 I/O を必要とするアプリケーション
+1. **特殊なストレージエンジン**: raw blockデバイス用に明示的に設計されたソフトウェアのみが対象です。通常のMySQL/PostgreSQLデータディレクトリにはファイルシステムが必要です。
+2. **カスタムファイルシステム**: ZFSやLVMなどの特殊なファイルシステムを使用するアプリケーション
+3. **高性能ストレージ**: ファイルシステムのオーバーヘッドなしで直接I/Oを必要とするアプリケーション
 4. **ストレージ仮想化**: ソフトウェア定義ストレージソリューション
+
+静的EBSボリュームIDとnodeAffinityのゾーンは、実際のボリュームとそのAvailability Zoneに置き換えてください。`custom-database`イメージは、raw blockデバイスをサポートするソフトウェアのプレースホルダーです。
 
 ## Volume Cloning
 
-Volume Cloning は、既存の PVC の内容を持つ新しい PVC を作成します。これは、テスト環境の作成、データの複製、ワークロードの移行に役立ちます。
+Volume Cloningは、既存のPVCの内容を持つ新しいPVCを作成します。テスト環境の作成、データの複製、ワークロードの移行に役立ちます。
 
 ### 前提条件
 
-- CSI driver が Volume Cloning をサポートしている必要があります
-- ソースと宛先の PVCs は同じ Namespace 内に存在する必要があります
-- ソースと宛先は同じ StorageClass を使用する必要があります
-- ソースと宛先は同じ volumeMode を使用する必要があります
+EBS CSIはv1.51.0からPVCクローンをサポートしています（[バージョン指定の例](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/v1.67.0/examples/kubernetes/clone/README.md)）。インストール済みのdriverとIAM権限を確認してください。FSx for Lustre CSIは`CLONE_VOLUME`を通知していません。EFSもサポートされていると推測しないでください。`kubectl get csidriver`ではCSI RPCの機能は確認できません。
 
-### PVC Cloning の例
+- CSI driverがボリュームクローンをサポートしていること
+- ソースPVCと宛先PVCが同じnamespaceにあること
+- driverがサポートする場合は異なるStorageClassも使用できます。ソースはバインド済みで、使用中でないこと
+- ソースと宛先のvolumeModeが同じであること
+
+### PVCクローンの例
 
 ```yaml
 # Source PVC (existing)
@@ -889,17 +912,19 @@ spec:
     name: source-pvc
 ```
 
-### Cloning と Snapshots の比較
+### クローンとスナップショットの比較
 
-| 機能 | Volume Cloning | Volume Snapshots |
+| 特徴 | Volume Cloning | Volume Snapshots |
 |---------|---------------|------------------|
-| **結果** | データを持つ新しい PVC | Snapshot オブジェクト |
-| **ユースケース** | 稼働中 Volume の複製 | 特定時点のバックアップ |
-| **パフォーマンス** | 遅くなる場合がある（完全コピー） | 通常は高速（コピーオンライト） |
-| **Namespace をまたぐ利用** | 不可 | 不可 |
-| **ストレージオーバーヘッド** | 完全コピー | 増分 |
+| **結果** | データを含む新しいPVC | Snapshotオブジェクト |
+| **用途** | 使用可能なソースボリュームの複製 | 特定時点のバックアップ |
+| **パフォーマンス** | driver/バックエンドに依存 | driver/バックエンドに依存 |
+| **namespaceをまたぐ使用** | 不可 | 不可 |
+| **ストレージのオーバーヘッド** | バックエンドに依存 | バックエンドに依存 |
 
-### テスト用の Clone
+### テスト用のクローン
+
+最初に、`staging`内にバインド済みで整合性の取れた`staging-source-pvc`を作成してください。`dataSource`から`production`内のPVCを直接参照することはできません。クローンには、互換性のあるPostgreSQLデータディレクトリがあらかじめ含まれている必要があります。これは初期化の例ではありません。
 
 ```yaml
 apiVersion: v1
@@ -916,7 +941,7 @@ spec:
       storage: 100Gi
   dataSource:
     kind: PersistentVolumeClaim
-    name: production-db-pvc
+    name: staging-source-pvc
 ---
 apiVersion: v1
 kind: Pod
@@ -938,18 +963,18 @@ spec:
 
 ## Storage ResourceQuota
 
-ResourceQuota は、PVCs の数やストレージ総容量を含め、Namespace 内のストレージ消費を制限できます。
+ResourceQuotaは、PVCの数や総ストレージ容量を含め、namespace内のストレージ消費量を制限できます。
 
-### ストレージ関連の Quota フィールド
+### ストレージ関連のクォータフィールド
 
 | フィールド | 説明 |
 |-------|-------------|
-| **persistentvolumeclaims** | 許可される PVCs の総数 |
-| **requests.storage** | すべての PVCs の合計ストレージ容量 |
-| **\<storage-class\>.storageclass.storage.k8s.io/requests.storage** | 特定の StorageClass のストレージ容量 |
-| **\<storage-class\>.storageclass.storage.k8s.io/persistentvolumeclaims** | 特定の StorageClass の PVC 数 |
+| **persistentvolumeclaims** | 許可されるPVCの合計数 |
+| **requests.storage** | すべてのPVCの合計ストレージ容量 |
+| **\<storage-class\>.storageclass.storage.k8s.io/requests.storage** | 特定のStorageClassに対するストレージ容量 |
+| **\<storage-class\>.storageclass.storage.k8s.io/persistentvolumeclaims** | 特定のStorageClassに対するPVC数 |
 
-### ResourceQuota の例
+### ResourceQuotaの例
 
 ```yaml
 apiVersion: v1
@@ -971,7 +996,7 @@ spec:
     efs-sc.storageclass.storage.k8s.io/persistentvolumeclaims: "5"
 ```
 
-### ResourceQuota ステータスの確認
+### ResourceQuotaのステータス確認
 
 ```bash
 # View quota status
@@ -987,9 +1012,9 @@ status:
     requests.storage: "150Gi"
 ```
 
-### ストレージ用の LimitRange
+### ストレージ用のLimitRange
 
-LimitRange では、PVC ストレージ要求のデフォルト値と制限値を設定できます。
+LimitRangeはPVCストレージ要求の最小値と最大値を適用できます。PVCの要求が指定されていない場合にデフォルト値を設定するものではありません。
 
 ```yaml
 apiVersion: v1
@@ -1004,32 +1029,28 @@ spec:
       storage: 1Gi
     max:
       storage: 100Gi
-    default:
-      storage: 10Gi
 ```
 
-これにより、次が保証されます。
-- 最小 PVC サイズは 1Gi
-- 最大 PVC サイズは 100Gi
-- デフォルトサイズ（未指定の場合）は 10Gi
+これにより、次のことが保証されます。
+- PVCの最小サイズは1Gi
+- PVCの最大サイズは100Gi
+- すべてのPVCでストレージを明示的に要求する必要があり、LimitRangeによるPVCのデフォルト値設定はありません
 
-## EKS のストレージオプション
+## EKSのストレージオプション
 
-Amazon EKS ではさまざまなストレージオプションを利用できます。各オプションには異なるユースケースとパフォーマンス特性があるため、アプリケーションの要件に合ったストレージを選択することが重要です。
+Amazon EKSではさまざまなストレージオプションを利用できます。各オプションは用途やパフォーマンス特性が異なるため、アプリケーションの要件に合ったストレージを選択することが重要です。
 
-![Amazon EKS Pods は、EBS のブロックストレージ、EFS の共有ファイルストレージ、FSx for Lustre の高性能並列ストレージを消費します。それぞれは独自の CSI driver、StorageClass、PersistentVolume を通じてプロビジョニングされます。](../.gitbook/assets/en-core-04-storage-5.png)
+![Amazon EKSのPodは、EBSからブロックストレージ、EFSから共有ファイルストレージ、FSx for Lustreから高性能な並列ストレージを利用します。それぞれ専用のCSI driver、StorageClass、PersistentVolumeを通じてプロビジョニングされます。](../.gitbook/assets/en-core-04-storage-5.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-5.html)
 
 ### Amazon EBS
 
-Amazon EBS（Elastic Block Store）は、EC2 インスタンスにアタッチできるブロックストレージ Volumes を提供します。EKS では EBS CSI driver を使用して EBS Volumes を Kubernetes Pods にマウントできます。
+Amazon EBS（Elastic Block Store）は、EC2インスタンスにアタッチできるブロックストレージボリュームを提供します。EKSではEBS CSI driverを使用して、EBSボリュームをKubernetes Podにマウントできます。
 
-#### EBS CSI Driver のインストール
+#### EBS CSI Driverのインストール
 
-```bash
-kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"
-```
+[ EKS driverのインストールガイド](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)に従って、互換性のあるアドオン/driverバージョンを選択し、PVCを作成する前にIAMロールとNodeの前提条件を設定してください。StorageClassだけではdriverはインストールされません。
 
 #### EBS Storage Class
 
@@ -1041,24 +1062,24 @@ metadata:
 provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  fsType: ext4
+  csi.storage.k8s.io/fstype: ext4
   encrypted: "true"
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-#### EBS Volume タイプ
+#### EBSボリュームタイプ
 
-Amazon EBS にはさまざまな Volume タイプがあります。
+Amazon EBSには、さまざまなボリュームタイプがあります。
 
-1. **gp3**: ほとんどのワークロードに適した汎用 SSD Volumes。ベースラインで 3,000 IOPS と 125MB/s のスループットを提供し、追加料金で最大 16,000 IOPS および 1,000MB/s まで拡張できます。
+1. **gp3**: 多くのワークロードに適した汎用SSDボリュームです。ベースラインとして3,000 IOPS、125 MiB/sを提供します。現在、リージョンごとのボリューム上限は最大80,000 IOPS、2,000 MiB/sですが、容量とIOPSの比率およびインスタンスの上限が適用されます。Outpostsの上限はより低くなります（[AWSの仕様](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)）。
 
-2. **io2**: 高 IOPS を必要とするワークロードに適した高性能 SSD Volumes。GiB あたり最大 500 IOPS を提供し、最大 64,000 IOPS まで拡張できます。
+2. **io2**: 高いIOPSを必要とするワークロードに適した高性能SSDボリュームです。現在のio2 Block Expressは、対応するNitroインスタンスで最大1,000 IOPS/GiB、256,000 IOPSをサポートします。ただし、インスタンスとボリュームの上限が適用されます（[AWSの仕様](https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html)）。
 
-3. **st1**: ビッグデータ、データウェアハウス、ログ処理など、スループット集約型ワークロードに適したスループット最適化 HDD Volumes。
+3. **st1**: ビッグデータ、データウェアハウス、ログ処理など、スループットを多く必要とするワークロードに適したスループット最適化HDDボリュームです。
 
-4. **sc1**: アクセス頻度の低いデータに適したコールド HDD Volumes。
+4. **sc1**: アクセス頻度の低いデータに適したコールドHDDボリュームです。
 
-#### EBS Storage Class の例（gp3）
+#### EBS Storage Classの例（gp3）
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -1075,7 +1096,7 @@ parameters:
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-#### EBS Storage Class の例（io2）
+#### EBS Storage Classの例（io2）
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -1092,25 +1113,24 @@ volumeBindingMode: WaitForFirstConsumer
 
 ### Amazon EFS
 
-Amazon EFS（Elastic File System）は、複数の EC2 インスタンスから同時にアクセスできるスケーラブルなファイルストレージを提供します。EFS は ReadWriteMany アクセスモードをサポートするため、複数の Pods が同じ Volume を共有する必要がある場合に役立ちます。
+Amazon EFS（Elastic File System）は、複数のEC2インスタンスから同時にアクセスできるスケーラブルなファイルストレージを提供します。EFSはReadWriteManyアクセスモードをサポートしているため、複数のPodで同じボリュームを共有する場合に役立ちます。
 
-#### EFS CSI Driver のインストール
+#### EFS CSI Driverのインストール
 
-```bash
-kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"
-```
+[ EKS driverのインストールガイド](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html)に従って、互換性のあるアドオン/driverバージョンを選択し、PVCを作成する前にIAMロールとNodeの前提条件を設定してください。StorageClassだけではdriverはインストールされません。
 
-#### EFS File System の作成
+#### EFSファイルシステムの作成
 
-EFS File System を作成するには、AWS Management Console、AWS CLI、または AWS CloudFormation を使用できます。
+EFSファイルシステムを作成するには、AWS Management Console、AWS CLI、またはAWS CloudFormationを使用できます。
 
-AWS CLI の例:
+AWS CLIの例:
 
 ```bash
 # Create EFS file system
 aws efs create-file-system \
   --creation-token eks-efs \
   --performance-mode generalPurpose \
+  --encrypted \
   --throughput-mode bursting \
   --tags Key=Name,Value=EKS-EFS
 
@@ -1120,9 +1140,9 @@ FS_ID=$(aws efs describe-file-systems \
   --query "FileSystems[0].FileSystemId" \
   --output text)
 
-# Create mount target (for each subnet)
+# Create one mount target per Availability Zone
 aws efs create-mount-target \
-  --file-system-id $FS_ID \
+  --file-system-id "$FS_ID" \
   --subnet-id subnet-0eabfaa81fb22bcaf \
   --security-groups sg-068000ccf82dfba88
 ```
@@ -1141,7 +1161,7 @@ parameters:
   directoryPerms: "700"
 ```
 
-#### PV と PVC を使用する EFS Access Point
+#### PVとPVCを使用したEFS Access Point
 
 ```yaml
 # Persistent Volume
@@ -1160,7 +1180,7 @@ spec:
   csi:
     driver: efs.csi.aws.com
     volumeHandle: fs-1234abcd::fsap-0123456789abcdef
-
+---
 # Persistent Volume Claim
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1175,44 +1195,44 @@ spec:
       storage: 5Gi
 ```
 
-#### EFS パフォーマンスモード
+ファイルシステムIDとAccess Point IDを置き換え、クライアントのセキュリティグループからマウントターゲットへのNFS TCP 2049を許可してください。Dynamic Provisioningでは既存のファイルシステム上にAccess Pointが作成されますが、ファイルシステム自体は作成されません。EFS PVCの容量はバインド用の値であり、PVCごとのクォータではありません。EFSは弾力的に拡張されます。Fargateがサポートするのは静的なEFSプロビジョニングのみです。
 
-EFS には 2 つのパフォーマンスモードがあります。
+#### EFSのパフォーマンスモード
 
-1. **General Purpose**: ほとんどの File System ワークロードに推奨されるデフォルトモードです。低レイテンシーを提供します。
+EFSには2つのパフォーマンスモードがあります。
 
-2. **Max I/O**: 高スループットと並列処理を必要とするワークロードに適しています。レイテンシーはわずかに高くなりますが、より高いスループットを提供します。
+1. **General Purpose**: ほとんどのファイルシステムワークロードに推奨されるデフォルトモードです。低レイテンシーを提供します。
 
-#### EFS スループットモード
+2. **Max I/O**: 1操作あたりのレイテンシーがより高い旧世代のモードです。AWSは新しいワークロードにはGeneral Purposeを推奨しています。Max I/OはElasticスループットと互換性がありません。
 
-EFS には 3 つのスループットモードがあります。
+#### EFSのスループットモード
 
-1. **Bursting**: File System サイズに基づいてベーススループットが割り当てられ、バーストクレジットにより一時的に高いスループットが提供されます。
+EFSには3つのスループットモードがあります。
 
-2. **Provisioned**: File System サイズに関係なく、指定したスループットを提供します。
+1. **Bursting**: ベーススループットはファイルシステムのサイズに基づいて割り当てられ、バーストクレジットにより一時的に高いスループットが得られます。
 
-3. **Elastic**: ワークロードに基づいてスループットを自動的にスケールアップ・スケールダウンします。
+2. **Provisioned**: ファイルシステムのサイズに関係なく、指定されたスループットを提供します。
+
+3. **Elastic**: ワークロードに応じてスループットを自動的に増減します。
 
 ### Amazon FSx for Lustre
 
-Amazon FSx for Lustre は、高性能コンピューティングワークロード向けの高性能 File Systems を提供します。FSx for Lustre は、大規模なデータ処理、機械学習、分析ワークロードに適しています。
+Amazon FSx for Lustreは、高性能コンピューティングのワークロード向けに高性能なファイルシステムを提供します。FSx for Lustreは、大規模なデータ処理、機械学習、分析のワークロードに適しています。
 
-#### FSx for Lustre CSI Driver のインストール
+#### FSx for Lustre CSI Driverのインストール
 
-```bash
-kubectl apply -k "github.com/kubernetes-sigs/aws-fsx-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"
-```
+[EKS driverのインストールガイド](https://docs.aws.amazon.com/eks/latest/userguide/fsx-csi-create.html)に従って、互換性のあるアドオン/driverバージョンを選択し、PVCを作成する前にIAMロールとNodeの前提条件を設定してください。StorageClassだけではdriverはインストールされません。
 
-#### FSx for Lustre File System の作成
+#### FSx for Lustreファイルシステムの作成
 
-AWS CLI の例:
+AWS CLIの例:
 
 ```bash
 aws fsx create-file-system \
   --file-system-type LUSTRE \
   --storage-capacity 1200 \
   --subnet-ids subnet-0eabfaa81fb22bcaf \
-  --lustre-configuration DeploymentType=SCRATCH_2,PerUnitStorageThroughput=200
+  --lustre-configuration DeploymentType=SCRATCH_2
 ```
 
 #### FSx for Lustre Storage Class
@@ -1227,38 +1247,24 @@ parameters:
   subnetId: subnet-0eabfaa81fb22bcaf
   securityGroupIds: sg-068000ccf82dfba88
   deploymentType: SCRATCH_2
-  automaticBackupRetentionDays: "0"
-  dailyAutomaticBackupStartTime: "00:00"
-  copyTagsToBackups: "false"
-  perUnitStorageThroughput: "200"
   dataCompressionType: "NONE"
   weeklyMaintenanceStartTime: "7:09:00"
 ```
 
-#### FSx for Lustre デプロイメントタイプ
+#### FSx for LustreのDeploymentタイプ
 
-FSx for Lustre には 3 つのデプロイメントタイプがあります。
+FSx for Lustreには、一時ストレージと永続ストレージがあります。
 
-1. **SCRATCH_1**: 一時ストレージおよび短期処理向けの最も安価なオプションです。データレプリケーションがないため、耐久性は低くなります。
+- **SCRATCH_1 / SCRATCH_2**: データレプリケーションを行わない一時ストレージです。ファイルサーバーに障害が発生しても置き換えられず、影響を受けたデータが失われる可能性があります。SCRATCH_2でも、そのデータは自動的に復旧しません。
+- **PERSISTENT_1 / PERSISTENT_2**: コンポーネントの自動交換に対応したレプリケーションストレージです。サポートされるストレージクラス、容量の増分、スループットオプション、リージョンはDeploymentタイプによって異なります。
 
-2. **SCRATCH_2**: SCRATCH_1 より高いバーストスループットを提供し、サーバー障害時にはデータを自動的に復旧します。
+Scratchのベースラインは200 MBps/TiBで、最大6倍までバーストできます。`PerUnitStorageThroughput`は永続SSD/HDD構成向けであり、SCRATCH_2向けではありません。永続SSDのオプションは、PERSISTENT_1では50/100/200 MBps/TiB、PERSISTENT_2では125/250/500/1000 MBps/TiBです。Intelligent-Tieringでは異なる容量/スループット構成が使用されます。サイズを選ぶ前に、[Deploymentの仕様](https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html)とAPIを確認してください。
 
-3. **PERSISTENT**: 長期ストレージとスループットを必要とするワークロードに適しています。データレプリケーションと自動復旧を提供します。
+### vLLMワークロード向けFSx for Lustreの設定
 
-#### FSx for Lustre のストレージ容量とスループット
+vLLM（LLMの推論・サービングエンジン）のような大規模AIモデルのワークロードには、高スループットかつ低レイテンシーのストレージが必要です。FSx for Lustreは、これらの要件を満たす理想的なソリューションです。
 
-FSx for Lustre のストレージ容量とスループットは次のように設定されます。
-
-- **ストレージ容量**: 最小 1.2 TiB から開始し、2.4 TiB 単位で増加します。
-- **スループット**: デプロイメントタイプとストレージ容量によって決まります。
-  - SCRATCH_2: ストレージ 1 TiB あたり 200 MB/s または 1,000 MB/s
-  - PERSISTENT: ストレージ 1 TiB あたり 50 MB/s、100 MB/s、または 200 MB/s
-
-### vLLM ワークロード向け FSx for Lustre 構成
-
-vLLM（Vector Language Model）のような大規模 AI モデルワークロードには、高スループットかつ低レイテンシーのストレージが必要です。FSx for Lustre は、これらの要件を満たす理想的なソリューションです。
-
-#### vLLM 用 FSx for Lustre Storage Class
+#### vLLM向けFSx for Lustre Storage Class
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -1272,12 +1278,13 @@ parameters:
   deploymentType: PERSISTENT_1
   perUnitStorageThroughput: "200"
   dataCompressionType: "NONE"
-  storageCapacity: "4800"  # 4.8 TiB
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 ```
 
-#### vLLM ワークロード用 PVC
+FSx CSI driverは、`storageCapacity`というStorageClassパラメーターではなく、PVCの要求から容量を算出します。サブネットIDとセキュリティグループIDを置き換え、互換性のあるLustreクライアント/CSI driverをインストールし、要求容量が選択したDeploymentタイプで有効であることを確認してください。以下の推論イメージは、モデルサービングのコマンドを提供する必要があるプレースホルダーです。
+
+#### vLLMワークロード用PVC
 
 ```yaml
 apiVersion: v1
@@ -1293,7 +1300,7 @@ spec:
   storageClassName: fsx-lustre-vllm
 ```
 
-#### vLLM Deployment の例
+#### vLLM Deploymentの例
 
 ```yaml
 apiVersion: apps/v1
@@ -1331,19 +1338,19 @@ spec:
           claimName: vllm-model-storage
 ```
 
-#### vLLM パフォーマンス最適化のヒント
+#### vLLMのパフォーマンス最適化のヒント
 
-1. **適切なスループットの選択**: vLLM ワークロードでは、TiB あたり少なくとも 200 MB/s のスループットを選択することを推奨します。
+1. **適切なスループットの選択**: vLLMワークロードでは、モデルの読み込み時の同時実行数とデータセットへのアクセスを測定したうえで、スループットを選択することを推奨します。
 
-2. **ストレージ容量の最適化**: モデルサイズとデータセットサイズを考慮して、十分なストレージ容量を割り当てます。
+2. **ストレージ容量の最適化**: モデルのサイズとデータセットのサイズを考慮して、十分なストレージ容量を割り当てます。
 
-3. **ネットワークの最適化**: FSx for Lustre File System と EKS Nodes が同じ Availability Zone にあることを確認します。
+3. **ネットワークの最適化**: FSx for LustreファイルシステムとEKS Nodeが同じAvailability Zoneにあることを確認します。
 
-4. **インスタンスタイプの選択**: vLLM ワークロードのパフォーマンスを最適化するため、GPU インスタンス（例: g5.12xlarge）を使用します。
+4. **インスタンスタイプの選択**: vLLMワークロードのパフォーマンスを最適化するため、GPUインスタンス（例: g5.12xlarge）を使用します。
 
-5. **メモリ構成**: モデルサイズに基づいて十分なメモリを割り当てます。
+5. **メモリーの設定**: モデルのサイズに基づいて十分なメモリーを割り当てます。
 
-6. **File System マウントオプション**: 最適なパフォーマンスのため、適切なマウントオプションを使用します。
+6. **ファイルシステムのマウントオプション**: パフォーマンスを最適化するため、適切なマウントオプションを使用します。
 
    ```bash
    mount -t lustre -o noatime,flock fs-1234abcd.fsx.us-west-2.amazonaws.com@tcp:/fsx /mnt/fsx
@@ -1351,39 +1358,39 @@ spec:
 
 ### ストレージオプションの比較
 
-| ストレージオプション | アクセスモード | ユースケース | パフォーマンス | コスト | スケーラビリティ |
+| ストレージオプション | アクセスモード | 用途 | パフォーマンス | コスト | スケーラビリティ |
 |---------------|-------------|----------|-------------|------|-------------|
-| Amazon EBS | ReadWriteOnce | 単一 Pod 向けブロックストレージ | 中～高 | 中 | 限定的（単一 Node） |
-| Amazon EFS | ReadWriteMany | 複数 Pods で共有するファイルストレージ | 中 | 中～高 | 高（複数 Nodes） |
+| Amazon EBS | ReadWriteOnce | 1つのNodeにマウントするブロックストレージ | 中～高 | 中 | 限定的（単一Node） |
+| Amazon EFS | ReadWriteMany | 複数のPodで共有するファイルストレージ | 中 | 中～高 | 高（複数Node） |
 | Amazon FSx for Lustre | ReadWriteMany | HPC、ML、分析 | 非常に高い | 高 | 非常に高い（並列アクセス） |
 
-### EKS ストレージ選択ガイド
+### EKSストレージ選択ガイド
 
-1. **単一 Pod 用のブロックストレージが必要な場合**: Amazon EBS
+1. **1つのNodeにマウントするブロックストレージが必要な場合**: Amazon EBS
    - データベース
-   - Stateful アプリケーション
-   - 単一 Node で実行されるワークロード
+   - ステートフルアプリケーション
+   - 単一Node上で実行するワークロード
 
-2. **複数 Pods で共有するファイルストレージが必要な場合**: Amazon EFS
-   - Web サーバーコンテンツ
+2. **複数のPodで共有するファイルストレージが必要な場合**: Amazon EFS
+   - Webサーバーのコンテンツ
    - 共有設定ファイル
-   - 中規模データ処理
+   - 中規模のデータ処理
 
-3. **高性能ファイルストレージが必要な場合**: Amazon FSx for Lustre
-   - 大規模データ処理
-   - 機械学習および AI ワークロード（vLLM など）
+3. **高性能なファイルストレージが必要な場合**: Amazon FSx for Lustre
+   - 大規模なデータ処理
+   - 機械学習およびAIワークロード（vLLMなど）
    - 高性能コンピューティング（HPC）
    - ビッグデータ分析
 
 ## まとめ
 
-この章では、Kubernetes のストレージ概念について学びました。Volumes は Pod 内のコンテナがデータを保存・共有する手段を提供し、Persistent Volumes と Persistent Volume Claims は Pods から独立したライフサイクルを持つストレージを提供します。Storage Classes により、ユーザーは Dynamic Provisioning を通じて必要なときにストレージを要求できます。
+この章では、Kubernetesのストレージに関する概念を学びました。VolumesはPod内のコンテナがデータを保存・共有する手段を提供し、Persistent VolumesとPersistent Volume ClaimsはPodとは独立したライフサイクルを持つストレージを提供します。Storage Classesを使うと、Dynamic Provisioningを通じて必要なときにストレージを要求できます。
 
-EKS では Amazon EBS、Amazon EFS、Amazon FSx for Lustre などのさまざまなストレージオプションを利用でき、それぞれユースケースとパフォーマンス特性が異なります。vLLM のような大規模 AI モデルワークロードには、高スループットと低レイテンシーを備えた FSx for Lustre が理想的な選択肢です。FSx for Lustre は、複数の Nodes から同時にデータへアクセスできる並列ファイルシステムであり、大規模モデルのトレーニングおよび推論タスクに適しています。
+EKSでは、Amazon EBS、Amazon EFS、Amazon FSx for Lustreなど、用途やパフォーマンス特性の異なるさまざまなストレージオプションを利用できます。vLLMのような大規模AIモデルのワークロードには、高スループットかつ低レイテンシーのFSx for Lustreが理想的な選択肢です。FSx for Lustreは複数のNodeから同時にデータへアクセスできる並列ファイルシステムであり、大規模なモデルの学習や推論タスクに適しています。
 
-アプリケーションの要件に適したストレージオプションを選択することが重要です。単一 Pod 用のブロックストレージが必要な場合は Amazon EBS、複数 Pods で共有するファイルストレージが必要な場合は Amazon EFS、高性能ファイルストレージが必要な場合は Amazon FSx for Lustre を選択してください。
+アプリケーションの要件に合ったストレージオプションを選ぶことが重要です。1つのNodeにマウントするブロックストレージが必要な場合はAmazon EBS、複数のPodで共有するファイルストレージが必要な場合はAmazon EFS、高性能なファイルストレージが必要な場合はAmazon FSx for Lustreを選択してください。
 
-次の章では、Kubernetes の設定と Secrets について学びます。
+次の章では、Kubernetesの設定とSecretsについて学びます。
 
 ## クイズ
 
@@ -1391,12 +1398,12 @@ EKS では Amazon EBS、Amazon EFS、Amazon FSx for Lustre などのさまざま
 
 ## 参考資料
 
-- [Kubernetes 公式ドキュメント - Volumes](https://kubernetes.io/docs/concepts/storage/volumes/)
-- [Kubernetes 公式ドキュメント - Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
-- [Kubernetes 公式ドキュメント - Storage Classes](https://kubernetes.io/docs/concepts/storage/storage-classes/)
-- [Kubernetes 公式ドキュメント - Volume Snapshots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
+- [Kubernetes公式ドキュメント - Volumes](https://kubernetes.io/docs/concepts/storage/volumes/)
+- [Kubernetes公式ドキュメント - Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
+- [Kubernetes公式ドキュメント - Storage Classes](https://kubernetes.io/docs/concepts/storage/storage-classes/)
+- [Kubernetes公式ドキュメント - Volume Snapshots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
 - [AWS EBS CSI Driver](https://github.com/kubernetes-sigs/aws-ebs-csi-driver)
 - [AWS EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
 - [AWS FSx for Lustre CSI Driver](https://github.com/kubernetes-sigs/aws-fsx-csi-driver)
-- [AWS ブログ - LLM 推論ワークロードのスケーリング: Amazon EKS での TensorRT-LLM と Triton を使用したマルチノードデプロイメント](https://aws.amazon.com/ko/blogs/hpc/scaling-your-llm-inference-workloads-multi-node-deployment-with-tensorrt-llm-and-triton-on-amazon-eks/)
-- [AWS ワークショップ - GenAI FSx EKS](https://catalog.workshops.aws/genaifsxeks/en-US/200-module2-genai/210-deploy)
+- [AWSブログ - LLM推論ワークロードのスケーリング: Amazon EKS上でTensorRT-LLMとTritonを使用したマルチノードDeployment](https://aws.amazon.com/ko/blogs/hpc/scaling-your-llm-inference-workloads-multi-node-deployment-with-tensorrt-llm-and-triton-on-amazon-eks/)
+- [AWS Workshop - GenAI FSx EKS](https://catalog.workshops.aws/genaifsxeks/en-US/200-module2-genai/210-deploy)

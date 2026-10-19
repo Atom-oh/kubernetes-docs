@@ -1,32 +1,32 @@
 # Políticas de red
 
-> **Base de revisión**: Kubernetes 1.35 OpenAPI, Cilium 1.20.1, Calico 3.32.2 y la documentación actual de AWS. Las comprobaciones sin conexión no establecen la compatibilidad con el clúster.
-> **Última actualización**: September 13, 2026
+> **Referencia de revisión**: OpenAPI de Kubernetes 1.35, Cilium 1.20.3, Calico 3.32.2 y documentación actual de AWS. Las comprobaciones sin conexión no establecen la compatibilidad con el clúster.
+> **Última actualización**: 16 de octubre de 2026
 
-Las Network Policies de Kubernetes son reglas de firewall que controlan el tráfico entre Pods. Este documento cubre NetworkPolicy básico y extensiones de Cilium/Calico. Las secciones son ejemplos independientes; combinar todas las políticas cambiaría los permisos efectivos. No se realizó ningún despliegue de clúster/nube ni una prueba de conectividad en vivo.
+Las NetworkPolicy de Kubernetes son reglas de firewall que controlan el tráfico entre Pods. Este documento cubre NetworkPolicy básica y las extensiones de Cilium/Calico. Las secciones son ejemplos independientes; combinar todas las políticas cambiaría los permisos efectivos. No se realizó ningún despliegue en un clúster o en la nube ni ninguna prueba de conectividad en vivo.
 
 ## Tabla de contenido
 
-1. [Descripción general de las Network Policies](#network-policy-overview)
-2. [Especificación Kubernetes NetworkPolicy](#kubernetes-networkpolicy-spec)
+1. [Descripción general de las políticas de red](#network-policy-overview)
+2. [Especificación de NetworkPolicy de Kubernetes](#kubernetes-networkpolicy-spec)
 3. [Políticas de denegación predeterminada](#default-deny-policies)
-4. [Orden y evaluación de políticas](#policy-order-and-evaluation)
-5. [Extensiones de Cilium Network Policy](#cilium-network-policy-extensions)
-6. [Extensiones de Calico Network Policy](#calico-network-policy-extensions)
+4. [Orden y evaluación de las políticas](#policy-order-and-evaluation)
+5. [Extensiones de políticas de red de Cilium](#cilium-network-policy-extensions)
+6. [Extensiones de políticas de red de Calico](#calico-network-policy-extensions)
 7. [Patrones de diseño](#design-patterns)
-8. [Prueba de Network Policies](#testing-network-policies)
-9. [Consideraciones de EKS](#eks-considerations)
+8. [Pruebas de políticas de red](#testing-network-policies)
+9. [Consideraciones para EKS](#eks-considerations)
 10. [Herramientas de visualización](#visualization-tools)
 
 ---
 
-## Descripción general de Network Policy {#network-policy-overview}
+## Descripción general de las políticas de red {#network-policy-overview}
 
-### ¿Qué es una Network Policy?
+### ¿Qué es una política de red?
 
-Kubernetes NetworkPolicy selecciona Pods en su propio namespace y controla el tráfico de entrada y salida compatible. Un Pod sin una política seleccionadora para una dirección no queda aislado por NetworkPolicy en esa dirección; el enrutamiento, los security groups, las NACL y otros motores de políticas aún pueden impedir la conectividad.
+NetworkPolicy de Kubernetes selecciona Pods en su propio espacio de nombres y controla el tráfico de entrada y salida que admite. Un Pod que no tenga una política que lo seleccione para una dirección no está aislado por NetworkPolicy en esa dirección; el enrutamiento, los grupos de seguridad, las NACL y otros motores de políticas aún pueden impedir la conectividad.
 
-**Ambos extremos deben permitir** una conexión de Pod a Pod: las reglas de salida efectivas del origen y las reglas de entrada efectivas del destino deben permitirla. El tráfico de retorno de una conexión permitida se permite implícitamente. Las políticas son implementadas de forma asíncrona por un plugin de red compatible; un objeto de API por sí solo no demuestra su aplicación. El tráfico de Node/hostNetwork y los protocolos fuera de TCP/UDP/SCTP requieren una revisión específica de la implementación. Los diagramas siguientes muestran la intención de la política, no una garantía de accesibilidad.
+**Ambos extremos deben permitir** una conexión entre Pods: las reglas efectivas de salida del origen y las reglas efectivas de entrada del destino deben permitirla. El tráfico de respuesta de una conexión permitida se permite implícitamente. Un complemento de red compatible implementa las políticas de forma asíncrona; la existencia de un objeto de API no demuestra que se apliquen. El tráfico de nodos/hostNetwork y los protocolos que no sean TCP/UDP/SCTP requieren una revisión específica de la implementación. Los diagramas siguientes muestran la intención de la política, no garantizan la alcanzabilidad.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -56,33 +56,33 @@ Kubernetes NetworkPolicy selecciona Pods en su propio namespace y controla el tr
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Características de Network Policy
+### Características de las políticas de red
 
 | Propiedad | Descripción |
 |----------|-------------|
-| **Con ámbito de namespace** | NetworkPolicy se aplica a recursos dentro de un namespace |
-| **Aditiva** | Las reglas Allow de las Kubernetes NetworkPolicies seleccionadoras forman una unión para cada dirección; las denegaciones de Cilium, los tiers de Calico y las políticas administrativas de AWS tienen semánticas distintas |
-| **Aplicación selectiva** | Pods de destino especificados mediante podSelector |
-| **Control direccional** | Control independiente para Ingress (entrada) y Egress (salida) |
-| **Dependiente de CNI** | El plugin de CNI debe admitir NetworkPolicy |
+| **Limitada al espacio de nombres** | NetworkPolicy se aplica a los recursos de un espacio de nombres |
+| **Aditiva** | Las reglas de permiso de las NetworkPolicy de Kubernetes que seleccionan un Pod se combinan en una unión para cada dirección; las denegaciones de Cilium, los niveles de Calico y las políticas administrativas de AWS tienen semánticas propias |
+| **Aplicación selectiva** | Los Pods de destino se especifican mediante podSelector |
+| **Control direccional** | Control independiente de Ingress (entrada) y Egress (salida) |
+| **Dependiente de CNI** | El complemento CNI debe admitir NetworkPolicy |
 
-### Compatibilidad de CNI con NetworkPolicy
+### Compatibilidad con NetworkPolicy de CNI
 
-| CNI | NetworkPolicy básico | Extensiones | Política L7 |
+| CNI | NetworkPolicy básica | Extensiones | Política L7 |
 |-----|---------------------|------------|-----------|
 | **Cilium** | ✓ | CiliumNetworkPolicy, CiliumClusterwideNetworkPolicy | ✓ |
-| **Calico** | ✓ | GlobalNetworkPolicy, NetworkSet, Tier | Integración opcional de Istio/Dikastes; verifique el producto y las versiones desplegados |
+| **Calico** | ✓ | GlobalNetworkPolicy, NetworkSet, Tier | Integración opcional con Istio/Dikastes; verifique el producto y las versiones implementados |
 | **Weave Net (proyecto archivado)** | Compatibilidad histórica | Referencia heredada; evalúe una implementación mantenida para nuevos despliegues | ✗ |
-| **Flannel solo** | No aplica políticas por sí solo | Se necesita un motor de políticas compatible independiente | ✗ |
-| **Amazon VPC CNI** | ✓ cuando está habilitado en Node EC2 Linux compatibles | NetworkPolicy estándar; ClusterNetworkPolicy con VPC CNI 1.21+ | Egress DNS en Nodes EKS Auto Mode; consulte las consideraciones de EKS |
+| **Solo Flannel** | No aplica políticas por sí solo | Se necesita un motor de políticas compatible independiente | ✗ |
+| **Amazon VPC CNI** | ✓ cuando está habilitado en nodos Linux EC2 compatibles | NetworkPolicy estándar; ClusterNetworkPolicy con VPC CNI 1.21+ | Egress DNS en nodos EKS Auto Mode; consulte las consideraciones para EKS |
 
 ---
 
-## Especificación Kubernetes NetworkPolicy {#kubernetes-networkpolicy-spec}
+## Especificación de NetworkPolicy de Kubernetes {#kubernetes-networkpolicy-spec}
 
 ### Estructura básica
 
-Especifique `policyTypes` explícitamente. Si se omite, Kubernetes usa Ingress de forma predeterminada y agrega Egress cuando hay al menos una regla de salida. Los arrays de reglas vacíos por sí solos no implican ambas direcciones.
+Especifique `policyTypes` explícitamente. Si se omite, Kubernetes toma Ingress como valor predeterminado y agrega Egress cuando hay al menos una regla de salida. Las matrices de reglas vacías, por sí solas, no implican ambas direcciones.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -133,7 +133,7 @@ spec:
 
 ### podSelector
 
-Selecciona los Pods a los que se aplica la política en su propio namespace. Los siguientes son fragmentos alternativos de especificación, no recursos de API independientes.
+Selecciona los Pods a los que se aplica la política en su propio espacio de nombres. Los siguientes son fragmentos alternativos de la especificación, no recursos de API independientes.
 
 ```yaml
 # Apply to Pods with specific labels
@@ -166,7 +166,7 @@ spec:
 
 ### namespaceSelector
 
-Selecciona namespaces por etiquetas, incluido el namespace actual si coincide. `name` no es una etiqueta de namespace asignada automáticamente. Use la etiqueta integrada e inmutable `kubernetes.io/metadata.name` para un nombre de namespace exacto; restrinja quién puede cambiar las etiquetas de tenancy personalizadas.
+Selecciona espacios de nombres por sus etiquetas, incluido el espacio de nombres actual si coincide. `name` no es una etiqueta de espacio de nombres que se asigne automáticamente. Use la etiqueta inmutable integrada `kubernetes.io/metadata.name` para un nombre de espacio de nombres exacto; restrinja quién puede cambiar las etiquetas de tenencia personalizadas.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -195,7 +195,7 @@ spec:
               role: frontend
 ```
 
-**Nota:** distinción entre AND y OR al usar `namespaceSelector` y `podSelector` juntos:
+**Nota:** distinción entre AND y OR cuando se usan juntos `namespaceSelector` y `podSelector`:
 
 ```yaml
 # OR condition (two separate peer entries)
@@ -222,7 +222,7 @@ ingress:
 
 ### ipBlock
 
-Un `ipBlock` permite un CIDR menos sus rangos `except` en esa regla. Una excepción no es una denegación global y otra política puede permitirla. La traducción de direcciones de Service/load-balancer puede cambiar el origen o destino visible para el CNI; verifique la ruta real. Los CIDR de documentación siguientes son ilustrativos, no endpoints de producción accesibles.
+Un `ipBlock` permite un CIDR menos los rangos `except` de esa regla. Una excepción no es una denegación global y otra política puede permitirla. La traducción de direcciones de Service o balanceador de carga puede cambiar el origen o el destino que ve el CNI; verifique la ruta real. Los CIDR de documentación siguientes son ilustrativos, no extremos de producción alcanzables.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -261,7 +261,7 @@ spec:
 
 ### ports
 
-Especifique los puertos y protocolos permitidos. `endPort` requiere un puerto inicial numérico y compatibilidad de CNI para rangos; un puerto con nombre no puede ser el inicio de un rango. La aceptación por la API por sí sola no demuestra la aplicación por cada plugin.
+Especifique los puertos y protocolos permitidos. `endPort` requiere un puerto inicial numérico y compatibilidad del CNI con rangos; un puerto con nombre no puede ser el inicio de un rango. La aceptación por parte de la API no demuestra que todos los complementos apliquen la regla.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -295,11 +295,11 @@ spec:
 
 ## Políticas de denegación predeterminada {#default-deny-policies}
 
-Una línea base vacía no aporta permisos; otras políticas seleccionadoras aún pueden permitir tráfico. El comportamiento de conexiones existentes después de un cambio de política depende de la implementación y debe probarse por separado.
+Una línea base vacía no aporta permisos; otras políticas que seleccionen el Pod aún pueden permitir el tráfico. El comportamiento de las conexiones existentes después de un cambio de política depende de la implementación y debe probarse por separado.
 
-### Denegación predeterminada de Ingress
+### Denegación predeterminada de entrada
 
-Una línea base de aislamiento de entrada sin permisos propios. Otras políticas seleccionadoras aún pueden permitir Ingress:
+Una línea base de aislamiento de entrada que no permite nada por sí misma. Otras políticas que seleccionen el Pod aún pueden permitir el tráfico de entrada:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -314,9 +314,9 @@ spec:
   # No ingress rules = block all inbound traffic
 ```
 
-### Denegación predeterminada de Egress
+### Denegación predeterminada de salida
 
-Una línea base de aislamiento de salida sin permisos propios. Otras políticas seleccionadoras aún pueden permitir Egress:
+Una línea base de aislamiento de salida que no permite nada por sí misma. Otras políticas que seleccionen el Pod aún pueden permitir el tráfico de salida:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -348,7 +348,7 @@ spec:
 
 ### Denegación predeterminada con DNS permitido
 
-Este perfil presupone CoreDNS basado en Pod en `kube-system` con `k8s-app=kube-dns`. Permite TCP y UDP 53. Si DNS tiene aislamiento de entrada, su política también debe permitir los clientes. NodeLocal DNSCache y CoreDNS local del Node de Auto Mode necesitan su perfil real de resolver/IP; no aplique aquí este podSelector sin cambios.
+Este perfil supone CoreDNS basado en Pods en `kube-system` con `k8s-app=kube-dns`. Permite TCP y UDP en el puerto 53. Si DNS tiene aislamiento de entrada, su política también debe permitir el acceso de los clientes. NodeLocal DNSCache y CoreDNS local al nodo en Auto Mode necesitan el perfil real de la ruta/IP del resolvedor; no aplique allí sin cambios este selector de Pods.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -377,7 +377,7 @@ spec:
 
 ### Política predeterminada de arquitectura Zero Trust
 
-Están presentes ambas direcciones frontend→API. Esto no permite tráfico de entrada al frontend ni API→database; agregue solo los flujos revisados. Use la hipótesis de DNS basado en Pod anterior.
+Se incluyen ambas direcciones del flujo frontend→API. Esto no permite el tráfico entrante al frontend ni el flujo API→database; agregue únicamente los flujos revisados. Use la suposición anterior de DNS basado en Pods.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -457,11 +457,11 @@ spec:
       port: 8080
 ```
 
-## Orden y evaluación de políticas {#policy-order-and-evaluation}
+## Orden y evaluación de las políticas {#policy-order-and-evaluation}
 
 ### Reglas de evaluación de políticas
 
-Para cada endpoint y dirección, evalúe únicamente las **Kubernetes NetworkPolicies** seleccionadoras como se indica a continuación. Después compruebe la dirección del otro endpoint y todos los demás controles de red. Una política solo de entrada no aísla la salida.
+Para cada extremo y dirección, evalúe únicamente las **NetworkPolicy de Kubernetes** que lo seleccionen, como se indica a continuación. Después, compruebe la dirección del otro extremo y los demás controles de red. Una política que solo rige Ingress no aísla Egress.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -493,7 +493,7 @@ Para cada endpoint y dirección, evalúe únicamente las **Kubernetes NetworkPol
 
 ### Combinación de varias políticas
 
-Cuando varias NetworkPolicies se aplican al mismo Pod, se combinan todas las reglas de política (unión):
+Cuando varias NetworkPolicy se aplican al mismo Pod, todas las reglas de las políticas se combinan (unión):
 
 ```yaml
 ---
@@ -542,11 +542,11 @@ spec:
           port: 9090
 ```
 
-**Resultado:** el Ingress de la API permite Pods frontend en 8080 y Pods del namespace monitoring en 8080/9090. Sus reglas de Egress, listeners reales y otros controles de red también deben permitir la conexión.
+**Resultado:** Ingress de la API permite Pods frontend en el puerto 8080 y Pods del espacio de nombres monitoring en los puertos 8080/9090. Sus reglas de Egress, los procesos que realmente escuchan y los demás controles de red también deben permitir la conexión.
 
-### Orden de evaluación de políticas
+### Orden de evaluación de las políticas
 
-La API Kubernetes NetworkPolicy no tiene prioridad ni regla explícita de denegación. Su unión de permisos no describe el orden o las acciones de tier de las políticas Calico, las denegaciones explícitas de Cilium ni la evaluación de políticas administrativas de AWS:
+La API de NetworkPolicy de Kubernetes no tiene prioridades ni una regla explícita de denegación. La unión de permisos no describe el orden/las acciones de los niveles de políticas de Calico, las denegaciones explícitas de Cilium ni la evaluación de políticas administrativas de AWS:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -571,13 +571,13 @@ La API Kubernetes NetworkPolicy no tiene prioridad ni regla explícita de denega
 
 ---
 
-## Extensiones de Cilium Network Policy {#cilium-network-policy-extensions}
+## Extensiones de políticas de red de Cilium {#cilium-network-policy-extensions}
 
-Estos ejemplos usan el esquema de políticas publicado de Cilium 1.20.1, no son una instrucción para actualizar todos los clústeres. Las reglas HTTP necesitan una ruta de proxy L7 compatible. El chaining de AWS VPC CNI tiene limitaciones documentadas de características avanzadas, incluidas las políticas L7; no presuponga que estos ejemplos HTTP funcionan en ese modo. Una identidad de seguridad numérica de Cilium es una asignación para un conjunto de etiquetas, no un ID de aplicación permanente.
+Estos ejemplos utilizan el esquema de políticas publicado para Cilium 1.20.3; no indican que haya que actualizar todos los clústeres. Las reglas HTTP necesitan una ruta de proxy L7 compatible. El encadenamiento de AWS VPC CNI tiene limitaciones documentadas para funciones avanzadas, incluidas las políticas L7; no dé por sentado que estos ejemplos HTTP funcionan en ese modo. Una identidad de seguridad numérica de Cilium es una asignación para un conjunto de etiquetas, no un ID de aplicación permanente.
 
 ### CiliumNetworkPolicy
 
-Cilium extiende NetworkPolicy básico con funcionalidades más potentes.
+Cilium amplía la NetworkPolicy básica con funciones más potentes.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -613,7 +613,7 @@ spec:
 
 ### Política HTTP L7
 
-Las reglas HTTP de Cilium filtran las solicitudes visibles para su proxy L7; no autentican API keys ni establecen roles de administrador. Un llamador puede proporcionar un encabezado `X-User-Role`. Este ejemplo filtra métodos, rutas y un `Content-Type` exacto. Aplique autenticación y autorización en la aplicación o en un gateway autenticado. TLS de extremo a extremo no se descifra automáticamente para la inspección HTTP. Revise otras políticas que puedan permitir el mismo tráfico en L4.
+Las reglas HTTP de Cilium filtran las solicitudes visibles para su proxy L7; no autentican claves de API ni establecen roles de administrador. Una persona que llama puede enviar un encabezado `X-User-Role`. Este ejemplo filtra métodos, rutas y un `Content-Type` exacto. Aplique la autenticación y la autorización en la aplicación o en una puerta de enlace autenticada. El tráfico TLS de extremo a extremo no se descifra automáticamente para inspeccionar HTTP. Revise otras políticas que puedan permitir el mismo tráfico en L4.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -646,13 +646,13 @@ spec:
             value: application/json
 ```
 
-[HTTP API — Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/http.go)
+[API HTTP (Cilium 1.20.3)](https://github.com/cilium/cilium/blob/v1.20.3/pkg/policy/api/http.go)
 
 ### Política Kafka L7
 
-El esquema CNP publicado de Cilium 1.20.1 admite reglas L7 HTTP y DNS, pero no tiene `rules.kafka`. La anterior receta `role`, `topic` y `clientID` no es una API desplegable actual. Restrinja la conectividad del broker con una política de red y después aplique permisos de productor/consumidor para `orders` y `events` mediante autenticación y ACL de Kafka. Un ID de cliente no es un principal autenticado.
+El esquema CNP publicado para Cilium 1.20.3 admite reglas L7 de HTTP y DNS, pero no tiene `rules.kafka`. La receta anterior con `role`, `topic` y `clientID` no es una API actual desplegable. Restrinja la conectividad con el broker mediante una política de red y, después, aplique los permisos de productor/consumidor para `orders` y `events` mediante la autenticación de Kafka y las ACL. Un ID de cliente no es una entidad autenticada.
 
-Este ejemplo L4 presupone un listener de broker TLS ya configurado en TCP 9093, clientes en el mismo namespace y Egress/DNS de clientes autorizado por separado. No configura TLS, ACL de broker ni permisos de topics.
+Este ejemplo L4 presupone un listener TLS del broker ya configurado en TCP 9093, clientes en el mismo espacio de nombres y Egress de clientes/DNS autorizado por separado. No configura TLS, ACL del broker ni permisos de temas.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -676,11 +676,11 @@ spec:
         protocol: TCP
 ```
 
-[CNP schema — Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+[Esquema CNP (Cilium 1.20.3)](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
 
 ### Política DNS L7
 
-Este ejemplo utiliza CoreDNS basado en Pod. `ANY` en el puerto 53 cubre UDP y TCP. El permiso de consulta DNS y el permiso para conectarse a una IP devuelta son independientes: resolver el nombre de database siguiente no permite conexiones a la base de datos. Reemplace el dominio de ejemplo, tenga en cuenta los sufijos de búsqueda/caché/TTL de DNS y verifique el perfil real del resolver. Las reglas FQDN aprenden IP de DNS; no autentican un tenant SaaS ni sustituyen TLS/autorización de aplicación.
+Este ejemplo utiliza CoreDNS basado en Pods. `ANY` en el puerto 53 cubre UDP y TCP. El permiso para consultas DNS y el permiso para conectarse a una IP devuelta son independientes: resolver el nombre de la base de datos que aparece a continuación no permite conexiones a esa base de datos. Reemplace el dominio de ejemplo, tenga en cuenta los sufijos de búsqueda DNS, la caché y el TTL, y verifique el perfil real del resolvedor. Las reglas FQDN aprenden IP a partir de DNS; no autentican a un inquilino de SaaS ni sustituyen la autorización TLS/de la aplicación.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -715,7 +715,7 @@ spec:
 
 ### CiliumClusterwideNetworkPolicy
 
-El recurso tiene ámbito de clúster, mientras que su selector lo limita explícitamente a `production/app=api`. Permite Pods de gateway en TCP8080. Controla solo Ingress; el aislamiento de Egress/DNS y el Egress del propio gateway requieren las políticas correspondientes. El ejemplo anterior de permiso de cluster/world para todos los endpoints no era una política de denegación predeterminada.
+El recurso tiene alcance de clúster, pero su selector limita explícitamente la selección a `production/app=api`. Permite el tráfico de Pods de puerta de enlace por TCP 8080. Solo controla Ingress; el aislamiento de Egress/DNS y el Egress propio de la puerta de enlace requieren sus políticas correspondientes. El ejemplo anterior que permitía todos los extremos/todo el mundo en el clúster no era una política de denegación predeterminada.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -738,9 +738,9 @@ spec:
         protocol: TCP
 ```
 
-### Política basada en entidades de Cilium
+### Política de Cilium basada en entidades
 
-`host` incluye el Node local y sus contenedores host-network; `cluster` incluye más que Pods de aplicaciones. `world` abarca endpoints fuera del clúster y no es una allowlist detallada de Internet/SaaS. Use reglas CIDR/FQDN explícitas al restringir el acceso externo. Este ejemplo ofrece únicamente a un cliente Kubernetes API etiquetado acceso TCP443; configure por separado el endpoint de API, la confianza TLS, las credenciales y RBAC. La identidad de origen puede cambiar entre rutas de red de planos de control administrados, por lo que debe inspeccionar la identidad de flujo real en lugar de ampliar el Ingress a todo el clúster.
+`host` incluye el nodo local y sus contenedores host-network; `cluster` incluye más que los Pods de aplicaciones. `world` abarca extremos fuera del clúster y no es una lista de permisos detallada para Internet/SaaS. Use reglas CIDR/FQDN explícitas para restringir el acceso externo. Este ejemplo solo permite el acceso TCP 443 de un cliente de la API de Kubernetes etiquetado; configure por separado el extremo de la API, la confianza TLS, las credenciales y RBAC. La identidad de origen puede cambiar a través de las rutas de red del plano de control administrado, así que inspeccione la identidad real del flujo en lugar de ampliar Ingress a todo el clúster.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -761,13 +761,13 @@ spec:
         protocol: TCP
 ```
 
-## Extensiones de Calico Network Policy {#calico-network-policy-extensions}
+## Extensiones de políticas de red de Calico {#calico-network-policy-extensions}
 
-Los ejemplos de políticas/Tier siguen los recursos de Calico Open Source 3.32.2. `projectcalico.org/v3` requiere el API server de Calico compatible o un flujo de trabajo `calicoctl` equivalente; no es la API de almacenamiento Kubernetes sin procesar `crd.projectcalico.org/v1`. Verifique el datastore/API instalado antes de aplicar. Las acciones ordenadas de Calico y la delegación de tiers difieren de la API aditiva Kubernetes NetworkPolicy.
+Los ejemplos de políticas/Tier siguen los recursos de Calico Open Source 3.32.2. `projectcalico.org/v3` requiere el servidor de API de Calico compatible o el flujo de trabajo correspondiente de `calicoctl`; no es la API de almacenamiento sin procesar de Kubernetes `crd.projectcalico.org/v1`. Verifique el almacén de datos/la API instalados antes de aplicar. Las acciones ordenadas y la delegación entre niveles de Calico son distintas de la API aditiva de NetworkPolicy de Kubernetes.
 
-La documentación actual de Open Source también describe la [integración de capa de aplicación Istio/Dikastes](https://docs.tigera.io/calico/latest/network-policy/istio/app-layer-policy). La API HTTPMatch requiere esa configuración independiente y admite reglas Allow de Ingress. Los ejemplos Calico siguientes cubren política L3/L4; esta revisión no desplegó ni probó la integración L7.
+La documentación actual de Open Source también describe la [integración de capa de aplicación Istio/Dikastes](https://docs.tigera.io/calico/latest/network-policy/istio/app-layer-policy). La API HTTPMatch requiere esa configuración independiente y admite reglas de permiso para Ingress. Los ejemplos de Calico que siguen cubren políticas L3/L4; esta revisión no desplegó ni probó la integración L7.
 
-### Calico NetworkPolicy
+### NetworkPolicy de Calico
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -805,7 +805,7 @@ spec:
 
 ### GlobalNetworkPolicy
 
-Estos dos recursos globales seleccionan solo workloads en el namespace `production`. Un `selector: all()` sin restricciones también puede afectar endpoints de host; no aplique una denegación para todo el clúster sin un ámbito explícito y una vía de recuperación. El `order` más bajo se evalúa primero dentro del tier. El ejemplo permite DNS basado en Pod y, de otro modo, proporciona una línea base de denegación; agregue los flujos de aplicación revisados y tenga en cuenta las acciones de tiers superiores.
+Estos dos recursos globales seleccionan únicamente cargas de trabajo del espacio de nombres `production`. Un `selector: all()` sin restricciones también puede afectar a los extremos del host; no aplique una denegación en todo el clúster sin un alcance explícito y un método de recuperación. Dentro del nivel, se evalúa primero el valor menor de `order`. El ejemplo permite DNS basado en Pods y proporciona, por lo demás, una línea base de denegación; agregue los flujos de aplicación revisados y tenga en cuenta las acciones de los niveles superiores.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -851,7 +851,7 @@ spec:
 
 ### NetworkSet
 
-Los selectores NetworkSet coinciden con `metadata.labels`, no con el nombre del recurso. El primer conjunto tiene ámbito de namespace; el conjunto bloqueado es global y se consume en el ejemplo de security-tier siguiente. Todos los CIDR aquí son rangos de documentación y deben reemplazarse por destinos revisados. El ejemplo de Egress permite TCP443 al conjunto etiquetado con ámbito de namespace; DNS es una regla independiente.
+Los selectores de NetworkSet coinciden con las etiquetas de `metadata.labels`, no con el nombre del recurso. El primer conjunto tiene ámbito de espacio de nombres; el conjunto bloqueado es global y lo utiliza el ejemplo del nivel de seguridad que aparece a continuación. Todos los CIDR son rangos de documentación y deben reemplazarse por destinos revisados. El ejemplo de Egress permite TCP 443 al conjunto etiquetado del espacio de nombres; DNS es una regla independiente.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -894,9 +894,9 @@ spec:
       - 443
 ```
 
-### Políticas basadas en Tier
+### Políticas basadas en niveles
 
-Los tiers están disponibles en la versión de Calico Open Source referenciada, no solo en Enterprise. Un tier seleccionador toma `Deny` como valor predeterminado cuando no actúa ninguna regla. Por lo tanto, el tier deny-known-threats usa explícitamente `defaultAction: Pass` para que el tráfico no relacionado pueda llegar a las políticas posteriores. `Pass` es delegación, no permiso. `global()` pertenece a `namespaceSelector`; el selector de etiqueta independiente identifica el GlobalNetworkSet. Complete las políticas de application-tier y verifique cualquier comportamiento final de profile/default-tier antes del despliegue; crear un Tier vacío no es una política completa de aislamiento de aplicaciones.
+Los niveles están disponibles en la versión de Calico Open Source a la que se hace referencia, no solo en Enterprise. Si no se aplica ninguna regla de un nivel que selecciona tráfico, su acción predeterminada es `Deny`. Por ello, el nivel deny-known-threats usa explícitamente `defaultAction: Pass` para que el tráfico no relacionado pueda llegar a las políticas posteriores. `Pass` es delegación, no permiso. `global()` debe estar en `namespaceSelector`; el selector de etiquetas independiente identifica el GlobalNetworkSet. Defina las políticas del nivel de aplicación y verifique el comportamiento de cualquier perfil/nivel predeterminado final antes del despliegue; crear un Tier vacío no es una política completa de aislamiento de aplicaciones.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -970,11 +970,11 @@ spec:
 
 ## Patrones de diseño {#design-patterns}
 
-Estos son **perfiles de política alternativos**, no un conjunto para aplicar juntos. Reutilizar `production` no hace compatibles ejemplos no relacionados: sus reglas Allow se acumularían. Prepare primero los namespaces, las etiquetas de workload, los puertos de escucha y el perfil DNS real. Los ejemplos se comprobaron localmente en cuanto a esquema/intención, pero no se ejecutaron en un clúster.
+Estos son **perfiles de políticas alternativos**, no un conjunto para aplicar en bloque. Reutilizar `production` no hace compatibles los ejemplos que no guardan relación: sus reglas de permiso se acumularían. Prepare primero los espacios de nombres, las etiquetas de las cargas de trabajo, los puertos de escucha y el perfil DNS real. Los ejemplos se comprobaron localmente en cuanto a esquema/intención, pero no se ejecutaron en un clúster.
 
 ### Microsegmentación
 
-Este perfil permite frontend→API TCP8080 y API→database TCP5432 en ambos lados, además de DNS. Deliberadamente no tiene Egress a Internet ni Ingress externo al frontend. Si se requiere, agregue un CIDR/puerto de destino aprobado o un perfil de egress gateway autenticado; excluir RFC1918 de 0.0.0.0/0 no es una allowlist SaaS.
+Este perfil permite frontend→API por TCP 8080 y API→database por TCP 5432 en ambos lados, además de DNS. Deliberadamente, no hay Egress a Internet ni Ingress externo al frontend. Si se necesita, agregue un CIDR/puerto de destino aprobado o un perfil de puerta de enlace de Egress autenticada; excluir RFC1918 de 0.0.0.0/0 no constituye una lista de permisos para SaaS.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1094,9 +1094,9 @@ spec:
       port: 5432
 ```
 
-### Aislamiento de namespace
+### Aislamiento de espacios de nombres
 
-El perfil de equipo incluye Ingress **y Egress** para el mismo equipo, además de DNS. Los servicios compartidos también necesitan Ingress de destino que permita team-a y un listener TLS443 real. Restrinja la administración de las etiquetas de namespace; una etiqueta de equipo no es un límite de confianza independiente.
+El perfil del equipo incluye Ingress **y Egress** del mismo equipo, además de DNS. Los servicios compartidos también necesitan Ingress de destino que permita team-a y un listener TLS 443 real. Restrinja la administración de etiquetas de espacios de nombres; una etiqueta de equipo no es un límite de confianza independiente.
 
 ```yaml
 apiVersion: v1
@@ -1161,9 +1161,9 @@ spec:
       port: 443
 ```
 
-### Protección de base de datos
+### Protección de bases de datos
 
-El namespace `database` debe existir. Los llamadores de producción y los Pods de monitoring necesitan sus propios permisos de Egress. Las reglas de pares TCP5432 permiten únicamente el transporte de replicación PostgreSQL supuesto; configure la autenticación/TLS de la base de datos por separado. TCP9187 presupone un exporter instalado por separado.
+Debe existir el espacio de nombres `database`. Los clientes de producción y los Pods de monitoring necesitan sus propios permisos de Egress. Las reglas de pares TCP 5432 solo permiten el transporte de replicación de PostgreSQL que se presupone; configure aparte la autenticación/TLS de la base de datos. TCP 9187 presupone que se instaló un exportador independiente.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1230,7 +1230,7 @@ spec:
 
 ### Política de arquitectura de 3 niveles
 
-Suponga un workload existente `gateway-system/app=edge-proxy` que termina TLS de cliente y puede alcanzar los Pods web en TCP80. La política de Egress del gateway está fuera de este namespace. El Ingress y Egress de pares de datos usan TCP5432/6379; los puertos adicionales de replicación/bus de clúster/backup dependen de la base de datos elegida y no están implícitos. Separe los selectores PostgreSQL y Redis en un despliegue real.
+Suponga que ya existe una carga de trabajo `gateway-system/app=edge-proxy` que termina el TLS de los clientes y puede llegar a los Pods web por TCP 80. La política de Egress de la puerta de enlace queda fuera de este espacio de nombres. Ingress y Egress para los pares de datos usan TCP 5432/6379; no se infieren los puertos adicionales de replicación, bus de clúster o copia de seguridad, ya que dependen de la base de datos elegida. En un despliegue real, separe los selectores de PostgreSQL y Redis.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1384,15 +1384,15 @@ spec:
 
 ---
 
-## Prueba de Network Policies {#testing-network-policies}
+## Pruebas de políticas de red {#testing-network-policies}
 
 ### Pruebas con netshoot
 
-Use Pods de diagnóstico aprobados y ya aprovisionados con imágenes fijadas y permisos revisados. Seleccione etiquetas/namespace/ubicación de Node de origen que realmente ejerciten la política; un Pod genérico sin etiquetas no representa la aplicación. Aprovisionar netshoot crea un workload y puede entrar en conflicto con la admisión Pod Security. No cree/elimine un nombre fijo compartido `test-pod` como parte de un script de observación. Ejecute sondeos solo contra endpoints de prueba propios.
+Use Pods de diagnóstico aprobados y ya aprovisionados, con imágenes fijadas y permisos revisados. Elija etiquetas de origen, espacio de nombres y ubicación de nodo que realmente pongan a prueba la política; un Pod genérico sin etiquetas no representa la aplicación. Aprovisionar netshoot crea una carga de trabajo y puede entrar en conflicto con la admisión de Pod Security. No cree ni elimine un nombre fijo compartido como `test-pod` en un script de observación. Ejecute pruebas únicamente contra extremos de prueba de su propiedad.
 
 ### Pruebas con kubectl exec
 
-Establezca explícitamente el contexto, namespace, Pod existente y contenedor. El éxito de DNS no equivale al éxito de TCP; el rechazo de conexión, un listener no saludable, un error TLS y una caída por política son resultados distintos. Estos comandos prueban solo la conectividad y no imprimen cuerpos de respuesta. No se ejecutaron contra un clúster durante esta revisión.
+Establezca explícitamente el contexto, el espacio de nombres, el Pod existente y el contenedor. Que DNS funcione no significa que TCP funcione; un rechazo de conexión, un listener que no esté en buen estado, un error TLS y una caída por política son resultados distintos. Estos comandos solo prueban conectividad y no imprimen cuerpos de respuesta. No se ejecutaron contra un clúster durante esta revisión.
 
 ```bash
 # Both Pods already exist in the approved test environment.
@@ -1406,13 +1406,13 @@ kubectl --context="$CONTEXT" -n "$NAMESPACE" exec "$ALLOW_POD" \
 
 ### Prueba de conectividad de Cilium
 
-`cilium connectivity test` crea recursos y tráfico de prueba; no es un comando de estado de solo lectura. Use un clúster/namespace aislado aprobado, CLI e imágenes compatibles, destinos externos definidos y un plan de limpieza. Consulte `cilium connectivity test --help` para conocer los filtros de la CLI instalada en lugar de suponer que los nombres de prueba históricos aún existen. Una suite superada no demuestra cada política de aplicación ni cada característica de CNI chaining.
+`cilium connectivity test` crea recursos de prueba y tráfico; no es un comando de estado de solo lectura. Utilice un clúster/espacio de nombres aislado aprobado, una CLI e imágenes compatibles, destinos externos definidos y un plan de limpieza. Consulte `cilium connectivity test --help` para ver los filtros de la CLI instalada, en vez de suponer que siguen existiendo nombres de pruebas históricos. Que la suite pase no demuestra todas las políticas de aplicación ni todas las funciones de encadenamiento de CNI.
 
 ### Script de prueba automatizada
 
-Este script solo ejecuta sondeos curl limitados en dos Pods existentes; no crea ni elimina recursos de clúster. Establezca `CONTEXT`, `NAMESPACE`, `ALLOW_POD`, `DENIED_POD`, `PROBE_CONTAINER` y un `TARGET_URL` no secreto que termine en `/health`. Ambos contenedores necesitan `sh` y `curl`. El primer Pod es un control positivo conocido como permitido para el mismo destino. Las respuestas de error HTTP aún establecen accesibilidad de red porque esta prueba no es validación del estado de la aplicación.
+Este script solo ejecuta pruebas curl acotadas en dos Pods existentes; no crea ni elimina recursos del clúster. Establezca `CONTEXT`, `NAMESPACE`, `ALLOW_POD`, `DENIED_POD`, `PROBE_CONTAINER` y un `TARGET_URL` que no contenga secretos y termine en `/health`. Ambos contenedores necesitan `sh` y `curl`. El primer Pod es un control positivo conocido como permitido para el mismo destino. Las respuestas de error HTTP también confirman que hay conectividad de red, porque esta prueba no valida el estado de la aplicación.
 
-Exit1 significa que el sujeto bloqueado se conectó inesperadamente; exit2 significa desconocido/error; exit3 significa tiempo de espera que requiere corroboración. Un tiempo de espera **nunca** se convierte en PASS automático: correlacione el origen/destino/puerto/hora exactos con un veredicto de caída de política CNI, comprobando a la vez el estado del endpoint, las rutas y los controles SG/NACL. Las pruebas simuladas locales no afirman aplicación en vivo.
+El código de salida 1 significa que el sujeto bloqueado se conectó de forma inesperada; el código 2 indica resultado desconocido/error; el código 3 indica tiempo de espera que requiere corroboración. Un tiempo de espera **nunca** se convierte automáticamente en PASS: correlacione el origen/destino/puerto/hora exactos con un veredicto de descarte por política del CNI, mientras comprueba el estado de los extremos, las rutas y los controles de SG/NACL. Las pruebas locales simuladas no afirman que se haya aplicado ninguna política en vivo.
 
 ```bash
 #!/usr/bin/env bash
@@ -1460,13 +1460,13 @@ case "$denied" in
 esac
 ```
 
-## Consideraciones de EKS {#eks-considerations}
+## Consideraciones para EKS {#eks-considerations}
 
 ### Amazon VPC CNI y NetworkPolicy
 
-Amazon VPC CNI admite políticas de red después de la habilitación. La guía actual de AWS requiere VPC CNI 1.21+ para las políticas estándar y administrativas, una plataforma EKS compatible y Linux kernel 5.10+. La aplicación corresponde a Nodes EC2 Linux compatibles, no Fargate ni Windows. Use una versión EKS actualmente compatible y verifique su versión de add-on compatible; no infiera la compatibilidad EKS a partir de versiones Kubernetes upstream.
+Amazon VPC CNI admite políticas de red después de habilitarlas. La guía actual de AWS exige VPC CNI 1.21+ para las políticas estándar y administrativas, una plataforma EKS compatible y un kernel Linux 5.10 o posterior. La aplicación de políticas se limita a los nodos Linux EC2 compatibles, no a Fargate ni a Windows. Use una versión de EKS compatible actualmente y verifique la versión compatible del complemento; no deduzca la compatibilidad de EKS a partir de las versiones de Kubernetes upstream.
 
-Para un add-on VPC CNI **administrado por EKS**, conserve su configuración actual al establecer el string documentado `"enableNetworkPolicy": "true"`. Lo siguiente cambia el clúster seleccionado tras la revisión; no actualiza la versión del add-on. Si la versión instalada es incompatible, deténgase y siga primero el procedimiento de actualización documentado.
+Para un complemento de VPC CNI **administrado por EKS**, conserve su configuración existente y establezca el valor de cadena documentado `"enableNetworkPolicy": "true"`. El siguiente procedimiento modifica el clúster seleccionado después de revisarlo; no actualiza la versión del complemento. Si la versión instalada no es compatible, deténgase y siga primero el procedimiento de actualización documentado.
 
 ```bash
 # Requires AWS CLI, kubectl and jq; use an approved test cluster.
@@ -1480,17 +1480,17 @@ jq -e '(.addon.configurationValues // "{}") | if . == "" then {} else fromjson e
 aws eks update-addon --cluster-name "$CLUSTER_NAME" --addon-name vpc-cni   --configuration-values file://vpc-cni-network-policy.json --resolve-conflicts PRESERVE
 ```
 
-Compruebe el estado de la actualización y el comportamiento de la política antes del rollout. `--resolve-conflicts PRESERVE` no fusiona por usted un documento JSON de sustitución; el ejemplo conserva explícitamente los valores existentes. Mantenga la instantánea para recuperación. Una instalación propiedad de Helm usa su chart/values revisados y `enableNetworkPolicy: true`; no tome su propiedad mediante este comando de add-on administrado. Establecer la variable de entorno inventada `ENABLE_NETWORK_POLICY` no es el procedimiento de habilitación.
+Compruebe el estado de la actualización y el comportamiento de las políticas antes del despliegue. `--resolve-conflicts PRESERVE` no combina por usted un documento JSON de reemplazo; el ejemplo conserva explícitamente los valores existentes. Guarde la instantánea para poder recuperarse. Una instalación administrada por Helm usa el chart/valores revisados; establezca `enableNetworkPolicy: true`. No transfiera su administración mediante este comando para complementos administrados. Establecer la variable de entorno inventada `ENABLE_NETWORK_POLICY` no es el procedimiento de habilitación.
 
-El modo de inicio estándar puede permitir inicialmente un Pod nuevo hasta que se programe su política. `NETWORK_POLICY_ENFORCING_MODE=strict` inicia Pods elegibles denegados y requiere una matriz completa de permisos, incluido DNS; cambiarlo puede interrumpir workloads. Los Pods administrados por controladores son el destino de prueba fiable. La aplicación ocurre en la interfaz de Pod principal, por lo que inspeccione por separado interfaces adicionales, Egress IPv6 a IPv4, host networking y NAT. No instale dos motores para administrar las mismas políticas estándar ni elimine `aws-node` como atajo de migración.
+El modo de inicio estándar puede permitir inicialmente el tráfico de un Pod nuevo hasta que se programe su política. `NETWORK_POLICY_ENFORCING_MODE=strict` inicia los Pods aptos en estado denegado y requiere una matriz completa de permisos, incluido DNS; cambiarlo puede interrumpir las cargas de trabajo. Los Pods administrados por controladores son el objetivo de prueba más fiable. La aplicación se realiza en la interfaz principal del Pod, así que inspeccione por separado las interfaces adicionales, el Egress de IPv6 a IPv4, el uso de red del host y NAT. No instale dos motores para administrar las mismas políticas estándar ni elimine `aws-node` como atajo para una migración.
 
-### Políticas de seguridad de red mejoradas de EKS (diciembre de 2025)
+### Políticas mejoradas de seguridad de red de EKS (diciembre de 2025)
 
-> **Anunciado**: December 15, 2025 · [Fuente](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
+> **Anunciado**: 15 de diciembre de 2025 · [Fuente](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
 
-La característica es real, pero sus recursos usan **`networking.k8s.aws/v1alpha1`**. `ClusterNetworkPolicy` tiene ámbito de clúster y un `tier` obligatorio; el Egress basado en DNS usa `ApplicationNetworkPolicy` para el ejemplo de namespace siguiente. La compatibilidad de políticas VPC CNI estándar/administrativas en EC2 Linux no implica que todos los modos de cómputo sean compatibles. Las reglas DNS se aplican solo en **instancias EC2 lanzadas por Auto Mode**, incluso en un clúster mixto.
+La función existe, pero sus recursos usan **`networking.k8s.aws/v1alpha1`**. `ClusterNetworkPolicy` tiene alcance de clúster y requiere `tier`; para Egress basado en DNS se utiliza `ApplicationNetworkPolicy` en el ejemplo de espacio de nombres que aparece a continuación. Que las políticas estándar/administrativas de VPC CNI sean compatibles con Linux EC2 no significa que sean compatibles con todos los modos de cómputo. Las reglas DNS solo se aplican en **instancias EC2 lanzadas con Auto Mode**, incluso en un clúster mixto.
 
-**Requisito previo de Auto Mode:** habilite su Network Policy Controller antes de aplicar las políticas siguientes. Actualizar un add-on `vpc-cni` administrado por EKS es una ruta independiente y no habilita la aplicación de políticas para un clúster Auto Mode puro. El ajuste requerido es ConfigMap `kube-system/amazon-vpc-cni`, `data.enable-network-policy-controller: "true"`. El flujo siguiente conserva otros datos de ConfigMap con un merge patch, crea solo si está ausente y se detiene ante una lectura o escritura fallida. Revise el contexto del clúster y la configuración existente antes de ejecutarlo.
+**Requisito previo de Auto Mode:** habilite su Network Policy Controller antes de aplicar las políticas siguientes. Actualizar un complemento `vpc-cni` administrado por EKS es una ruta distinta y no habilita la aplicación de políticas para un clúster de Auto Mode puro. El ajuste necesario es el ConfigMap `kube-system/amazon-vpc-cni`, `data.enable-network-policy-controller: "true"`. El procedimiento siguiente conserva los demás datos del ConfigMap con un parche de fusión, solo lo crea si no existe y se detiene si falla la lectura o escritura. Revise el contexto del clúster y la configuración existente antes de ejecutarlo.
 
 ```bash
 set -euo pipefail
@@ -1506,9 +1506,9 @@ kubectl get configmap amazon-vpc-cni -n kube-system -o json \
   | jq -e '.data["enable-network-policy-controller"] == "true"'
 ```
 
-Después de habilitarlo, inspeccione los objetos `PolicyEndpoints` correspondientes y pruebe tanto el tráfico permitido como el denegado en los Nodes Auto Mode seleccionados. Una marca almacenada o un objeto de política aceptado no prueba la aplicación. Consulte la [configuración de Network Policy de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-net-pol.html). No se realizó una prueba de aplicación en clúster para esta auditoría de documentación.
+Después de habilitarlo, inspeccione los objetos `PolicyEndpoints` correspondientes y pruebe tanto el tráfico permitido como el denegado en los nodos Auto Mode seleccionados. Una opción guardada o un objeto de política aceptado no demuestra que se aplique. Consulte la [configuración de políticas de red de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-net-pol.html). No se realizó ninguna prueba de aplicación de políticas en un clúster para esta auditoría de documentación.
 
-Este ejemplo de nivel Admin deniega el tráfico entrante desde Pods seleccionados por namespace hacia `isolated-demo`, incluidos los Pods de ese mismo namespace. No es un firewall externo/host-network completo ni una política de permiso DNS. Una denegación Admin no puede sobrescribirse mediante una NetworkPolicy de namespace. Revise el CRD realmente instalado antes de agregar otras acciones: el esquema actual del controlador AWS upstream llama `Accept` a su acción de permiso, mientras que el texto de la guía de usuario usa “Allow”.
+Este ejemplo del nivel Admin deniega el tráfico entrante de Pods seleccionados por espacio de nombres a `isolated-demo`, incluidos los Pods de ese mismo espacio de nombres. No es un firewall completo para tráfico externo/de host-network ni una política de permisos DNS. Admin Deny no puede anularse con una NetworkPolicy del espacio de nombres. Revise la CRD realmente instalada antes de agregar otras acciones: el esquema actual upstream del controlador de AWS denomina `Accept` a la acción que permite, mientras que el texto de la guía de usuario usa “Allow”.
 
 ```yaml
 apiVersion: networking.k8s.aws/v1alpha1
@@ -1530,7 +1530,7 @@ spec:
         matchLabels: {}
 ```
 
-El ejemplo FQDN selecciona `app=backend` en `production`. **Reemplace `10.100.0.10/32` por la IP CoreDNS Auto Mode real de su clúster**: es la dirección de red Service CIDR más 10 (`::a/128` para IPv6). CoreDNS Auto Mode puro se ejecuta en el Node; un podSelector CoreDNS convencional no es intercambiable. Permita DNS TCP y UDP. Use un nombre de recurso único que no colisione con una NetworkPolicy de ese namespace.
+El ejemplo FQDN selecciona `app=backend` en `production`. **Reemplace `10.100.0.10/32` por la IP real de CoreDNS de Auto Mode de su clúster**: es la dirección de red del CIDR de Service más 10 (`::a/128` para IPv6). En Auto Mode puro, CoreDNS se ejecuta en el nodo; un selector de Pods convencional para CoreDNS no es equivalente. Permita DNS tanto por TCP como por UDP. Use un nombre de recurso único que no coincida con una NetworkPolicy de ese espacio de nombres.
 
 ```yaml
 apiVersion: networking.k8s.aws/v1alpha1
@@ -1561,15 +1561,15 @@ spec:
       port: 443
 ```
 
-El proxy DNS observa respuestas permitidas y sus TTL y después la ruta de datos permite las IP/puertos de destino aprendidos. Esto no autentica una cuenta SaaS ni prueba la identidad HTTP del par; las IP compartidas y el comportamiento DNS requieren pruebas. La verificación de certificados TLS, la autorización de aplicación, las rutas y cualquier regla de Route 53 DNS Firewall siguen siendo pertinentes. Deben revisarse conjuntamente otras políticas aplicables y rutas directas de backend.
+El proxy DNS observa las respuestas permitidas y sus TTL; después, la ruta de datos permite las IP/puertos de destino aprendidos. Esto no autentica una cuenta de SaaS ni demuestra la identidad HTTP del par; hay que probar las IP compartidas y el comportamiento de DNS. Siguen siendo relevantes la verificación de certificados TLS, la autorización de la aplicación, las rutas y las reglas de Route 53 DNS Firewall. Las demás políticas aplicables y las rutas directas al backend deben revisarse en conjunto.
 
-[AWS NetworkPolicy](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html) · [Configuración](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html) · [Políticas de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-net-pol.html)
+[NetworkPolicy de AWS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html) · [Configuración](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html) · [Políticas de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-net-pol.html)
 
-### Security Groups para Pods
+### Grupos de seguridad para Pods
 
-Este ejemplo de binding presupone EKS VPC Resource Controller, sus permisos de **rol de clúster**, Nodes EC2 Linux compatibles con trunking y una configuración VPC CNI revisada. La guía AWS actual excluye Windows y EKS Auto Mode. Fargate usa un modelo Pod-SG independiente y no obtiene compatibilidad VPC-CNI NetworkPolicy simplemente por tener un security group. Aplique el binding a nuevos Pods de workload coincidentes mediante su owner; los Pods existentes no se actualizan automáticamente.
+Este ejemplo de asociación presupone el EKS VPC Resource Controller, sus permisos de **cluster-role**, nodos Linux EC2 compatibles con trunking y una configuración revisada de VPC CNI. La guía actual de AWS excluye Windows y EKS Auto Mode. Fargate utiliza un modelo independiente de grupos de seguridad para Pods y no obtiene compatibilidad con NetworkPolicy de VPC CNI por el mero hecho de tener un grupo de seguridad. Aplique la asociación a los nuevos Pods de carga de trabajo coincidentes a través de su propietario; los Pods existentes no se actualizan automáticamente.
 
-Para Calico más Pod SG, AWS documenta VPC CNI1.11.0+ con `POD_SECURITY_GROUP_ENFORCING_MODE=standard`; use también los requisitos de CNI actuales, en lugar de tratar ese mínimo como una versión recomendada. El SNAT externo en modo estándar puede usar el SG del Node en vez del SG del Pod. Verifique la ruta exacta. El antiguo Pod PostgreSQL básico carecía de credenciales/almacenamiento y no era un despliegue de base de datos funcional.
+Para Calico con grupos de seguridad para Pods, AWS documenta VPC CNI 1.11.0+ con `POD_SECURITY_GROUP_ENFORCING_MODE=standard`; use también los requisitos actuales de CNI, en vez de tratar ese mínimo como una versión recomendada. El SNAT externo del modo estándar puede usar el grupo de seguridad del nodo en vez del grupo de seguridad del Pod. Verifique la ruta exacta. El Pod de PostgreSQL básico anterior no tenía credenciales ni almacenamiento y no era un despliegue funcional de base de datos.
 
 ```yaml
 # Binding example only: use an existing reviewed security group.
@@ -1587,7 +1587,7 @@ spec:
       - sg-0123456789abcdef0
 ```
 
-El fragmento Terraform permite Ingress de DB desde un SG de aplicación revisado y no inicia conexiones Egress nuevas. El tráfico de retorno con estado se permite mediante seguimiento SG; agregue por separado solo el DNS, replicación, backup o Egress externo requeridos. Las variables son entradas de operador existentes; no se ejecutó ningún Terraform plan/apply.
+El fragmento de Terraform permite Ingress a la base de datos desde un único grupo de seguridad de aplicación revisado y no inicia nuevas conexiones de Egress. El seguimiento de los grupos de seguridad permite el tráfico de respuesta de estado; agregue aparte solo el Egress necesario para DNS, replicación, copias de seguridad o destinos externos. Las variables son entradas existentes del operador; no se ejecutó ningún plan/aplicación de Terraform.
 
 ```hcl
 # Fragment for an existing reviewed Terraform configuration.
@@ -1605,9 +1605,9 @@ resource "aws_security_group" "database_pods" {
 }
 ```
 
-### Combinación de controles de nivel VPC con NetworkPolicy
+### Combinación de controles a nivel de VPC con NetworkPolicy
 
-NetworkPolicy, los SG realmente aplicados y las NACL deben permitir todos la ruta pertinente. Esta NetworkPolicy solo de Ingress no restringe el Egress de database; agregue el perfil Egress seleccionado y el Egress del Pod de origen. Varios SG combinan sus permisos. Las NACL son **sin estado**, por lo que una regla de subnet que permite inbound5432 necesita una ruta de retorno coincidente hacia los puertos efímeros del cliente, además de reglas adecuadas en la subnet del cliente. Los fragmentos siguientes no sustituyen un conjunto completo de reglas ACL revisado.
+NetworkPolicy, los grupos de seguridad aplicados realmente y las NACL deben permitir la ruta pertinente. Esta NetworkPolicy solo de Ingress no restringe el Egress de la base de datos; agregue el perfil de Egress seleccionado y el Egress del Pod de origen. Los permisos de varios grupos de seguridad se combinan. Las NACL son **sin estado**, de modo que una regla de subred que permita entrada por el puerto 5432 necesita una ruta de retorno correspondiente a los puertos efímeros del cliente, además de reglas adecuadas en la subred del cliente. Los fragmentos siguientes no sustituyen un conjunto completo y revisado de reglas de ACL.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1657,14 +1657,14 @@ resource "aws_network_acl_rule" "database_return" {
 
 ### Uso de Cilium en EKS
 
-Elija **AWS VPC CNI chaining** o una migración CNI/IPAM completa diseñada por separado. En modo chaining AWS VPC CNI conserva la responsabilidad ENI/IPAM y Cilium adjunta su datapath. Conserve `aws-node`; eliminarlo no es un atajo de instalación. Revise el owner existente del add-on/Helm y evite motores de aplicación de políticas superpuestos. Los Pods existentes necesitan una recreación controlada antes de que se aplique la política chaining; planifique la interrupción y la reversión.
+Elija **encadenamiento de AWS VPC CNI** o una migración completa de CNI/IPAM diseñada por separado. En el modo de encadenamiento, AWS VPC CNI conserva la responsabilidad de ENI/IPAM y Cilium conecta su plano de datos. Conserve `aws-node`; eliminarlo no es un atajo de instalación. Revise quién administra el complemento/chart existente y evite motores de aplicación de políticas superpuestos. Es necesario recrear de forma controlada los Pods existentes antes de que se apliquen las políticas de encadenamiento; planifique la interrupción y la reversión.
 
-La guía oficial de chaining 1.20.1 ofrece estos valores, pero también documenta limitaciones L7/IPsec. Contiene salidas ilustrativas antiguas; no validan su entorno EKS actual. Prepare el repositorio/paquete de chart, verifique la procedencia y renderice primero:
+La guía oficial de encadenamiento 1.20.3 proporciona estos valores, pero también documenta limitaciones de L7/IPsec. Incluye salidas ilustrativas antiguas, que no validan el entorno EKS actual. Prepare el repositorio/paquete del chart, verifique su procedencia y renderícelo primero:
 
 ```bash
 # Render locally after verifying the official chart/package provenance.
 # Rendering alone does not change a cluster or validate a migration.
-helm template cilium cilium/cilium --version 1.20.1 \
+helm template cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system \
   --set cni.chainingMode=aws-cni \
   --set cni.exclusive=false \
@@ -1672,21 +1672,21 @@ helm template cilium cilium/cilium --version 1.20.1 \
   --set routingMode=native > cilium-reviewed.yaml
 ```
 
-[AWS VPC CNI chaining — Cilium 1.20.1](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
+[Encadenamiento de AWS VPC CNI (Cilium 1.20.3)](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
 
 ## Herramientas de visualización {#visualization-tools}
 
-### Editor de Cilium Network Policy
+### Editor de políticas de red de Cilium
 
-Un editor de políticas ayuda a crear políticas; **Hubble UI visualiza flujos de servicio observados**. Son herramientas distintas. Habilitar Hubble/UI cambia la configuración del clúster y corresponde al owner de la instalación. Con un servicio Hubble ya instalado y autenticado, inspeccione el servicio existente y use un port-forward local. No exponga la UI públicamente como atajo de depuración.
+Un editor de políticas ayuda a crear políticas; **Hubble UI visualiza los flujos de servicio observados**. Son herramientas distintas. Habilitar Hubble/UI cambia la configuración del clúster y corresponde al responsable de la instalación. Si ya hay un servicio Hubble autenticado e instalado, inspeccione el servicio existente y use un reenvío de puertos local. No exponga la interfaz de usuario públicamente como atajo de depuración.
 
 ```bash
 kubectl --context="$CONTEXT" -n kube-system port-forward --address=127.0.0.1 svc/hubble-ui 12000:80
 ```
 
-### Comprobación de veredictos de políticas Cilium
+### Comprobación de veredictos de políticas de Cilium
 
-Use una conexión Hubble autenticada. `DROPPED` incluye motivos distintos de las políticas; inspeccione el motivo de caída, la identidad del endpoint, la hora y la dirección. Una observación `FORWARDED` en un punto no garantiza la entrega de extremo a extremo.
+Use una conexión Hubble autenticada. `DROPPED` incluye motivos distintos de las políticas; inspeccione el motivo de la caída, la identidad del extremo, la hora y la dirección. Una observación `FORWARDED` en un punto no garantiza la entrega de extremo a extremo.
 
 
 ```bash
@@ -1701,21 +1701,21 @@ hubble observe --pod production/api-server
 hubble observe --output json | jq '.flow.verdict'
 ```
 
-### UI de Calico Enterprise
+### Interfaz de usuario de Calico Enterprise
 
-La UI de administración Enterprise requiere el producto con licencia y su configuración real de servicio/TLS/autenticación; no se instala automáticamente con Calico Open Source. Inspeccione el nombre/puerto del servicio instalado y la política de acceso antes de hacer forwarding. No suponga que `cnx-manager` existe en todas las instalaciones.
+La interfaz de administración de Enterprise requiere el producto con licencia y su configuración real de servicio/TLS/autenticación; Calico Open Source no la instala automáticamente. Inspeccione el nombre/puerto del servicio instalado y la política de acceso antes de reenviar puertos. No suponga que `cnx-manager` existe en todas las instalaciones.
 
-### Herramientas de visualización de Network Policy
+### Herramientas de visualización de políticas de red
 
-Use `kubectl get networkpolicy -n <namespace>` y `kubectl describe networkpolicy <name> -n <namespace>` para inspeccionar selectores/reglas de políticas Kubernetes, y las herramientas de flujo autenticadas del motor instalado para inspeccionar la aplicación. La disponibilidad de viewers/plugins de terceros y sus flags deben comprobarse frente a la versión actual de ese proyecto. Un gráfico de YAML por sí solo no puede demostrar la aplicación en dataplane.
+Use `kubectl get networkpolicy -n <namespace>` y `kubectl describe networkpolicy <name> -n <namespace>` para inspeccionar los selectores/reglas de las políticas de Kubernetes, y las herramientas autenticadas de flujo del motor instalado para inspeccionar su aplicación. La disponibilidad de visores/complementos de terceros y sus indicadores debe comprobarse en la versión actual del proyecto correspondiente. Un gráfico basado solo en YAML no puede demostrar la aplicación en el plano de datos.
 
 ### Pruebas de seguridad con Kube-hunter
 
-kube-hunter es un escáner de exposición/seguridad de clústeres, no un verificador Allow/Deny de NetworkPolicy. Sus escaneos pueden generar tráfico intrusivo; use un destino/ámbito explícitamente aprobados y una versión/imagen revisada. No despliegue un escáner sin versión fijada en un namespace activo desde un tutorial general de políticas. Esta revisión no ejecutó un escáner.
+kube-hunter es un escáner de exposición/seguridad de clústeres, no un verificador de permisos/denegaciones de NetworkPolicy. Sus análisis pueden generar tráfico intrusivo; use un objetivo/alcance aprobado explícitamente y una versión/imagen revisada. No despliegue un escáner sin fijar su versión en un espacio de nombres activo a partir de un tutorial general de políticas. Esta revisión no ejecutó ningún escáner.
 
-## Mejores prácticas
+## Prácticas recomendadas
 
-### 1. Aplicar política de denegación predeterminada
+### 1. Aplicar una política de denegación predeterminada
 
 ```yaml
 # Applies only to this production namespace
@@ -1731,7 +1731,7 @@ spec:
     - Egress
 ```
 
-### 2. Principio de mínimo privilegio
+### 2. Principio de privilegio mínimo
 
 Permita explícitamente solo el tráfico necesario:
 
@@ -1756,7 +1756,7 @@ spec:
           protocol: TCP
 ```
 
-### 3. Documentar políticas
+### 3. Documentar las políticas
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1785,7 +1785,7 @@ spec:
 
 ### 4. Auditorías periódicas de políticas
 
-Este inventario de solo lectura enumera por separado las líneas base de permisos vacíos en todo el namespace para Ingress y Egress. Se gestionan tanto `[]` vacío como arrays de reglas ausentes, mientras que una regla `{}` permite tráfico y no es una línea base de denegación. Los errores de API/autorización fallan en vez de mostrarse como cero políticas. Una línea base enumerada **no prueba aislamiento**: otras reglas Allow, políticas de extensión, Pods no cubiertos y el estado CNI aún requieren revisión.
+Este inventario de solo lectura enumera por separado las líneas base vacías de permisos aplicadas a todo un espacio de nombres para Ingress y Egress. Se admiten tanto `[]` como la ausencia de matrices de reglas, mientras que una regla `{}` permite el tráfico y no constituye una línea base de denegación. Los errores de API/autorización provocan un fallo en vez de parecer que no hay políticas. Una línea base enumerada **no demuestra el aislamiento**: es necesario revisar las demás reglas de permiso, las políticas de extensión, los Pods no cubiertos y el estado de CNI.
 
 ```bash
 #!/usr/bin/env bash
@@ -1829,32 +1829,38 @@ jq -n --slurpfile ns "$work/namespaces.json" --slurpfile np "$work/policies.json
 '
 ```
 
+## Conexión de NetworkPolicy con la inspección perimetral
+
+NetworkPolicy aplica las conexiones de Pods mediante un CNI compatible; no crea todas las rutas de WAF o de firewall central. No suponga que el tráfico en el mismo nodo, dentro de la VPC, por PrivateLink, por peering o IPv6 atraviesa automáticamente la inspección central de TGW.
+
+Conecte las aplicaciones públicas a la [protección de WAF/origen](./14-waf-edge-api-security.md) y el tráfico de salida/entre VPC a [Palo Alto/Fortinet](./15-ngfw-paloalto-fortinet.md) y [GWLB/GENEVE](./16-gwlb-geneve-inspection.md). Verifique las tuplas SNAT de Pod/nodo y de solicitud/respuesta, y pruebe los resultados de las políticas por separado del paso por los dispositivos. Consulte [Defensa en profundidad y respuesta a incidentes](./13-defense-in-depth-incident-response.md) para investigar webhooks y permisos de Secret.
+
 ## Resumen
 
-Las Kubernetes Network Policies son un mecanismo de seguridad fundamental para controlar la comunicación de Pods dentro de los clústeres:
+Las NetworkPolicy de Kubernetes son un mecanismo de seguridad fundamental para controlar la comunicación entre Pods en los clústeres:
 
-1. **NetworkPolicy básico**: con ámbito de namespace, admite podSelector/namespaceSelector/ipBlock
-2. **Extensiones de Cilium**: políticas L7, políticas basadas en DNS FQDN, políticas para todo el clúster
+1. **NetworkPolicy básica**: limitada al espacio de nombres, admite podSelector/namespaceSelector/ipBlock
+2. **Extensiones de Cilium**: políticas L7, políticas DNS basadas en FQDN, políticas para todo el clúster
 3. **Extensiones de Calico**: GlobalNetworkPolicy, NetworkSet, políticas basadas en Tier
-4. **Consideraciones de EKS**: activación VPC CNI NetworkPolicy, Security Groups para Pods, ClusterNetworkPolicy y control de Egress basado en DNS (FQDN)
+4. **Consideraciones para EKS**: activación de NetworkPolicy en VPC CNI, grupos de seguridad para Pods, ClusterNetworkPolicy y control de Egress basado en DNS (FQDN)
 
 ### Recomendaciones
 
-- Aplique una política de denegación predeterminada a todos los namespaces de producción
-- Permita solo el tráfico necesario siguiendo el principio de mínimo privilegio
-- Realice auditorías y pruebas de políticas periódicamente
+- Aplique una política de denegación predeterminada a todos los espacios de nombres de producción
+- Permita solo el tráfico necesario siguiendo el principio de privilegio mínimo
+- Realice auditorías y pruebas de políticas periódicas
 - Considere Cilium cuando se necesiten políticas L7
 
 ---
 
 ## Referencias
 
-- [Documentación oficial de Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [Documentación de Cilium Network Policy](https://docs.cilium.io/en/stable/security/policy/index.html)
-- [Documentación de Calico Network Policy](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
-- [Mejores prácticas de seguridad de EKS - Seguridad de red](https://docs.aws.amazon.com/eks/latest/best-practices/network-security.html)
-- [Políticas de seguridad de red mejoradas de Amazon EKS (2025-12-15)](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
+- [Documentación oficial de Network Policies de Kubernetes](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Documentación de políticas de red de Cilium](https://docs.cilium.io/en/stable/security/policy/index.html)
+- [Documentación de políticas de red de Calico](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
+- [Prácticas recomendadas de seguridad de EKS: seguridad de red](https://docs.aws.amazon.com/eks/latest/best-practices/network-security.html)
+- [Políticas mejoradas de seguridad de red de Amazon EKS (2025-12-15)](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
 
-- [Security groups de Pods de EKS](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
-- [Calico Tier](https://docs.tigera.io/calico/latest/reference/resources/tier)
-- [Calico NetworkSet](https://docs.tigera.io/calico/latest/reference/resources/networkset)
+- [Grupos de seguridad para Pods de EKS](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+- [Tier de Calico](https://docs.tigera.io/calico/latest/reference/resources/tier)
+- [NetworkSet de Calico](https://docs.tigera.io/calico/latest/reference/resources/networkset)

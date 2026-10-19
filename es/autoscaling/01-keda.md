@@ -1,13 +1,13 @@
-# KEDA (escalado automático basado en eventos de Kubernetes)
+# KEDA (Kubernetes Event-driven Autoscaling)
 
-> **Versión de ejemplo**: KEDA/chart de Helm 2.21.0; consulta la matriz de Kubernetes probada más abajo.
-> **Última actualización**: October 16, 2026
+> **Versión de ejemplo**: KEDA/Helm chart 2.21.0; consulta la matriz de Kubernetes probada más abajo.
+> **Última actualización**: 16 de octubre de 2026
 
 ## Tabla de contenidos
 - [Introducción](#introduction)
 - [Arquitectura](#architecture)
 - [Instalación y configuración](#installation-and-configuration)
-- [Escaladores](#scalers)
+- [Scalers](#scalers)
 - [Escalado con métricas personalizadas](#custom-metric-scaling)
 - [Escalado con métricas de Twitter](#twitter-metric-scaling)
 - [Escalado con Google Calendar](#google-calendar-scaling)
@@ -18,65 +18,65 @@
 - [Solución de problemas](#troubleshooting)
 - [Conclusión](#conclusion)
 
-## Introducción {#introduction}
+## Introducción
 
-KEDA (escalado automático basado en eventos de Kubernetes) es un proyecto de código abierto que permite escalar automáticamente aplicaciones de Kubernetes en función de eventos. KEDA amplía el Horizontal Pod Autoscaler (HPA) nativo de Kubernetes para permitir el escalado de cargas de trabajo según diversas fuentes de eventos y métricas, además del uso de CPU y memoria.
+KEDA (Kubernetes Event-driven Autoscaling) es un proyecto de código abierto que permite el escalado automático basado en eventos de las aplicaciones de Kubernetes. KEDA amplía el Horizontal Pod Autoscaler (HPA) nativo de Kubernetes para permitir el escalado de cargas de trabajo en función de diversas fuentes de eventos y métricas, además del uso de CPU y memoria.
 
-### Principales ventajas de KEDA
+### Ventajas principales de KEDA
 
 1. **Escalado basado en eventos**: escalado según diversas fuentes de eventos (colas de mensajes, bases de datos, flujos, etc.)
-2. **Escalado a cero**: los activadores de eventos compatibles pueden activar una carga de trabajo inactiva; configura el mínimo, el umbral de activación y el periodo de enfriamiento de esa carga de trabajo.
-3. **Compatibilidad con diversos escaladores**: más de 50 escaladores integrados y compatibilidad con escaladores personalizados
+2. **Escalado a cero**: los activadores de eventos compatibles pueden activar una carga de trabajo inactiva; configura el mínimo, el umbral de activación y el periodo de espera para esa carga de trabajo.
+3. **Compatibilidad con diversos Scalers**: más de 50 Scalers integrados y compatibilidad con Scalers personalizados
 4. **Nativo de Kubernetes**: integración con el HPA existente de Kubernetes
-5. **Independiente de la nube**: se ejecuta en distribuciones de Kubernetes compatibles que tengan las API, el acceso de red y la configuración de identidad necesarios.
+5. **Independiente de la nube**: se ejecuta en distribuciones compatibles de Kubernetes que dispongan de las API, el acceso de red y la configuración de identidad necesarios.
 6. **Modelo de implementación**: la instalación estándar incluye un operador, un servidor de API de métricas y webhooks de admisión.
 
 ### Comparación con los métodos de escalado existentes
 
-| Característica | KEDA | HPA de Kubernetes | Escalador automático del proveedor de nube |
+| Característica | KEDA | Kubernetes HPA | Autoscaler del proveedor de nube |
 |---------|------|----------------|---------------------------|
-| Fuentes de métricas | Escaladores de eventos integrados y escaladores externos | Métricas de recursos, personalizadas y externas mediante adaptadores adecuados | Depende del producto |
-| Escalado a cero | Activadores y configuración compatibles | Depende de la versión/funcionalidad; la compatibilidad con métricas de objetos/externas permite escalar a cero en Kubernetes 1.37 beta | Depende del producto |
-| Basado en eventos | Integraciones con fuentes de eventos y activación | Posible mediante adaptadores de métricas personalizados/externos | Depende del producto |
+| Fuentes de métricas | Scalers de eventos integrados y externos | Métricas de recursos, personalizadas y externas mediante adaptadores adecuados | Depende del producto |
+| Escalado a cero | Activadores y configuración compatibles | Depende de la versión y las funciones; la compatibilidad con métricas de objeto/externas permite escalar a cero en Kubernetes 1.37 beta | Depende del producto |
+| Basado en eventos | Integraciones con fuentes de eventos y activación | Posible mediante adaptadores de métricas personalizadas/externas | Depende del producto |
 | Independiente de la nube | ✅ | ✅ | ❌ |
-| Complejidad de implementación | Operador, servidor de métricas, webhooks y credenciales | Controlador integrado; puede necesitar adaptadores | Depende del producto |
-| Métricas personalizadas | Integración con escaladores o productor HTTP/gRPC | Requiere un adaptador de métricas adecuado | Depende del producto |
+| Complejidad de implementación | Operador, servidor de métricas, webhooks y credenciales | Controlador integrado; pueden hacer falta adaptadores | Depende del producto |
+| Métricas personalizadas | Integración con Scaler o productor HTTP/gRPC | Requiere un adaptador de métricas adecuado | Depende del producto |
 
-## Arquitectura {#architecture}
+## Arquitectura
 
 KEDA se basa en el patrón de operador de Kubernetes: supervisa fuentes de métricas externas y administra automáticamente el HPA de Kubernetes.
 
-![El operador de KEDA administra la activación de ScaledObject y el ciclo de vida del HPA, expone los resultados de los escaladores al servidor de API de métricas y crea directamente Jobs para ScaledJob. El HPA administra las réplicas distintas de cero de ScaledObject; los webhooks de admisión validan los recursos.](../.gitbook/assets/en-autoscaling-01-keda-0.png)
+![El operador de KEDA administra la activación de ScaledObject y el ciclo de vida del HPA, expone los resultados de los Scalers al servidor de API de métricas y crea directamente Jobs para ScaledJob. El HPA administra las réplicas distintas de cero de ScaledObject; los webhooks de admisión validan los recursos.](../.gitbook/assets/en-autoscaling-01-keda-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-01-keda-0.html)
 
 
 ### Componentes principales
 
-1. **Operador de KEDA**: reconcilia los ScaledObjects y sus HPA, gestiona la activación/desactivación en cero y crea Jobs para ScaledJobs.
-2. **Servidor de métricas de KEDA**: sirve métricas externas mediante la API agregada de Kubernetes y obtiene los resultados de los escaladores a través del servicio de métricas del operador.
+1. **Operador de KEDA**: reconcilia ScaledObjects y sus HPA, gestiona la activación y desactivación desde cero y crea Jobs para ScaledJobs.
+2. **Servidor de métricas de KEDA**: sirve métricas externas mediante la API agregada de Kubernetes y obtiene los resultados de los Scalers a través del servicio de métricas del operador.
 3. **ScaledObject**: define la configuración de escalado para Deployments, StatefulSets, etc.
 4. **ScaledJob**: define la configuración de escalado para Kubernetes Jobs
-5. **Activadores/escaladores**: obtienen métricas de fuentes de eventos y evalúan la activación; los webhooks de admisión validan las configuraciones de recursos compatibles.
+5. **Triggers/Scalers**: obtienen métricas de fuentes de eventos y evalúan la activación; los webhooks de admisión validan las configuraciones de recursos compatibles.
 
 ### Cómo funciona
 
-1. Un ScaledObject hace referencia a un destino de escalado compatible en su espacio de nombres. KEDA administra un HPA para ese destino; utiliza un único propietario del escalado por destino.
-2. El operador consulta los activadores para determinar la activación según `pollingInterval`, incluso cuando la carga de trabajo está en cero.
-3. Para las réplicas distintas de cero, el HPA solicita métricas externas mediante el servidor de API de métricas y el operador. La sincronización del HPA y la configuración de caché de métricas afectan la frecuencia de las consultas.
-4. El HPA ajusta las réplicas distintas de cero; KEDA gestiona la activación y el periodo de enfriamiento configurado para escalar a cero. `cooldownPeriod` no sustituye la estabilización de reducción de escala del HPA desde N réplicas hasta 1.
-5. Un ScaledJob sigue una ruta distinta: KEDA crea Jobs por lotes según los eventos y su estrategia de escalado; no crea un HPA para esos Jobs.
+1. Un ScaledObject hace referencia a un destino de escalado compatible en su espacio de nombres. KEDA administra un HPA para ese destino; usa un solo responsable del escalado por destino.
+2. El operador consulta los activadores para determinar si debe activar la carga de trabajo, según `pollingInterval`, incluso cuando está en cero.
+3. Para las réplicas distintas de cero, el HPA solicita métricas externas a través del servidor de API de métricas y del operador. La sincronización del HPA y la configuración de almacenamiento en caché de métricas afectan la frecuencia de las consultas.
+4. El HPA ajusta las réplicas distintas de cero; KEDA gestiona la activación y el periodo de espera configurado para escalar a cero. `cooldownPeriod` no sustituye la estabilización del escalado descendente del HPA desde N réplicas a 1.
+5. ScaledJob sigue una ruta distinta: KEDA crea Jobs por lotes según los eventos y su estrategia de escalado; no crea un HPA para esos Jobs.
 
-## Instalación y configuración {#installation-and-configuration}
+## Instalación y configuración
 
-Los ejemplos son alternativas, no un único conjunto de manifiestos. Prepara las cargas de trabajo, los Services, los Secrets y las imágenes a los que se hace referencia; sustituye los marcadores de cuenta, cola, URL e imagen. No asocies varios ScaledObjects/HPA al mismo destino. Una vez que el escalado automático administra las réplicas, coordina la propiedad de `spec.replicas` con GitOps/apply. Estas recetas no se han implementado ni medido en producción.
+Los ejemplos son alternativas, no un único conjunto de manifiestos. Prepara las cargas de trabajo, Services, Secrets e imágenes a las que se hace referencia; sustituye los marcadores de posición de cuentas, colas, URL e imágenes. No asocies varios ScaledObjects/HPA al mismo destino. Una vez que el escalado automático administra las réplicas, coordina la propiedad de `spec.replicas` en GitOps/applies. Estas recetas no se han implementado ni medido en producción.
 
-Kubernetes 1.37 introdujo el escalado a cero beta del HPA para métricas de objetos/externas, habilitado de forma predeterminada mediante `HPAScaleToZero`; las métricas que solo utilizan CPU/memoria no pueden activar desde cero. Esto no cambia la separación entre el operador y el HPA de KEDA 2.21 ni establece compatibilidad con Kubernetes 1.37.
+Kubernetes 1.37 introdujo el escalado a cero del HPA para métricas de objeto/externas en versión beta, habilitado de forma predeterminada mediante `HPAScaleToZero`; las métricas que solo usan CPU/memoria no pueden activar el escalado desde cero. Esto no cambia la separación entre operador y HPA de KEDA 2.21 ni demuestra la compatibilidad con Kubernetes 1.37.
 
 ### Requisitos previos
 
-- Elige una versión de Kubernetes compatible con tu proveedor y la versión de KEDA seleccionada. La documentación de implementación de KEDA 2.21 publica una **matriz probada de 1.34–1.36**. Esa matriz no establece compatibilidad con 1.37; valida esa combinación por separado.
-- Si vas a actualizar desde KEDA 2.20, consulta primero la [guía de migración 2.21](https://keda.sh/docs/2.21/migration/#upgrading-from-keda-220-to-221). Como solución para CVE-2026-77524, 2.21 aplica de forma predeterminada las audiencias de los tokens de las cuentas de servicio (`operator.serviceAccountTokens.mode: enforce-audience`) para la autenticación de Vault Kubernetes y `boundServiceAccountToken`. También elimina la configuración obsoleta del escalador de Temporal y cambia el valor predeterminado de `scaleOnInFlight` de Azure Pipelines. Los ejemplos de este capítulo no utilizan esos métodos de autenticación ni esos escaladores.
+- Elige una versión de Kubernetes compatible con tu proveedor y con la versión de KEDA seleccionada. La documentación de implementación de KEDA 2.21 publica una **matriz probada de 1.34–1.36**. Esa matriz no demuestra la compatibilidad con 1.37; valida esa combinación por separado.
+- Si vas a actualizar desde KEDA 2.20, revisa primero la [guía de migración 2.21](https://keda.sh/docs/2.21/migration/#upgrading-from-keda-220-to-221). Como corrección para CVE-2026-77524, 2.21 aplica de forma predeterminada la validación de las audiencias de los tokens de cuentas de servicio (`operator.serviceAccountTokens.mode: enforce-audience`) para la autenticación de Vault en Kubernetes y `boundServiceAccountToken`. También elimina la configuración obsoleta del Scaler de Temporal y cambia el valor predeterminado de `scaleOnInFlight` de Azure Pipelines. Los ejemplos de este capítulo no utilizan esos métodos de autenticación ni esos Scalers.
 - kubectl configurado
 - Helm (opcional)
 
@@ -104,7 +104,7 @@ kubectl wait --for=condition=Available deployment --all -n keda --timeout=180s
 kubectl get apiservice v1beta1.external.metrics.k8s.io
 ```
 
-Salida ilustrativa (los nombres y las cantidades dependen de la configuración del chart; no es el resultado de una ejecución registrada):
+Salida ilustrativa (los nombres y las cantidades dependen de la configuración del chart; no es una ejecución capturada):
 ```
 NAME                                      READY   STATUS    RESTARTS   AGE
 keda-operator-<hash>-<id>                  1/1     Running   0          1m
@@ -114,9 +114,9 @@ keda-admission-webhooks-<hash>-<id>        1/1     Running   0          1m
 
 ### Configuración básica
 
-Los valores de IRSA que se muestran más adelante deben combinarse con los mismos valores fijados de Helm antes de aplicar una actualización. Al cambiar la identidad, verifica la anotación del ServiceAccount y reinicia los Pods del operador mediante el proceso de implementación habitual.
+Los valores de IRSA que se muestran más adelante deben combinarse con los mismos valores de Helm fijados a una versión antes de aplicar una actualización. Verifica la anotación resultante de ServiceAccount y reinicia los Pods del operador mediante el proceso normal de despliegue cuando cambies la identidad.
 
-Los siguientes valores corresponden al chart de Helm 2.21.0. Dos réplicas del operador proporcionan una instancia en espera para la elección de líder, no dos reconciliadores activos. La redundancia del servidor de métricas también depende del enrutamiento de agregación de API y no implica alta disponibilidad completa de extremo a extremo. Los valores de recursos son un punto de partida, no un dimensionamiento medido.
+Los siguientes valores corresponden a Helm chart 2.21.0. Dos réplicas del operador proporcionan una instancia en espera para la elección de líder, no dos reconciliadores activos. La redundancia del servidor de métricas también depende del enrutamiento de agregación de API y no implica alta disponibilidad integral de extremo a extremo. Los valores de recursos son un punto de partida, no un dimensionamiento medido.
 
 #### Configuración personalizada mediante un archivo de valores de Helm
 
@@ -158,13 +158,13 @@ logging:
 helm upgrade --install keda kedacore/keda --version 2.21.0 --namespace keda --create-namespace -f values.yaml
 ```
 
-## Escaladores {#scalers}
+## Scalers
 
-KEDA proporciona escaladores para diversas fuentes de eventos. Cada escalador recopila métricas de una fuente de eventos específica y escala las cargas de trabajo en función de ellas.
+KEDA ofrece Scalers para diversas fuentes de eventos. Cada Scaler recopila métricas de una fuente de eventos específica y escala las cargas de trabajo en función de ellas.
 
-### Escaladores principales
+### Scalers principales
 
-KEDA admite más de 50 escaladores. Entre los principales se incluyen:
+KEDA admite más de 50 Scalers; entre los principales se incluyen:
 
 1. **Colas de mensajes**:
    - Apache Kafka
@@ -193,11 +193,11 @@ KEDA admite más de 50 escaladores. Entre los principales se incluyen:
    - Prometheus
    - InfluxDB
    - Cron
-   - CPU/memoria
+   - CPU/Memory
 
 ### Ejemplo básico de ScaledObject
 
-Crea `rabbitmq-credentials` en el espacio de nombres de destino, con una clave `host` que contenga un URI de conexión AMQP/AMQPS completo y autorizado. El Deployment `rabbitmq-consumer` al que se hace referencia ya debe estar configurado para consumir de esa cola. En redes no aisladas, prefiere TLS con una cadena de confianza verificada; el ejemplo no implementa un broker ni genera credenciales.
+Crea `rabbitmq-credentials` en el espacio de nombres de destino con la clave `host`, que debe contener un URI de conexión AMQP/AMQPS completo y autorizado. El Deployment `rabbitmq-consumer` al que se hace referencia debe estar configurado para consumir de esa cola. En redes que no estén aisladas, prefiere TLS con la confianza verificada; el ejemplo no implementa un broker ni inventa credenciales.
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -238,7 +238,7 @@ spec:
 
 ### Ejemplo básico de ScaledJob
 
-Reutiliza `rabbitmq-auth` y `rabbitmq-credentials` de arriba. Proporciona una imagen de worker real cuyo proceso consuma una cantidad limitada de trabajo, la confirme y termine; de lo contrario, los Jobs nunca finalizarán. Los reintentos pueden repetir el procesamiento, así que utiliza idempotencia en la aplicación y confirmaciones/tiempos de visibilidad adecuados. `jobTargetRef` es un JobSpec, no otro Job o PodTemplate anidado.
+Reutiliza `rabbitmq-auth` y `rabbitmq-credentials` anteriores. Proporciona una imagen real de worker cuyo proceso consuma una cantidad acotada de trabajo, lo confirme y termine; de lo contrario, los Jobs no terminarán nunca. Los reintentos pueden repetir el procesamiento, así que usa idempotencia en la aplicación y confirmaciones/tiempos de espera de visibilidad adecuados. `jobTargetRef` es un JobSpec, no otro Job anidado ni un PodTemplate.
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -276,15 +276,15 @@ spec:
     authenticationRef:
       name: rabbitmq-auth
 ```
-## Escalado con métricas personalizadas {#custom-metric-scaling}
+## Escalado con métricas personalizadas
 
-KEDA permite escalar según métricas personalizadas, además de ofrecer diversos escaladores integrados. Esto permite implementar una lógica de escalado única, adaptada a los requisitos de tu negocio.
+Además de diversos Scalers integrados, KEDA permite escalar con flexibilidad en función de métricas personalizadas. Esto permite implementar una lógica de escalado única, adaptada a los requisitos de tu negocio.
 
 ### Uso de la API de métricas externas
 
-El ejemplo del contador utiliza `rate(...[2m])`, por lo que su objetivo es eventos/segundo por réplica, no un total acumulado de por vida. Las consultas de Prometheus deben producir un único resultado numérico. `ignoreNullValues: false` presenta las series faltantes como un error; decide deliberadamente si un resultado vacío significa cero o una interrupción de telemetría.
+El ejemplo del contador usa `rate(...[2m])`, así que su objetivo son eventos por segundo por réplica, no un total acumulado. Las consultas de Prometheus deben producir un único resultado numérico. `ignoreNullValues: false` presenta las series ausentes como un error; decide deliberadamente si un resultado vacío significa cero o una interrupción de la telemetría.
 
-Puedes implementar el escalado basado en métricas personalizadas usando fuentes de métricas externas como Prometheus:
+Puedes implementar el escalado basado en métricas personalizadas con fuentes de métricas externas como Prometheus:
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -308,11 +308,11 @@ spec:
       ignoreNullValues: 'false'
 ```
 
-### Uso del escalador HTTP
+### Uso de HTTP Scaler
 
-Este es el escalador `metrics-api` para datos numéricos de un endpoint, no el complemento independiente KEDA HTTP, que intercepta y almacena solicitudes en búfer para la activación. El endpoint debe seguir disponible independientemente de la carga de trabajo que se esté escalando, especialmente cuando esta está en cero.
+Este es el Scaler `metrics-api` para datos numéricos de un endpoint, no el complemento independiente de KEDA para HTTP, que intercepta y almacena en búfer solicitudes para activar la carga de trabajo. El endpoint debe permanecer disponible independientemente de la carga de trabajo que se escale, especialmente cuando esta está en cero.
 
-Puedes obtener métricas de un endpoint HTTP para el escalado:
+Puedes obtener métricas de un endpoint HTTP para realizar el escalado:
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -335,13 +335,13 @@ spec:
       valueLocation: value
 ```
 
-### Desarrollo de escaladores personalizados
+### Desarrollo de Scalers personalizados
 
-El ejemplo de Go que aparece a continuación es un **productor HTTP de métricas JSON para el escalador integrado `metrics-api`**, no una implementación de Kubernetes external.metrics.k8s.io ni del protocolo de escalador externo de KEDA. En cambio, un servicio KEDA `external`/`external-push` implementa los métodos gRPC documentados `IsActive`, `GetMetricSpec`, `GetMetrics` y, para la activación push, `StreamIsActive`.
+El ejemplo en Go a continuación es un **productor HTTP de métricas JSON para el Scaler integrado `metrics-api`**, no una implementación de Kubernetes external.metrics.k8s.io ni del protocolo de external-scaler de KEDA. En cambio, un servicio KEDA `external`/`external-push` implementa los métodos gRPC documentados `IsActive`, `GetMetricSpec`, `GetMetrics` y, para la activación push, `StreamIsActive`.
 
 1. Implementación del servidor de métricas:
 
-El servidor Go completo lee `METRICS_FILE`, una instantánea JSON que se sustituye atómicamente y que contiene un valor numérico `value` y `observed_at` en formato RFC3339. Un productor independiente de métricas de negocio debe escribirla. Si los datos faltan, no son válidos, son negativos o tienen más de dos minutos, se devuelve HTTP503. Compílalo e impleméntalo con un Service correspondiente antes de usar el siguiente ScaledObject; no es un servidor de API agregado de Kubernetes.
+El servidor Go completo lee `METRICS_FILE`, una instantánea JSON que se sustituye de forma atómica y contiene un `value` numérico y `observed_at` en formato RFC3339. Un productor independiente de métricas de negocio debe escribirla. Si faltan datos, son no válidos o negativos, o tienen más de dos minutos, devuelve HTTP503. Créalo e impleméntalo con un Service correspondiente antes de usar el siguiente ScaledObject; no es un servidor de API agregada de Kubernetes.
 
 ```go
 package main
@@ -435,20 +435,20 @@ spec:
       valueLocation: value
 ```
 
-## Escalado con métricas de Twitter {#twitter-metric-scaling}
+## Escalado con métricas de Twitter
 
-Este ejemplo utiliza el endpoint de recuentos recientes de la API v2 de X (antes Twitter). Cuenta coincidencias en una ventana de cinco minutos que termina 30 segundos antes de la recopilación; no es un recuento acumulado ni una tasa instantánea de publicaciones. Deben verificarse el acceso a la cuenta, la semántica de la consulta, la facturación y los límites de frecuencia para el uso previsto.
+Este ejemplo utiliza el endpoint de recuentos recientes de la API v2 de X (antes Twitter). Cuenta las coincidencias en una ventana de cinco minutos que termina 30 segundos antes de la recopilación; no es un recuento acumulado ni una tasa instantánea de publicaciones. Deben verificarse el acceso de la cuenta, la semántica de las consultas, la facturación y los límites de frecuencia para el uso previsto.
 
 ### Requisitos previos
 
-- Una aplicación de desarrollador de X con acceso a recuentos recientes de Posts y un token de portador de la aplicación; este ejemplo no implica que haya acceso a la API ni que su uso sea gratuito.
+- Una aplicación para desarrolladores de X con acceso a los recuentos recientes de Posts y un token de portador de la aplicación; este ejemplo no implica que exista acceso a la API ni que sea gratuito.
 - Un servicio para recopilar y exponer métricas
 
 ### Pasos de implementación
 
 1. Implementa el servicio de recopilación de métricas de Twitter:
 
-Guarda este ejemplo independiente como `app.py` en la imagen del recopilador, junto con las dependencias Flask, requests y Gunicorn. La implementación utiliza un worker de Gunicorn y `app:create_app()` para que el recopilador en segundo plano se inicie correctamente con WSGI. Varios workers/réplicas multiplican las consultas a la API. Si se produce un error de recuento parcial, límite de frecuencia o autenticación, se devuelve HTTP503; el código no utiliza silenciosamente una página de búsqueda truncada como si fuera una tasa. Ajusta la frecuencia de consulta a las condiciones de acceso de tu API.
+Guarda este ejemplo independiente como `app.py` en la imagen de tu recopilador, junto con las dependencias Flask, requests y Gunicorn. El Deployment usa un solo worker de Gunicorn y `app:create_app()` para que el recopilador en segundo plano se inicie correctamente bajo WSGI. Varios workers/réplicas multiplican las consultas a la API. Si se produce un error parcial de recuento, de límite de frecuencia o de autenticación, se devuelve HTTP503; el código no usa silenciosamente una página de búsqueda truncada como si fuera una tasa. Ajusta la frecuencia de consulta a los permisos de tu API.
 
 ```python
 import datetime as dt
@@ -529,13 +529,13 @@ if __name__ == "__main__":
 
 2. Implementa el servicio de recopilación de métricas:
 
-Compila y fija la versión de la imagen del recopilador antes de implementarla. Crea el archivo de token existente como entrada de Secret sin incluir su valor en un argumento de shell:
+Crea y fija la versión de la imagen del recopilador antes de implementarlo. Crea el archivo existente del token como entrada de Secret sin poner su valor en un argumento de shell:
 
 ```bash
 kubectl create secret generic twitter-api-secrets --namespace default --from-file=bearer-token=./x-bearer-token
 ```
 
-Este comando crea un Kubernetes Secret cuando se ejecuta; no se ejecutó durante esta revisión. Mantén el archivo de origen fuera del control de versiones.
+Este comando crea un Secret de Kubernetes cuando se ejecuta; no se ejecutó durante esta auditoría. Mantén el archivo de origen fuera del control de versiones.
 
 ```yaml
 apiVersion: apps/v1
@@ -626,22 +626,22 @@ spec:
       valueLocation: "tweet_count"
 ```
 
-Con el valor predeterminado AverageValue, la proporción entre recuento y objetivo propone réplicas dentro de los límites configurados; no modela directamente el rendimiento del procesamiento. El recopilador permanece en una réplica independientemente, devuelve 503 cuando no está disponible y no tiene una sonda de actividad que lo reinicie únicamente por una interrupción del servicio ascendente. El uso en producción todavía requiere credenciales y límites probados, gestión del ciclo de vida y observabilidad.
+Con el valor predeterminado AverageValue, la proporción entre recuento y objetivo propone réplicas dentro de los límites configurados; no representa directamente el rendimiento de procesamiento. El recopilador permanece en una réplica de forma independiente, devuelve 503 cuando no está disponible y no tiene una sonda de actividad que lo reinicie solo por una interrupción del servicio ascendente. El uso en producción sigue requiriendo credenciales probadas, límites, gestión del ciclo de vida y observabilidad.
 
-## Escalado con Google Calendar {#google-calendar-scaling}
+## Escalado con Google Calendar
 
-Este ejemplo cuenta las instancias de eventos de Google Calendar que **se solapan con la próxima hora**, incluidos los eventos que ya están en curso. `timeMin` filtra las horas de finalización de los eventos y `timeMax` filtra las horas de inicio. Se cuentan todas las páginas; si la recopilación es parcial, falla o queda obsoleta, la métrica se declara no disponible en lugar de devolver un cero falso.
+Este ejemplo cuenta las instancias de eventos de Google Calendar **que se solapan con la siguiente hora**, incluidos los eventos que ya están en curso. `timeMin` filtra las horas de finalización de los eventos y `timeMax` filtra las horas de inicio. Se cuentan todas las páginas; si la recopilación es parcial, falla o los datos están obsoletos, la métrica se declara no disponible en lugar de devolver un cero falso.
 
 ### Requisitos previos
 
-- Habilita la API de Calendar y utiliza una cuenta de servicio que tenga acceso de lectura a un calendario compartido específico. Indica el ID real del calendario; `primary` no sustituye el uso compartido de un calendario de usuario con esa cuenta de servicio.
+- Habilita la API de Calendar y usa una cuenta de servicio con acceso de lectura a un calendario compartido específico. Establece el ID real del calendario; `primary` no sustituye el hecho de compartir un calendario de usuario con esa cuenta de servicio.
 - Un servicio para recopilar y exponer métricas
 
 ### Pasos de implementación
 
 1. Implementa el servicio de recopilación de métricas de Google Calendar:
 
-Guarda este ejemplo independiente como `app.py` en su propia imagen, junto con Flask, requests, google-auth y Gunicorn. Un único subproceso de recopilación recorre todas las páginas y notifica un error si se repiten los tokens o se alcanza el límite de seguridad de páginas. El valor escalar cuenta instancias de eventos solapadas, no asistentes ni réplicas necesarias. Debe concederse acceso al calendario a la cuenta de servicio; un ámbito de OAuth por sí solo no otorga ese acceso.
+Guarda este ejemplo independiente como `app.py` en su propia imagen, junto con Flask, requests, google-auth y Gunicorn. Un único hilo recopilador sigue todas las páginas e informa de un fallo si se repiten los tokens o se alcanza el límite de seguridad de páginas. El valor escalar cuenta instancias de eventos que se solapan, no asistentes ni réplicas necesarias. Debe concederse acceso al calendario a la cuenta de servicio; el alcance de OAuth por sí solo no concede ese acceso.
 
 ```python
 import datetime as dt
@@ -732,7 +732,7 @@ if __name__ == "__main__":
 
 2. Implementa el servicio de recopilación de métricas:
 
-Utiliza el ID real del calendario compartido y un archivo JSON existente de la cuenta de servicio. El siguiente comando crea el Secret cuando se ejecuta; no se ejecutó durante la revisión.
+Usa el ID real del calendario compartido y un archivo JSON existente de la cuenta de servicio. El siguiente comando crea el Secret cuando se ejecuta; no se ejecutó durante la revisión.
 
 ```bash
 kubectl create secret generic google-calendar-secrets --namespace default --from-file=service-account.json=./service-account.json
@@ -832,19 +832,19 @@ spec:
       valueLocation: "upcoming_events"
 ```
 
-Con el valor predeterminado AverageValue, la proporción entre recuento y objetivo propone réplicas dentro de los límites configurados; no modela directamente el rendimiento del procesamiento. El recopilador permanece en una réplica independientemente, devuelve 503 cuando no está disponible y no tiene una sonda de actividad que lo reinicie únicamente por una interrupción del servicio ascendente. El uso en producción todavía requiere credenciales y límites probados, gestión del ciclo de vida y observabilidad.
-## Escalado con métricas de Istio {#istio-metric-scaling}
+Con el valor predeterminado AverageValue, la proporción entre recuento y objetivo propone réplicas dentro de los límites configurados; no representa directamente el rendimiento de procesamiento. El recopilador permanece en una réplica de forma independiente, devuelve 503 cuando no está disponible y no tiene una sonda de actividad que lo reinicie solo por una interrupción del servicio ascendente. El uso en producción sigue requiriendo credenciales probadas, límites, gestión del ciclo de vida y observabilidad.
+## Escalado con métricas de Istio
 
-Este ejemplo muestra cómo escalar aplicaciones en función de métricas recopiladas de la malla de servicios de Istio. Veremos cómo escalar según las solicitudes por segundo (RPS).
+Este ejemplo muestra cómo escalar aplicaciones según las métricas recopiladas de la malla de servicios de Istio. Veremos cómo escalar según las solicitudes por segundo (RPS).
 
 ### Requisitos previos
 
-- Malla de servicios Istio instalada
+- Malla de servicios de Istio instalada
 - Prometheus instalado e integrado con Istio
 
 ### Pasos de implementación
 
-1. Verifica que ya haya sidecars de Istio instalados y una política de inyección. El ejemplo utiliza enrutamiento dentro de la malla; no requiere crear un recurso ficticio de Gateway de entrada:
+1. Verifica una instalación existente de Istio sidecar y la política de inyección. El ejemplo usa enrutamiento dentro de la malla; no requiere un recurso inventado de Gateway de entrada:
 
 ```bash
 istioctl proxy-status
@@ -852,7 +852,7 @@ kubectl get namespace default --show-labels
 kubectl get pods -n default
 ```
 
-2. Implementa la aplicación de ejemplo:
+2. Implementa una aplicación de ejemplo:
 
 ```yaml
 apiVersion: apps/v1
@@ -932,11 +932,11 @@ spec:
       ignoreNullValues: 'false'
 ```
 
-Con el tipo de métrica predeterminado `AverageValue`, una tasa total de 100 solicitudes por segundo y un objetivo de 10 solicitudes por segundo por réplica sugieren unas 10 réplicas, antes de considerar la tolerancia, la estabilización y los límites del HPA. La consulta selecciona los informes de destino para evitar contar la misma solicitud desde los proxies de origen y destino. Prometheus debe recopilar realmente ese tráfico.
+Con el tipo de métrica predeterminado `AverageValue`, una tasa total de 100 solicitudes por segundo y un objetivo de 10 solicitudes por segundo por réplica sugieren unas 10 réplicas antes de tener en cuenta la tolerancia, la estabilización y los límites del HPA. La consulta selecciona los informes de destino para evitar contar la misma solicitud tanto desde los proxies de origen como desde los de destino. Prometheus debe recopilar realmente esas solicitudes.
 
 ### Configuración avanzada
 
-El siguiente ejemplo requiere una etiqueta de telemetría `request_path` **personalizada y acotada**; no es una dimensión predeterminada de las métricas de Istio. Configura y verifica primero esa etiqueta (evita una cardinalidad arbitraria de URL) o utiliza la consulta anterior sin ella. Es un ScaledObject alternativo para el mismo destino, no un propietario adicional del escalado.
+El siguiente ejemplo requiere una etiqueta de telemetría `request_path` **personalizada y acotada**; no es una dimensión predeterminada de las métricas de Istio. Configura y verifica primero esa etiqueta (evita una cardinalidad arbitraria de URL) o usa la consulta anterior sin ella. Este es un ScaledObject alternativo para el mismo destino, no un responsable de escalado adicional.
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -962,7 +962,7 @@ spec:
       ignoreNullValues: 'false'
 ```
 
-La proporción de errores y la latencia suelen ser mejores señales de alerta que entradas de escalado. La siguiente ilustración opcional utiliza `metricType: Value` para una proporción de todo el servicio, protege contra un denominador cero y limita la velocidad de aumento de escala. Supone que más réplicas realmente aliviarán la sobrecarga diagnosticada; de lo contrario, los errores posteriores o el ruido de muestras pequeñas podrían provocar un escalado perjudicial. No se ha medido su eficacia en producción.
+La proporción de errores y la latencia suelen ser mejores señales de alerta que entradas para el escalado. La siguiente ilustración opcional usa `metricType: Value` para una proporción de todo el servicio, evita una división por cero y limita la velocidad del escalado ascendente. Se supone que más réplicas alivian realmente la sobrecarga diagnosticada; de lo contrario, los errores de servicios posteriores o el ruido de muestras escasas pueden causar un escalado perjudicial. No se ha medido su eficacia en producción.
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -1001,11 +1001,11 @@ spec:
           stabilizationWindowSeconds: 300
 ```
 
-## Escalado basado en Cron {#cron-based-scaling}
+## Escalado basado en Cron
 
-KEDA admite el escalado basado en el tiempo mediante expresiones Cron. Esto permite preescalar aplicaciones según patrones de tráfico o calendarios previsibles.
+KEDA admite el escalado basado en horarios mediante expresiones Cron. Esto permite preescalar aplicaciones según patrones de tráfico o calendarios previsibles.
 
-### Escalador Cron básico
+### Cron Scaler básico
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -1031,11 +1031,11 @@ spec:
       desiredReplicas: "5"
 ```
 
-Durante los minutos 30–45 de cada hora, el activador Cron solicita un mínimo de 5 réplicas. Fuera de ese intervalo, queda inactivo; el escalado a cero espera a la consulta y al periodo de enfriamiento configurado (30 segundos en este caso), además de la programación del controlador. No se garantiza que la transición ocurra exactamente en el minuto 45.
+Durante los minutos 30 a 45 de cada hora, el activador Cron solicita un mínimo de 5 réplicas. Fuera de ese intervalo, queda inactivo; el escalado a cero espera al sondeo y al periodo de espera configurado (30 segundos en este ejemplo), además de la programación del controlador. No se garantiza que la transición se produzca exactamente en el minuto 45.
 
-### Horario laboral y horas no laborables
+### Horario laboral y fuera del horario laboral
 
-Utiliza `minReplicaCount: 2` como base fuera del horario laboral y una única ventana Cron entre semana para establecer 5 réplicas. Así se evitan ventanas nocturnas/de fin de semana solapadas. La estabilización del HPA puede retrasar la reducción después del horario laboral.
+Usa `minReplicaCount: 2` como nivel base fuera del horario laboral y una sola ventana Cron entre semana para 5 réplicas. Así se evitan ventanas nocturnas y de fin de semana superpuestas. La estabilización del HPA puede retrasar la reducción una vez finalizado el horario laboral.
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -1061,9 +1061,9 @@ spec:
       desiredReplicas: '5'
 ```
 
-### Combinación de Cron con otros escaladores
+### Combinación de Cron con otros Scalers
 
-Puedes combinar escaladores Cron con otros escaladores para establecer el comportamiento base de escalado y, además, escalar en función de la carga real:
+Puedes combinar Scalers Cron con otros Scalers para establecer el comportamiento base del escalado y, además, escalar según la carga real:
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -1095,9 +1095,9 @@ spec:
       ignoreNullValues: 'false'
 ```
 
-## Integración con Amazon EKS {#integration-with-amazon-eks}
+## Integración con Amazon EKS
 
-KEDA puede escalar cargas de trabajo de EKS mediante métricas de AWS si se configuran la compatibilidad con Kubernetes, la identidad del operador, los permisos y la conectividad. KEDA no añade capacidad de cómputo por sí mismo; combina el escalado de cargas de trabajo con un diseño adecuado de capacidad de nodos/Fargate.
+KEDA puede escalar cargas de trabajo de EKS mediante métricas de AWS cuando se configuran la compatibilidad con Kubernetes, la identidad del operador, los permisos y la conectividad. KEDA no agrega capacidad de cómputo por sí solo; acompaña el escalado de cargas de trabajo con un diseño adecuado de capacidad de nodos/Fargate.
 
 ### Instalación de KEDA en EKS
 
@@ -1108,7 +1108,7 @@ kubectl get deployment -n keda
 
 ### Escalado basado en servicios de AWS
 
-#### Escalado basado en colas SQS
+#### Escalado basado en una cola SQS
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -1189,9 +1189,9 @@ spec:
       name: aws-credentials
 ```
 
-### Integración con IRSA (IAM Roles para Service Accounts)
+### Integración de IRSA (IAM Roles for Service Accounts)
 
-Este ejemplo supone que ya existe un rol de IRSA para `system:serviceaccount:keda:keda-operator`, limitado al proveedor OIDC de este clúster con `aud: sts.amazonaws.com`. Concede `sqs:GetQueueAttributes` en la cola seleccionada y la acción necesaria para leer métricas de CloudWatch (como `cloudwatch:GetMetricData`); las acciones de CloudWatch que no admiten recursos específicos requieren un recurso comodín y pueden limitarse por la región solicitada. Los permisos del consumidor son independientes. Los comandos siguientes inspeccionan la configuración; el aprovisionamiento del rol debe formar parte de la configuración de infraestructura revisada.
+Este ejemplo supone que ya existe un rol de IRSA para `system:serviceaccount:keda:keda-operator`, vinculado al proveedor OIDC de este clúster con `aud: sts.amazonaws.com`. Concede `sqs:GetQueueAttributes` en la cola seleccionada y la acción necesaria para leer las métricas de CloudWatch (como `cloudwatch:GetMetricData`); las acciones de CloudWatch que no admiten recursos específicos requieren un recurso comodín y pueden limitarse según la región solicitada. Los permisos del consumidor son independientes. Los comandos siguientes inspeccionan la configuración; el aprovisionamiento del rol corresponde a la configuración de infraestructura revisada.
 
 ```bash
 : "${KEDA_IAM_ROLE_NAME:?Set the existing IRSA role name}"
@@ -1209,14 +1209,14 @@ serviceAccount:
       eks.amazonaws.com/sts-regional-endpoints: 'true'
 ```
 
-## Prácticas recomendadas {#best-practices}
+## Prácticas recomendadas
 
 ### Optimización del rendimiento
 
-1. **Establece intervalos de consulta adecuados**: ajusta los intervalos de consulta a las características de la carga de trabajo.
-2. **Configura por separado el periodo de enfriamiento y el comportamiento del HPA**: el periodo de enfriamiento rige el escalado a cero; la estabilización/políticas del HPA rigen los cambios entre cantidades de réplicas distintas de cero.
-3. **Establece solicitudes y límites de recursos**: asigna los recursos adecuados a los componentes de KEDA.
-4. **Escribe consultas eficientes**: optimiza las consultas de métricas.
+1. **Establece intervalos de sondeo adecuados**: ajusta los intervalos de sondeo a las características de tu carga de trabajo
+2. **Configura por separado el periodo de espera y el comportamiento del HPA**: el periodo de espera rige el escalado a cero; la estabilización y las políticas del HPA rigen los cambios entre cantidades de réplicas distintas de cero.
+3. **Establece solicitudes y límites de recursos**: asigna recursos adecuados a los componentes de KEDA
+4. **Escribe consultas eficientes**: optimiza las consultas de métricas
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -1240,10 +1240,10 @@ spec:
 
 ### Mejora de la fiabilidad
 
-1. **Comprende los activadores múltiples**: normalmente, el HPA utiliza la mayor recomendación de réplicas; los activadores no suman capacidad y los errores pueden impedir la reducción de escala.
-2. **Establece cantidades mínimas y máximas adecuadas de réplicas**: define rangos que se ajusten a los requisitos de la carga de trabajo.
-3. **Estrategia de gestión de fallos**: en KEDA 2.21, fallback admite activadores Value y AverageValue, salvo CPU/memoria, y se aplica a ScaledObjects, no a ScaledJobs. Prueba el comportamiento ante interrupciones y fallos de autenticación.
-4. **Configura la supervisión y las alertas**: supervisa el estado operativo de KEDA.
+1. **Comprende el funcionamiento de varios activadores**: normalmente, el HPA toma la recomendación de réplicas más alta; los activadores no suman capacidad y los errores pueden impedir el escalado descendente.
+2. **Establece cantidades mínimas y máximas de réplicas adecuadas**: configura intervalos que correspondan a los requisitos de la carga de trabajo
+3. **Estrategia de gestión de fallos**: en KEDA 2.21, el fallback admite activadores Value y AverageValue, excepto CPU/memoria, y se aplica a ScaledObjects, no a ScaledJobs. Prueba el comportamiento ante interrupciones y fallos de autenticación.
+4. **Configura la supervisión y las alertas**: supervisa el estado operativo de KEDA
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -1270,12 +1270,12 @@ spec:
 
 ### Refuerzo de la seguridad
 
-La NetworkPolicy siguiente restringe el tráfico entrante al recopilador de Twitter para que solo provenga del operador de KEDA por TCP8080; no es una política completa del plano de control de KEDA. Su aplicación requiere compatibilidad con NetworkPolicy. Antes de restringir KEDA, ten en cuenta el acceso del servidor de API a la API de métricas y al webhook de admisión, el tráfico entre el operador y el servidor de métricas, DNS, la API de Kubernetes y cada endpoint de los escaladores. El plano de control de EKS no es simplemente un Pod en `kube-system`.
+La NetworkPolicy siguiente restringe el tráfico de entrada al recopilador de Twitter para permitir solo al operador de KEDA por TCP8080; no es una política completa para el plano de control de KEDA. Su aplicación requiere compatibilidad con NetworkPolicy. Antes de restringir KEDA, ten en cuenta el acceso del servidor de API a la API de métricas y al webhook de admisión, el tráfico entre el operador y el servidor de métricas, DNS, la API de Kubernetes y cada endpoint de Scaler. Un plano de control de EKS no es simplemente un Pod en `kube-system`.
 
-1. **Aplica el principio de mínimo privilegio**: concede solo los permisos necesarios.
-2. **Gestión de Secrets**: administra de forma segura la información sensible.
-3. **Aplica políticas de red**: restringe el acceso a los componentes de KEDA.
-4. **Configura RBAC**: establece un control de acceso basado en roles adecuado.
+1. **Aplica el principio de privilegio mínimo**: concede solo los permisos necesarios
+2. **Gestión de Secrets**: gestiona la información confidencial de forma segura
+3. **Aplica políticas de red**: restringe el acceso a los componentes de KEDA
+4. **Configura RBAC**: establece un control de acceso basado en roles adecuado
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -1313,18 +1313,18 @@ spec:
       port: 8080
 ```
 
-## Solución de problemas {#troubleshooting}
+## Solución de problemas
 
 ### Problemas comunes
 
 #### 1. El escalado no funciona
 
-**Síntoma**: los Pods no escalan aunque las métricas superen el umbral.
+**Síntoma**: los Pods no escalan aunque las métricas superen el umbral
 
 **Solución**:
-- Comprueba los registros de KEDA.
-- Verifica la conectividad con la fuente de métricas.
-- Verifica la configuración de autenticación.
+- Revisa los registros de KEDA
+- Verifica la conectividad con la fuente de métricas
+- Verifica la configuración de autenticación
 
 ```bash
 # Check KEDA operator logs
@@ -1337,14 +1337,14 @@ kubectl logs -n keda -l app=keda-operator-metrics-apiserver
 kubectl get scaledobject -n <namespace> <name> -o yaml
 ```
 
-#### 2. Problemas de escalado a cero
+#### 2. Problemas con el escalado a cero
 
-**Síntoma**: no escala a 0 cuando no hay actividad.
+**Síntoma**: no escala a 0 cuando no hay actividad
 
 **Solución**:
-- Comprueba la configuración de minReplicaCount.
-- Verifica los valores de las métricas.
-- Comprueba el estado del HPA.
+- Revisa la configuración de minReplicaCount
+- Verifica los valores de las métricas
+- Revisa el estado del HPA
 
 ```bash
 # Check HPA status
@@ -1356,12 +1356,12 @@ kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1/namespaces/<namespace>/
 
 #### 3. Problemas de autenticación
 
-**Síntoma**: no se puede conectar con la fuente de métricas.
+**Síntoma**: no se puede conectar a la fuente de métricas
 
 **Solución**:
-- Verifica la configuración de TriggerAuthentication.
-- Comprueba los Secrets o las variables de entorno.
-- Verifica los permisos.
+- Verifica la configuración de TriggerAuthentication
+- Revisa los Secrets o las variables de entorno
+- Verifica los permisos
 
 ```bash
 # Check TriggerAuthentication
@@ -1392,30 +1392,30 @@ kubectl logs -n keda -l app=keda-operator --tail=100
 
 ## Conclusión
 
-KEDA (escalado automático basado en eventos de Kubernetes) es una herramienta potente que proporciona escalado automático basado en eventos en entornos de Kubernetes. Amplía el HPA básico de Kubernetes para permitir escalar cargas de trabajo según diversas fuentes de eventos y métricas.
+KEDA (Kubernetes Event-driven Autoscaling) es una herramienta eficaz que proporciona escalado automático basado en eventos en entornos de Kubernetes. Amplía el HPA básico de Kubernetes para permitir el escalado de cargas de trabajo según diversas fuentes de eventos y métricas.
 
-Este documento abarcó los conceptos básicos de KEDA, los métodos de instalación, el uso de diversos escaladores, el escalado con métricas personalizadas, la integración con servicios externos como Twitter y Google Calendar, el escalado basado en métricas de Istio, el escalado basado en Cron, la integración con Amazon EKS, las prácticas recomendadas y la solución de problemas.
+Este documento abordó los conceptos básicos de KEDA, los métodos de instalación, el uso de diversos Scalers, el escalado con métricas personalizadas, la integración con servicios externos como Twitter y Google Calendar, el escalado basado en métricas de Istio, el escalado basado en Cron, la integración con Amazon EKS, las prácticas recomendadas y la solución de problemas.
 
-Con KEDA, puedes escalar aplicaciones de manera más eficiente, optimizar el uso de recursos y reducir costos. Resulta especialmente útil para implementar arquitecturas basadas en eventos y patrones sin servidor.
+Con KEDA, puedes escalar aplicaciones de forma más eficiente, optimizar el uso de recursos y reducir los costes. Es especialmente útil para implementar arquitecturas basadas en eventos y patrones sin servidor.
 
 ### Próximos pasos
 
-- Implementa arquitecturas sin servidor con KEDA.
-- Explora la integración con diversas fuentes de eventos.
-- Desarrolla escaladores personalizados.
-- Aprovecha KEDA en entornos con varios clústeres.
-- Integra KEDA con otras herramientas nativas de la nube.
+- Implementa arquitecturas sin servidor con KEDA
+- Explora la integración con diversas fuentes de eventos
+- Desarrolla Scalers personalizados
+- Aprovecha KEDA en entornos de varios clústeres
+- Integra KEDA con otras herramientas nativas de la nube
 
 ## Referencias
 
 - [Documentación oficial de KEDA](https://keda.sh/docs/)
 - [Repositorio de KEDA en GitHub](https://github.com/kedacore/keda)
-- [Lista de escaladores de KEDA](https://keda.sh/docs/latest/scalers/)
+- [Lista de Scalers de KEDA](https://keda.sh/docs/latest/scalers/)
 - [KEDA Operator Hub](https://operatorhub.io/operator/keda)
 - [Configuración de AWS IRSA](https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html)
 
 ## Cuestionario
 
-Para comprobar lo que has aprendido en este capítulo, prueba el [cuestionario del tema](../quizzes/autoscaling/05-keda-quiz.md).
+Para poner a prueba lo aprendido en este capítulo, responde el [cuestionario del tema](../quizzes/autoscaling/05-keda-quiz.md).
 
-Referencias verificadas para esta revisión: [compatibilidad de KEDA](https://keda.sh/docs/2.21/operate/cluster/), [ScaledObject](https://keda.sh/docs/2.21/reference/scaledobject-spec/), [ScaledJob](https://keda.sh/docs/2.21/reference/scaledjob-spec/), [autenticación de AWS](https://keda.sh/docs/2.21/authentication-providers/aws/), [gRPC de escalador externo](https://keda.sh/docs/2.21/concepts/external-scalers/), [recuentos de X](https://docs.x.com/x-api/posts/counts/quickstart), [eventos de Calendar](https://developers.google.com/workspace/calendar/api/v3/reference/events/list), [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/).
+Referencias verificadas para esta revisión: [compatibilidad de KEDA](https://keda.sh/docs/2.21/operate/cluster/), [ScaledObject](https://keda.sh/docs/2.21/reference/scaledobject-spec/), [ScaledJob](https://keda.sh/docs/2.21/reference/scaledjob-spec/), [autenticación de AWS](https://keda.sh/docs/2.21/authentication-providers/aws/), [gRPC de external scaler](https://keda.sh/docs/2.21/concepts/external-scalers/), [recuentos de X](https://docs.x.com/x-api/posts/counts/quickstart), [eventos de Calendar](https://developers.google.com/workspace/calendar/api/v3/reference/events/list), [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/).

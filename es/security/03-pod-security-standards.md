@@ -1,32 +1,32 @@
 # Estándares de seguridad de Pod (PSS)
 
-> **Línea base de validación**: Biblioteca PSA de Kubernetes `k8s.io/pod-security-admission` v0.36.2; política PSS de ejemplo v1.35
-> **Última actualización**: October 12, 2026
+> **Línea base de validación**: biblioteca PSA de Kubernetes `k8s.io/pod-security-admission` v0.36.2; ejemplo de política PSS v1.35
+> **Última actualización**: 12 de octubre de 2026
 
-Los estándares de seguridad de Pod (PSS) son un marco de políticas estandarizado para la seguridad de Pod en Kubernetes. Este documento abarca conceptos de PSS, métodos de configuración e implementación en entornos EKS.
+Los Estándares de seguridad de Pod (PSS) son un marco de políticas estandarizado para la seguridad de los Pod en Kubernetes. Este documento cubre los conceptos de PSS, los métodos de configuración y su implementación en entornos EKS.
 
-PSS define políticas; PSA es la implementación de admisión integrada que las aplica. Esta guía presupone **Pods de Linux normales sin espacios de nombres de usuario**, salvo que se indique lo contrario. La evaluación local de políticas upstream y las comprobaciones de esquema/comandos son distintas del despliegue: no se probó ningún clúster en vivo, EKS ni ejecución de contenedor. El ejemplo `v1.35` es una definición de política fijada, no una afirmación sobre la última versión compatible con Kubernetes/EKS. El significado de `latest` cambia cuando se actualiza el servidor de API.
+PSS define políticas; PSA es la implementación de admisión integrada que las aplica. Esta guía da por sentados **Pod Linux ordinarios sin espacios de nombres de usuario**, salvo que se indique lo contrario. La evaluación local de las políticas upstream y las comprobaciones de esquema y comandos son distintas del despliegue: no se probó ningún clúster activo, EKS ni ejecución de contenedores. El ejemplo `v1.35` es una definición de política fijada, no una afirmación sobre la versión más reciente de Kubernetes/EKS compatible. El significado de `latest` cambia cuando se actualiza el servidor de la API.
 
 ## Tabla de contenido
 
 1. [Evolución de PSP a PSS](#evolution-from-psp-to-pss)
-2. [Controlador de Pod Security Admission (PSA)](#pod-security-admission-psa-controller)
+2. [Controlador Pod Security Admission (PSA)](#pod-security-admission-psa-controller)
 3. [Niveles de seguridad](#security-levels)
 4. [Modos de aplicación](#enforcement-modes)
-5. [Configuración a nivel de Namespace](#namespace-level-configuration)
+5. [Configuración a nivel de espacio de nombres](#namespace-level-configuration)
 6. [Migración de PSP a PSS](#migration-from-psp-to-pss)
 7. [Valores predeterminados y configuración de EKS](#eks-defaults-and-configuration)
-8. [Detalles del perfil de seguridad](#security-profile-details)
-9. [Configuración de exenciones](#exemptions-configuration)
-10. [Prácticas recomendadas para la adopción gradual](#best-practices-for-gradual-adoption)
+8. [Detalles de los perfiles de seguridad](#security-profile-details)
+9. [Configuración de excepciones](#exemptions-configuration)
+10. [Buenas prácticas para una adopción gradual](#best-practices-for-gradual-adoption)
 
 ---
 
-## Evolución de PSP a PSS {#evolution-from-psp-to-pss}
+## Evolución de PSP a PSS
 
-### Historia de PodSecurityPolicy (PSP)
+### Historial de PodSecurityPolicy (PSP)
 
-PodSecurityPolicy (PSP) se introdujo por primera vez en Kubernetes 1.3 como un mecanismo de seguridad de Pod. Sin embargo, quedó obsoleto en Kubernetes 1.21 y se eliminó por completo en 1.25 debido a los siguientes problemas:
+PodSecurityPolicy (PSP) se introdujo por primera vez en Kubernetes 1.3 como mecanismo de seguridad para los Pod. Sin embargo, se declaró obsoleto en Kubernetes 1.21 y se eliminó por completo en 1.25 debido a los siguientes problemas:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -42,34 +42,34 @@ PodSecurityPolicy (PSP) se introdujo por primera vez en Kubernetes 1.3 como un m
 
 ### Introducción de PSS
 
-Los estándares de seguridad de Pod (PSS) y Pod Security Admission (PSA) se introdujeron como alfa en Kubernetes 1.22, pasaron a beta en 1.23 y alcanzaron GA (disponibilidad general) en 1.25.
+Pod Security Standards (PSS) y Pod Security Admission (PSA) se introdujeron como funciones alfa en Kubernetes 1.22, pasaron a beta en 1.23 y alcanzaron el estado GA (disponibilidad general) en 1.25.
 
-![Hoja de ruta que distingue la obsolescencia de PSP, la eliminación de PSP y PSA GA en 1.25, y la evolución posterior de políticas versionadas.](../.gitbook/assets/en-security-03-pod-security-standards-0.png)
+![Hoja de ruta que distingue la obsolescencia de PSP, su eliminación y la disponibilidad general de PSA en 1.25, así como la evolución posterior de las políticas versionadas.](../.gitbook/assets/en-security-03-pod-security-standards-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-security-03-pod-security-standards-0.html)
 
-> Interpretación del diagrama: PSA alcanzó GA en 1.25; 1.28 no es un hito de estabilización independiente.
+> Interpretación del diagrama: PSA alcanzó el estado GA en 1.25; 1.28 no es un hito de estabilización independiente.
 
 ### Comparación entre PSP y PSS
 
-| Característica | PodSecurityPolicy (PSP) | Estándares de seguridad de Pod (PSS) |
+| Característica | PodSecurityPolicy (PSP) | Pod Security Standards (PSS) |
 |---------|------------------------|------------------------------|
-| **Activación** | Plugin de admisión anterior | Definiciones de PSS aplicadas por el plugin PSA integrado |
-| **Definición de política** | Recursos PSP personalizados | Tres perfiles predefinidos |
-| **Vinculación de políticas** | Vinculación RBAC compleja | Etiquetas simples de Namespace |
-| **Ámbito** | En todo el clúster o Namespace | Nivel de Namespace |
-| **Vista previa de políticas** | Sin modos warn/audit estilo PSA; el dry-run de API es independiente | Modos warn/audit más dry-run de API |
-| **Auditoría** | Limitada | Soporte de auditoría integrado |
+| **Activación** | Complemento de admisión anterior | Definiciones PSS aplicadas por el complemento PSA integrado |
+| **Definición de políticas** | Recursos PSP personalizados | Tres perfiles predefinidos |
+| **Asociación de políticas** | Asociación RBAC compleja | Etiquetas de espacio de nombres simples |
+| **Alcance** | En todo el clúster o por espacio de nombres | Nivel de espacio de nombres |
+| **Vista previa de políticas** | Sin modos warn/audit al estilo de PSA; la simulación de la API es independiente | Modos warn/audit y simulación de la API |
+| **Auditoría** | Limitada | Compatibilidad integrada con auditoría |
 | **Flexibilidad** | Alta (control detallado) | Media (perfiles estandarizados) |
 | **Complejidad** | Alta | Baja |
 
 ---
 
-## Controlador de Pod Security Admission (PSA) {#pod-security-admission-psa-controller}
+## Controlador Pod Security Admission (PSA)
 
 ### Arquitectura de PSA
 
-PSA se ejecuta **dentro del servidor de API durante la admisión de validación**, después de la admisión de mutación. También se aplican la autenticación, autorización, validación de esquema y otras comprobaciones de admisión. No es un webhook externo, y el diagrama no debe implicar un orden universal entre PSA y todos los demás validadores.
+PSA se ejecuta **dentro del servidor de la API durante la admisión de validación**, después de la admisión de mutación. También se aplican la autenticación, la autorización, la validación del esquema y otras comprobaciones de admisión. No es un webhook externo, y el diagrama no debe sugerir un orden universal entre PSA y todos los demás validadores.
 
 ```text
 Request → authentication / authorization → mutating admission
@@ -78,32 +78,32 @@ Request → authentication / authorization → mutating admission
 
 ### Cómo funciona PSA
 
-![Pod CREATE simplificado, autenticado y autorizado. PSA es interno al servidor de API; 201 también requiere que las demás comprobaciones de admisión y el almacenamiento se completen correctamente.](../.gitbook/assets/en-security-03-pod-security-standards-1.png)
+![Creación CREATE simplificada de un Pod autenticada y autorizada. PSA es interna al servidor de la API; 201 requiere además que las demás comprobaciones de admisión y el almacenamiento se completen correctamente.](../.gitbook/assets/en-security-03-pod-security-standards-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-security-03-pod-security-standards-1.html)
 
-> Alcance del diagrama: PSA es interno al servidor de API. Un Pod CREATE correcto solo persiste después de que se superen todas las comprobaciones aplicables; la aprobación de PSA por sí sola no garantiza 201 Created.
+> Alcance del diagrama: PSA es interna al servidor de la API. Un Pod creado correctamente con CREATE solo se guarda después de superar todas las comprobaciones aplicables; la aprobación de PSA por sí sola no garantiza una respuesta 201 Created.
 
 ### Verificación del estado de PSA
 
-PSA pasó a beta y se habilitó de forma predeterminada en Kubernetes 1.23, y luego alcanzó GA en 1.25. La ausencia de una marca explícita `--enable-admission-plugins=PodSecurity` no significa que esté deshabilitado. Inspeccione la configuración del servidor de API autogestionado para detectar una deshabilitación explícita; EKS no expone esa configuración. Las métricas muestran evaluaciones, no una configuración de feature gate. El acceso a `/metrics` necesita autorización y una serie sin uso puede estar ausente.
+PSA pasó a beta y se habilitó de forma predeterminada en Kubernetes 1.23; después alcanzó el estado GA en 1.25. La ausencia de la marca explícita `--enable-admission-plugins=PodSecurity` no significa que esté deshabilitada. En servidores de la API autogestionados, inspeccione la configuración para comprobar si se deshabilitó explícitamente; EKS no expone esa configuración. Las métricas muestran evaluaciones, no la configuración de una puerta de funciones. El acceso a `/metrics` requiere autorización, y es posible que no aparezca una serie que no se haya utilizado.
 
 ```bash
 kubectl --context "$PSS_CONTEXT" get namespace "$PSS_NAMESPACE" -o yaml
 kubectl --context "$PSS_CONTEXT" get --raw /metrics
 ```
 
-Utilice los controles de dry-run de Pod positivos/negativos de abajo para probar la ruta de admisión real. Nunca infiera cumplimiento a partir únicamente de un dry-run correcto de Deployment.
+Use los controles de simulación de Pod positiva/negativa indicados a continuación para probar la ruta real de admisión. Nunca deduzca el cumplimiento únicamente a partir de una simulación de Deployment satisfactoria.
 
 ---
 
-## Niveles de seguridad {#security-levels}
+## Niveles de seguridad
 
 PSS define tres niveles de seguridad (perfiles). Cada nivel aplica restricciones de seguridad progresivamente más estrictas.
 
 ### 1. Privileged
 
-Este perfil no añade restricciones de PSS. No habilita automáticamente privilegios de contenedor ni omite RBAC, la validación de API u otras políticas de admisión.
+Este perfil no añade restricciones de PSS. No habilita automáticamente los privilegios de los contenedores ni omite RBAC, la validación de la API u otras políticas de admisión.
 
 ```yaml
 # Privileged profile: PSS imposes no controls; API/RBAC/other policies still apply
@@ -129,13 +129,13 @@ spec:
 **El nivel Privileged permite:**
 - Espacios de nombres de red, PID e IPC del host
 - Contenedores privilegiados
-- Todas las capabilities
+- Todas las capacidades
 - Montajes HostPath
 - Cualquier ID de usuario/grupo
 
 ### 2. Baseline
 
-Aplica restricciones mínimas para impedir escalaciones de privilegios conocidas. Adecuado para la mayoría de las cargas de trabajo generales.
+Aplica restricciones mínimas para evitar escaladas de privilegios conocidas. Adecuado para la mayoría de las cargas de trabajo generales.
 
 ```yaml
 # Baseline level: Prevents known privilege escalations
@@ -168,18 +168,18 @@ spec:
 | HostProcess | Se prohíben los contenedores Windows HostProcess |
 | Espacios de nombres del host | Se prohíben hostNetwork, hostPID y hostIPC |
 | Contenedores privilegiados | Se prohíbe privileged: true |
-| Capabilities | Las adiciones explícitas se limitan a la lista de permitidos de Baseline indicada; `NET_RAW` no está en ella |
+| Capacidades | Las adiciones explícitas se limitan a la lista de permitidos de Baseline; `NET_RAW` no está incluida |
 | Volúmenes HostPath | Se prohíben los volúmenes hostPath |
-| Puertos de host | El PSA integrado permite sin establecer/0; no tiene una lista personalizada de puertos permitidos |
+| Puertos del host | El PSA integrado permite que el valor no se establezca o sea 0; no tiene una lista de puertos permitidos personalizada |
 | AppArmor | Sin establecer o RuntimeDefault/Localhost; las anotaciones heredadas usan runtime/default o localhost/* |
-| SELinux | Solo valores de tipo restringidos; se prohíbe establecer usuario/rol |
+| SELinux | Solo se permiten valores de tipo restringidos; se prohíbe establecer usuario/rol |
 | Tipo de montaje de /proc | Solo se permite el valor predeterminado |
-| Seccomp | Se permite sin establecer; si se especifica, RuntimeDefault o Localhost (no Unconfined) |
-| Sysctls | Solo la lista explícita de sysctl permitidos de la versión de PSS; no todos los sysctl seguros de kubelet |
+| Seccomp | Se permite que no esté establecido; si se especifica, debe ser RuntimeDefault o Localhost (no Unconfined) |
+| Sysctls | Solo la lista explícita de sysctls permitidos de la versión de PSS; no todos los sysctls seguros para kubelet |
 
 ### 3. Restricted
 
-La política más restrictiva que aplica las prácticas recomendadas de endurecimiento de seguridad de Pod. Adecuada para cargas de trabajo sensibles a la seguridad.
+La política más restrictiva, que aplica las prácticas recomendadas de refuerzo de seguridad de Pod. Adecuada para cargas de trabajo con requisitos de seguridad sensibles.
 
 ```yaml
 apiVersion: v1
@@ -225,17 +225,17 @@ spec:
 | Campo | Restricción |
 |-------|------------|
 | Tipos de volumen | Solo se permiten configMap, csi, downwardAPI, emptyDir, ephemeral, persistentVolumeClaim, projected y secret |
-| Escalación de privilegios | Se requiere allowPrivilegeEscalation: false |
+| Escalada de privilegios | Se requiere allowPrivilegeEscalation: false |
 | Ejecución como usuario no root | Se requiere runAsNonRoot: true |
-| Ejecución como usuario no root | Se prohíbe runAsUser: 0 explícito (v1.23+); el campo puede omitirse |
+| Ejecución como usuario no root | Se prohíbe el valor explícito runAsUser: 0 (v1.23+); el campo puede omitirse |
 | Seccomp | Se requiere RuntimeDefault o Localhost |
-| Capabilities | Debe eliminar todas las capabilities; solo se puede añadir NET_BIND_SERVICE |
+| Capacidades | Se deben descartar todas las capacidades; solo se puede añadir NET_BIND_SERVICE |
 
 
 
-Los controles se aplican a los contenedores normales, init y efímeros aplicables. Se puede heredar un valor de no root/seccomp a nivel de Pod; una anulación de contenedor en conflicto no cumple. La política v1.34+ también prohíbe un `host` no vacío en probes HTTP/TCP y hooks de ciclo de vida. En v1.35, `hostUsers: false` flexibiliza las comprobaciones de no root; Baseline también flexibiliza `procMount`, pero Restricted sigue prohibiendo `Unmasked`. Esto requiere soporte real de espacios de nombres de usuario, no solo una etiqueta. Las flexibilizaciones específicas de Windows para escalación de privilegios, seccomp y capabilities de Linux son independientes de este ejemplo de Linux.
+Los controles se aplican a los contenedores normales, init y efímeros pertinentes. Se puede heredar un valor de nivel Pod para no root/seccomp; una anulación de contenedor en conflicto no cumple la política. La política v1.34+ también prohíbe un valor `host` no vacío en las sondas HTTP/TCP y los hooks del ciclo de vida. En v1.35, `hostUsers: false` flexibiliza las comprobaciones de no root; Baseline también flexibiliza `procMount`, pero Restricted sigue prohibiendo `Unmasked`. Esto requiere compatibilidad real con espacios de nombres de usuario, no solo una etiqueta. Las flexibilizaciones específicas de Windows para la escalada de privilegios, seccomp y las capacidades de Linux son independientes de este ejemplo para Linux.
 
-### Tabla comparativa de niveles de seguridad
+### Gráfico comparativo de niveles de seguridad
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -265,13 +265,13 @@ Los controles se aplican a los contenedores normales, init y efímeros aplicable
 
 ---
 
-## Modos de aplicación {#enforcement-modes}
+## Modos de aplicación
 
-PSA proporciona tres modos de aplicación. Estos modos se pueden usar de forma independiente o conjunta.
+PSA ofrece tres modos de aplicación. Se pueden utilizar de forma independiente o combinada.
 
 ### 1. enforce
 
-Rechaza la creación de Pods que incumplen y las actualizaciones de Pod pertinentes. Las plantillas de cargas de trabajo reciben comprobaciones warn/audit; la aplicación se produce en los Pods resultantes. Volver a etiquetar un Namespace no expulsa los Pods que ya se están ejecutando.
+Rechaza la creación de Pod que infrinja la política y las actualizaciones pertinentes de Pod. Las plantillas de cargas de trabajo se someten a comprobaciones warn/audit; la aplicación se realiza en los Pod resultantes. Cambiar las etiquetas de un espacio de nombres no expulsa los Pod que ya están en ejecución.
 
 ```yaml
 # enforce mode: Block Pod creation on violation
@@ -284,7 +284,7 @@ metadata:
     pod-security.kubernetes.io/enforce-version: v1.35
 ```
 
-**Extracto ilustrativo de respuesta (no es una ejecución registrada de clúster):**
+**Fragmento ilustrativo de respuesta (no corresponde a una ejecución registrada en un clúster):**
 ```text
 # Attempting to create a policy-violating Pod
 $ kubectl apply --dry-run=server -f privileged-pod.yaml -n production
@@ -297,7 +297,7 @@ securityContext.allowPrivilegeEscalation=false)
 
 ### 2. audit
 
-Añade anotaciones de infracciones a los eventos de auditoría; este modo no rechaza por sí mismo la solicitud. La configuración de la política de auditoría/entrega de registros determina si esos eventos se conservan. Otros modos y comprobaciones de admisión aún pueden rechazarla.
+Añade anotaciones de infracción a los eventos de auditoría; este modo no rechaza por sí mismo la solicitud. La configuración de la política de auditoría y de entrega de registros determina si esos eventos se conservan. Otros modos y comprobaciones de admisión todavía pueden rechazarla.
 
 ```yaml
 # audit mode: Record violations in audit logs
@@ -310,7 +310,7 @@ metadata:
     pod-security.kubernetes.io/audit-version: v1.35
 ```
 
-**Extracto sintético de evento de auditoría (no es un evento capturado completo):**
+**Fragmento sintético de evento de auditoría (no es un evento capturado completo):**
 ```json
 {
   "kind": "Event",
@@ -336,7 +336,7 @@ metadata:
 
 ### 3. warn
 
-Devuelve advertencias visibles para el cliente sin rechazar por sí mismo la solicitud; enforce u otras comprobaciones de admisión aún pueden rechazarla.
+Devuelve advertencias visibles para el cliente sin rechazar por sí mismo la solicitud; enforce u otras comprobaciones de admisión todavía pueden rechazarla.
 
 ```yaml
 # warn mode: Display warning messages on violation
@@ -349,7 +349,7 @@ metadata:
     pod-security.kubernetes.io/warn-version: v1.35
 ```
 
-**Extracto de advertencia ilustrativo (no es una ejecución registrada):**
+**Fragmento ilustrativo de advertencia (no corresponde a una ejecución registrada):**
 ```text
 $ kubectl apply --dry-run=server -f non-compliant-pod.yaml -n development
 Warning: would violate PodSecurity "restricted:v1.35":
@@ -362,7 +362,7 @@ pod/my-pod created (server dry run)
 
 ### Estrategia de combinación de modos
 
-La etapa inicial Privileged es solo para un Namespace sin una política existente más fuerte. Nunca reduzca la aplicación Baseline/Restricted para seguir este diagrama.
+La etapa inicial Privileged solo debe usarse en un espacio de nombres que no tenga una política existente más estricta. Nunca reduzca la aplicación de Baseline/Restricted para seguir este diagrama.
 
 En entornos de producción, se recomienda combinar varios modos:
 
@@ -417,11 +417,11 @@ metadata:
 
 ---
 
-## Configuración a nivel de Namespace {#namespace-level-configuration}
+## Configuración a nivel de espacio de nombres
 
 ### Configuración básica de etiquetas
 
-PSS se configura mediante etiquetas de Namespace:
+PSS se configura mediante etiquetas de espacio de nombres:
 
 ```yaml
 apiVersion: v1
@@ -440,7 +440,7 @@ metadata:
 
 ### Especificación de versión
 
-Puede usar definiciones de PSS de una versión específica de Kubernetes:
+Puede utilizar definiciones PSS de una versión específica de Kubernetes:
 
 ```yaml
 apiVersion: v1
@@ -456,7 +456,7 @@ metadata:
     # pod-security.kubernetes.io/enforce-version: latest
 ```
 
-### Ejemplos de configuración específicos del entorno
+### Ejemplos de configuración por entorno
 
 ```yaml
 ---
@@ -493,7 +493,7 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-### Adición de etiquetas a Namespaces existentes
+### Añadir etiquetas a espacios de nombres existentes
 
 ```bash
 # Add labels using kubectl
@@ -509,21 +509,21 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 ---
 
-## Migración de PSP a PSS {#migration-from-psp-to-pss}
+## Migración de PSP a PSS
 
 ### Descripción general de la migración
 
-La migración de PSP a PSS debe planificarse cuidadosamente y realizarse por etapas.
+La migración de PSP a PSS debe planificarse y realizarse por etapas con cuidado.
 
-![La migración conserva la aplicación existente mientras evalúa brechas, observa warn/audit, corrige y valida una política objetivo. La limpieza de la API PSP solo se aplica a entornos históricos 1.24 o anteriores.](../.gitbook/assets/en-security-03-pod-security-standards-2.png)
+![La migración conserva la aplicación existente mientras evalúa las brechas, observa warn/audit, corrige los problemas y valida una política objetivo. La limpieza de la API de PSP solo corresponde a entornos históricos con Kubernetes 1.24 o anterior.](../.gitbook/assets/en-security-03-pod-security-standards-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-security-03-pod-security-standards-2.html)
 
-> Alcance del diagrama: el análisis/eliminación de PSP es histórico. Nunca reduzca una política enforce existente más fuerte para observación; readOnlyRootFilesystem es recomendable, no obligatorio para Restricted.
+> Alcance del diagrama: el análisis y la eliminación de PSP son históricos. Nunca reduzca una política enforce existente más estricta para observar; readOnlyRootFilesystem es una recomendación, no un requisito de Restricted.
 
-### Paso 1: Analizar PSP actual
+### Paso 1: Analizar la PSP actual
 
-**Solo procedimiento histórico:** los comandos/recursos PSP siguientes se aplican a clústeres antiguos que todavía exponían `policy/v1beta1` (hasta Kubernetes 1.24) o a manifiestos guardados. No aplique este PSP a un clúster actual. También inventaríe los campos que PSP rellenaba o mutaba previamente de forma predeterminada; PSA no los rellena.
+**Solo procedimiento histórico:** los comandos/recursos PSP de abajo se aplican a clústeres antiguos que aún ofrecían `policy/v1beta1` (hasta Kubernetes 1.24) o a manifiestos guardados. No aplique esta PSP a un clúster actual. Haga también un inventario de los campos que PSP establecía o modificaba anteriormente; PSA no los completa.
 
 ```bash
 # List current PSPs
@@ -569,15 +569,15 @@ spec:
     rule: RunAsAny
 ```
 
-**Resultado de la asignación:** Restricted es un objetivo candidato, no una política equivalente. Este PSP carece del control seccomp requerido y permite configuraciones SELinux que PSS puede rechazar. Compare cada control y cada Pod resultante; tres campos seleccionados no pueden establecer equivalencia.
+**Resultado de la asignación:** Restricted es un posible perfil objetivo, no una política equivalente. A esta PSP le falta el control seccomp requerido y permite configuraciones SELinux que PSS podría rechazar. Compare todos los controles y cada Pod resultante; tres campos seleccionados no bastan para establecer equivalencia.
 
 ### Tabla de asignación de PSP a PSS
 
 | Requisito de la carga de trabajo | Perfil PSS candidato | Revisión necesaria |
 |---|---|---|
-| Espacios de nombres de host, contenedor privilegiado o hostPath | Privileged | Aísle la excepción y aplique controles adicionales |
-| No se necesita acceso al host, pero se requiere un proceso root | Baseline | Compruebe todos los controles de Baseline, incluidas capabilities y seccomp |
-| No root, sin escalación de privilegios, eliminar ALL | Restricted | Compruebe también volúmenes, seccomp, anulaciones y controles específicos de versión |
+| Espacios de nombres del host, contenedor privilegiado o hostPath | Privileged | Aísle la excepción y aplique controles adicionales |
+| Sin acceso al host, pero se necesita un proceso root | Baseline | Compruebe todos los controles Baseline, incluidas las capacidades y seccomp |
+| No root, sin escalada de privilegios, descartar ALL | Restricted | Compruebe también los volúmenes, seccomp, las anulaciones y los controles específicos de la versión |
 
 ### Paso 3: Validar en un entorno de prueba
 
@@ -619,9 +619,9 @@ metadata:
     # pod-security.kubernetes.io/enforce: restricted
 ```
 
-### Paso 5: Modificar cargas de trabajo
+### Paso 5: Modificar las cargas de trabajo
 
-Antes: un Pod `nginx` simple sin contexto de seguridad falla las comprobaciones de Restricted. Añadir únicamente `runAsNonRoot` es insuficiente: el usuario de imagen, el listener y las rutas grabables también deben ser compatibles. El Pod corregido utiliza la imagen upstream sin privilegios (UID/GID 101), el puerto 8080 y `/tmp` grabable con un sistema de archivos raíz de solo lectura.
+Antes: un Pod `nginx` sencillo sin contexto de seguridad no supera las comprobaciones Restricted. Añadir solo `runAsNonRoot` no basta: el usuario de la imagen, el puerto de escucha y las rutas con permisos de escritura también deben ser compatibles. El Pod corregido utiliza la imagen no privilegiada upstream (UID/GID 101), el puerto 8080 y `/tmp` con permisos de escritura, junto con un sistema de archivos raíz de solo lectura.
 
 ```yaml
 apiVersion: v1
@@ -664,7 +664,7 @@ spec:
 
 ### Script de automatización de la migración
 
-Esto apunta deliberadamente a **un Namespace revisado**, añade solo etiquetas warn/audit previamente ausentes, conserva enforce y usa la versión del recurso observada para rechazar una edición simultánea. Es una mutación real del Namespace al ejecutarse; inspeccione primero el objetivo. Las etiquetas existentes provocan un fallo para comparación manual en lugar de una reducción automática. Las advertencias aparecen en solicitudes posteriores, no como un escaneo retrospectivo de todos los Pods en ejecución.
+Este script se dirige deliberadamente a **un espacio de nombres revisado**, añade solo las etiquetas warn/audit que aún no existan, conserva enforce y utiliza la versión del recurso observada para rechazar una edición simultánea. Al ejecutarse, modifica realmente el espacio de nombres; inspeccione el destino primero. Si ya existen etiquetas, falla para que se comparen manualmente, en vez de aplicar una reducción automática. Las advertencias aparecerán en solicitudes posteriores; no constituyen un análisis retrospectivo de todos los Pod en ejecución.
 
 ```python
 #!/usr/bin/env python3
@@ -697,11 +697,11 @@ subprocess.run(base + [
 
 ---
 
-## Valores predeterminados y configuración de EKS {#eks-defaults-and-configuration}
+## Valores predeterminados y configuración de EKS
 
 ### Configuración predeterminada de PSA en EKS
 
-AWS documenta PSA como habilitado de forma predeterminada desde EKS 1.23, con valores predeterminados de clúster `privileged/latest` para todos los modos y sin exenciones estáticas. Esos valores permisivos no son una política de endurecimiento de cargas de trabajo. Las etiquetas de Namespace creadas por herramientas de plataforma o administradores pueden anular los valores predeterminados; inspeccione el Namespace real en lugar de asumir que todos los Namespaces no tienen etiquetas.
+AWS documenta que PSA está habilitada de forma predeterminada desde EKS 1.23, con valores predeterminados del clúster `privileged/latest` para todos los modos y sin excepciones estáticas. Esos valores permisivos no son una política de refuerzo de cargas de trabajo. Las etiquetas de espacio de nombres creadas por herramientas de la plataforma o administradores pueden anular los valores predeterminados; inspeccione el espacio de nombres real en lugar de dar por sentado que no tiene etiquetas.
 
 ```bash
 kubectl --context "$PSS_CONTEXT" get namespace "$PSS_NAMESPACE" -o yaml
@@ -726,9 +726,9 @@ metadata:
     app.kubernetes.io/managed-by: eks
 ```
 
-### Consideraciones sobre el Namespace del sistema de EKS
+### Consideraciones sobre los espacios de nombres del sistema de EKS
 
-Un agente con acceso al host no puede satisfacer Baseline, pero eso no significa que cada Pod en `kube-system` necesite privilegios completos. Revise la versión exacta del complemento y la especificación de Pod renderizada. Evite una sobrescritura general que deshabilite warn/audit para un Namespace de sistema completo. Cuando sea posible, aísle los agentes de host aprobados de las aplicaciones normales y restrinja quién puede realizar despliegues allí. Lo siguiente es un Namespace de ejemplo dedicado, no una instrucción para volver a etiquetar Namespaces de sistema existentes.
+Un agente con acceso al host no puede cumplir Baseline, pero eso no significa que todos los Pod de `kube-system` necesiten privilegios completos. Revise la versión exacta del complemento y la especificación Pod representada. Evite sobrescribir en bloque la configuración para deshabilitar warn/audit en todo un espacio de nombres del sistema. Siempre que sea posible, aísle los agentes del host aprobados de las aplicaciones ordinarias y restrinja quién puede desplegar allí. El siguiente ejemplo corresponde a un espacio de nombres dedicado; no es una instrucción para volver a etiquetar espacios de nombres del sistema existentes.
 
 ```yaml
 apiVersion: v1
@@ -747,16 +747,16 @@ metadata:
 
 | Componente / despliegue típico | Punto de revisión de PSS |
 |---|---|
-| VPC CNI `aws-node`, kube-proxy | Las operaciones de red de host o de nodo privilegiadas pueden exceder Baseline |
-| DaemonSets de nodo EBS/EFS CSI | Los montajes de host pueden exceder Baseline; los Pods de controlador tienen necesidades diferentes |
-| CloudWatch Agent / Fluent Bit a nivel de nodo | El acceso a registros/sistema de archivos del host depende de la configuración real |
-| CoreDNS, AWS Load Balancer Controller, Cluster Autoscaler | Evalúe la especificación renderizada frente a Baseline/Restricted; el nombre de un componente por sí solo no demuestra cumplimiento |
+| VPC CNI `aws-node`, kube-proxy | La red del host o las operaciones privilegiadas en los nodos pueden superar Baseline |
+| DaemonSet de nodo de EBS/EFS CSI | Los montajes del host pueden superar Baseline; los Pod del controlador tienen necesidades distintas |
+| CloudWatch Agent / Fluent Bit a nivel de nodo | El acceso a los registros/sistema de archivos del host depende de la configuración real |
+| CoreDNS, AWS Load Balancer Controller, Cluster Autoscaler | Evalúe la especificación representada frente a Baseline/Restricted; el nombre de un componente por sí solo no demuestra que cumpla |
 
-Los componentes de nodo integrados de EKS Auto Mode difieren de los complementos autogestionados. Esta tabla es una ayuda de revisión, no una matriz de compatibilidad probada ni un requisito para instalar todos los complementos enumerados.
+Los componentes de nodo integrados de EKS Auto Mode son distintos de los complementos autogestionados. Esta tabla sirve de ayuda para la revisión; no es una matriz de compatibilidad probada ni un requisito para instalar todos los complementos enumerados.
 
 ### Ejemplo de Terraform para EKS
 
-Este fragmento gestiona un Namespace de aplicación. Configure y revise por separado el proveedor de Kubernetes y su contexto de destino; no se ejecutó ninguna inicialización de proveedor, plan ni apply. Adopte/importe un Namespace existente mediante su propietario en lugar de crear una propiedad Terraform/GitOps en competencia. La política se fija deliberadamente y no se cambian etiquetas de Namespaces de sistema.
+Este fragmento administra un espacio de nombres de aplicación. Configure y revise por separado el proveedor de Kubernetes y su contexto de destino; no se ejecutaron la inicialización, el plan ni el apply del proveedor. Adopte o importe un espacio de nombres existente a través de su responsable, en lugar de crear una propiedad de Terraform/GitOps en conflicto. La política está fijada deliberadamente y no se modifican etiquetas de espacios de nombres del sistema.
 
 ```hcl
 # Provider authentication/context and ownership must be configured separately.
@@ -778,11 +778,11 @@ resource "kubernetes_namespace_v1" "app" {
 
 ---
 
-## Detalles del perfil de seguridad {#security-profile-details}
+## Detalles de los perfiles de seguridad
 
 ### Detalles del perfil Privileged
 
-El perfil Privileged no impone restricciones de PSS; la validación de API, RBAC y otras comprobaciones de admisión siguen vigentes. El siguiente ejemplo de raíz de host es solo para análisis de políticas, no una carga de trabajo recomendada para desplegar.
+El perfil Privileged no impone restricciones PSS; la validación de la API, RBAC y otras comprobaciones de admisión siguen vigentes. El siguiente ejemplo con root y acceso al host es solo para analizar políticas; no se recomienda desplegar esta carga de trabajo.
 
 ```yaml
 # All options allowed in Privileged profile
@@ -870,7 +870,7 @@ spec:
 
 ### Detalles del perfil Restricted
 
-Restricted añade a Baseline su lista de permitidos de volúmenes, ejecución no root, seccomp explícito, sin escalación de privilegios y la eliminación de todas las capabilities. `NET_BIND_SERVICE` es la única adición permitida, pero este listener 8080 no la necesita. `readOnlyRootFilesystem` es un endurecimiento recomendado, no un requisito de PSS. Configurar `containerPort` es metadatos; no reconfigura Nginx.
+Restricted añade a Baseline su lista de volúmenes permitidos, la ejecución como usuario no root, seccomp explícito, la prohibición de escalada de privilegios y el descarte de todas las capacidades. `NET_BIND_SERVICE` es la única capacidad que se permite añadir, pero este listener en el puerto 8080 no la necesita. `readOnlyRootFilesystem` es una medida de refuerzo recomendada, no un requisito de PSS. Establecer `containerPort` es metadato; no reconfigura Nginx.
 
 ```yaml
 apiVersion: v1
@@ -913,7 +913,7 @@ spec:
 
 ### Ejemplo completo de Nginx compatible con Restricted
 
-El digest se comprobó con los metadatos OCI upstream para Linux amd64/arm64 (Nginx 1.30.4, usuario 101); no se extrajeron capas de imagen ni se ejecutó ningún contenedor. Upstream documenta el puerto 8080, `/tmp/nginx.pid` y rutas temporales bajo `/tmp`. El ConfigMap siguiente proporciona el listener y endpoint de estado correspondientes. Créelo en el mismo Namespace antes del Deployment. Valide el inicio/la disponibilidad en su entorno aprobado antes del despliegue.
+Se comprobó el digest con los metadatos OCI upstream para Linux amd64/arm64 (Nginx 1.30.4, usuario 101); no se descargaron capas de la imagen ni se ejecutó ningún contenedor. La documentación upstream indica el puerto 8080, `/tmp/nginx.pid` y las rutas temporales bajo `/tmp`. El ConfigMap siguiente proporciona el listener y el endpoint de estado correspondientes. Créelo en el mismo espacio de nombres antes del Deployment. Valide el inicio y la disponibilidad en el entorno aprobado antes del despliegue.
 
 ```yaml
 apiVersion: apps/v1
@@ -1009,11 +1009,11 @@ data:
 
 ---
 
-## Configuración de exenciones {#exemptions-configuration}
+## Configuración de excepciones
 
-### Configuración de exenciones a nivel de clúster
+### Configuración de excepciones a nivel de clúster
 
-Los servidores de API autogestionados pueden cargar esta configuración mediante `--admission-control-config-file`. El ejemplo mantiene vacía cada lista de exenciones. Las exenciones omiten **todos los modos de PSA**. `usernames` coincide con un nombre de usuario autenticado de solicitud exacto, no con un grupo, comodín ni el futuro ServiceAccount del Pod. Eximir una cuenta de controlador omitiría las comprobaciones para los Pods que crea en nombre de muchos usuarios. Los nombres de Namespace y RuntimeClass también coinciden exactamente. Configure una excepción solo después de restringir por separado quién puede utilizarla.
+Los servidores de la API autogestionados pueden cargar esta configuración mediante `--admission-control-config-file`. El ejemplo deja vacías todas las listas de excepciones. Las excepciones omiten **todos los modos PSA**. `usernames` coincide exactamente con el nombre de usuario autenticado de la solicitud, no con un grupo, un comodín o la ServiceAccount del futuro Pod. Eximir la cuenta de un controlador omitiría las comprobaciones de los Pod que crea en nombre de muchos usuarios. Los nombres de espacios de nombres y RuntimeClass también deben coincidir exactamente. Configure una excepción solo después de restringir por separado quién puede utilizarla.
 
 ```yaml
 # Self-managed API server configuration; not an EKS control-plane setting
@@ -1037,9 +1037,9 @@ plugins:
       namespaces: []
 ```
 
-### Configuración de exenciones en EKS
+### Excepciones en EKS
 
-EKS no permite editar AdmissionConfiguration del servidor de API administrado. El Namespace `enforce: privileged` es un perfil permisivo, **no una exención estática**: warn/audit aún pueden evaluar las solicitudes. Restrinja los permisos de escritura/despliegue del Namespace y separe los agentes de host de las aplicaciones normales. Por ejemplo, node-exporter configurado con hostNetwork/hostPID/hostPath no puede superar Baseline; establecer Baseline no vuelve seguros ni permitidos esos accesos al host.
+EKS no permite editar la AdmissionConfiguration del servidor de la API administrado. El valor de espacio de nombres `enforce: privileged` es un perfil permisivo, **no una excepción estática**: warn/audit todavía pueden evaluar las solicitudes. Restrinja los permisos para escribir en el espacio de nombres y desplegar en él, y separe los agentes del host de las aplicaciones ordinarias. Por ejemplo, node-exporter configurado con hostNetwork/hostPID/hostPath no puede superar Baseline; establecer Baseline no hace que esos accesos al host sean seguros ni estén permitidos.
 
 ```yaml
 apiVersion: v1
@@ -1054,9 +1054,9 @@ metadata:
     pod-security.kubernetes.io/warn-version: v1.35
 ```
 
-### Exenciones basadas en RuntimeClass
+### Excepciones basadas en RuntimeClass
 
-Un RuntimeClass selecciona un controlador de runtime CRI configurado. Crear el recurso no instala gVisor/Kata ni concede una excepción de PSA. Todos los nodos objetivo deben admitir el controlador (o usar restricciones de programación adecuadas). Esta definición por sí sola deja PSA plenamente aplicable:
+Una RuntimeClass selecciona un controlador de runtime CRI configurado. Crear el recurso no instala gVisor/Kata ni concede una excepción PSA. Todos los nodos seleccionados deben ser compatibles con el controlador (o se deben utilizar restricciones de programación adecuadas). Esta definición, por sí sola, deja PSA plenamente aplicable:
 
 ```yaml
 apiVersion: node.k8s.io/v1
@@ -1066,21 +1066,21 @@ metadata:
 handler: runsc
 ```
 
-Solo una exención `runtimeClasses: ["gvisor"]` configurada por separado en un servidor de API autogestionado omite PSA. Cualquier solicitud a la que se permita seleccionar esa clase podría entonces omitir PSA; el aislamiento de runtime no reemplaza la autorización de admisión. Esta configuración del plano de control administrado no está disponible en EKS.
+Solo una excepción `runtimeClasses: ["gvisor"]` configurada por separado en un servidor de la API autogestionado omite PSA. Cualquier solicitud que pueda seleccionar esa clase podría eludir PSA; el aislamiento del runtime no reemplaza la autorización de admisión. Esta configuración no está disponible en el plano de control administrado de EKS.
 
-### Exenciones detalladas con Kyverno
+### Excepciones detalladas con Kyverno
 
-Kyverno no puede convertir una denegación de PSA en una aprobación. Si un agente de host necesita una excepción, primero diseñe el perfil PSA y los permisos de despliegue del Namespace, y luego añada una política de aplicación independiente con una excepción de alcance limitado. Una exclusión de solo HostPath no excluye las comprobaciones hostNetwork/hostPID; hacer coincidir únicamente una etiqueta de imagen o una etiqueta de Pod mutable no es autorización.
+Kyverno no puede convertir una denegación de PSA en una autorización. Si un agente del host necesita una excepción, primero diseñe el perfil PSA y los permisos de despliegue del espacio de nombres; después añada una política que aplique controles de forma independiente y con una excepción de alcance reducido. Una exclusión que solo abarque HostPath no excluye las comprobaciones de hostNetwork/hostPID; usar únicamente una etiqueta de Pod mutable o una etiqueta de imagen no constituye autorización.
 
-Consulte [Gestión de políticas de Kyverno](./01-kyverno-policy-management.md) para las API de políticas revisadas y los límites de versión/obsolescencia. No copie una `ClusterPolicy` heredada con `validationFailureAction: enforce` en minúsculas; no es un valor válido, y ClusterPolicy está obsoleto en Kyverno 1.19. Un reemplazo debe probarse tanto con las cargas de trabajo normales como con las de excepción.
+Consulte [Gestión de políticas de Kyverno](./01-kyverno-policy-management.md) para conocer las API de políticas revisadas y los límites de versión/obsolescencia. No copie una `ClusterPolicy` heredada con `validationFailureAction: enforce` en minúsculas; no es un valor válido y ClusterPolicy está obsoleta en Kyverno 1.19. Se debe probar cualquier sustitución con las cargas de trabajo normales y las de excepción.
 
 ---
 
-## Prácticas recomendadas para la adopción gradual {#best-practices-for-gradual-adoption}
+## Buenas prácticas para una adopción gradual
 
 ### Paso 1: Analizar el estado actual
 
-Obtenga una vista previa de un cambio a **enforce**, no a warn: solo un cambio de nivel/versión de enforce activa la comprobación de Pods existentes. Este dry-run del servidor no guarda etiquetas ni expulsa Pods. Si la política enforce efectiva no cambia, no se activa un nuevo escaneo. El escaneo se realiza según el mejor esfuerzo y puede limitar/deduplicar advertencias; el silencio no es una auditoría completa de cargas de trabajo. Los fallos de comando/autenticación siguen siendo fallos.
+Obtenga una vista previa de un cambio a **enforce**, no a warn: solo un cambio de nivel/versión de enforce activa la comprobación de los Pod existentes. Esta simulación del servidor no guarda etiquetas ni expulsa Pod. Si la política enforce efectiva no cambia, no se activa un nuevo análisis. El análisis es de mejor esfuerzo y puede limitar o deduplicar las advertencias; que no aparezcan advertencias no constituye una auditoría completa de las cargas de trabajo. Los errores de comandos/autenticación siguen siendo errores.
 
 ```bash
 #!/usr/bin/env bash
@@ -1099,7 +1099,7 @@ kubectl --context "$PSS_CONTEXT" --request-timeout=30s \
 
 ### Paso 2: Estrategia de despliegue gradual
 
-Los intervalos de días son una planificación ilustrativa, no duraciones de migración medidas. Use un inventario explícito de Namespaces, nunca reduzca una política existente más fuerte y avance solo después de probar Pods de reemplazo y la capacidad de reversión.
+Los intervalos de días son un calendario de planificación ilustrativo, no duraciones de migración medidas. Utilice un inventario explícito de espacios de nombres, nunca reduzca una política existente más estricta y avance solo después de probar los Pod de sustitución y la capacidad de reversión.
 
 ```yaml
 # Gradual rollout using GitOps
@@ -1125,9 +1125,9 @@ Los intervalos de días son una planificación ilustrativa, no duraciones de mig
 # - Gradually migrate existing namespaces
 ```
 
-### Paso 3: Configurar supervisión y alertas
+### Paso 3: Configurar la supervisión y las alertas
 
-Estas reglas requieren CRD de Prometheus Operator, un selector que incluya esta PrometheusRule y un scrape autorizado del servidor de API que exponga `pod_security_evaluations_total`. El PSA integrado no es un webhook llamado `pod-security-webhook`. Las etiquetas de evaluación incluyen decision, policy_level, policy_version, mode, request_operation, resource y subresource; **no hay etiqueta de namespace**. Correlacione los eventos de auditoría conservados para obtener detalles de Namespace/solicitud. Las métricas ausentes no prueban que haya cero infracciones; una denegación en modo audit significa una evaluación con infracción, no necesariamente una solicitud de API rechazada.
+Estas reglas requieren las CRD de Prometheus Operator, un selector que incluya este PrometheusRule y una extracción autorizada del servidor de la API que exponga `pod_security_evaluations_total`. PSA integrado no es un webhook llamado `pod-security-webhook`. Las etiquetas de evaluación incluyen decision, policy_level, policy_version, mode, request_operation, resource y subresource; **no hay ninguna etiqueta de espacio de nombres**. Correlacione los eventos de auditoría conservados para obtener detalles del espacio de nombres y la solicitud. La ausencia de métricas no demuestra que haya cero infracciones; una denegación en modo audit indica una evaluación que infringe la política, no necesariamente una solicitud a la API rechazada.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1164,7 +1164,7 @@ spec:
 
 ### Paso 4: Comprobaciones de cumplimiento automatizadas
 
-Guarde esto como `check-pss.py` en el proyecto propietario de las cargas de trabajo. Requisitos previos: Python 3 con PyYAML, un kubectl compatible, credenciales de clúster aprobadas, un servidor de API de Kubernetes compatible con la política v1.35 y un Namespace de prueba existente que aplique explícitamente `restricted:v1.35`. La persona que llama necesita autorización de lectura de Namespace y creación de Pod, incluso para el dry-run del servidor. No exponga credenciales de clúster a código no confiable de pull request.
+Guarde este archivo como `check-pss.py` en el proyecto responsable de las cargas de trabajo. Requisitos previos: Python 3 con PyYAML, un kubectl compatible, credenciales de clúster aprobadas, un servidor de la API de Kubernetes compatible con la política v1.35 y un espacio de nombres de prueba existente que aplique explícitamente `restricted:v1.35`. Quien invoque el script necesita autorización para leer el espacio de nombres y crear Pod, incluso para la simulación del servidor. No exponga credenciales del clúster a código de solicitudes de cambios no confiable.
 
 ```python
 #!/usr/bin/env python3
@@ -1236,7 +1236,7 @@ print(f"{len(pods)} explicit Pod inputs passed server dry-run in {namespace}")
 python3 check-pss.py "$PSS_CONTEXT" "$PSS_NAMESPACE" ./pss-inputs/web-pod.yaml
 ```
 
-La lista explícita de entradas debe cubrir la plantilla de Pod de cada carga de trabajo, incluidos los contenedores init. Este ejemplo rechaza Deployments, archivos vacíos, Namespaces erróneos, fallos de consulta, aplicación ausente y una ruta de control negativo exenta/inactiva. La extracción de plantillas, los webhooks de mutación, la programación, el inicio de imagen y el comportamiento futuro en tiempo de ejecución necesitan comprobaciones independientes. El control negativo debe ser rechazado por PSA; cualquier otro error no es concluyente y hace fallar la comprobación. Una exención diferente seleccionada por un Pod candidato (por ejemplo, una RuntimeClass exenta) también debe prohibirse o probarse por separado por el propietario del clúster de prueba.
+La lista explícita de entradas debe cubrir la plantilla Pod de cada carga de trabajo, incluidos los contenedores init. Este ejemplo rechaza Deployments, archivos vacíos, espacios de nombres incorrectos, errores en las consultas, ausencia de aplicación de la política y una ruta de control negativo exenta/inactiva. La extracción de plantillas, los webhooks de mutación, la programación, el inicio de imágenes y el comportamiento futuro del runtime requieren comprobaciones independientes. PSA debe rechazar el control negativo; cualquier otro error no es concluyente y hace que la comprobación falle. El responsable del clúster de pruebas también debe prohibir o probar por separado cualquier otra excepción que pudiera seleccionar un Pod candidato (por ejemplo, una RuntimeClass exenta).
 
 ### Paso 5: Documentación y formación
 
@@ -1271,11 +1271,11 @@ La lista explícita de entradas debe cubrir la plantilla de Pod de cada carga de
 
 ## Solución de problemas
 
-### Errores y soluciones comunes
+### Errores comunes y soluciones
 
-#### 1. Error de "allowPrivilegeEscalation != false"
+#### 1. Error «allowPrivilegeEscalation != false»
 
-Extracto de error ilustrativo; el YAML es una **corrección parcial de la especificación de Pod**, no un manifiesto independiente. Conserve la imagen/configuración de contenedor existente. Aplique los controles pertinentes por contenedor también a los contenedores init y efímeros.
+Fragmento ilustrativo del error; el YAML es una **corrección parcial de la especificación Pod**, no un manifiesto independiente. Conserve la imagen y la configuración actuales del contenedor. Aplique también los controles pertinentes por contenedor a los contenedores init y efímeros.
 
 ```text
 allowPrivilegeEscalation != false
@@ -1289,9 +1289,9 @@ spec:
       allowPrivilegeEscalation: false
 ```
 
-#### 2. Error de "unrestricted capabilities"
+#### 2. Error «unrestricted capabilities»
 
-Extracto de error ilustrativo; el YAML es una **corrección parcial de la especificación de Pod**, no un manifiesto independiente. Conserve la imagen/configuración de contenedor existente. Aplique los controles pertinentes por contenedor también a los contenedores init y efímeros.
+Fragmento ilustrativo del error; el YAML es una **corrección parcial de la especificación Pod**, no un manifiesto independiente. Conserve la imagen y la configuración actuales del contenedor. Aplique también los controles pertinentes por contenedor a los contenedores init y efímeros.
 
 ```text
 unrestricted capabilities
@@ -1306,9 +1306,9 @@ spec:
         drop: [ALL]
 ```
 
-#### 3. Error de "runAsNonRoot != true"
+#### 3. Error «runAsNonRoot != true»
 
-Extracto de error ilustrativo; el YAML es una **corrección parcial de la especificación de Pod**, no un manifiesto independiente. Conserve la imagen/configuración de contenedor existente. Aplique los controles pertinentes por contenedor también a los contenedores init y efímeros.
+Fragmento ilustrativo del error; el YAML es una **corrección parcial de la especificación Pod**, no un manifiesto independiente. Conserve la imagen y la configuración actuales del contenedor. Aplique también los controles pertinentes por contenedor a los contenedores init y efímeros.
 
 ```text
 runAsNonRoot != true
@@ -1321,9 +1321,9 @@ spec:
     runAsUser: 101
 ```
 
-#### 4. Error de "seccompProfile"
+#### 4. Error «seccompProfile»
 
-Extracto de error ilustrativo; el YAML es una **corrección parcial de la especificación de Pod**, no un manifiesto independiente. Conserve la imagen/configuración de contenedor existente. Aplique los controles pertinentes por contenedor también a los contenedores init y efímeros.
+Fragmento ilustrativo del error; el YAML es una **corrección parcial de la especificación Pod**, no un manifiesto independiente. Conserve la imagen y la configuración actuales del contenedor. Aplique también los controles pertinentes por contenedor a los contenedores init y efímeros.
 
 ```text
 seccompProfile must be RuntimeDefault or Localhost
@@ -1336,9 +1336,9 @@ spec:
       type: RuntimeDefault
 ```
 
-### Herramientas de comprobación de infracciones de PSS
+### Herramientas para comprobar infracciones de PSS
 
-Polaris, kube-score y Trivy proporcionan comprobaciones estáticas adicionales, no un sustituto exacto de la política PSA versionada del clúster, las exenciones y las mutaciones. Instale una versión revisada y consulte su ayuda de CLI. Un dry-run correcto del servidor se limita a esa solicitud, identidad, Namespace y momento; use los controles explícitos de Pod anteriores.
+Polaris, kube-score y Trivy proporcionan comprobaciones estáticas adicionales; no son sustitutos exactos de la política PSA versionada, las excepciones y las mutaciones del clúster. Instale una versión revisada y consulte la ayuda de la CLI. Una simulación del servidor satisfactoria se limita a esa solicitud, identidad, espacio de nombres y momento; utilice los controles explícitos de Pod indicados arriba.
 
 ```bash
 # Dry-run check with kubectl
@@ -1358,29 +1358,29 @@ trivy config ./k8s/
 
 ## Resumen
 
-Los estándares de seguridad de Pod (PSS) proporcionan un enfoque estandarizado para gestionar la seguridad de Pod en Kubernetes:
+Pod Security Standards (PSS) ofrece un enfoque estandarizado para gestionar la seguridad de los Pod en Kubernetes:
 
-1. **Tres niveles de seguridad**: Privileged (todos los privilegios), Baseline (impedir escalaciones conocidas), Restricted (mínimo privilegio)
-2. **Tres modos de aplicación**: enforce (bloquear), audit (registrar), warn (advertencia)
-3. **Etiquetas de Namespace**: no existe vinculación de uso estilo PSP; RBAC aún debe restringir las etiquetas de Namespace y la creación de cargas de trabajo
-4. **Soporte para adopción gradual**: migración segura mediante los modos warn/audit
+1. **Tres niveles de seguridad**: Privileged (todos los privilegios), Baseline (evitar escaladas conocidas), Restricted (privilegios mínimos)
+2. **Tres modos de aplicación**: enforce (bloquear), audit (registrar), warn (advertir)
+3. **Etiquetas de espacio de nombres**: no hay asociación de uso al estilo PSP; RBAC aún debe restringir las etiquetas de espacio de nombres y la creación de cargas de trabajo
+4. **Compatibilidad con la adopción gradual**: migración segura mediante los modos warn/audit
 
 ### Recomendaciones
 
-- Habilite PSS desde el inicio para clústeres nuevos
-- Comience con el modo warn para clústeres existentes y endurezca gradualmente
-- Aplique al menos el nivel Baseline en entornos de producción
-- Aplique el nivel Restricted a cargas de trabajo sensibles
+- Habilite PSS desde el principio en los clústeres nuevos
+- En clústeres existentes, empiece con el modo warn y refuerce la política gradualmente
+- Aplique como mínimo el nivel Baseline en entornos de producción
+- Aplique el nivel Restricted a las cargas de trabajo sensibles
 
 ---
 
 ## Referencias
 
-- [Documentación oficial de estándares de seguridad de Pod de Kubernetes](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
+- [Documentación oficial de Kubernetes sobre Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Documentación oficial de Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/)
-- [Guía de prácticas recomendadas de EKS - Seguridad de Pod](https://docs.aws.amazon.com/eks/latest/best-practices/pod-security.html)
+- [Guía de buenas prácticas de EKS: seguridad de Pod](https://docs.aws.amazon.com/eks/latest/best-practices/pod-security.html)
 - [Guía de migración de PSP a PSS](https://kubernetes.io/docs/tasks/configure-pod-container/migrate-from-psp/)
 
-- [Vista previa de etiquetas de Namespace de PSA y comprobaciones de Pods existentes](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/)
-- [Configuración y exenciones de PSA](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-admission-controller/)
-- [Imagen Nginx sin privilegios y rutas grabables](https://github.com/nginx/docker-nginx-unprivileged)
+- [Vista previa de las etiquetas de espacio de nombres de PSA y comprobaciones de Pod existentes](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/)
+- [Configuración y excepciones de PSA](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-admission-controller/)
+- [Imagen Nginx no privilegiada y rutas con permisos de escritura](https://github.com/nginx/docker-nginx-unprivileged)
