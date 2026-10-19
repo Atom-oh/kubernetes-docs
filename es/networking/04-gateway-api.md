@@ -1,18 +1,18 @@
 # Kubernetes Gateway API
 
-> **Base de API**: Gateway API v1.6 Standard; seleccione el paquete exacto compatible con su controlador.
-> **Última actualización**: 12 de septiembre de 2026
+> **Base de API**: Gateway API v1.6 Standard; seleccione el paquete exacto que admite su controlador.
+> **Última actualización**: 16 de octubre de 2026
 
 ## Descripción general
 
-Gateway API es la API de entrada de nueva generación para Kubernetes, diseñada para superar las limitaciones de Ingress y ofrecer un enrutamiento de red más expresivo y extensible. Desarrollada por SIG-Network, cuenta con implementaciones como Istio, Cilium, Envoy Gateway y otras.
+Gateway API es la API de entrada de próxima generación para Kubernetes, diseñada para superar las limitaciones de la API Ingress existente y ofrecer capacidades de enrutamiento de red más expresivas y extensibles. Desarrollada por SIG-Network, cuenta con diversas implementaciones, entre ellas Istio, Cilium y Envoy Gateway.
 
 ### Limitaciones de Ingress API
 
 | Problema | Descripción |
 |---------|-------------|
 | **Expresividad limitada** | Soporte escaso para TCP/UDP/gRPC más allá del enrutamiento HTTP |
-| **Responsabilidades combinadas** | RBAC/IngressClass pueden restringir acceso, pero las funciones de listeners y rutas están menos separadas explícitamente |
+| **Responsabilidades combinadas** | RBAC/IngressClass pueden restringir el acceso, pero las responsabilidades de listeners y rutas están menos separadas de forma explícita |
 | **Abuso de anotaciones** | Las funciones específicas de implementación se gestionan mediante anotaciones, reduciendo la portabilidad |
 | **Extensibilidad limitada** | Dificultad para añadir protocolos o funciones |
 | **Entre namespaces** | Enrutamiento complejo entre namespaces |
@@ -23,7 +23,7 @@ Gateway API es la API de entrada de nueva generación para Kubernetes, diseñada
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-04-gateway-api-0.html)
 
-La expresividad, la separación de responsabilidades, la portabilidad y la extensibilidad son objetivos independientes. El soporte real depende del controlador y su perfil de conformidad; RBAC y las políticas de admisión de Kubernetes controlan quién puede modificar cada recurso.
+La expresividad, la separación de responsabilidades, la portabilidad y la extensibilidad son objetivos de diseño independientes. La compatibilidad real con cada función depende del controlador y del perfil de conformidad; RBAC de Kubernetes y las políticas de admisión determinan quién puede modificar cada recurso.
 
 ## Modelo de recursos
 
@@ -33,7 +33,7 @@ Gateway API utiliza un modelo de recursos por capas.
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-04-gateway-api-1.html)
 
-La figura muestra relaciones entre recursos y un modelo habitual de despliegue. Un Gateway no equivale universalmente a un balanceador de nube: Istio puede aprovisionar un Deployment/Service de proxy, mientras VPC Lattice lo asigna a una red de servicios. El propietario de un **namespace referenciado** concede acceso entre namespaces a backends/Secrets mediante ReferenceGrant.
+La figura muestra las relaciones entre recursos y un modelo de despliegue habitual. Un Gateway no siempre corresponde a un único balanceador de carga en la nube: Istio puede aprovisionar un Deployment/Service de proxy, mientras que VPC Lattice lo asigna a una red de servicios. El propietario de un **namespace referenciado** concede acceso entre namespaces a backends/Secrets mediante ReferenceGrant.
 
 ### Separación de roles
 
@@ -60,7 +60,7 @@ spec:
 
 GatewayClass selecciona un controlador ya instalado; crear la clase no lo instala. Las definiciones siguientes son alternativas. Use una clase cuya condición `Accepted` sea true y sustituya los nombres de ejemplo por los aceptados en su clúster.
 
-El soporte de `parametersRef` y su group/kind dependen de la implementación. En Istio 1.31, un ConfigMap por Gateway se referencia en `Gateway.spec.infrastructure.parametersRef` y reside en su namespace. Los valores predeterminados de toda la clase usan un ConfigMap etiquetado `gateway.istio.io/defaults-for-class` en el namespace raíz de Istio. El ejemplo ALB→Istio posterior muestra la forma por Gateway.
+La compatibilidad con `parametersRef` y su grupo/tipo dependen de la implementación. En Istio 1.31, un ConfigMap por Gateway se referencia en `Gateway.spec.infrastructure.parametersRef` y reside en su namespace. Los valores predeterminados de toda la clase usan un ConfigMap etiquetado `gateway.istio.io/defaults-for-class` en el namespace raíz de Istio. El ejemplo ALB→Istio posterior muestra la forma por Gateway.
 
 ### GatewayClass según implementación
 
@@ -341,7 +341,7 @@ spec:
 
 ### Reglas de coincidencia avanzadas
 
-Los campos de un elemento `matches` se combinan con AND; varios elementos se combinan con OR. PathPrefix compara elementos de ruta, no un prefijo arbitrario de cadena. El soporte y la sintaxis de RegularExpression dependen de la implementación. La cabecera de tenant del ejemplo es un selector de enrutamiento que cualquier cliente podría enviar, no autenticación para la aplicación administrativa.
+Los campos de un elemento `matches` se combinan con AND; varios elementos se combinan con OR. PathPrefix compara elementos de ruta, no un prefijo arbitrario de cadena. El soporte y la sintaxis de RegularExpression dependen de la implementación. El encabezado de tenant del ejemplo es un selector de enrutamiento que cualquier cliente podría enviar; no autentica a la aplicación administrativa.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -426,7 +426,7 @@ spec:
 
 ### Filtros
 
-Los modificadores de cabeceras establecen valores literales. `X-Example-Source: gateway-demo` es una marca estática, no un ID único generado; use las funciones de trazado del proxy/aplicación para IDs. El ejemplo de espejo usa su ruta `/mirror` para que la regla `/api` anterior no lo oculte. Copia solicitudes GET a un backend sombra e ignora su respuesta. Aísle los efectos secundarios y revise los datos/credenciales copiados. La cabecera de caché pública solo es apropiada para contenido realmente seguro de almacenar públicamente.
+Los modificadores de encabezado establecen valores literales. `X-Example-Source: gateway-demo` es una marca estática, no un ID de solicitud único generado; use las funciones de trazado del proxy o de la aplicación para obtener IDs. El ejemplo de reflejo de tráfico usa su propia ruta `/mirror` para que la regla `/api` anterior no la oculte. Copia solicitudes GET a un backend sombra e ignora la respuesta de ese backend. Aísle los efectos secundarios y revise los datos y credenciales copiados al servicio sombra. El encabezado de caché pública solo es adecuado para contenido realmente seguro para almacenamiento público en caché.
 
 Los filtros permiten modificar solicitudes/respuestas.
 
@@ -690,7 +690,7 @@ spec:
 
 ## UDPRoute
 
-Este escenario requiere Envoy Gateway instalado, una clase `envoy-gateway` aceptada, su paquete Gateway API compatible y el backend UDP `dns-service`. Expone UDP 5300 y enruta al puerto 53 del backend. El proxy UDP de Envoy no es transparente: el backend ve la IP/puerto de origen del gateway. Asegure que el balanceador/Service de la plataforma soporte esta exposición UDP.
+Este escenario requiere un controlador Envoy Gateway instalado, una clase `envoy-gateway` aceptada, su paquete compatible de Gateway API y el backend UDP `dns-service`. Expone el puerto UDP 5300 y enruta al puerto 53 del backend. El proxy UDP de Envoy no es transparente: el backend ve la IP y el puerto de origen del gateway. Asegúrese de que el balanceador/Service de la plataforma admita esta exposición UDP.
 
 Define el enrutamiento de tráfico UDP.
 
@@ -733,9 +733,9 @@ spec:
 
 ## ReferenceGrant
 
-ReferenceGrant se crea en el namespace **que contiene el Service o Secret referenciado**, por su propietario. `from` selecciona group/kind/namespace de origen; `to.name` puede restringir el nombre objetivo. Los permisos son aditivos y autorizan referencias, no llamantes de aplicaciones.
+ReferenceGrant lo crea el propietario del namespace **que contiene el Service o Secret referenciado**. `from` selecciona el grupo/tipo/namespace de origen; `to.name` puede limitar el nombre de destino. Los permisos se acumulan y autorizan referencias, no a los clientes de la aplicación.
 
-La asociación Route→Gateway entre namespaces usa `parentRefs` y el acuerdo de `allowedRoutes` del listener, no ReferenceGrant. Las referencias de backend y certificados usan ReferenceGrant como se muestra. Deben existir el Service `shared-api` y el Secret `shared-tls`; un permiso no los crea.
+La asociación de Route→Gateway entre namespaces usa `parentRefs` junto con el acuerdo `allowedRoutes` del listener Gateway, no ReferenceGrant. Las referencias a backends y certificados sí usan ReferenceGrant, como se muestra a continuación. Deben existir el Service `shared-api` y el Secret `shared-tls`; un permiso por sí solo no los crea.
 
 ReferenceGrant permite referencias entre namespaces.
 
@@ -780,7 +780,7 @@ spec:
 
 | Implementación | Controlador | Funciones |
 |----------------|------------|----------|
-| **Istio** | istio.io/gateway-controller | Integración con malla y gestión avanzada de tráfico |
+| **Istio** | istio.io/gateway-controller | Integración con malla de servicios y gestión avanzada del tráfico |
 | **Cilium** | io.cilium/gateway-controller | Redes Cilium con procesamiento L7 de Envoy |
 | **Envoy Gateway** | gateway.envoyproxy.io/gatewayclass-controller | Basado en Envoy, conforme a estándares |
 | **AWS Gateway API Controller** | application-networking.k8s.aws/gateway-api-controller | Integración con VPC Lattice |
@@ -790,33 +790,33 @@ spec:
 
 ### Notas de implementación por versión
 
-El canal de publicación de la API, el nivel Core/Extended/específico de una función y el perfil de conformidad del controlador son conceptos diferentes. Que un CRD acepte un campo no demuestra que el controlador lo implemente. Revise resultados de conformidad y condiciones de recursos, incluidas `Accepted`, `ResolvedRefs` y `Programmed` donde corresponda.
+El canal de lanzamiento de la API, el nivel de compatibilidad Core/Extended/específico de la implementación de una función y el perfil de conformidad de un controlador son conceptos distintos. Que un CRD acepte un campo no demuestra que el controlador lo implemente. Consulte los resultados de conformidad publicados y las condiciones de los recursos, incluidas `Accepted`, `ResolvedRefs` y `Programmed` cuando correspondan.
 
 | Implementación comprobada | Alcance verificado y límites importantes |
 |---|---|
-| Istio **1.31.0** | HTTP/gRPC y rutas v1 TCP/TLS; listeners UDP explícitamente no admitidos. Plano de datos Envoy configurable, sin garantizar todas las extensiones Gateway API |
-| Cilium **1.20.1** | Gateway API **1.6.1**, incluidos TCPRoute/UDPRoute; combina redes Cilium y Envoy para L7 |
-| Envoy Gateway **1.9.1** | Gateway API **1.6.1**; matriz Kubernetes publicada **1.33–1.36**. Admite UDP y TLS passthrough con su comportamiento documentado |
-| AWS Load Balancer Controller **3.5.0** | Gateway API **1.6.0**; ALB gestiona HTTP/gRPC y NLB rutas L4. Solo la Route L4 asociada más antigua es elegible por listener NLB; use una Route por listener |
-| AWS Gateway API Controller **2.1.3** | Integración VPC Lattice; v2.1 requiere Gateway API **1.5+**. Admite HTTPRoute, GRPCRoute y TLSRoute. El acceso TCP a recursos es otro modelo de configuración de Lattice, no soporte TCPRoute/UDPRoute genérico |
-| Contour **1.33.7** | Compilado con Gateway API **1.3.0** y probado en Kubernetes **1.32–1.34**. Documenta HTTP/gRPC/TCP/TLS; use su canal/configuración de aprovisionamiento compatible en vez de aplicar un paquete nuevo a ciegas |
-| NGINX Gateway Fabric **2.7.0** | Gateway API **1.6.1**, mínimo Kubernetes publicado **1.32**; añade v1 TCPRoute/UDPRoute. Producto separado del ingress-nginx comunitario retirado |
+| Istio **1.31.2** | Rutas HTTP/gRPC y TCP/TLS v1; los listeners UDP no son compatibles explícitamente. El plano de datos Envoy es configurable, pero eso no garantiza la compatibilidad con todas las extensiones de Gateway API |
+| Cilium **1.20.3** | Gateway API **1.6.3**, incluidas TCPRoute/UDPRoute; combina las redes de Cilium con Envoy para el procesamiento L7 |
+| Envoy Gateway **1.9.2** | Gateway API **1.6.1**; la matriz publicada de Kubernetes es **1.33–1.36**. Admite enrutamiento UDP y TLS passthrough con el comportamiento de transporte documentado |
+| AWS Load Balancer Controller **3.6.0** | Gateway API **1.6.0**; ALB gestiona HTTP/gRPC y NLB las rutas L4. Por cada listener de NLB, solo puede elegirse la Route L4 asociada más antigua; use una Route por listener |
+| AWS Gateway API Controller **2.1.3** | Integración con VPC Lattice; v2.1 requiere Gateway API **1.5+**. Admite HTTPRoute, GRPCRoute y TLSRoute. El acceso a recursos TCP usa un modelo de configuración de recursos propio de Lattice; no equivale a admitir TCPRoute/UDPRoute genéricas |
+| Contour **1.33.7** | Compilado con Gateway API **1.3.0** y probado para esta versión en Kubernetes **1.32–1.34**. Documenta rutas HTTP/gRPC/TCP/TLS; use el canal y la configuración de aprovisionamiento correspondientes en vez de aplicar a ciegas un paquete más reciente |
+| NGINX Gateway Fabric **2.8.0** | Gateway API **1.6.3**, versión mínima publicada de Kubernetes **1.32**; admite TCPRoute/UDPRoute v1 (añadidas en 2.7.0). Es un producto distinto de ingress-nginx comunitario, ya retirado |
 
-Estas notas sustituyen una tabla de sí/no sin versiones. Consulte cada implementación para filtros, políticas TLS, extensiones, versiones admitidas y requisitos operativos. La página de compatibilidad incluida en Contour no tiene una fila específica 1.33.7; la dependencia API y el intervalo Kubernetes anteriores proceden del archivo de módulos y las notas de esa versión exacta.
+Estas notas sustituyen una tabla de funciones sí/no sin versiones. Consulte la documentación de cada implementación para conocer filtros, políticas TLS, extensiones, versiones compatibles y requisitos operativos específicos. La página de compatibilidad incluida con Contour no tiene una fila específica para 1.33.7; la dependencia de API y el intervalo de Kubernetes anteriores se obtuvieron del archivo de módulos y las notas de esa versión exacta.
 
 ## Soporte de Gateway API en AWS Load Balancer Controller
 
-Gateway API alcanzó GA en **LBC v3.0.0 el 2026-01-23**. Ingress y Service siguen admitidos, por lo que la migración a Gateway puede planificarse separadamente de la actualización del controlador. v3.5.0 requiere los CRD Gateway API y LBC Gateway compatibles descritos en la [guía de instalación de LBC](./03-aws-lb-controller.md). EKS Auto Mode tiene una implementación gestionada independiente; las funciones del LBC autogestionado no describen automáticamente Auto Mode.
+Gateway API alcanzó la disponibilidad general en **LBC v3.0.0 el 2026-01-23**. Las API Ingress y Service existentes siguen siendo compatibles, por lo que la migración a Gateway puede planificarse por separado de la actualización del controlador. La versión actual v3.6.0 requiere Gateway API y los CRD Gateway de LBC compatibles descritos en la [guía de instalación de LBC](./03-aws-lb-controller.md). EKS Auto Mode tiene una implementación gestionada independiente; las funciones de LBC autogestionado no describen automáticamente Auto Mode.
 
-El controlador retirado es el proyecto comunitario Kubernetes **ingress-nginx**, cuyo mantenimiento terminó en marzo de 2026. No significa que se retiraran Ingress API ni otros productos NGINX de F5.
+El controlador retirado es el proyecto comunitario de Kubernetes **ingress-nginx**, cuyo mantenimiento terminó en marzo de 2026. Esto no significa que se hayan retirado Kubernetes Ingress API ni los demás productos NGINX de F5.
 
-La solución temporal `keepTLSSecret=false` de las notas v3.0 se aplicaba a usuarios **que permanecían en versiones anteriores** afectadas por el error de propiedad de cert-manager. Quienes actualizaban a v3.0 recibían la corrección sin esa acción adicional. Siga las opciones de certificados del chart actual en vez de aplicar la mitigación histórica a todas las actualizaciones.
+La solución temporal `keepTLSSecret=false` indicada en las notas de la versión v3.0 se aplicaba a quienes **seguían en versiones anteriores** afectadas por el error de propiedad de cert-manager. Quienes actualizaban a v3.0 recibían la corrección sin esa medida adicional. Siga las opciones actuales de gestión de certificados del chart en vez de aplicar la mitigación histórica a todas las actualizaciones.
 
 ### Herramientas de migración de LBC v3.4.0
 
 La versión del **2026-06-03** introdujo la CLI real `lbc-migrate` y Migration Console. Se dirigen a recursos **LBC Ingress** funcionales; no son un conversor genérico para cualquier implementación Ingress.
 
-- `lbc-migrate` lee archivos o, con `--from-cluster`, lista/obtiene recursos del clúster. Traduce anotaciones admitidas y emite recursos Gateway API. La salida predeterminada contiene la anotación dry-run de LBC Gateway.
+- `lbc-migrate` lee archivos o, con `--from-cluster`, lista/obtiene recursos del clúster. Traduce anotaciones admitidas y emite recursos Gateway API. La salida predeterminada contiene la anotación de ejecución en seco de Gateway de LBC.
 - Migration Console compara planes de recursos generados por el controlador. Requiere anotaciones de plan, configuración de funciones y acceso de lectura adecuados. Trate los planes como datos de configuración que pueden necesitar restricciones de acceso y ocultación de información sensible.
 - Aplicar manifiestos Gateway activos revisados crea **ALB nuevos junto a los existentes**. Valídelos y cambie el tráfico frontend por separado. Los pesos de backend de una HTTPRoute no realizan esa migración frontend.
 
@@ -828,7 +828,7 @@ lbc-migrate -f ingress.yaml --output-dir ./gateway-output/
 
 El conversor no genera los Deployments/Services existentes ni revalida todas las anotaciones Ingress. Revise anotaciones no admitidas, sobrescrituras Service/IngressClassParams, miembros IngressGroup entre namespaces, precedencia de reglas y TLS. Los grupos de destino externos ya asociados al ALB antiguo no pueden adjuntarse sin más simultáneamente al nuevo; planifique una estrategia compatible de duplicación/cambio.
 
-Las herramientas proporcionan un flujo de migración, no una garantía de cero interrupciones. Consulte la [guía de migración versionada](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress2gateway/migrate_from_ingress.md) y la [referencia CLI](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress2gateway/lbc_migrate_reference.md).
+Las herramientas ofrecen un flujo de migración, no una garantía de cero interrupciones. Consulte la [guía de migración versionada](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/ingress2gateway/migrate_from_ingress.md) y la [referencia de la CLI](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/ingress2gateway/lbc_migrate_reference.md).
 
 ## Migración de Ingress a Gateway API
 
@@ -875,7 +875,7 @@ spec:
 
 #### Paso 2: Crear Gateway y GatewayClass
 
-El nuevo Gateway se llama `migration-gateway`. El Secret existente `api-tls` permanece en `default`; un ReferenceGrant de ese namespace permite explícitamente que el namespace Gateway lo referencie. Proporcione un certificado válido para `api.example.com`. La etiqueta integrada de nombre del Namespace `default` proporciona el selector de asociación de rutas.
+El Gateway nuevo se llama `migration-gateway`. El Secret existente `api-tls` permanece en `default`; un ReferenceGrant de ese namespace permite explícitamente que el namespace del Gateway lo referencie. Proporcione un certificado válido para `api.example.com`. La etiqueta integrada de nombre del Namespace `default` proporciona el selector de asociación de rutas.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -940,7 +940,7 @@ spec:
 
 La Route de redirección solo se asocia al listener HTTP. La Route HTTPS reenvía solicitudes de aplicación. El antiguo ejemplo `rewrite-target: /` sustituye toda la ruta coincidente por `/`, por lo que la traducción usa **ReplaceFullPath**. ReplacePrefixMatch conservaría un sufijo (`/api/v1/users` → `/users`) y cambiaría el comportamiento. Pruebe rutas raíz, subrutas, cadenas de consulta y redirecciones frente a la aplicación antigua antes del cambio.
 
-La redirección supone el **308** predeterminado de ingress-nginx, conservando método/cuerpo; revise cualquier sobrescritura `http-redirect-code`. Su anotación de reescritura también habilita ubicaciones regex sin distinción de mayúsculas para ese host, mientras PathPrefix distingue mayúsculas y compara elementos de ruta. Por eso `/API/V1` o `/api/v10` pueden diferir. El ejemplo muestra una política PathPrefix más estricta, no equivalencia completa. Si los clientes dependen del comportamiento anterior, diseñe y pruebe una coincidencia regex admitida u otra regla explícita de compatibilidad antes de cambiar.
+La redirección siguiente supone el **308** predeterminado de ingress-nginx, que conserva el método y el cuerpo de la solicitud; compruebe si se sobrescribe con `http-redirect-code`. Su anotación de reescritura también habilita ubicaciones regex sin distinción de mayúsculas para ese host, mientras PathPrefix distingue mayúsculas y compara elementos de ruta. Por eso `/API/V1` o `/api/v10` pueden diferir. El ejemplo muestra una política PathPrefix más restrictiva, no una equivalencia completa de coincidencias. Si los clientes dependen del comportamiento anterior, diseñe y pruebe una coincidencia regex admitida u otra regla explícita de compatibilidad antes de cambiar.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -1009,7 +1009,7 @@ spec:
 
 #### Paso 4: Cambiar el tráfico frontend
 
-Valide dirección, certificado, redirecciones HTTP, coincidencias de ruta, comportamiento del backend y observabilidad antes de mover clientes. Cambie el tráfico mediante el mecanismo adecuado para los frontends, como enrutamiento DNS/balanceador revisado, y monitorice fallos y latencia. Considere cachés DNS, conexiones persistentes y sesiones. Conserve una vía probada de retorno al frontend antiguo.
+Valide la dirección, el certificado, las redirecciones HTTP, la coincidencia de rutas, el comportamiento del backend y la observabilidad del nuevo Gateway antes de mover a los clientes. Cambie el tráfico mediante el mecanismo adecuado para los frontends, como enrutamiento DNS/balanceador revisado, y monitorice fallos y latencia. Considere cachés DNS, conexiones persistentes y sesiones. Conserve una vía probada de retorno al frontend antiguo.
 
 Los pesos de backend HTTPRoute controlan tráfico **dentro del Gateway elegido**; la sección específica de división de tráfico explica esa operación. Para la migración frontend, conserve el Ingress/controlador antiguo hasta mover los clientes y completar las comprobaciones de drenaje/reversión.
 
@@ -1029,7 +1029,7 @@ Los pesos de backend HTTPRoute controlan tráfico **dentro del Gateway elegido**
 
 ### AWS Gateway API Controller (VPC Lattice)
 
-Use el controlador instalado, la red `my-network` con su política `AWS_IAM` revisada, los permisos del llamante y el backend `service-stable:8080` de la [guía VPC Lattice](./02-vpc-lattice.md). El nombre Gateway selecciona la red; no la crea. Esta Route independiente tiene su propio servicio y dominio Lattice. IAMAuthPolicy protege ese servicio; conserve la política de red durante la reconciliación. Obtenga el dominio asignado y use el cliente HTTPS firmado de la guía. La referencia de certificado `unused` sigue el comportamiento documentado de certificado gestionado por AWS de este controlador, no la carga genérica de Secrets Kubernetes.
+Use el controlador instalado, la red de servicios `my-network` con su política `AWS_IAM` revisada, los permisos del llamante y el backend `service-stable:8080` de la [guía VPC Lattice](./02-vpc-lattice.md). El nombre Gateway selecciona la red; no la crea. Esta Route independiente tiene su propio servicio y dominio Lattice. IAMAuthPolicy protege ese servicio; conserve la política de red durante la reconciliación. Obtenga el dominio asignado a la Route y use el cliente HTTPS firmado de la guía. La referencia de certificado `unused` se ajusta al comportamiento documentado por este controlador para certificados administrados por AWS, no a la carga genérica de Secrets de Kubernetes.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -1088,9 +1088,9 @@ spec:
 
 ### Uso con ALB Controller
 
-Esta topología coloca un ALB delante de un gateway Istio cuando la aplicación necesita su comportamiento. El ConfigMap establece el Service generado como ClusterIP mediante los parámetros de infraestructura documentados. El Ingress ALB está en el **mismo namespace** que ese Service y referencia su nombre generado, `internal-gateway-istio`.
+Esta topología coloca un ALB delante de un gateway Istio cuando la aplicación necesita el comportamiento de gateway de Istio. El ConfigMap configura el Service generado como ClusterIP mediante los parámetros de infraestructura documentados por Istio. El Ingress ALB está en el **mismo namespace** que ese Service y referencia su nombre generado, `internal-gateway-istio`.
 
-La HTTPRoute de aplicación está en el namespace etiquetado `production` y apunta a `api-service:80` existente allí. Sustituya el ARN ACM y configure los requisitos LBC/red. En este ejemplo TLS termina en ALB; su conexión a Istio es HTTP. Permita los puertos reales de tráfico y estado del gateway en los controles de seguridad. `/healthz/ready` en 15021 comprueba el gateway, no la salud de cada aplicación. Verifique condiciones Route y respuestas de aplicación por separado.
+La HTTPRoute de aplicación está en el namespace etiquetado `production` y apunta a `api-service:80` existente allí. Sustituya el ARN ACM y configure los requisitos LBC/red. En este ejemplo TLS termina en ALB; su conexión a Istio es HTTP. Permita los puertos reales de tráfico y estado del gateway en los controles de seguridad. `/healthz/ready` en el puerto 15021 comprueba que el gateway esté listo, no el estado de cada aplicación. Verifique condiciones Route y respuestas de aplicación por separado.
 
 ```yaml
 apiVersion: v1
@@ -1180,11 +1180,11 @@ spec:
 | Standard | GatewayClass, Gateway, HTTPRoute, GRPCRoute, TLSRoute, TCPRoute, UDPRoute, ReferenceGrant, BackendTLSPolicy y ListenerSet |
 | Experimental | Standard más campos experimentales como reintentos/persistencia de sesión HTTPRoute, y XBackend, XBackendTrafficPolicy y XMesh |
 
-Los ejemplos Standard actuales usan `v1` para los tipos Route. El paquete Standard v1.6.0 ya no **sirve** las versiones alpha antiguas de TLSRoute/TCPRoute/UDPRoute. Experimental aún sirve algunas versiones obsoletas, por lo que un manifiesto funcional allí no demuestra compatibilidad con Standard.
+Los ejemplos Standard actuales usan `v1` para los tipos Route. El paquete Standard v1.6.0 ya no **sirve** las antiguas versiones alfa de TLSRoute/TCPRoute/UDPRoute. El paquete Experimental todavía sirve algunas versiones obsoletas, por lo que un manifiesto que funciona allí no demuestra que funcione con Standard.
 
 ReferenceGrant contradice la idea de que «Standard siempre significa solo v1»: el paquete v1.6.0 sirve `v1` y `v1beta1`, con `v1beta1` como versión de almacenamiento. Los ejemplos conservan la beta que se sigue sirviendo.
 
-Los recursos X experimentales nuevos usan `gateway.networking.x-k8s.io`. Los campos experimentales de recursos establecidos aún pueden estar en `gateway.networking.k8s.io`; no se trasladó todo el canal Experimental a otro grupo. Sus garantías de compatibilidad difieren de Standard, y las políticas de admisión protegen los límites de canal/campo. Revise el procedimiento publicado de actualización en vez de eliminar CRD compartidos o políticas de admisión para forzar el cambio.
+Los nuevos recursos X experimentales usan `gateway.networking.x-k8s.io`. Los campos experimentales de recursos ya establecidos pueden seguir en `gateway.networking.k8s.io`; no se trasladó todo el canal Experimental a otro grupo. Sus garantías de compatibilidad difieren de las de Standard, y las políticas de admisión protegen los límites entre canales y campos. Revise el procedimiento de actualización publicado en vez de eliminar CRD compartidos o políticas de admisión para forzar un cambio.
 
 ### Contexto de la versión v1.6
 
@@ -1258,14 +1258,14 @@ spec:
 - [Documentación oficial de Gateway API](https://gateway-api.sigs.k8s.io/)
 - [Gateway API en GitHub](https://github.com/kubernetes-sigs/gateway-api)
 - [Soporte Gateway API de Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
-- [Gateway API de Cilium](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/gateway-api.rst)
+- [Gateway API de Cilium](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/gateway-api/gateway-api.rst)
 - [AWS Gateway API Controller](https://github.com/aws/aws-application-networking-k8s/tree/v2.1.3/docs)
 - [Envoy Gateway](https://gateway.envoyproxy.io/)
 
 - [Versionado de Gateway API 1.6](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.0/site/content/en/docs/concepts/versioning.md)
 - [ReferenceGrant y excepciones de asociación](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.0/site/content/en/reference/api-types/referencegrant.md)
-- [Compatibilidad de Envoy Gateway](https://github.com/envoyproxy/gateway/blob/v1.9.1/site/content/en/news/releases/matrix.md)
-- [Versión NGINX Gateway Fabric 2.7](https://github.com/nginx/nginx-gateway-fabric/blob/v2.7.0/CHANGELOG.md)
+- [Compatibilidad de Envoy Gateway](https://github.com/envoyproxy/gateway/blob/v1.9.2/site/content/en/news/releases/matrix.md)
+- [Versión 2.8 de NGINX Gateway Fabric](https://github.com/nginx/nginx-gateway-fabric/blob/v2.8.0/CHANGELOG.md)
 - [Versión Contour 1.33.7](https://github.com/projectcontour/contour/releases/tag/v1.33.7)
 - [Retirada de ingress-nginx comunitario](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)
 

@@ -1,1662 +1,1040 @@
-# Pipelines de CI basados en EKS: compilación y push a ECR
+# Pipelines de CI basadas en EKS: compilación y publicación en ECR
 
-> **Versiones compatibles**: Amazon EKS 1.28+, GitLab Runner 16.x+, Actions Runner Controller 0.9+
-> **Última actualización**: February 23, 2026
+> **Baseline de revisión**: GitLab Runner 19.3.1 / chart 0.92.1, ARC 0.15.0, runner 2.337.0, Docker 29.8.0, Trivy 0.76.0, Node 24
+> **Última revisión**: 16 de octubre de 2026. Se comprobaron los esquemas de Helm/TOML/CI, dobles locales de prueba y una pequeña aplicación independiente de Next.js. No se ejecutó ningún trabajo de CI real, publicación en el registro ni despliegue en AWS.
 
-< [Anterior: NLB Blue/Green](./02-infrastructure-advanced.md) | [Tabla de contenido](./README.md) | [Siguiente: ArgoCD multi-cluster](./04-gitops-multi-cluster.md) >
+< [Anterior: NLB Blue/Green](02-infrastructure-advanced.md) | [Tabla de contenido](README.md) | [Siguiente: ArgoCD Multi-Cluster](04-gitops-multi-cluster.md) >
 
----
+Esta guía usa un **clúster de CI dedicado para los trabajos de publicación de confianza y protegidos**. El Docker-in-Docker que se muestra más abajo requiere privilegios. Un Pod separado no constituye por sí solo un límite de seguridad completo; no enrutes a estos runners solicitudes de cambios públicas o no confiables ni les concedas credenciales de publicación de AWS heredadas. El ejemplo de GitHub ejecuta las pruebas de solicitudes de cambios en runners alojados por GitHub y obtiene credenciales OIDC solo en los trabajos de publicación activados por push.
 
-## Descripción general
+El contrato de la aplicación es un proyecto npm con `package-lock.json`, scripts `lint` y `test` funcionales y un Dockerfile. Adapta esos comandos a la aplicación. Las API de GitHub/GitLab, los registros, los repositorios de paquetes y los endpoints de AWS siguen siendo dependencias de red, aunque los runners se ejecuten en EKS.
 
-Crear imágenes de contenedor dentro de clusters EKS elimina dependencias de infraestructura de CI externa y proporciona una integración más estrecha con los servicios de AWS. Esta guía cubre la configuración de pipelines de CI mediante GitLab Runner y GitHub Actions Runner Controller, con estrategias de compilación multi-platform para arquitecturas ARM (Graviton) y x86.
+## 1. Configuración del repositorio de ECR
 
-**Beneficios clave:**
-- Integración nativa con ECR mediante Pod Identity
-- Runners con escalado automático basado en la carga de trabajo
-- Builds multi-architecture en hardware nativo
-- Optimización de costos con instancias Spot
+Usa etiquetas inmutables para las aplicaciones y coloca las referencias mutables de caché de BuildKit en un **repositorio distinto**. Las etiquetas únicas basadas en el commit, la ejecución y el trabajo reducen las colisiones; despliega por el digest aprobado. Que una etiqueta tenga forma de SHA no la hace inmutable. Si vuelves a intentar una compilación ya publicada, reutiliza su digest verificado o crea un nuevo identificador de compilación en lugar de sobrescribir una etiqueta de lanzamiento.
 
----
-
-## 1. Configuración de repositorios ECR
-
-### 1.1 Módulo Terraform de ECR
-
-Crea un módulo reutilizable de repositorio ECR con políticas de lifecycle, scanning y acceso cross-account.
+El ejemplo de Terraform supone que ya existen el clúster de CI de EKS y el proveedor OIDC de GitHub de la cuenta. Separa el rol de caché S3 del administrador de GitLab del rol de publicación en ECR del Pod de compilación. Los Pods de trabajo de ARC no tienen un rol de publicación de Pod Identity: el workflow de confianza usa su propio rol OIDC de GitHub.
 
 ```hcl
-# modules/ecr/main.tf
-
-variable "repository_name" {
-  description = "Name of the ECR repository"
-  type        = string
-}
-
-variable "image_tag_mutability" {
-  description = "Tag mutability setting"
-  type        = string
-  default     = "IMMUTABLE"
-}
-
-variable "scan_on_push" {
-  description = "Enable image scanning on push"
-  type        = bool
-  default     = true
-}
-
-variable "encryption_type" {
-  description = "Encryption type (AES256 or KMS)"
-  type        = string
-  default     = "AES256"
-}
-
-variable "kms_key_arn" {
-  description = "KMS key ARN for encryption (required if encryption_type is KMS)"
-  type        = string
-  default     = null
-}
-
-variable "cross_account_ids" {
-  description = "List of AWS account IDs for cross-account access"
-  type        = list(string)
-  default     = []
-}
-
-variable "lifecycle_policy_count" {
-  description = "Number of images to retain"
-  type        = number
-  default     = 30
-}
-
-resource "aws_ecr_repository" "this" {
-  name                 = var.repository_name
-  image_tag_mutability = var.image_tag_mutability
-
-  image_scanning_configuration {
-    scan_on_push = var.scan_on_push
-  }
-
-  encryption_configuration {
-    encryption_type = var.encryption_type
-    kms_key         = var.kms_key_arn
-  }
-
-  tags = {
-    Name        = var.repository_name
-    ManagedBy   = "terraform"
-    Environment = terraform.workspace
+# main.tf
+terraform {
+  required_version = ">= 1.10.0"
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "6.69.1" }
   }
 }
-
-resource "aws_ecr_lifecycle_policy" "this" {
-  repository = aws_ecr_repository.this.name
-
-  policy = jsonencode({
-    rules = [
-      {
-        rulePriority = 1
-        description  = "Keep last ${var.lifecycle_policy_count} images"
-        selection = {
-          tagStatus     = "tagged"
-          tagPrefixList = ["v", "release"]
-          countType     = "imageCountMoreThan"
-          countNumber   = var.lifecycle_policy_count
-        }
-        action = {
-          type = "expire"
-        }
-      },
-      {
-        rulePriority = 2
-        description  = "Remove untagged images older than 7 days"
-        selection = {
-          tagStatus   = "untagged"
-          countType   = "sinceImagePushed"
-          countUnit   = "days"
-          countNumber = 7
-        }
-        action = {
-          type = "expire"
-        }
-      },
-      {
-        rulePriority = 3
-        description  = "Remove dev/feature images older than 14 days"
-        selection = {
-          tagStatus     = "tagged"
-          tagPrefixList = ["dev-", "feature-", "pr-"]
-          countType     = "sinceImagePushed"
-          countUnit     = "days"
-          countNumber   = 14
-        }
-        action = {
-          type = "expire"
-        }
-      }
-    ]
+provider "aws" { region = var.region }
+data "aws_caller_identity" "current" {}
+data "aws_eks_cluster" "ci" { name = var.cluster_name }
+locals {
+  tags = { Project = var.project_name, ManagedBy = "terraform" }
+}
+resource "aws_ecr_repository" "application" {
+  name                 = "${var.project_name}/application"
+  image_tag_mutability = "IMMUTABLE"
+  encryption_configuration { encryption_type = "AES256" }
+  tags = local.tags
+}
+resource "aws_ecr_repository" "build_cache" {
+  name                 = "${var.project_name}/build-cache"
+  image_tag_mutability = "MUTABLE"
+  encryption_configuration { encryption_type = "AES256" }
+  tags = local.tags
+}
+# This minimal rule leaves tagged releases alone. Preview before applying any
+# additional tagged-image retention rules; ECR does not know current EKS usage.
+resource "aws_ecr_lifecycle_policy" "application" {
+  repository = aws_ecr_repository.application.name
+  policy = jsonencode({ rules = [{
+    rulePriority = 1
+    description  = "Expire untagged images after 14 days"
+    selection    = { tagStatus = "untagged", countType = "sinceImagePushed", countUnit = "days", countNumber = 14 }
+    action       = { type = "expire" }
+  }] })
+}
+resource "aws_ecr_lifecycle_policy" "build_cache" {
+  repository = aws_ecr_repository.build_cache.name
+  policy = jsonencode({ rules = [{
+    rulePriority = 1
+    description  = "Cache is disposable, not a release retention policy"
+    selection    = { tagStatus = "any", countType = "sinceImagePushed", countUnit = "days", countNumber = 14 }
+    action       = { type = "expire" }
+  }] })
+}
+resource "aws_s3_bucket" "runner_cache" {
+  bucket_prefix = "docs-ci-cache-"
+  tags          = local.tags
+}
+resource "aws_s3_bucket_public_access_block" "runner_cache" {
+  bucket                  = aws_s3_bucket.runner_cache.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+resource "aws_s3_bucket_server_side_encryption_configuration" "runner_cache" {
+  bucket = aws_s3_bucket.runner_cache.id
+  rule {
+    apply_server_side_encryption_by_default { sse_algorithm = "AES256" }
+  }
+}
+resource "aws_s3_bucket_lifecycle_configuration" "runner_cache" {
+  bucket = aws_s3_bucket.runner_cache.id
+  rule {
+    id     = "runner-cache"
+    status = "Enabled"
+    filter { prefix = "runner/" }
+    expiration { days = 14 }
+  }
+}
+resource "aws_iam_role" "gitlab" {
+  for_each    = toset(["manager", "build"])
+  name_prefix = "gitlab-${each.key}-"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "pods.eks.amazonaws.com" }
+      Action    = ["sts:AssumeRole", "sts:TagSession"]
+      Condition = { StringEquals = {
+        "aws:RequestTag/eks-cluster-arn"            = data.aws_eks_cluster.ci.arn
+        "aws:RequestTag/kubernetes-namespace"       = "gitlab-ci"
+        "aws:RequestTag/kubernetes-service-account" = "gitlab-${each.key}"
+      } }
+    }]
   })
+  tags = local.tags
 }
-
-# Cross-account access policy
-resource "aws_ecr_repository_policy" "cross_account" {
-  count      = length(var.cross_account_ids) > 0 ? 1 : 0
-  repository = aws_ecr_repository.this.name
-
+resource "aws_eks_pod_identity_association" "gitlab" {
+  for_each        = aws_iam_role.gitlab
+  cluster_name    = var.cluster_name
+  namespace       = "gitlab-ci"
+  service_account = "gitlab-${each.key}"
+  role_arn        = each.value.arn
+}
+resource "aws_iam_policy" "ecr_publish" {
+  name_prefix = "docs-ci-ecr-"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      { Effect = "Allow", Action = "ecr:GetAuthorizationToken", Resource = "*", Condition = { StringEquals = { "aws:RequestedRegion" = var.region } } },
       {
-        Sid    = "CrossAccountPull"
-        Effect = "Allow"
-        Principal = {
-          AWS = [for id in var.cross_account_ids : "arn:aws:iam::${id}:root"]
-        }
-        Action = [
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage",
-          "ecr:BatchCheckLayerAvailability"
-        ]
+        Effect   = "Allow"
+        Action   = ["ecr:BatchCheckLayerAvailability", "ecr:GetDownloadUrlForLayer", "ecr:BatchGetImage", "ecr:PutImage", "ecr:InitiateLayerUpload", "ecr:UploadLayerPart", "ecr:CompleteLayerUpload"]
+        Resource = [aws_ecr_repository.application.arn, aws_ecr_repository.build_cache.arn]
       }
     ]
   })
 }
-
-output "repository_url" {
-  value = aws_ecr_repository.this.repository_url
+resource "aws_iam_role_policy_attachment" "gitlab_build" {
+  role       = aws_iam_role.gitlab["build"].name
+  policy_arn = aws_iam_policy.ecr_publish.arn
 }
-
-output "repository_arn" {
-  value = aws_ecr_repository.this.arn
+resource "aws_iam_role_policy" "gitlab_manager_cache" {
+  role = aws_iam_role.gitlab["manager"].name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      { Effect = "Allow", Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"], Resource = "${aws_s3_bucket.runner_cache.arn}/runner/*" },
+      { Effect = "Allow", Action = "s3:GetBucketLocation", Resource = aws_s3_bucket.runner_cache.arn }
+    ]
+  })
+}
+# Reuse the account's existing GitHub OIDC provider; do not create a duplicate.
+resource "aws_iam_role" "github_publish" {
+  name_prefix = "github-ci-publish-"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = var.github_oidc_provider_arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" }
+        StringLike = { "token.actions.githubusercontent.com:sub" = [
+          "repo:${var.github_repository}:ref:refs/heads/main",
+          "repo:${var.github_repository}:ref:refs/tags/v*"
+        ] }
+      }
+    }]
+  })
+  tags = local.tags
+}
+resource "aws_iam_role_policy_attachment" "github_publish" {
+  role       = aws_iam_role.github_publish.name
+  policy_arn = aws_iam_policy.ecr_publish.arn
 }
 ```
-
-### 1.2 Configuración de replicación de ECR
-
-Habilita la replicación cross-region para recuperación ante desastres:
 
 ```hcl
-# ecr-replication.tf
-
-resource "aws_ecr_replication_configuration" "this" {
-  replication_configuration {
-    rule {
-      destination {
-        region      = "us-west-2"
-        registry_id = data.aws_caller_identity.current.account_id
-      }
-
-      repository_filter {
-        filter      = "prod-"
-        filter_type = "PREFIX_MATCH"
-      }
-    }
-
-    rule {
-      destination {
-        region      = "eu-west-1"
-        registry_id = data.aws_caller_identity.current.account_id
-      }
-
-      repository_filter {
-        filter      = "prod-"
-        filter_type = "PREFIX_MATCH"
-      }
-    }
+# variables.tf
+variable "region" {
+  type    = string
+  default = "ap-northeast-2"
+}
+variable "project_name" {
+  type    = string
+  default = "docs-ci"
+}
+variable "cluster_name" { type = string }
+variable "github_oidc_provider_arn" {
+  description = "Existing account OIDC provider for token.actions.githubusercontent.com"
+  type        = string
+}
+variable "github_repository" {
+  description = "Exact owner/repository; protect main and v* release tags in GitHub"
+  type        = string
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", var.github_repository))
+    error_message = "Supply an exact owner/repository, without wildcards."
   }
 }
 ```
-
-### 1.3 Configuración de scanning mejorado
-
-Configura el scanning mejorado de ECR con Inspector:
 
 ```hcl
-# ecr-scanning.tf
-
-resource "aws_ecr_registry_scanning_configuration" "this" {
-  scan_type = "ENHANCED"
-
-  rule {
-    scan_frequency = "CONTINUOUS_SCAN"
-    repository_filter {
-      filter      = "*"
-      filter_type = "WILDCARD"
-    }
-  }
-
-  rule {
-    scan_frequency = "SCAN_ON_PUSH"
-    repository_filter {
-      filter      = "dev-*"
-      filter_type = "WILDCARD"
-    }
-  }
-}
+# outputs.tf
+output "application_repository" { value = aws_ecr_repository.application.name }
+output "application_url" { value = aws_ecr_repository.application.repository_url }
+output "cache_repository" { value = aws_ecr_repository.build_cache.name }
+output "cache_url" { value = aws_ecr_repository.build_cache.repository_url }
+output "runner_cache_bucket" { value = aws_s3_bucket.runner_cache.id }
+output "github_publish_role_arn" { value = aws_iam_role.github_publish.arn }
 ```
 
----
+Usa un backend y un estado protegidos y distintos para esta raíz, y revisa el plan antes de aplicarlo. Incluye la salida del bucket de caché en los valores de GitLab y los nombres de los repositorios y el ARN del rol en las variables de CI. Las asociaciones de EKS Pod Identity no crean cuentas de servicio; también se necesitan las cuentas coincidentes que aparecen a continuación.
+
+### Retención, análisis y replicación
+
+- Las listas de prefijos o patrones de ciclo de vida son condiciones **AND aplicadas a las etiquetas de una imagen**, no una lista OR de ramas. ECR no sabe qué imágenes están ejecutando los clústeres de EKS ni qué versiones necesitas para una reversión. Previsualiza las políticas y los requisitos de retención antes de añadir reglas que eliminen imágenes etiquetadas.
+- La configuración de análisis del registro abarca toda la cuenta y la región. Los eventos de análisis básico de ECR y los hallazgos de Inspector mejorado tienen esquemas distintos. El análisis continuo tiene prioridad sobre una regla coincidente de análisis al publicar; una regla continua amplia `*` no deja una regla de desarrollo más específica en modo de análisis solo al publicar.
+- High y Critical son valores de gravedad alternativos, no dos campos que deban ser positivos a la vez. Un análisis fallido o incompleto no significa que la imagen esté limpia. La puerta de Trivy de CI que se muestra más adelante es independiente de las notificaciones de ECR/Inspector.
+- Para extraer imágenes entre cuentas se necesitan tanto la política de recursos del repositorio como los permisos de identidad del llamador, incluido el acceso al token de autorización de ECR. Prefiere roles específicos en lugar de conceder acceso a todos los principales de una cuenta.
+- La replicación entre cuentas también requiere permisos en el registro de destino. Es asíncrona y no completa automáticamente las imágenes existentes ni copia todos los ajustes de ciclo de vida, análisis o repositorio.
+
+Consulta la [guía revisada de Amazon ECR](../container-registry/02-amazon-ecr.md) para conocer las alternativas completas a nivel de registro y las [prácticas recomendadas para registros](../container-registry/04-best-practices.md) para promoción, retención y firma. No permitas que cada stack de aplicación sobrescriba una configuración de registro compartida.
 
 ## 2. GitLab Runner en EKS
 
-### 2.1 Valores Helm de GitLab Runner
+### Cuentas de servicio y registro de runners protegidos
 
-Despliega GitLab Runner con Kubernetes executor para builds dinámicos basados en pod:
+Usa el namespace y las cuentas que se muestran a continuación. Crea **dos runners de proyecto en el servidor**, con acceso protegido y las etiquetas `eks-ci-amd64` y `eks-ci-arm64`; después, crea sus Secrets de token de autenticación. Con el flujo moderno de tokens de autenticación, configura las etiquetas, la protección y run-untagged en GitLab; no des por hecho que las antiguas opciones de registro o los valores de Helm los actualizarán.
 
 ```yaml
-# gitlab-runner/values.yaml
+# gitlab-prerequisites.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitlab-ci
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+---
+# No Kubernetes API token is needed by build jobs. AWS Pod Identity uses its
+# own projected token, provided by the configured association.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitlab-build
+  namespace: gitlab-ci
+automountServiceAccountToken: false
 
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitlab-manager
+  namespace: gitlab-ci
+```
+
+Guarda los tokens fuera de Git y de los valores/estado de Terraform. El chart usa los Secrets existentes `gitlab-runner-auth-amd64` y `gitlab-runner-auth-arm64` en `gitlab-ci`. Espera las claves `runner-token` y la clave de compatibilidad `runner-registration-token` (vacía). Usa archivos protegidos o un flujo de secretos externos; no pongas los valores de los tokens en la línea de comandos del shell:
+
+```bash
+# Repeat for the ARM runner using its own protected token file and Secret name.
+kubectl create secret generic gitlab-runner-auth-amd64 -n gitlab-ci \
+  --from-file=runner-token=/protected/gitlab-amd64-token \
+  --from-literal=runner-registration-token=''
+```
+
+Coordina la rotación de tokens con el origen real del secreto y el comportamiento de recarga/reinicio del runner. La cuenta de servicio del administrador necesita acceso a la API de Kubernetes; los Pods de compilación desactivan el token normal de la API de Kubernetes mientras Pod Identity proporciona su propio token de AWS.
+
+### Valores estables de Helm y configuración del runner
+
+La siguiente configuración corresponde a la versión AMD64. Usa el chart versionado, no la versión `bleeding` de una rama de desarrollo. La variante ARM cambia la arquitectura del administrador y del trabajo, y el Secret del token; ambos administradores pueden usar la cuenta de servicio creada previamente.
+
+```yaml
+# gitlab-values.yaml
+# GitLab Runner chart 0.92.1 / Runner 19.3.1. Trusted protected jobs only.
 gitlabUrl: https://gitlab.example.com/
-runnerRegistrationToken: ""  # Use runnerToken instead (deprecated)
-
-# Use authentication token (GitLab 16.0+)
-runnerToken: ""  # Set via --set or external secret
-
-concurrent: 10
+concurrent: 4
 checkInterval: 3
-
 rbac:
   create: true
+  clusterWideAccess: false
   rules:
     - apiGroups: [""]
-      resources: ["pods", "pods/exec", "secrets", "configmaps"]
-      verbs: ["get", "list", "watch", "create", "patch", "delete"]
+      resources: [pods]
+      verbs: [create, delete, get, list, watch]
     - apiGroups: [""]
-      resources: ["pods/log"]
-      verbs: ["get"]
-
+      resources: [pods/attach, pods/exec]
+      verbs: [create, delete, get, patch]
+    - apiGroups: [""]
+      resources: [pods/log]
+      verbs: [get, list]
+    - apiGroups: [""]
+      resources: [secrets]
+      verbs: [create, delete, get, update]
+    - apiGroups: [""]
+      resources: [services]
+      verbs: [create, get]
+    - apiGroups: [""]
+      resources: [serviceaccounts]
+      verbs: [get]
+    - apiGroups: [""]
+      resources: [events]
+      verbs: [list, watch]
 serviceAccount:
-  create: true
-  name: gitlab-runner
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/GitLabRunnerRole
-
+  create: false
+  name: gitlab-manager
+resources:
+  requests: {cpu: 200m, memory: 256Mi}
+  limits: {cpu: "1", memory: 512Mi}
+nodeSelector:
+  workload-type: ci-builder
+  kubernetes.io/arch: amd64
+tolerations:
+  - key: ci-builder
+    operator: Equal
+    value: "true"
+    effect: NoSchedule
+service:
+  enabled: true
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false
 runners:
+  secret: gitlab-runner-auth-amd64
   config: |
     [[runners]]
-      name = "eks-runner"
       executor = "kubernetes"
       [runners.kubernetes]
-        namespace = "gitlab-runner"
-        image = "alpine:latest"
-        privileged = false
-
-        # Pod resources
-        cpu_limit = "2"
+        namespace = "gitlab-ci"
+        service_account = "gitlab-build"
+        automount_service_account_token = false
+        image = "docker.io/library/docker@sha256:eccaacfeed644c7de222ff047483568cb988dde95476fbaaf10ea2d04921bb66"
+        privileged = true
+        poll_interval = 3
+        poll_timeout = 600
         cpu_request = "500m"
-        memory_limit = "4Gi"
+        cpu_limit = "2"
         memory_request = "1Gi"
-
-        # Service account for builds
-        service_account = "gitlab-runner-build"
-
-        # Node selection
+        memory_limit = "4Gi"
+        helper_cpu_request = "100m"
+        helper_memory_request = "128Mi"
+        helper_image_autoset_arch_and_os = true
         [runners.kubernetes.node_selector]
-          "kubernetes.io/os" = "linux"
-          "node.kubernetes.io/instance-type" = "m6i.xlarge"
-
-        # Tolerations for dedicated CI nodes
-        [[runners.kubernetes.node_tolerations]]
-          key = "ci-workload"
-          operator = "Equal"
-          value = "true"
-          effect = "NoSchedule"
-
-        # Pod labels
-        [runners.kubernetes.pod_labels]
-          "app.kubernetes.io/component" = "ci-build"
-
-        # Pod annotations for monitoring
-        [runners.kubernetes.pod_annotations]
-          "prometheus.io/scrape" = "true"
-
-        # Helper image configuration
-        helper_image = "gitlab/gitlab-runner-helper:x86_64-latest"
-
-        # Build container security context
-        [runners.kubernetes.build_container_security_context]
-          run_as_user = 1000
-          run_as_group = 1000
-          run_as_non_root = true
-
-        # Volume mounts for caching
+          "workload-type" = "ci-builder"
+          "kubernetes.io/arch" = "amd64"
+        [runners.kubernetes.node_tolerations]
+          "ci-builder=true" = "NoSchedule"
         [[runners.kubernetes.volumes.empty_dir]]
-          name = "docker-cache"
-          mount_path = "/var/lib/docker"
+          name = "docker-certs"
+          mount_path = "/certs/client"
           medium = "Memory"
-
-        [[runners.kubernetes.volumes.empty_dir]]
-          name = "build-cache"
-          mount_path = "/cache"
-
       [runners.cache]
         Type = "s3"
+        Path = "runner"
         Shared = true
         [runners.cache.s3]
-          ServerAddress = "s3.amazonaws.com"
-          BucketName = "gitlab-runner-cache-123456789012"
-          BucketLocation = "us-east-1"
-
-  # Tags for job matching
-  tags: "eks,docker,linux"
-  runUntagged: false
-  protected: false
-
-# Resource limits for runner manager pod
-resources:
-  limits:
-    memory: 256Mi
-    cpu: 200m
-  requests:
-    memory: 128Mi
-    cpu: 100m
-
-# Pod security context
-podSecurityContext:
-  runAsNonRoot: true
-  runAsUser: 100
-  fsGroup: 65533
-
-# Affinity for runner manager
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: node.kubernetes.io/instance-type
-              operator: In
-              values:
-                - t3.medium
-                - t3.large
-
-# Metrics for monitoring
-metrics:
-  enabled: true
-  portName: metrics
-  port: 9252
-  serviceMonitor:
-    enabled: true
+          BucketName = "REPLACE_CACHE_BUCKET"
+          BucketLocation = "ap-northeast-2"
+          AuthenticationType = "iam"
 ```
 
-### 2.2 Rol IAM para GitLab Runner (Pod Identity)
+`node_tolerations` es un mapa TOML. `poll_interval` consulta si se crearon Pods de Kubernetes; Helm `checkInterval` y runner `check_interval` se refieren a la consulta de trabajos al coordinador. No son equivalentes. La versión del helper corresponde a Runner 19.3.1; la arquitectura se selecciona mediante el selector de nodos explícito, no con una sobreescritura `x86_64-latest` del helper.
 
-```hcl
-# gitlab-runner-iam.tf
-
-# IAM Role for GitLab Runner
-resource "aws_iam_role" "gitlab_runner" {
-  name = "GitLabRunnerRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "pods.eks.amazonaws.com"
-        }
-        Action = [
-          "sts:AssumeRole",
-          "sts:TagSession"
-        ]
-      }
-    ]
-  })
-}
-
-# ECR push policy
-resource "aws_iam_role_policy" "gitlab_runner_ecr" {
-  name = "ecr-push-policy"
-  role = aws_iam_role.gitlab_runner.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "ecr:GetAuthorizationToken"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "ecr:BatchCheckLayerAvailability",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage",
-          "ecr:PutImage",
-          "ecr:InitiateLayerUpload",
-          "ecr:UploadLayerPart",
-          "ecr:CompleteLayerUpload",
-          "ecr:DescribeRepositories",
-          "ecr:ListImages"
-        ]
-        Resource = "arn:aws:ecr:*:${data.aws_caller_identity.current.account_id}:repository/*"
-      }
-    ]
-  })
-}
-
-# S3 cache policy
-resource "aws_iam_role_policy" "gitlab_runner_cache" {
-  name = "s3-cache-policy"
-  role = aws_iam_role.gitlab_runner.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
-        ]
-        Resource = [
-          "arn:aws:s3:::gitlab-runner-cache-${data.aws_caller_identity.current.account_id}",
-          "arn:aws:s3:::gitlab-runner-cache-${data.aws_caller_identity.current.account_id}/*"
-        ]
-      }
-    ]
-  })
-}
-
-# Pod Identity Association
-resource "aws_eks_pod_identity_association" "gitlab_runner" {
-  cluster_name    = var.cluster_name
-  namespace       = "gitlab-runner"
-  service_account = "gitlab-runner"
-  role_arn        = aws_iam_role.gitlab_runner.arn
-}
-
-# Also create association for build service account
-resource "aws_eks_pod_identity_association" "gitlab_runner_build" {
-  cluster_name    = var.cluster_name
-  namespace       = "gitlab-runner"
-  service_account = "gitlab-runner-build"
-  role_arn        = aws_iam_role.gitlab_runner.arn
-}
-```
-
-### 2.3 Pipeline de GitLab CI completo
-
-```yaml
-# .gitlab-ci.yml
-
-stages:
-  - build
-  - test
-  - security
-  - push
-  - deploy
-
-variables:
-  AWS_REGION: us-east-1
-  ECR_REGISTRY: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-  IMAGE_NAME: myapp
-  DOCKER_BUILDKIT: "1"
-
-.docker-login: &docker-login
-  - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
-
-.build-base:
-  tags:
-    - eks
-    - docker
-  before_script:
-    - *docker-login
-
-# Build stage
-build:
-  extends: .build-base
-  stage: build
-  image: docker:24-dind
-  services:
-    - docker:24-dind
-  script:
-    - docker build
-        --cache-from ${ECR_REGISTRY}/${IMAGE_NAME}:cache
-        --build-arg BUILDKIT_INLINE_CACHE=1
-        -t ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-        -t ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_REF_SLUG}
-        .
-    - docker push ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-    - docker push ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_REF_SLUG}
-  cache:
-    key: docker-${CI_COMMIT_REF_SLUG}
-    paths:
-      - /cache
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-
-# Unit tests
-test:unit:
-  stage: test
-  image: ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-  tags:
-    - eks
-  script:
-    - npm test
-  coverage: '/Lines\s*:\s*(\d+\.?\d*)%/'
-  artifacts:
-    reports:
-      junit: test-results.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage/cobertura-coverage.xml
-  needs:
-    - build
-
-# Integration tests
-test:integration:
-  stage: test
-  image: ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-  tags:
-    - eks
-  services:
-    - name: postgres:15
-      alias: db
-    - name: redis:7
-      alias: cache
-  variables:
-    DATABASE_URL: postgres://postgres:postgres@db:5432/test
-    REDIS_URL: redis://cache:6379
-  script:
-    - npm run test:integration
-  needs:
-    - build
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: manual
-
-# Security scanning
-security:trivy:
-  stage: security
-  image: aquasec/trivy:latest
-  tags:
-    - eks
-  before_script:
-    - *docker-login
-  script:
-    - trivy image
-        --exit-code 1
-        --severity HIGH,CRITICAL
-        --ignore-unfixed
-        --format json
-        --output trivy-report.json
-        ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-  artifacts:
-    reports:
-      container_scanning: trivy-report.json
-  allow_failure: true
-  needs:
-    - build
-
-# Push to production registry
-push:production:
-  extends: .build-base
-  stage: push
-  image: docker:24
-  script:
-    - docker pull ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-    - docker tag ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA} ${ECR_REGISTRY}/${IMAGE_NAME}:latest
-    - docker tag ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA} ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_TAG}
-    - docker push ${ECR_REGISTRY}/${IMAGE_NAME}:latest
-    - docker push ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_TAG}
-  needs:
-    - test:unit
-    - security:trivy
-  rules:
-    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
-
-# Deploy to staging
-deploy:staging:
-  stage: deploy
-  image: bitnami/kubectl:latest
-  tags:
-    - eks
-  script:
-    - kubectl set image deployment/myapp myapp=${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA} -n staging
-    - kubectl rollout status deployment/myapp -n staging --timeout=300s
-  environment:
-    name: staging
-    url: https://staging.example.com
-  needs:
-    - test:unit
-    - test:integration
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-```
-
-### 2.4 Gestión del token de Runner con External Secrets
-
-```yaml
-# gitlab-runner-secret.yaml
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: gitlab-runner-token
-  namespace: gitlab-runner
-spec:
-  refreshInterval: 1h
-  secretStoreRef:
-    name: aws-secrets-manager
-    kind: SecretStore
-  target:
-    name: gitlab-runner-secret
-    creationPolicy: Owner
-  data:
-    - secretKey: runner-token
-      remoteRef:
-        key: gitlab/runner-token
-        property: token
-```
-
----
-
-## 3. GitHub Self-Hosted Runner (Actions Runner Controller)
-
-### 3.1 Instalación de ARC con Helm
+Las métricas corresponden al administrador, no a cada Pod de compilación. ServiceMonitor permanece deshabilitado hasta que existan su CRD y la configuración de monitorización. S3 `AuthenticationType=iam` usa la cadena de credenciales del administrador si `RoleARN` no está definido; al establecer `RoleARN` cambia el comportamiento de las credenciales de caché y se necesita una política independiente y revisada.
 
 ```bash
-# Add the ARC Helm repository
-helm repo add actions-runner-controller https://actions-runner-controller.github.io/actions-runner-controller
-helm repo update
-
-# Create namespace
-kubectl create namespace actions-runner-system
+# After namespace, accounts, Secrets, IAM associations, and CI nodes are ready.
+helm upgrade --install gitlab-amd64 gitlab-runner \
+  --repo https://charts.gitlab.io --version 0.92.1 \
+  --namespace gitlab-ci --values gitlab-values.yaml
+# Use a separate token and replace both amd64 selectors with arm64 in the ARM values.
+helm upgrade --install gitlab-arm64 gitlab-runner \
+  --repo https://charts.gitlab.io --version 0.92.1 \
+  --namespace gitlab-ci --values gitlab-arm64-values.yaml
 ```
+
+### Imagen de herramientas de CI y pipeline
+
+La imagen estándar de Docker no incluye todos los comandos de AWS que usa el pipeline. Compila, analiza y publica esta imagen de herramientas en un entorno de arranque de confianza para ambas arquitecturas. Asigna a `CI_TOOLS_IMAGE` el digest de índice inmutable aprobado. Alpine 3.24 proporciona AWS CLI para AMD64 y ARM64; registra el digest de la imagen resultante en lugar de suponer que futuras reconstrucciones de paquetes producirán bytes idénticos.
+
+```dockerfile
+# Dockerfile.ci-tools
+# Build in a trusted bootstrap environment, scan, and publish with an immutable digest.
+FROM docker.io/library/docker@sha256:eccaacfeed644c7de222ff047483568cb988dde95476fbaaf10ea2d04921bb66
+RUN apk add --no-cache bash aws-cli jq
+```
+
+El pipeline usa trabajos matriciales nativos con dependencias de compilación → análisis → publicación 1:1, compatibles con GitLab 19.3. Cada archivo se analiza antes de publicar esa misma imagen. El JSON nativo de Trivy es un artefacto descargable; no se etiqueta incorrectamente como si tuviera el esquema de informe de análisis de contenedores de GitLab. Los archivos de digest finales de cada arquitectura tienen nombres distintos para evitar que el trabajo del manifiesto sobrescriba artefactos.
 
 ```yaml
-# arc-values.yaml
-
-replicaCount: 1
-
-image:
-  repository: ghcr.io/actions/actions-runner-controller
-  tag: "0.9.3"
-
-serviceAccount:
-  create: true
-  name: actions-runner-controller
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ActionsRunnerControllerRole
-
-# Authentication via GitHub App (recommended)
-authSecret:
-  enabled: true
-  create: false
-  name: controller-manager
-
-# GitHub App configuration
-githubAPP:
-  enabled: true
-
-# Controller resources
-resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
-
-# Metrics
-metrics:
-  serviceMonitor:
-    enabled: true
-
-# Pod security
-podSecurityContext:
-  runAsNonRoot: true
-  runAsUser: 1000
-  fsGroup: 1000
-
-# Webhook configuration for scale-from-zero
-githubWebhookServer:
-  enabled: true
-  replicaCount: 1
-  service:
-    type: ClusterIP
-  ingress:
-    enabled: true
-    ingressClassName: alb
-    annotations:
-      alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/target-type: ip
-      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:123456789012:certificate/xxx
-    hosts:
-      - host: arc-webhook.example.com
-        paths:
-          - path: /
-            pathType: Prefix
-```
-
-Instala ARC:
-
-```bash
-helm install arc actions-runner-controller/actions-runner-controller \
-  -n actions-runner-system \
-  -f arc-values.yaml
-```
-
-### 3.2 Secret de GitHub App
-
-```yaml
-# github-app-secret.yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: controller-manager
-  namespace: actions-runner-system
-type: Opaque
-stringData:
-  github_app_id: "123456"
-  github_app_installation_id: "12345678"
-  github_app_private_key: |
-    -----BEGIN RSA PRIVATE KEY-----
-    ...
-    -----END RSA PRIVATE KEY-----
-```
-
-### 3.3 Configuración de RunnerDeployment
-
-```yaml
-# runner-deployment.yaml
-apiVersion: actions.summerwind.dev/v1alpha1
-kind: RunnerDeployment
-metadata:
-  name: eks-runners
-  namespace: actions-runner-system
-spec:
-  replicas: 2
-  template:
-    spec:
-      organization: my-org
-      # Or use repository for repo-level runners:
-      # repository: my-org/my-repo
-
-      labels:
-        - eks
-        - linux
-        - x64
-
-      group: production
-
-      image: summerwind/actions-runner:latest
-
-      serviceAccountName: actions-runner
-
-      resources:
-        limits:
-          cpu: "2"
-          memory: 4Gi
-        requests:
-          cpu: "500m"
-          memory: 1Gi
-
-      nodeSelector:
-        kubernetes.io/os: linux
-        kubernetes.io/arch: amd64
-
-      tolerations:
-        - key: ci-workload
-          operator: Equal
-          value: "true"
-          effect: NoSchedule
-
-      # Docker-in-Docker mode
-      dockerdWithinRunnerContainer: true
-
-      # Volume mounts
-      volumeMounts:
-        - name: work
-          mountPath: /runner/_work
-
-      volumes:
-        - name: work
-          emptyDir: {}
-
-      env:
-        - name: DOCKER_BUILDKIT
-          value: "1"
-        - name: AWS_REGION
-          value: us-east-1
-```
-
-### 3.4 RunnerSet para runners con estado
-
-```yaml
-# runner-set.yaml
-apiVersion: actions.summerwind.dev/v1alpha1
-kind: RunnerSet
-metadata:
-  name: eks-runner-set
-  namespace: actions-runner-system
-spec:
-  organization: my-org
-
-  replicas: 3
-
-  selector:
-    matchLabels:
-      app: runner
-
-  serviceName: runner
-
-  template:
-    metadata:
-      labels:
-        app: runner
-    spec:
-      serviceAccountName: actions-runner
-
-      containers:
-        - name: runner
-          image: summerwind/actions-runner:latest
-          resources:
-            limits:
-              cpu: "4"
-              memory: 8Gi
-            requests:
-              cpu: "1"
-              memory: 2Gi
-
-          volumeMounts:
-            - name: runner-work
-              mountPath: /runner/_work
-            - name: docker-cache
-              mountPath: /var/lib/docker
-
-      nodeSelector:
-        node.kubernetes.io/instance-type: m6i.2xlarge
-
-  volumeClaimTemplates:
-    - metadata:
-        name: runner-work
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: gp3
-        resources:
-          requests:
-            storage: 100Gi
-    - metadata:
-        name: docker-cache
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: gp3
-        resources:
-          requests:
-            storage: 50Gi
-```
-
-### 3.5 HorizontalRunnerAutoscaler (escalado desde cero)
-
-```yaml
-# horizontal-runner-autoscaler.yaml
-apiVersion: actions.summerwind.dev/v1alpha1
-kind: HorizontalRunnerAutoscaler
-metadata:
-  name: eks-runners-autoscaler
-  namespace: actions-runner-system
-spec:
-  scaleTargetRef:
-    kind: RunnerDeployment
-    name: eks-runners
-
-  minReplicas: 0
-  maxReplicas: 20
-
-  scaleDownDelaySecondsAfterScaleOut: 300
-
-  metrics:
-    - type: TotalNumberOfQueuedAndInProgressWorkflowRuns
-      repositoryNames:
-        - my-org/repo1
-        - my-org/repo2
-
-  # Scale up triggers
-  scaleUpTriggers:
-    - githubEvent:
-        workflowJob: {}
-      amount: 1
-      duration: "5m"
-```
-
-### 3.6 Workflow completo de GitHub Actions
-
-```yaml
-# .github/workflows/build-push.yaml
-
-name: Build and Push to ECR
-
-on:
-  push:
-    branches: [main]
-    tags: ['v*']
-  pull_request:
-    branches: [main]
-
-env:
-  AWS_REGION: us-east-1
-  ECR_REPOSITORY: myapp
-
-permissions:
-  id-token: write
-  contents: read
-  packages: write
-
-jobs:
-  build:
-    runs-on: [self-hosted, eks, linux, x64]
-
-    outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build.outputs.digest }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=sha,prefix=
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
-          cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache,mode=max
-          provenance: false
-
-  test:
-    runs-on: [self-hosted, eks, linux, x64]
-    needs: build
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Run tests
-        run: |
-          npm ci
-          npm test
-
-  security-scan:
-    runs-on: [self-hosted, eks, linux, x64]
-    needs: build
-    if: github.event_name != 'pull_request'
-
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ needs.build.outputs.image-tag }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'HIGH,CRITICAL'
-
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-  deploy:
-    runs-on: [self-hosted, eks, linux, x64]
-    needs: [build, security-scan]
-    if: github.ref == 'refs/heads/main'
-    environment: production
-
-    steps:
-      - name: Deploy to EKS
-        run: |
-          kubectl set image deployment/myapp \
-            myapp=${{ needs.build.outputs.image-tag }} \
-            -n production
-          kubectl rollout status deployment/myapp -n production
-```
-
-### 3.7 Rol IAM para GitHub Actions Runner
-
-```hcl
-# github-actions-runner-iam.tf
-
-resource "aws_iam_role" "github_actions_runner" {
-  name = "GitHubActionsRunnerRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "pods.eks.amazonaws.com"
-        }
-        Action = [
-          "sts:AssumeRole",
-          "sts:TagSession"
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "github_actions_ecr" {
-  role       = aws_iam_role.github_actions_runner.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
-}
-
-resource "aws_eks_pod_identity_association" "github_actions_runner" {
-  cluster_name    = var.cluster_name
-  namespace       = "actions-runner-system"
-  service_account = "actions-runner"
-  role_arn        = aws_iam_role.github_actions_runner.arn
-}
-```
-
----
-
-## 4. Build multi-platform (ARM + x86)
-
-### 4.1 Configuración de runner ARM (Graviton)
-
-```yaml
-# arm-runner-deployment.yaml
-apiVersion: actions.summerwind.dev/v1alpha1
-kind: RunnerDeployment
-metadata:
-  name: eks-arm-runners
-  namespace: actions-runner-system
-spec:
-  replicas: 2
-  template:
-    spec:
-      organization: my-org
-
-      labels:
-        - eks
-        - linux
-        - arm64
-        - graviton
-
-      image: summerwind/actions-runner:latest
-
-      serviceAccountName: actions-runner
-
-      resources:
-        limits:
-          cpu: "4"
-          memory: 8Gi
-        requests:
-          cpu: "1"
-          memory: 2Gi
-
-      nodeSelector:
-        kubernetes.io/os: linux
-        kubernetes.io/arch: arm64
-        node.kubernetes.io/instance-type: m7g.xlarge
-
-      tolerations:
-        - key: arch
-          operator: Equal
-          value: arm64
-          effect: NoSchedule
-
-      dockerdWithinRunnerContainer: true
-```
-
-### 4.2 Configuración de runner x86
-
-```yaml
-# x86-runner-deployment.yaml
-apiVersion: actions.summerwind.dev/v1alpha1
-kind: RunnerDeployment
-metadata:
-  name: eks-x86-runners
-  namespace: actions-runner-system
-spec:
-  replicas: 2
-  template:
-    spec:
-      organization: my-org
-
-      labels:
-        - eks
-        - linux
-        - amd64
-        - x64
-
-      image: summerwind/actions-runner:latest
-
-      nodeSelector:
-        kubernetes.io/os: linux
-        kubernetes.io/arch: amd64
-        node.kubernetes.io/instance-type: m6i.xlarge
-
-      dockerdWithinRunnerContainer: true
-```
-
-### 4.3 Workflow multi-platform de GitHub Actions
-
-```yaml
-# .github/workflows/multi-arch-build.yaml
-
-name: Multi-Architecture Build
-
-on:
-  push:
-    branches: [main]
-    tags: ['v*']
-
-env:
-  AWS_REGION: us-east-1
-  ECR_REPOSITORY: myapp
-
-permissions:
-  id-token: write
-  contents: read
-
-jobs:
-  build-amd64:
-    runs-on: [self-hosted, eks, linux, amd64]
-    outputs:
-      digest: ${{ steps.build.outputs.digest }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push AMD64
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}-amd64
-          platforms: linux/amd64
-          provenance: false
-
-  build-arm64:
-    runs-on: [self-hosted, eks, linux, arm64]
-    outputs:
-      digest: ${{ steps.build.outputs.digest }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push ARM64
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}-arm64
-          platforms: linux/arm64
-          provenance: false
-
-  create-manifest:
-    runs-on: [self-hosted, eks, linux, amd64]
-    needs: [build-amd64, build-arm64]
-
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Create and push manifest
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: |
-          # Create manifest list
-          docker manifest create ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA} \
-            ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}-amd64 \
-            ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}-arm64
-
-          # Annotate with architecture info
-          docker manifest annotate ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA} \
-            ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}-amd64 \
-            --os linux --arch amd64
-
-          docker manifest annotate ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA} \
-            ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}-arm64 \
-            --os linux --arch arm64
-
-          # Push manifest
-          docker manifest push ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}
-
-          # Tag as latest for main branch
-          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
-            docker manifest create ${REGISTRY}/${ECR_REPOSITORY}:latest \
-              ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}-amd64 \
-              ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}-arm64
-            docker manifest push ${REGISTRY}/${ECR_REPOSITORY}:latest
-          fi
-```
-
-### 4.4 GitLab CI multi-platform con matrix
-
-```yaml
-# .gitlab-ci.yml (multi-arch)
-
-stages:
-  - build
-  - manifest
-  - deploy
-
+# gitlab-ci.yaml
+# The registered runner must be protected and limited to this trusted project.
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED == "true" && ($CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/)'
+    - when: never
+stages: [test, build, scan, publish, manifest]
 variables:
-  AWS_REGION: us-east-1
-  ECR_REGISTRY: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-  IMAGE_NAME: myapp
+  AWS_REGION: ap-northeast-2
+  ECR_REGISTRY: REPLACE_ACCOUNT.dkr.ecr.ap-northeast-2.amazonaws.com
+  ECR_REPOSITORY: docs-ci/application
+  ECR_CACHE_REPOSITORY: docs-ci/build-cache
+  # Publish Dockerfile.ci-tools first; replace with its approved immutable image URI.
+  CI_TOOLS_IMAGE: registry.example.invalid/ci-tools@sha256:REPLACE_DIGEST
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: /certs
+  DOCKER_TLS_VERIFY: "1"
+  DOCKER_CERT_PATH: /certs/client
 
-.docker-login: &docker-login
-  - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+default:
+  tags: [eks-ci-amd64]
 
-# Parallel architecture builds
-build:
-  stage: build
-  image: docker:24-dind
-  services:
-    - docker:24-dind
+.native: &native
+  tags: [$RUNNER]
   parallel:
     matrix:
       - ARCH: amd64
-        RUNNER_TAG: x64
+        RUNNER: eks-ci-amd64
       - ARCH: arm64
-        RUNNER_TAG: graviton
-  tags:
-    - eks
-    - ${RUNNER_TAG}
-  before_script:
-    - *docker-login
+        RUNNER: eks-ci-arm64
+
+test:
+  stage: test
+  image: docker.io/library/node@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
   script:
-    - docker build
-        --platform linux/${ARCH}
-        -t ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}-${ARCH}
-        .
-    - docker push ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}-${ARCH}
+    - npm ci --cache .npm --prefer-offline
+    - npm run lint
+    - npm test
+  cache:
+    key:
+      prefix: node24-amd64-protected
+      files: [package-lock.json]
+    paths: [.npm/]
 
-# Create multi-arch manifest
-manifest:
-  stage: manifest
-  image: docker:24
-  tags:
-    - eks
-    - x64
+.docker-job:
+  image: $CI_TOOLS_IMAGE
+  services:
+    - name: docker.io/library/docker@sha256:5efed980cba3fc126cf54e21a5a6ff8849d05b6e0623d6e7612f48e9cd6cd17e
+      alias: docker
+      variables:
+        HEALTHCHECK_TCP_PORT: "2376"
   before_script:
-    - *docker-login
-  script:
-    # Create manifest list
-    - docker manifest create ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-        ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}-amd64
-        ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}-arm64
-
-    # Annotate architectures
-    - docker manifest annotate ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-        ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}-amd64
-        --os linux --arch amd64
-
-    - docker manifest annotate ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-        ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}-arm64
-        --os linux --arch arm64
-
-    # Push manifest
-    - docker manifest push ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}
-
-    # Tag as latest for default branch
     - |
-      if [ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]; then
-        docker manifest create ${ECR_REGISTRY}/${IMAGE_NAME}:latest \
-          ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}-amd64 \
-          ${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}-arm64
-        docker manifest push ${ECR_REGISTRY}/${IMAGE_NAME}:latest
-      fi
+      set -euo pipefail
+      for attempt in $(seq 1 60); do
+        docker info >/dev/null 2>&1 && break
+        sleep 1
+      done
+      docker info >/dev/null
+      aws ecr get-login-password --region "$AWS_REGION" |
+        docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
+build:
+  <<: *native
+  extends: .docker-job
+  stage: build
+  needs: [test]
+  script:
+    - |
+      set -euo pipefail
+      TAG="sha-${CI_COMMIT_SHA}-${CI_PIPELINE_ID}-${CI_JOB_ID}-${ARCH}"
+      IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
+      docker buildx create --name ci-builder --driver docker-container --use
+      docker buildx build --platform "linux/$ARCH" --load \
+        --cache-from "type=registry,ref=$ECR_REGISTRY/$ECR_CACHE_REPOSITORY:${ARCH}-protected" \
+        --cache-to "type=registry,ref=$ECR_REGISTRY/$ECR_CACHE_REPOSITORY:${ARCH}-protected,mode=max,image-manifest=true,oci-mediatypes=true" \
+        --tag "$IMAGE" .
+      docker save "$IMAGE" -o image.tar
+      printf 'IMAGE_TAG=%s\n' "$TAG" > build.env
+  artifacts:
+    paths: [image.tar]
+    reports:
+      dotenv: build.env
+    expire_in: 1 day
+
+scan:
+  <<: *native
+  stage: scan
+  image:
+    name: docker.io/aquasec/trivy@sha256:2416d1f74045b57274df1a340eee6b510cacd73c66a6ccb8da092b117eb7d222
+    entrypoint: [""]
   needs:
-    - build
+    - job: build
+      artifacts: true
+      parallel:
+        matrix:
+          - ARCH: ['$[[ matrix.ARCH ]]']
+            RUNNER: ['$[[ matrix.RUNNER ]]']
+  script:
+    - trivy image --input image.tar --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --format json --output trivy-report.json
+  artifacts:
+    when: always
+    paths: [trivy-report.json]
+    expire_in: 1 week
+  allow_failure: false
+
+publish:
+  <<: *native
+  extends: .docker-job
+  stage: publish
+  needs:
+    - job: build
+      artifacts: true
+      parallel:
+        matrix:
+          - ARCH: ['$[[ matrix.ARCH ]]']
+            RUNNER: ['$[[ matrix.RUNNER ]]']
+    - job: scan
+      artifacts: false
+      parallel:
+        matrix:
+          - ARCH: ['$[[ matrix.ARCH ]]']
+            RUNNER: ['$[[ matrix.RUNNER ]]']
+  script:
+    - |
+      set -euo pipefail
+      IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY"
+      docker load -i image.tar
+      docker push "$IMAGE:$IMAGE_TAG"
+      DIGEST="$(docker buildx imagetools inspect "$IMAGE:$IMAGE_TAG" --format '{{.Manifest.Digest}}')"
+      [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+      mkdir -p approved
+      printf '%s@%s\n' "$IMAGE" "$DIGEST" > "approved/$ARCH.txt"
+  artifacts:
+    paths: [approved/]
+    expire_in: 1 week
+
+manifest:
+  extends: .docker-job
+  stage: manifest
+  tags: [eks-ci-amd64]
+  needs:
+    - job: publish
+      artifacts: true
+  script:
+    - |
+      set -euo pipefail
+      IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY"
+      AMD64="$(cat approved/amd64.txt)"
+      ARM64="$(cat approved/arm64.txt)"
+      for REF in "$AMD64" "$ARM64"; do
+        [[ "$REF" == "$IMAGE@sha256:"* ]]
+        [[ "${REF##*@}" =~ ^sha256:[a-f0-9]{64}$ ]]
+      done
+      TAG="sha-${CI_COMMIT_SHA}-${CI_PIPELINE_ID}-${CI_JOB_ID}"
+      docker buildx imagetools create --tag "$IMAGE:$TAG" "$AMD64" "$ARM64"
+      DIGEST="$(docker buildx imagetools inspect "$IMAGE:$TAG" --format '{{.Manifest.Digest}}')"
+      [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+      docker buildx imagetools inspect "$IMAGE@$DIGEST" --raw | jq -e '
+        [.manifests[].platform | select(.os == "linux") | .architecture]
+        | unique | sort | . == ["amd64", "arm64"]
+      ' >/dev/null
+      printf 'APPROVED_IMAGE=%s@%s\n' "$IMAGE" "$DIGEST" > approved.env
+  artifacts:
+    reports:
+      dotenv: approved.env
+    expire_in: 1 week
 ```
 
-### 4.5 Buildx multi-platform (runner único)
+El servicio DinD requiere la opción de privilegios y el volumen compartido `/certs/client` en la configuración del runner. Las esperas de disponibilidad tienen un límite de tiempo. El estado del daemon y de las imágenes de Docker no se conserva entre trabajos: el archivo de imagen es el mecanismo explícito de transferencia. El artefacto final identifica el índice multi-plataforma aprobado; después de la aprobación, un workflow de GitOps independiente debe actualizar los manifiestos de despliegue.
 
-Para configuraciones más simples, usa Docker Buildx con emulación QEMU:
+## 3. GitHub Actions Runner Controller
+
+### Conjuntos de escalado actuales de runners
+
+Usa los charts OCI oficiales para conjuntos de escalado. `RunnerDeployment`, `RunnerSet` y `HorizontalRunnerAutoscaler` son recursos de otro modelo de controlador y no los instalan estos charts. El listener del conjunto de escalado actual detecta la demanda; no añadas una implementación webhook heredada y ajena al controlador para habilitar el escalado desde cero.
 
 ```yaml
-# .github/workflows/buildx-multi-arch.yaml
-
-name: Buildx Multi-Architecture
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  build:
-    runs-on: [self-hosted, eks, linux, amd64]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
-          aws-region: us-east-1
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push multi-platform
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/myapp:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/myapp:latest
-          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/myapp:cache
-          cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/myapp:cache,mode=max
+# arc-namespaces.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: arc-systems
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: arc-runners
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
 ```
 
+Crea `arc-github-app` en `arc-runners` mediante el flujo de secretos aprobado. Sus claves son `github_app_id`, `github_app_installation_id` y `github_app_private_key`. Usa un archivo protegido para la clave; no la incluyas directamente en un valor de Terraform o Helm. Instala la GitHub App con los permisos y el acceso a repositorios necesarios para el alcance elegido, ya sea un repositorio o una organización.
+
+```bash
+kubectl create secret generic arc-github-app -n arc-runners \
+  --from-literal=github_app_id=REPLACE_ID \
+  --from-literal=github_app_installation_id=REPLACE_INSTALLATION_ID \
+  --from-file=github_app_private_key=/protected/github-app.pem
+```
+
+```yaml
+# arc-controller-values.yaml
+replicaCount: 1
+serviceAccount:
+  create: true
+  name: arc-controller
+resources:
+  requests: {cpu: 100m, memory: 128Mi}
+  limits: {cpu: "1", memory: 512Mi}
+```
+
+```yaml
+# arc-runner-values.yaml
+# ARC 0.15.0, Kubernetes >=1.29. Dedicated CI cluster, trusted publish jobs only.
+githubConfigUrl: https://github.com/REPLACE_ORG/REPLACE_REPO
+githubConfigSecret: arc-github-app
+runnerScaleSetName: eks-ci-amd64
+minRunners: 0
+maxRunners: 4
+controllerServiceAccount:
+  namespace: arc-systems
+  name: arc-controller
+# Custom DinD template derived from the versioned chart; do not also set containerMode.
+template:
+  spec:
+    automountServiceAccountToken: false
+    nodeSelector:
+      workload-type: ci-builder
+      kubernetes.io/arch: amd64
+    tolerations:
+      - key: ci-builder
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
+    initContainers:
+      - name: init-dind-externals
+        image: ghcr.io/actions/actions-runner@sha256:e5496277be5d09bc968b3d64911b74e219ac4a3f2edce956a3ecf9271bea1ef4
+        command: [cp, -r, /home/runner/externals/., /home/runner/tmpDir/]
+        volumeMounts:
+          - name: dind-externals
+            mountPath: /home/runner/tmpDir
+      - name: dind
+        image: docker.io/library/docker@sha256:5efed980cba3fc126cf54e21a5a6ff8849d05b6e0623d6e7612f48e9cd6cd17e
+        args: [dockerd, --host=unix:///var/run/docker.sock, "--group=$(DOCKER_GROUP_GID)"]
+        env:
+          - name: DOCKER_GROUP_GID
+            value: "123"
+        securityContext:
+          privileged: true
+        restartPolicy: Always
+        startupProbe:
+          exec:
+            command: [docker, info]
+          failureThreshold: 24
+          periodSeconds: 5
+        resources:
+          requests: {cpu: 250m, memory: 512Mi}
+          limits: {cpu: "2", memory: 4Gi}
+        volumeMounts:
+          - name: work
+            mountPath: /home/runner/_work
+          - name: dind-sock
+            mountPath: /var/run
+          - name: dind-externals
+            mountPath: /home/runner/externals
+    containers:
+      - name: runner
+        image: ghcr.io/actions/actions-runner@sha256:e5496277be5d09bc968b3d64911b74e219ac4a3f2edce956a3ecf9271bea1ef4
+        command: [/home/runner/run.sh]
+        env:
+          - name: DOCKER_HOST
+            value: unix:///var/run/docker.sock
+          - name: RUNNER_WAIT_FOR_DOCKER_IN_SECONDS
+            value: "120"
+        resources:
+          requests: {cpu: 500m, memory: 1Gi}
+          limits: {cpu: "2", memory: 4Gi}
+        volumeMounts:
+          - name: work
+            mountPath: /home/runner/_work
+          - name: dind-sock
+            mountPath: /var/run
+    volumes:
+      - name: work
+        emptyDir: {}
+      - name: dind-sock
+        emptyDir: {}
+      - name: dind-externals
+        emptyDir: {}
+```
+
+Esta plantilla personalizada sigue el diseño DinD de sidecar nativo de Kubernetes ≥1.29 del chart y fija runner 2.337.0 y Docker 29.8.0. No definas también `containerMode` si proporcionas el diseño personalizado. El runner y DinD comparten las rutas de trabajo y del socket, y los ejecutables externos del runner. La cuenta de servicio generada para el runner no tiene un rol de publicación. La imagen estándar del runner incluye Docker/Buildx/jq/git, pero no AWS CLI; el workflow de abajo obtiene el digest final mediante Buildx.
+
+Para ARM, cambia `runnerScaleSetName` a `eks-ci-arm64` y la arquitectura del nodo a `arm64`. Usa esos nombres reales de conjunto de escalado en `runs-on`; el nombre de un grupo de runners de la organización no se convierte automáticamente en la etiqueta del trabajo. ARC 0.15.0 también expone `scaleSetLabels` si se necesitan etiquetas adicionales.
+
+```bash
+helm upgrade --install arc \
+  oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller \
+  --version 0.15.0 --namespace arc-systems --values arc-controller-values.yaml
+helm upgrade --install eks-ci-amd64 \
+  oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set \
+  --version 0.15.0 --namespace arc-runners --values arc-runner-values.yaml
+helm upgrade --install eks-ci-arm64 \
+  oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set \
+  --version 0.15.0 --namespace arc-runners --values arc-runner-arm64-values.yaml
+```
+
+`minRunners` es el mínimo de runners inactivos que se suma al trabajo asignado, dentro de los límites de capacidad y máximo. El valor cero reduce los Pods de runner inactivos, pero no elimina el controlador, el listener ni todos los costes del clúster. Un valor distinto de cero tampoco garantiza que no haya demora de arranque. Restringe qué repositorios y workflows pueden usar los conjuntos de escalado y protege las ramas y etiquetas de publicación.
+
+### Workflow de GitHub
+
+Define las variables del repositorio `AWS_PUBLISH_ROLE_ARN`, `ECR_REPOSITORY` y `ECR_CACHE_REPOSITORY`. La relación de confianza de IAM permite la rama principal y las etiquetas protegidas `v*` de este repositorio exacto. Un entorno de GitHub cambia la forma de `sub` de OIDC; modifica la relación de confianza deliberadamente si añades uno. Nunca uses `pull_request_target` con un checkout no confiable para acceder a estas credenciales.
+
+```yaml
+# github-ci.yaml
+name: Test and publish native ECR images
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+  publish:
+    if: github.event_name == 'push'
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: eks-ci-amd64
+          - arch: arm64
+            platform: linux/arm64
+            runner: eks-ci-arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ap-northeast-2
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      ECR_CACHE_REPOSITORY: ${{ vars.ECR_CACHE_REPOSITORY }}
+    steps:
+      - name: Verify the native runner architecture
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          case "$ARCH:$(uname -m)" in
+            amd64:x86_64|arm64:aarch64) ;;
+            *) echo "Runner architecture does not match the matrix" >&2; exit 1 ;;
+          esac
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        with:
+          role-to-assume: ${{ vars.AWS_PUBLISH_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+        id: login
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+      - name: Define a unique build tag
+        id: image
+        env:
+          REGISTRY: ${{ steps.login.outputs.registry }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          TAG="sha-${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${ARCH}"
+          printf 'tag=%s/%s:%s\n' "$REGISTRY" "$ECR_REPOSITORY" "$TAG" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          load: true
+          push: false
+          tags: ${{ steps.image.outputs.tag }}
+          cache-from: type=registry,ref=${{ steps.login.outputs.registry }}/${{ env.ECR_CACHE_REPOSITORY }}:${{ matrix.arch }}-protected
+          cache-to: type=registry,ref=${{ steps.login.outputs.registry }}/${{ env.ECR_CACHE_REPOSITORY }}:${{ matrix.arch }}-protected,mode=max,image-manifest=true,oci-mediatypes=true
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.0
+          image-ref: ${{ steps.image.outputs.tag }}
+          scan-type: image
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+      - name: Publish only the scanned image
+        env:
+          TAGGED_IMAGE: ${{ steps.image.outputs.tag }}
+          REGISTRY: ${{ steps.login.outputs.registry }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          docker push "$TAGGED_IMAGE"
+          DIGEST="$(docker buildx imagetools inspect "$TAGGED_IMAGE" --format '{{.Manifest.Digest}}')"
+          [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          mkdir -p approved
+          printf '%s/%s@%s\n' "$REGISTRY" "$ECR_REPOSITORY" "$DIGEST" > "approved/$ARCH.txt"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: approved-${{ matrix.arch }}
+          path: approved/${{ matrix.arch }}.txt
+          if-no-files-found: error
+          retention-days: 7
+  manifest:
+    if: github.event_name == 'push'
+    needs: publish
+    runs-on: eks-ci-amd64
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ap-northeast-2
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        with:
+          role-to-assume: ${{ vars.AWS_PUBLISH_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+        id: login
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: approved-*
+          path: approved
+          merge-multiple: true
+      - name: Publish the index of both approved platform digests
+        env:
+          REGISTRY: ${{ steps.login.outputs.registry }}
+        run: |
+          set -euo pipefail
+          IMAGE="$REGISTRY/$ECR_REPOSITORY"
+          AMD64="$(cat approved/amd64.txt)"
+          ARM64="$(cat approved/arm64.txt)"
+          for REF in "$AMD64" "$ARM64"; do
+            [[ "$REF" == "$IMAGE@sha256:"* ]]
+            DIGEST="${REF##*@}"
+            [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          done
+          TAG="sha-${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker buildx imagetools create --tag "$IMAGE:$TAG" "$AMD64" "$ARM64"
+          INDEX="$(docker buildx imagetools inspect "$IMAGE:$TAG" --format '{{.Manifest.Digest}}')"
+          [[ "$INDEX" =~ ^sha256:[a-f0-9]{64}$ ]]
+          docker buildx imagetools inspect "$IMAGE@$INDEX" --raw | jq -e '
+            [.manifests[].platform | select(.os == "linux") | .architecture]
+            | unique | sort | . == ["amd64", "arm64"]
+          ' >/dev/null
+          printf '%s@%s\n' "$IMAGE" "$INDEX" > approved-image.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: approved-image
+          path: approved-image.txt
+          if-no-files-found: error
+          retention-days: 7
+```
+
+Cada plataforma nativa se analiza antes de publicar su digest. El trabajo del manifiesto consume referencias inmutables aprobadas y verifica que el índice resultante incluya AMD64 y ARM64. Se comprobaron los commits de las Actions y las definiciones de entradas y entorno de ejecución. El digest final, no la salida de etiqueta de varias líneas de la acción de metadatos, es la entrada para el despliegue y la firma. Si la plataforma lo exige, añade la verificación de firmas y admisión siguiendo la [guía del registro](../container-registry/04-best-practices.md).
+
+## 4. Nodos de CI multi-plataforma nativos
+
+Los siguientes grupos de Auto Mode usan requisitos estándar de tipos de instancia, no claves específicas de proveedores autogestionados. Suponen que ya existe una NodeClass predeterminada. Haz coincidir los selectores del administrador y del trabajo, las tolerancias, la arquitectura del helper y las etiquetas de runner configuradas en el servidor.
+
+```yaml
+# nodepools.yaml
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: ci-amd64
+spec:
+  template:
+    metadata:
+      labels:
+        workload-type: ci-builder
+    spec:
+      nodeClassRef: {group: eks.amazonaws.com, kind: NodeClass, name: default}
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: [amd64]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: [on-demand, spot]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: [c7i.xlarge, m7i.xlarge]
+      taints:
+        - key: ci-builder
+          value: "true"
+          effect: NoSchedule
+  limits: {cpu: "64", memory: 256Gi}
+  disruption: {consolidationPolicy: WhenEmpty, consolidateAfter: 5m}
 ---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: ci-arm64
+spec:
+  template:
+    metadata:
+      labels:
+        workload-type: ci-builder
+    spec:
+      nodeClassRef: {group: eks.amazonaws.com, kind: NodeClass, name: default}
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: [arm64]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: [on-demand, spot]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: [c7g.xlarge, m7g.xlarge]
+      taints:
+        - key: ci-builder
+          value: "true"
+          effect: NoSchedule
+  limits: {cpu: "64", memory: 256Gi}
+  disruption: {consolidationPolicy: WhenEmpty, consolidateAfter: 5m}
+```
 
-## 5. Optimización de builds
+Spot puede interrumpir las compilaciones; elige los tipos de capacidad y los reintentos según los requisitos de la carga de trabajo. Los runners nativos y la emulación QEMU son enfoques distintos. QEMU ejecuta instrucciones de otra arquitectura; no es por sí mismo un compilador cruzado. Las compilaciones multi-plataforma en un único runner requieren emulación compatible o un diseño explícito de compilación cruzada. Una opción de plataforma por sí sola no proporciona ninguna de las dos cosas.
 
-### 5.1 Caché de BuildKit con ECR
+## 5. Optimización de compilaciones y alternativas mantenidas
+
+### Contenedor independiente de Next.js
+
+Node 20 llegó al fin de su vida útil en abril de 2026. Este ejemplo basado en npm usa Node 24 y supone una única raíz de aplicación Next.js con un archivo de bloqueo. La compilación necesita las dependencias de desarrollo; omítelas solo del resultado de producción trazado. Configura explícitamente la salida independiente:
+
+```javascript
+export default {
+  output: 'standalone'
+}
+```
 
 ```dockerfile
-# syntax=docker/dockerfile:1.4
-
-FROM node:20-alpine AS deps
+# Dockerfile.next
+# syntax=docker/dockerfile:1
+FROM docker.io/library/node@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS deps
 WORKDIR /app
-COPY package*.json ./
+COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --only=production
+    --mount=type=secret,id=npmrc,target=/root/.npmrc npm ci
 
-FROM node:20-alpine AS builder
+FROM docker.io/library/node@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS builder
 WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN --mount=type=cache,target=/root/.npm \
-    npm run build
+RUN mkdir -p public && npm run build
 
-FROM node:20-alpine AS runner
+FROM docker.io/library/node@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS runner
 WORKDIR /app
-ENV NODE_ENV=production
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    HOSTNAME=0.0.0.0 \
+    PORT=3000
+COPY --from=builder --chown=node:node /app/public ./public
+COPY --from=builder --chown=node:node /app/.next/standalone ./
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+USER node
 EXPOSE 3000
 CMD ["node", "server.js"]
 ```
 
-Build con caché:
+Usa este `.dockerignore`:
 
-```bash
-# Build with ECR cache
-docker buildx build \
-  --cache-from type=registry,ref=${ECR_REGISTRY}/myapp:cache \
-  --cache-to type=registry,ref=${ECR_REGISTRY}/myapp:cache,mode=max \
-  --push \
-  -t ${ECR_REGISTRY}/myapp:${VERSION} \
-  .
+```text
+node_modules
+.next
+.git
+coverage
+.npm
+.env*
+!.env.example
+*.log
+.npmrc
 ```
 
-### 5.2 Builds con Kaniko (rootless)
+El Dockerfile copia los recursos públicos y `.next/static`, define una dirección de enlace accesible y ejecuta el proceso como el usuario no raíz `node` de la imagen. Las credenciales privadas de npm se pueden proporcionar mediante un secreto de BuildKit (`--secret id=npmrc,src=/protected/npmrc`); no copies `.npmrc` ni incluyas secretos en argumentos de compilación. Un monorepo necesita raíces de trazado deliberadas y rutas `COPY`/server anidadas que coincidan; el diseño con `server.js` en la raíz no es universal.
 
-Kaniko permite crear imágenes sin Docker daemon:
+Se compiló una aplicación de prueba local Next 16.3.5/React 19.3.0 con Node 24.22.0; el servidor independiente generado y el archivo estático copiado respondieron HTTP 200. Esto comprueba el contrato de salida, no el despliegue de una aplicación, contenedor o CI completo.
 
-```yaml
-# kaniko-build-job.yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: kaniko-build
-  namespace: ci
-spec:
-  backoffLimit: 0
-  template:
-    spec:
-      serviceAccountName: kaniko-builder
-      restartPolicy: Never
-      containers:
-        - name: kaniko
-          image: gcr.io/kaniko-project/executor:latest
-          args:
-            - --dockerfile=Dockerfile
-            - --context=git://github.com/myorg/myrepo.git#refs/heads/main
-            - --destination=123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp:latest
-            - --cache=true
-            - --cache-repo=123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp/cache
-            - --snapshot-mode=redo
-            - --use-new-run
-          env:
-            - name: AWS_REGION
-              value: us-east-1
-          resources:
-            limits:
-              cpu: "2"
-              memory: 4Gi
-            requests:
-              cpu: "1"
-              memory: 2Gi
-```
+### Comportamiento de la caché
 
-GitLab CI con Kaniko:
+Las exportaciones de caché del registro guardan capas de compilación. Una caché `RUN --mount=type=cache` es local al builder a menos que se conserve por separado; `--cache-to` del registro no exporta automáticamente todos los directorios de montajes de caché. Mantén las etiquetas mutables de caché fuera del repositorio inmutable de lanzamientos y nunca almacenes en caché las credenciales del registro.
+
+Usa reglas de cambios declaradas y grafos de dependencias en vez de una prueba superficial `HEAD~1` o comandos en segundo plano seguidos de un `wait` simple que pueda ocultar errores. No hagas referencia a una etapa Dockerfile `tester` que no exista. Reutilizar la caché es una optimización, no una prueba de que el trabajo de código, pruebas y análisis haya terminado correctamente.
+
+### Kaniko y BuildKit sin raíz
+
+El repositorio de Google Kaniko está archivado. Que una herramienta no use daemon no significa que todos los Dockerfiles se compilen sin root ni que las compilaciones estén completamente aisladas. Para nuevos trabajos, usa un builder mantenido actualmente y verifica sus privilegios reales, el soporte del kernel, las credenciales y la ruta de publicación de imágenes.
+
+Este fragmento opcional de BuildKit corresponde a un **runner no privilegiado distinto y validado**, con una imagen de CI que incluya BuildKit 0.33.0, AWS CLI, jq y Bash. No es un cambio directo a la configuración DinD con privilegios de arriba. El soporte de namespace de usuario y montajes, así como la política de seguridad del clúster, deben permitir el modo sin raíz elegido.
 
 ```yaml
-# .gitlab-ci.yml (kaniko)
-
-build:kaniko:
-  stage: build
+# rootless-buildkit.yaml
+# Alternative fragment for a SEPARATE validated non-privileged runner.
+# CI_ROOTLESS_IMAGE must contain BuildKit 0.33.0, aws CLI, jq, and a shell.
+# Node user-namespace/mount/security-policy support is a prerequisite.
+build-rootless:
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: $CI_ROOTLESS_IMAGE
     entrypoint: [""]
-  tags:
-    - eks
+  tags: [validated-rootless-runner]
+  variables:
+    BUILDKITD_FLAGS: --oci-worker-no-process-sandbox
   script:
     - |
-      /kaniko/executor \
-        --context "${CI_PROJECT_DIR}" \
-        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
-        --destination "${ECR_REGISTRY}/${IMAGE_NAME}:${CI_COMMIT_SHA}" \
-        --cache=true \
-        --cache-repo="${ECR_REGISTRY}/${IMAGE_NAME}/cache" \
-        --snapshot-mode=redo \
-        --use-new-run
+      set -euo pipefail
+      umask 077
+      DOCKER_CONFIG="$(mktemp -d)"
+      export DOCKER_CONFIG
+      trap 'rm -f "$DOCKER_CONFIG/config.json"; rmdir "$DOCKER_CONFIG"' EXIT
+      aws ecr get-login-password --region "$AWS_REGION" |
+        awk '{printf "AWS:%s", $0}' | base64 | tr -d '\n' |
+        jq -R --arg registry "$ECR_REGISTRY" \
+          '{auths:{($registry):{auth:.}}}' > "$DOCKER_CONFIG/config.json"
+      buildctl-daemonless.sh build --frontend dockerfile.v0 \
+        --local context=. --local dockerfile=. \
+        --output type=oci,dest=image.tar
+  artifacts:
+    paths: [image.tar]
 ```
 
-### 5.3 Estrategias de caching de capas
+La salida es un archivo OCI para entregar a un analizador/publicador compatible. BuildKit advierte que `--oci-worker-no-process-sandbox` debilita el aislamiento de procesos dentro del contenedor del daemon y no puede limpiar todos los procesos de compilación que queden en ejecución. Usarlo en Kubernetes es una concesión, no una garantía de seguridad universal. Valida la configuración del runner dedicado antes de adoptar esta alternativa.
 
-```dockerfile
-# Optimized Dockerfile for caching
+## Referencias
 
-# Stage 1: Dependencies (cached unless package files change)
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+- [Ejecutor de Kubernetes de GitLab](https://docs.gitlab.com/runner/executors/kubernetes/)
+- [Configuración avanzada de GitLab Runner](https://docs.gitlab.com/runner/configuration/advanced-configuration/)
+- [Dependencias de matrices de GitLab](https://docs.gitlab.com/ci/yaml/matrix_expressions/)
+- [Conjuntos de escalado de runners de ARC](https://docs.github.com/en/actions/tutorials/use-actions-runner-controller/deploy-runner-scale-sets)
+- [Requisitos de BuildKit sin raíz](https://github.com/moby/buildkit/blob/v0.33.0/docs/rootless.md)
+- [Salida independiente de Next.js](https://nextjs.org/docs/app/api-reference/config/next-config-js/output)
 
-# Stage 2: Build (cached unless source changes)
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-# Copy configuration first (changes less often)
-COPY tsconfig.json next.config.js ./
-# Copy source last (changes most often)
-COPY src ./src
-COPY public ./public
-RUN npm run build
-
-# Stage 3: Production image
-FROM node:20-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
-CMD ["node", "server.js"]
-```
-
-### 5.4 Caché S3 para artefactos de build
-
-```yaml
-# GitLab Runner cache configuration
-runners:
-  config: |
-    [[runners]]
-      [runners.cache]
-        Type = "s3"
-        Shared = true
-        [runners.cache.s3]
-          ServerAddress = "s3.amazonaws.com"
-          BucketName = "ci-cache-bucket"
-          BucketLocation = "us-east-1"
-```
-
-```hcl
-# S3 bucket for CI cache
-resource "aws_s3_bucket" "ci_cache" {
-  bucket = "ci-cache-${data.aws_caller_identity.current.account_id}"
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "ci_cache" {
-  bucket = aws_s3_bucket.ci_cache.id
-
-  rule {
-    id     = "expire-old-cache"
-    status = "Enabled"
-
-    expiration {
-      days = 7
-    }
-
-    filter {
-      prefix = "runner/"
-    }
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "ci_cache" {
-  bucket = aws_s3_bucket.ci_cache.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-```
-
----
-
-## Resumen
-
-Esta guía cubrió la configuración completa para pipelines de CI basados en EKS:
-
-| Componente | Propósito | Características clave |
-|-----------|---------|--------------|
-| ECR | Container registry | Políticas de lifecycle, scanning, acceso cross-account |
-| GitLab Runner | Ejecutor de GitLab CI | Kubernetes executor, Pod Identity, caché S3 |
-| ARC | Runner de GitHub Actions | Escalado desde cero, autoscaling basado en webhook |
-| Multi-platform | Builds ARM + x86 | Runners nativos, listas de manifest |
-| BuildKit/Kaniko | Builds optimizados | Caching de capas, builds rootless |
-
-**Buenas prácticas:**
-- Usa Pod Identity para acceso seguro a AWS (sin credenciales estáticas)
-- Habilita el escalado desde cero para optimizar costos
-- Implementa Dockerfiles multi-stage para imágenes más pequeñas
-- Usa caching basado en registry para builds más rápidos
-- Ejecuta security scans como parte del pipeline
-
----
-
-## Documentación relacionada
-
-- [Deployment multi-cluster de ArgoCD](./04-gitops-multi-cluster.md)
-- [Fundamentos de GitOps](../gitops/argocd/README.md)
-- [Networking de EKS](../eks/03-eks-networking-part1.md)
-- [Configuración de Pod Identity](../eks/02-eks-cluster-creation-part3.md)
-
----
-
-< [Anterior: NLB Blue/Green](./02-infrastructure-advanced.md) | [Tabla de contenido](./README.md) | [Siguiente: ArgoCD multi-cluster](./04-gitops-multi-cluster.md) >
+< [Anterior: NLB Blue/Green](02-infrastructure-advanced.md) | [Tabla de contenido](README.md) | [Siguiente: ArgoCD Multi-Cluster](04-gitops-multi-cluster.md) >

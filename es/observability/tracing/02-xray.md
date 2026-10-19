@@ -1,27 +1,27 @@
 # AWS X-Ray
 
-> **Última actualización**: September 13, 2026
+> **Última actualización**: 13 de septiembre de 2026
 
 ## Introducción
 
 AWS X-Ray es un servicio nativo de AWS para rastrear y analizar solicitudes en aplicaciones distribuidas. Usar X-Ray en entornos EKS permite visualizar el flujo de solicitudes entre microservicios, identificar cuellos de botella de rendimiento y determinar las causas raíz de los errores.
 
-Los **SDK y el daemon de X-Ray están en modo de mantenimiento desde el 25 de febrero de 2026**, únicamente con correcciones de seguridad y sin fecha de finalización anunciada en el [cronograma de soporte](https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html) actual. Esto corresponde al ciclo de vida de la instrumentación, no a la retirada del servicio X-Ray. AWS recomienda OpenTelemetry para nueva instrumentación y para las migraciones. El ejemplo del daemon que aparece más abajo es una vía de compatibilidad heredada (legacy).
+Los **SDK y el daemon de X-Ray están en modo de mantenimiento desde el 25 de febrero de 2026**: solo reciben correcciones de seguridad y no tienen una fecha de fin de soporte anunciada en el [cronograma de soporte](https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html) actual. Esto corresponde al ciclo de vida de la instrumentación, no a la retirada del servicio X-Ray. AWS recomienda OpenTelemetry para la instrumentación nueva y las migraciones. El ejemplo del daemon que aparece más abajo ofrece compatibilidad con aplicaciones que todavía usan la instrumentación antigua.
 
 ## Características principales
 
 | Característica | Descripción |
 |---------|-------------|
-| **Service Map** | Visualización automática de las dependencias entre servicios |
-| **Request Tracing** | Seguimiento de la ruta de la solicitud de extremo a extremo |
-| **Analysis Tools** | Distribución de tiempos de respuesta, análisis de tasa de errores |
-| **AWS Integration** | Soporte nativo para Lambda, API Gateway, ECS, EKS |
-| **Sampling Rules** | Configuración centralizada del muestreo |
-| **Groups and Alerts** | Agrupación basada en filtros y alertas de CloudWatch |
+| **Mapa de servicios** | Visualización automática de las dependencias entre servicios |
+| **Seguimiento de solicitudes** | Seguimiento de la ruta de las solicitudes de extremo a extremo |
+| **Herramientas de análisis** | Distribución de tiempos de respuesta y análisis de la tasa de errores |
+| **Integración con AWS** | Compatibilidad nativa con Lambda, API Gateway, ECS y EKS |
+| **Reglas de muestreo** | Configuración centralizada del muestreo |
+| **Grupos y alertas** | Agrupación mediante filtros y alertas de CloudWatch |
 
 ## Arquitectura
 
-Lo siguiente muestra las dos alternativas de recolección descritas aquí. El daemon envía solicitudes HTTPS firmadas a AWS; UDP/TCP2000 son sus protocolos heredados orientados a la aplicación. El exportador awsxray de ADOT configurado usa PutTraceSegments, no el endpoint OTLP nativo de CloudWatch.
+El siguiente diagrama muestra las dos alternativas de recopilación descritas aquí. El daemon envía solicitudes HTTPS firmadas a AWS; UDP y TCP en el puerto 2000 son sus protocolos antiguos de comunicación con la aplicación. El exportador awsxray de ADOT configurado usa PutTraceSegments, no el endpoint OTLP nativo de CloudWatch.
 
 ```mermaid
 flowchart LR
@@ -32,7 +32,7 @@ flowchart LR
     XRay --> Analysis["CloudWatch trace map and analysis"]
 ```
 
-EKS no instrumenta automáticamente todas las aplicaciones. Lambda/API Gateway y otras integraciones de servicios necesitan su propia configuración de tracing y propagación admitida. El OTLP nativo de CloudWatch es una ruta de ingesta independiente con requisitos previos de Transaction Search y SigV4, descritos más abajo.
+EKS no instrumenta automáticamente todas las aplicaciones. Lambda, API Gateway y las demás integraciones de servicios requieren su propia configuración compatible de seguimiento y propagación. La ingesta OTLP nativa de CloudWatch utiliza una ruta independiente con los requisitos previos de Transaction Search y SigV4 que se describen más adelante.
 
 ## Despliegue del daemon de X-Ray
 
@@ -110,14 +110,14 @@ spec:
   type: ClusterIP
 ```
 
-Esta imagen de la vía de mantenimiento está fijada al manifiesto multiarquitectura oficial 3.7.0 verificado (Linux amd64/arm64). Su entrypoint es `/xray`, no `/usr/bin/xray`; `-o` desactiva el enriquecimiento con metadatos de EC2 y `-n` proporciona la Región. Los DaemonSet no se ejecutan en EKS Fargate. Este Service de tipo ClusterIP puede seleccionar un daemon en otro nodo, por lo que no garantiza la entrega local al nodo ni un UDP sin pérdidas.
+Esta imagen de compatibilidad está fijada al manifiesto multiarquitectura oficial 3.7.0 verificado para Linux amd64/arm64. Su punto de entrada es `/xray`, no `/usr/bin/xray`; `-o` desactiva el enriquecimiento con metadatos de EC2 y `-n` indica la región. Los DaemonSets no se ejecutan en EKS Fargate. Este Service de tipo ClusterIP puede seleccionar un daemon de otro nodo, por lo que no garantiza la entrega al nodo local ni la ausencia de pérdidas UDP.
 
-Para un cliente con el SDK heredado, establezca `AWS_XRAY_DAEMON_ADDRESS=xray-daemon.amazon-cloudwatch.svc.cluster.local:2000`. Tanto los segmentos UDP como el tráfico de muestreo TCP necesitan alcanzabilidad. Restrinja esta ruta heredada sin cifrar a cargas de trabajo confiables; use la ruta de OpenTelemetry para una recolección TLS autenticada. Elija una sola ruta de recolección por productor.
+Para un cliente con el SDK antiguo, establece `AWS_XRAY_DAEMON_ADDRESS=xray-daemon.amazon-cloudwatch.svc.cluster.local:2000`. Debe haber conectividad tanto para los segmentos UDP como para el tráfico de muestreo TCP. Restringe esta ruta sin cifrar a las cargas de trabajo de confianza; utiliza la ruta de OpenTelemetry para recopilar datos con TLS autenticado. Elige una sola ruta de recopilación por productor.
 
 
 ### Configuración de IRSA
 
-Cree el namespace `amazon-cloudwatch` a través de su propietario existente. La ServiceAccount `xray-daemon` del daemon heredado debe referenciar su propio rol preparado. La siguiente política de permisos cubre la exportación de segmentos/telemetría y las llamadas de muestreo centralizado; reemplace la Región por la Región real de despliegue:
+Crea el namespace `amazon-cloudwatch` a través de quien ya lo administra. La ServiceAccount `xray-daemon` del daemon antiguo debe hacer referencia a su propio rol, preparado previamente. La siguiente política de permisos cubre la exportación de segmentos y telemetría y las llamadas de muestreo centralizado; sustituye la región por la región real de despliegue:
 
 ```json
 {
@@ -145,7 +145,7 @@ Cree el namespace `amazon-cloudwatch` a través de su propietario existente. La 
 
 Estas acciones de X-Ray usan `Resource: "*"`, restringido aquí mediante `aws:RequestedRegion`. La política del daemon es independiente de la política más restringida de ADOT que aparece a continuación. Ninguna de las dos políticas otorga a un operador permiso para crear grupos o reglas de muestreo.
 
-Para cualquiera de los dos recolectores, prepare un rol de IRSA usando el proveedor OIDC registrado del cluster, `aud=sts.amazonaws.com` y el **subject exacto de namespace/ServiceAccount**. El ejemplo de confianza siguiente corresponde a `adot-collector`; un rol de daemon requiere en su lugar `system:serviceaccount:amazon-cloudwatch:xray-daemon`. Reemplace de forma coherente la cuenta, la Región y el ID de OIDC de ejemplo.
+Para cualquiera de los dos recolectores, prepara un rol de IRSA con el proveedor OIDC registrado del clúster, `aud=sts.amazonaws.com` y el **identificador subject exacto del namespace y la ServiceAccount**. El ejemplo de confianza siguiente corresponde a `adot-collector`; un rol del daemon requiere, en cambio, `system:serviceaccount:amazon-cloudwatch:xray-daemon`. Sustituye de forma coherente la cuenta, la región y el ID de OIDC de ejemplo.
 
 ```json
 {
@@ -168,24 +168,24 @@ Para cualquiera de los dos recolectores, prepare un rol de IRSA usando el provee
 }
 ```
 
-Solicite al propietario de IAM/infraestructura que cree o actualice el rol previsto y adjunte la política de permisos correspondiente. Conserve la propiedad de una ServiceAccount existente; no ejecute `eksctl --override-existing-serviceaccounts` como paso genérico de configuración. Verifique el token proyectado del Pod renderizado, el ARN del rol, la resolución de credenciales del SDK y la autorización real en el entorno aprobado. Una anotación en la ServiceAccount por sí sola no es una prueba de autorización.
+Solicita a quien administra IAM e infraestructura que cree o actualice el rol previsto y adjunte la política de permisos correspondiente. Respeta la administración de una ServiceAccount existente; no ejecutes `eksctl --override-existing-serviceaccounts` como paso genérico de configuración. Verifica el token proyectado del Pod generado, el ARN del rol, la resolución de credenciales del SDK y la autorización real en el entorno aprobado. Una anotación en la ServiceAccount por sí sola no demuestra que la autorización funcione.
 
 ## Despliegue del ADOT Collector
 
-Esta canalización de trazas usa [ADOT Collector 0.50.0](https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0), basado en Collector/Contrib 0.158.0. La distribución publicada de ADOT tiene su propio inventario de componentes; no asuma que contiene todos los componentes de una versión upstream de Contrib. El binario del collector fijado se ejercitó localmente con datos sintéticos OTLP/X-Ray y un endpoint falso de X-Ray en loopback. No se realizó ninguna prueba de autorización de AWS, despliegue en Kubernetes ni disponibilidad en producción.
+Esta canalización de trazas usa [ADOT Collector 0.50.0](https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0), basado en Collector/Contrib 0.158.0. La distribución publicada de ADOT tiene su propio inventario de componentes; no supongas que incluye todos los de una versión de Contrib. El binario del recolector fijado se probó localmente con datos sintéticos OTLP/X-Ray y un endpoint simulado de X-Ray en la interfaz de bucle local. No se realizaron pruebas de autorización de AWS, despliegue en Kubernetes ni disponibilidad en producción.
 
 <a id="adot-collector-daemonset"></a>
 
 ### Despliegue del Collector y requisitos previos
 
-El ejemplo consiste en un único **Deployment** central y un Service de tipo ClusterIP, sin puertos de host. No es una configuración de alta disponibilidad (HA). Las aplicaciones seleccionan explícitamente su endpoint DNS; instalarlo no instrumenta las aplicaciones. Un DaemonSet es un diseño de ubicación distinto y no está soportado en EKS Fargate. Un Deployment en Fargate igualmente necesita un perfil de Fargate coincidente y una configuración de recursos/almacenamiento/red admitida.
+El ejemplo consta de un único **Deployment** central y un Service de tipo ClusterIP, sin puertos de host. No es una configuración de alta disponibilidad. Las aplicaciones eligen explícitamente su endpoint DNS; instalarlo no las instrumenta. Un DaemonSet utiliza un diseño de ubicación distinto y no es compatible con EKS Fargate. Un Deployment en Fargate también requiere un perfil de Fargate coincidente y una configuración compatible de recursos, almacenamiento y red.
 
 Antes de aplicar estos recursos:
 
-- Prepare el namespace y el rol de IRSA de la sección anterior, con el subject `system:serviceaccount:amazon-cloudwatch:adot-collector`.
-- Entregue el Secret de Kubernetes existente `adot-collector-tls` mediante el proceso de certificados aprobado. Contiene `server.crt`, `server.key` y `ca.crt`. El certificado del servidor debe cubrir el nombre DNS real del Service, por ejemplo `adot-collector.amazon-cloudwatch.svc.cluster.local`; la CA debe confiar en los certificados de cliente previstos.
-- Monte en los productores los archivos aprobados de CA, certificado de cliente y clave. Restrinja el acceso al Secret, el acceso de las cargas de trabajo a los puertos 4317/4318 y al endpoint de salud; planifique la rotación de certificados. No coloque el contenido de las claves privadas de certificados ni credenciales de AWS en variables de entorno.
-- Reemplace los valores de cluster/cuenta/Región e inspeccione la identidad final de la carga de trabajo. El procesador resource establece explícitamente un único nombre de cluster; no descubre todos los metadatos de Pod/nodo y no debe reetiquetar como este cluster el tráfico de clusters no relacionados.
+- Prepara el namespace y el rol de IRSA de la sección anterior, con el identificador subject `system:serviceaccount:amazon-cloudwatch:adot-collector`.
+- Proporciona el Secret de Kubernetes existente `adot-collector-tls` mediante el proceso de certificados aprobado. Contiene `server.crt`, `server.key` y `ca.crt`. El certificado del servidor debe cubrir el nombre DNS real del Service, por ejemplo `adot-collector.amazon-cloudwatch.svc.cluster.local`; la CA debe confiar en los certificados de cliente previstos.
+- Monta en los productores los archivos aprobados de CA, certificado de cliente y clave. Restringe el acceso al Secret y el de las cargas de trabajo a los puertos 4317/4318 y al endpoint de salud; planifica la rotación de certificados. No coloques el contenido de las claves privadas de certificados ni credenciales de AWS en variables de entorno.
+- Sustituye los valores del clúster, la cuenta y la región e inspecciona la identidad final de la carga de trabajo. El procesador resource establece explícitamente un único nombre de clúster; no descubre todos los metadatos de Pods y nodos y no debe etiquetar el tráfico de otros clústeres como si procediera de este.
 
 La canalización de ADOT siguiente desactiva la telemetría del exportador y usa únicamente la ruta clásica de exportación `PutTraceSegments` de X-Ray, por lo que su política de permisos de carga de trabajo es:
 
@@ -207,7 +207,7 @@ La canalización de ADOT siguiente desactiva la telemetría del exportador y usa
 }
 ```
 
-Use este ConfigMap completo junto con el manifiesto de carga de trabajo/Service siguiente:
+Utiliza este ConfigMap completo junto con el siguiente manifiesto de la carga de trabajo y el Service:
 
 ```yaml
 apiVersion: v1
@@ -386,9 +386,9 @@ spec:
       targetPort: otlp-http
 ```
 
-La imagen del contenedor proporciona `RUN_IN_CONTAINER=True`; para una prueba autónoma del collector nativo esta variable es necesaria para mantener su registro CLI personalizado fuera de `/opt`. Su CLI no es intercambiable con todos los comandos upstream de `otelcol`. La prueba local utilizó el binario de AWS con la versión fijada, certificados de prueba y únicamente destinos de loopback.
+La imagen del contenedor proporciona `RUN_IN_CONTAINER=True`; esta variable es necesaria en una prueba independiente del binario nativo del recolector para evitar que los registros de su CLI personalizada se escriban en `/opt`. Su CLI no es intercambiable con todos los comandos de `otelcol` del proyecto original. La prueba local utilizó el binario de AWS de la versión indicada, certificados de prueba y únicamente destinos de bucle local.
 
-La configuración propuesta pasó cinco comprobaciones locales de mTLS, incluidos el rechazo sin certificado de cliente y la aceptación con uno de confianza. Los tres recursos de Kubernetes pasaron la validación local de esquema OpenAPI. Esto no verifica el Secret real, la mutación de IRSA, la política de CNI, la programación (scheduling) ni los permisos de AWS. El endpoint de salud informa del estado del proceso del collector, no de la entrega correcta a X-Ray. Las colas, los reintentos, la presión de memoria, la terminación y los fallos del backend aún pueden provocar pérdida de telemetría; planifique la capacidad y monitorice los datos rechazados/descartados/con exportación fallida.
+La configuración propuesta superó cinco comprobaciones locales de mTLS, incluidos el rechazo de clientes sin certificado y la aceptación de uno de confianza. Los tres recursos de Kubernetes superaron la validación local del esquema OpenAPI. Esto no verifica el Secret real, las modificaciones de IRSA, la política de CNI, la planificación de Pods ni los permisos de AWS. El endpoint de salud informa del estado del proceso del recolector, no de la entrega correcta a X-Ray. Las colas, los reintentos, la presión de memoria, la terminación y los fallos del backend pueden causar pérdida de telemetría; planifica la capacidad y supervisa los datos rechazados, descartados o cuya exportación falla.
 
 ### Receptor heredado de X-Ray y canalizaciones de telemetría independientes
 
@@ -402,17 +402,17 @@ receivers:
     transport: udp
 ```
 
-Este receptor heredado es una alternativa a enviar los segmentos del SDK a través del daemon; evite duplicar la ruta de trazas del mismo productor. También inicia por defecto un proxy de muestreo TCP. Si usa muestreo centralizado, configure y restrinja tanto la ruta de Service/proxy TCP2000 requerida y los permisos de muestreo como el puerto UDP2000. El protocolo heredado no está protegido por la configuración mTLS del receptor OTLP. La auditoría nativa confirmó la recepción tanto de OTLP como de UDP de X-Ray; no ejecutó muestreo remoto de AWS.
+Este receptor antiguo es una alternativa al envío de segmentos del SDK a través del daemon; evita duplicar la ruta de trazas de un mismo productor. También inicia por defecto un proxy TCP de muestreo. Si utilizas muestreo centralizado, configura y restringe la ruta necesaria del Service y el proxy TCP en el puerto 2000 y los permisos de muestreo, además de UDP en el puerto 2000. La configuración mTLS del receptor OTLP no protege este protocolo antiguo. La auditoría nativa confirmó la recepción tanto de OTLP como de UDP de X-Ray; no ejecutó muestreo remoto de AWS.
 
-Las métricas, los logs de aplicación y las trazas requieren sus propias canalizaciones conectadas y configuración de backend. Declarar simplemente un exportador `awscloudwatchlogs` no convierte las trazas en logs ni las escribe en un grupo de logs inventado `/aws/xray/traces`. Un endpoint de remote-write de métricas necesita igualmente su receptor real, autenticación y configuración TLS; no es un requisito previo de X-Ray.
+Las métricas, los registros de aplicaciones y las trazas requieren sus propias canalizaciones conectadas y configuraciones de backend. Declarar un exportador `awscloudwatchlogs` no convierte las trazas en registros ni las escribe en un grupo de registros inventado `/aws/xray/traces`. Un endpoint de escritura remota de métricas también necesita un receptor real, autenticación y configuración TLS; no es un requisito previo de X-Ray.
 
 ## Integración de OpenTelemetry con X-Ray
 
-Estos ejemplos usan el Service del collector autenticado anterior. Los productores necesitan acceso a ese Service y a sus archivos TLS de cliente montados; no necesitan las credenciales de AWS del collector. Los ejemplos crean spans sintéticos y no realizan ninguna operación de pago, base de datos o negocio en AWS.
+Estos ejemplos usan el Service autenticado del recolector anterior. Los productores necesitan acceso a ese Service y a sus archivos TLS de cliente montados; no necesitan las credenciales de AWS del recolector. Los ejemplos crean spans sintéticos y no realizan pagos, operaciones de base de datos ni operaciones de negocio en AWS.
 
-Las bases de validación exactas son SDK/exportador de Python1.44.0 con Flask3.1.3, SDK/exportador de Go1.44.0 con Go1.26.8 y fuentes de la API de Java1.66.0. Estas versiones fijadas no constituyen una matriz universal de compatibilidad de AWS ni afirman que todos los lenguajes tengan la misma versión más reciente. Python y Go se ejercitaron localmente; la API/configuración de Java se verificó contra el código fuente etiquetado, pero no había compilación con JDK/Maven disponible en esta auditoría.
+Las versiones exactas utilizadas para la validación son el SDK y el exportador de Python 1.44.0 con Flask 3.1.3, el SDK y el exportador de Go 1.44.0 con Go 1.26.8 y el código fuente de la API de Java 1.66.0. Estas versiones fijadas no constituyen una matriz universal de compatibilidad de AWS ni implican que todos los lenguajes tengan la misma versión más reciente. Python y Go se probaron localmente; la API y la configuración de Java se comprobaron en el código fuente de la versión etiquetada, pero esta auditoría no dispuso de compilación con JDK/Maven.
 
-Use estos ajustes para el proceso de demostración finito. El endpoint incluye `/v1/traces` para OTLP/HTTP. Mantenga la clave privada del cliente en un archivo protegido montado. En esta demostración finita se muestrean los spans raíz y se respetan las decisiones del padre remoto; seleccione un muestreador de producción medido en lugar de copiar un ajuste de demostración que muestrea todas las raíces al tráfico de producción sin restricciones. Los muestreadores genéricos del SDK no obtienen automáticamente las reglas centralizadas de X-Ray.
+Utiliza estos ajustes para el proceso limitado de demostración. El endpoint incluye `/v1/traces` para OTLP/HTTP. Mantén la clave privada del cliente en un archivo montado y protegido. Esta demostración muestrea los spans raíz y respeta las decisiones del padre remoto; elige un muestreador de producción basándote en mediciones, en lugar de copiar el ajuste que muestrea todas las raíces en tráfico de producción sin restricciones. Los muestreadores genéricos del SDK no obtienen automáticamente las reglas centralizadas de X-Ray.
 
 ```bash
 # Application-process configuration; mounted file paths are not secret contents.
@@ -432,7 +432,7 @@ export OTEL_TRACES_SAMPLER=parentbased_always_on
 
 ### Configuración de la aplicación (Java)
 
-Guarde `InventoryDemo.java` en el proyecto Java existente. La autoconfiguración lee los ajustes estándar de endpoint OTLP, protocolo y archivos de CA/clave de cliente/certificado de cliente. No instrumenta automáticamente una aplicación completa. No inicialice otro SDK si un agente/framework ya es su propietario. `OpenTelemetrySdk` implementa Closeable; cerrarlo coordina el apagado de los proveedores, pero la finalización de una llamada a un método no prueba la entrega al backend.
+Guarda `InventoryDemo.java` en el proyecto Java existente. La autoconfiguración lee los ajustes estándar del endpoint OTLP, el protocolo y los archivos de CA, clave y certificado de cliente. No instrumenta automáticamente una aplicación completa. No inicialices otro SDK si un agente o framework ya lo administra. `OpenTelemetrySdk` implementa Closeable; cerrarlo coordina el cierre de los proveedores, pero que finalice una llamada a un método no demuestra la entrega al backend.
 
 ```xml
 <!-- Dependency fragment for an existing Java17+ Maven project. -->
@@ -484,7 +484,7 @@ public final class InventoryDemo {
 
 ### Configuración de la aplicación (Python)
 
-Use un entorno de aplicación aislado con `opentelemetry-api==1.44.0`, `opentelemetry-sdk==1.44.0`, `opentelemetry-exporter-otlp-proto-http==1.44.0` y `Flask==3.1.3`. Guarde lo siguiente como `payment_demo.py`. Su endpoint `/api/payment` solo devuelve una respuesta sintética; no cobra ni valida un pago real. El servidor de desarrollo local de Flask no es un despliegue WSGI de producción.
+Utiliza un entorno de aplicación aislado con `opentelemetry-api==1.44.0`, `opentelemetry-sdk==1.44.0`, `opentelemetry-exporter-otlp-proto-http==1.44.0` y `Flask==3.1.3`. Guarda el siguiente código como `payment_demo.py`. Su endpoint `/api/payment` solo devuelve una respuesta sintética; no cobra ni valida un pago real. El servidor local de desarrollo de Flask no es un despliegue WSGI de producción.
 
 ```python
 """Synthetic Flask instrumentation example: no payment is processed."""
@@ -563,7 +563,7 @@ if __name__ == "__main__":
 
 ### Configuración de la aplicación (Go)
 
-Guarde los siguientes `go.mod` y `main.go` en un directorio de ejemplo separado, resuelva las dependencias fijadas con `go mod tidy` y ejecútelo únicamente con el entorno de collector/TLS previsto. El ejemplo emite dos spans finitos. `DEMO_TRACEPARENT` es un portador (carrier) de demostración opcional; los handlers HTTP reales deben extraer de las cabeceras de la solicitud e inyectar en las solicitudes salientes. La creación del SDK por sí sola no añade instrumentación a todas las bibliotecas HTTP/de base de datos.
+Guarda los siguientes `go.mod` y `main.go` en un directorio de ejemplo independiente, resuelve las dependencias fijadas con `go mod tidy` y ejecútalo únicamente con el entorno previsto del recolector y TLS. El ejemplo emite dos spans en una ejecución limitada. `DEMO_TRACEPARENT` es un portador opcional para la demostración; los manejadores HTTP reales deben extraer el contexto de los encabezados de la solicitud e inyectarlo en las solicitudes salientes. Crear el SDK por sí solo no instrumenta todas las bibliotecas HTTP o de bases de datos.
 
 ```text
 module example.invalid/xray-otel-demo
@@ -662,21 +662,21 @@ func main() {
 }
 ```
 
-El ejemplo de Python pasó 13 comprobaciones que cubren cabeceras entrantes con mayúsculas y minúsculas mezcladas, identidad padre/hijo, padres no muestreados, exclusión de payloads sensibles y un POST OTLP real con mTLS en loopback. Go pasó 4 pruebas nativas que cubren la exportación mTLS/protobuf, la identidad W3C, los padres no muestreados, el rechazo de tráfico en texto plano y la ausencia de archivos TLS. Ninguna de las pruebas contactó con AWS ni demostró el rendimiento de una aplicación en producción. Los imports, el ciclo de vida y la autoconfiguración TLS de Java solo se verificaron en el código fuente.
+El ejemplo de Python superó 13 comprobaciones de encabezados entrantes con combinaciones de mayúsculas y minúsculas, identidad padre/hijo, padres no muestreados, exclusión de datos sensibles y un POST OTLP real con mTLS en la interfaz de bucle local. Go superó 4 pruebas nativas de exportación mTLS/protobuf, identidad W3C, padres no muestreados, rechazo del tráfico sin cifrar y ausencia de archivos TLS. Ninguna prueba contactó con AWS ni demostró el rendimiento de una aplicación en producción. Las importaciones, el ciclo de vida y la autoconfiguración TLS de Java solo se verificaron en el código fuente.
 
-Seleccione la propagación de forma deliberada: aquí se usa W3C Trace Context. La interoperabilidad con X-Amzn-Trace-Id puede requerir el propagador de AWS adecuado para el lenguaje/integración concretos, pero un generador de ID específico de X-Ray no es universalmente necesario para trazas W3C. Con varios formatos aceptados, defina la precedencia y los límites de confianza en lugar de componer propagadores a ciegas. El trabajo asíncrono debe transportar su contexto padre de forma explícita.
+Elige la propagación de forma deliberada: aquí se usa W3C Trace Context. La interoperabilidad con X-Amzn-Trace-Id puede requerir el propagador de AWS adecuado para el lenguaje o la integración, pero las trazas W3C no siempre necesitan un generador de ID específico de X-Ray. Si aceptas varios formatos, define su precedencia y los límites de confianza, en lugar de combinar propagadores sin revisar su comportamiento. El trabajo asíncrono debe transportar explícitamente su contexto padre.
 
 ## Reglas de muestreo
 
 ### Configuración de muestreo centralizado
 
-Las reglas centralizadas de X-Ray se aplican únicamente a los productores que usan un muestreador remoto de X-Ray compatible. Un muestreador genérico de OpenTelemetry `parentbased_traceidratio` no obtiene estas reglas, y crear una regla no habilita el muestreo remoto en un SDK. El exportador `awsxray` del collector exporta spans ya seleccionados; no selecciona solicitudes de forma retroactiva.
+Las reglas centralizadas de X-Ray solo se aplican a los productores que usan un muestreador remoto de X-Ray compatible. Un muestreador genérico de OpenTelemetry `parentbased_traceidratio` no obtiene estas reglas, y crear una regla no habilita el muestreo remoto en un SDK. El exportador `awsxray` del recolector exporta spans que ya han sido seleccionados; no selecciona solicitudes de forma retroactiva.
 
-El muestreo en cabeza (head sampling) decide antes de conocer la respuesta completada. Coincidir con un futuro HTTP500 o con la duración final no puede garantizar la captura de todas las solicitudes con error o lentas. Los SDK clásicos de X-Ray ignoran las reglas que contienen `Attributes` y admiten `ResourceARN: "*"`; la regla anterior basada en atributos de error no era una política funcional que capturara todos los errores. Una regla “lenta” con coincidencia amplia tampoco inspecciona la latencia final.
+El muestreo al inicio de la traza decide antes de conocer la respuesta final. Una condición sobre un futuro HTTP 500 o la duración final no puede garantizar la captura de todas las solicitudes fallidas o lentas. Los SDK clásicos de X-Ray ignoran las reglas que contienen `Attributes` y admiten `ResourceARN: "*"`; la regla anterior basada en atributos de error no capturaba todos los errores. Una regla «lenta» con coincidencia amplia tampoco evalúa la latencia final.
 
-Las reglas se evalúan en orden numérico ascendente de prioridad. Los objetivos de reservorio y las tasas fijas son un comportamiento de muestreo de mejor esfuerzo, no una garantía de diez trazas por segundo cuando llegan menos solicitudes. Las decisiones del padre, las implementaciones de muestreador admitidas y las cuotas distribuidas importan.
+Las reglas se evalúan en orden numérico ascendente de prioridad. Los objetivos de reserva y las tasas fijas se aplican sin garantías estrictas de muestreo: no garantizan diez trazas por segundo cuando llegan menos solicitudes. También influyen las decisiones del padre, las implementaciones de muestreador compatibles y las cuotas distribuidas.
 
-Los siguientes son tres archivos de solicitud independientes. Sus formas de la API de AWS se validaron localmente, no se aplicaron a AWS.
+Los siguientes son tres archivos de solicitud independientes. La estructura de sus solicitudes a la API de AWS se validó localmente; no se aplicaron a AWS.
 
 **`sampling-production.json` — una política general para solicitudes de API:**
 
@@ -699,7 +699,7 @@ Los siguientes son tres archivos de solicitud independientes. Sus formas de la A
 }
 ```
 
-**`sampling-health.json` — una exclusión de health checks GET con mayor prioridad:**
+**`sampling-health.json` — una exclusión de comprobaciones de salud GET con mayor prioridad:**
 
 ```json
 {
@@ -720,9 +720,9 @@ Los siguientes son tres archivos de solicitud independientes. Sus formas de la A
 }
 ```
 
-**`sampling-adaptive.json` — un ejemplo adaptativo opcional con alcance de solicitud:**
+**`sampling-adaptive.json` — un ejemplo adaptativo opcional limitado a las solicitudes seleccionadas:**
 
-El [SamplingRateBoost](https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html) actual admite incrementos temporales impulsados por anomalías, con una tasa máxima y un periodo de enfriamiento. `MaxRate: 0.5` es un límite absoluto de la tasa de muestreo, no un incremento relativo del 50 %. Esto no es muestreo de cola (tail sampling) retroactivo ni una garantía de capturar todas las solicitudes fallidas. Confirme el soporte de muestreo adaptativo del productor antes de usarlo.
+La función actual [SamplingRateBoost](https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html) permite aumentos temporales por anomalías, con una tasa máxima y un periodo de espera. `MaxRate: 0.5` es un límite absoluto de la tasa de muestreo, no un aumento relativo del 50 %. Esto no es muestreo retroactivo al final de la traza ni garantiza la captura de todas las solicitudes fallidas. Confirma que el productor admita muestreo adaptativo antes de utilizarlo.
 
 ```json
 {
@@ -749,7 +749,7 @@ El [SamplingRateBoost](https://docs.aws.amazon.com/xray/latest/api/API_SamplingR
 
 ### Gestión de reglas de muestreo
 
-Inspeccione los nombres y prioridades de las reglas existentes en la cuenta/Región prevista antes de crear, actualizar o eliminar cualquier cosa. Use un rol de operador con los permisos necesarios de gestión de reglas; los permisos de escritura del collector son insuficientes.
+Inspecciona los nombres y las prioridades de las reglas existentes en la cuenta y la región previstas antes de crear, actualizar o eliminar cualquiera. Utiliza un rol de operador con los permisos necesarios para gestionar las reglas; los permisos de escritura del recolector no bastan.
 
 ```bash
 set -euo pipefail
@@ -760,13 +760,13 @@ aws xray get-sampling-statistic-summaries --region "$AWS_REGION"
 aws xray create-sampling-rule --region "$AWS_REGION"   --cli-input-json file://sampling-production.json
 ```
 
-Use `update-sampling-rule` para una regla existente de la que sea propietario y conserve su configuración previa. Elimine solo una regla propia explícitamente retirada con `delete-sampling-rule`; ni un fallo de búsqueda ni un nombre adivinado prueban que sea seguro eliminar una regla.
+Utiliza `update-sampling-rule` para una regla existente que administres y conserva su configuración anterior. Elimina con `delete-sampling-rule` solo una regla propia cuya retirada esté explícitamente decidida; ni un fallo de búsqueda ni un nombre supuesto demuestran que sea seguro eliminarla.
 
-Para conservar trazas completadas en función de errores/latencia, evalúe una canalización de tail sampling diseñada por separado. Debe recibir los spans relevantes antes de cualquier descarte en cabeza aguas arriba, mantener cada traza en el muestreador adecuado y tolerar spans tardíos y memoria acotada. No puede recuperar spans ya descartados ni prometer la captura sin pérdidas de todos los errores.
+Para conservar trazas completas según sus errores o latencia, evalúa una canalización de muestreo al final de la traza diseñada por separado. Debe recibir los spans pertinentes antes de que un muestreo inicial los descarte, mantener cada traza en el muestreador adecuado y manejar spans tardíos con memoria limitada. No puede recuperar spans ya descartados ni garantizar la captura sin pérdidas de todos los errores.
 
 ### Ejemplos de expresiones de filtro
 
-Estas son expresiones de filtro de X-Ray para su UI/API de consulta, no comandos de shell ni consultas de Logs Insights. Los valores de duración están en segundos; `> 2` significa estrictamente mayor que dos segundos. Seleccione anotaciones realmente emitidas e indexadas por sus productores.
+Estas son expresiones de filtro de X-Ray para su interfaz o API de consulta, no comandos de shell ni consultas de Logs Insights. Las duraciones se expresan en segundos; `> 2` significa estrictamente más de dos segundos. Elige anotaciones que tus productores realmente emitan y que se indexen.
 
 ```text
 service("order-service")
@@ -779,11 +779,11 @@ edge("api-gateway", "order-service")
 
 ## Mapa de servicios
 
-### Uso del trace map
+### Uso del mapa de trazas
 
-El trace map de CloudWatch reúne el mapa de X-Ray y el antiguo mapa de ServiceLens. Los colores de su tráfico distinguen categorías: rojo para fallos del servidor (HTTP5xx), amarillo para errores de cliente (HTTP4xx), morado para throttling (HTTP429) y verde para tráfico correcto. No son umbrales arbitrarios de advertencia de latencia.
+El mapa de trazas de CloudWatch reúne el mapa de X-Ray y el antiguo mapa de ServiceLens. Los colores del tráfico distinguen categorías: rojo para fallos del servidor (HTTP 5xx), amarillo para errores del cliente (HTTP 4xx), morado para limitación de solicitudes (HTTP 429) y verde para tráfico correcto. No son umbrales arbitrarios de advertencia de latencia.
 
-La ilustración original en coreano usaba la topología siguiente. Sus valores se conservan como **promedios agregados ilustrativos**, no como mediciones reales, tiempos aditivos de una sola traza ni una clasificación de QPS. Tener más conexiones salientes no prueba que Order Service reciba la mayor cantidad de solicitudes.
+La ilustración original en coreano usaba la siguiente topología. Sus valores se conservan como **promedios agregados ilustrativos**, no como mediciones reales, tiempos que se puedan sumar dentro de una misma traza ni una clasificación de QPS. Tener más conexiones salientes no demuestra que Order Service reciba más solicitudes.
 
 ```mermaid
 flowchart LR
@@ -797,13 +797,13 @@ flowchart LR
 
 | Componente | Promedio ilustrativo original |
 |---|---:|
-| Client |250ms|
-| API Gateway |50ms|
-| Auth Service |30ms|
-| Order Service |100ms|
-| Payment Service |150ms; tasa de error ilustrativa2%|
-| ElastiCache |5ms|
-| DynamoDB |20ms|
+| Cliente |250 ms|
+| API Gateway |50 ms|
+| Servicio de autenticación |30 ms|
+| Servicio de pedidos |100 ms|
+| Servicio de pagos |150 ms; tasa de error ilustrativa del 2 %|
+| ElastiCache |5 ms|
+| DynamoDB |20 ms|
 
 ### Leer el grafo de servicios
 
@@ -821,15 +821,15 @@ aws xray get-service-graph --region "$AWS_REGION"   --start-time "$START_TIME" -
 
 ### Configurar la ruta de recolección real
 
-CloudWatch puede correlacionar trazas, métricas y logs, pero deben recolectarse realmente y compartir identificadores de servicio/traza adecuados. Un ConfigMap no montado no configura un agente. Use el [add-on de CloudWatch Observability para EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html) o la configuración aprobada del agente/operator existente, preservando su propietario, identidad de IAM, ajustes de Secret/CA y el comportamiento admitido de la plataforma. No inicie un receptor adicional en un puerto de host ya ocupado por otro collector. El ConfigMap anterior por sí solo no establecía esta integración.
+CloudWatch puede correlacionar trazas, métricas y registros, pero deben recopilarse realmente y compartir los identificadores de servicio y traza adecuados. Un ConfigMap que no se haya montado no configura un agente. Utiliza el [complemento de CloudWatch Observability para EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html) o la configuración aprobada del agente u operador existente; respeta su administración, identidad de IAM, ajustes de Secret y CA y comportamiento compatible de la plataforma. No inicies otro receptor en un puerto de host que ya utilice otro recolector. El ConfigMap anterior por sí solo no establecía esta integración.
 
-La ingesta nativa de trazas OTLP usa el endpoint HTTPS `https://xray.REGION.amazonaws.com/v1/traces`, **HTTP con SigV4**, y requiere [Transaction Search](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html). Un exportador OTLP genérico sin firmar apuntado a esa URL es insuficiente. Esto es diferente del exportador awsxray de ADOT anterior, que traduce los spans OTLP a documentos clásicos de segmentos de X-Ray.
+La ingesta nativa de trazas OTLP usa el endpoint HTTPS `https://xray.REGION.amazonaws.com/v1/traces`, **HTTP con SigV4**, y requiere [Transaction Search](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html). Un exportador OTLP genérico que envíe solicitudes sin firmar a esa URL no basta. Esta ruta difiere del exportador awsxray de ADOT anterior, que traduce los spans OTLP a documentos clásicos de segmentos de X-Ray.
 
-Transaction Search almacena spans estructurados en el grupo de logs `aws/spans` de CloudWatch. Sus controles de muestreo de índice son independientes del muestreo en cabeza del productor y de la ingesta de spans. X-Ray admite IDs de traza W3C de 128 bits; la representación clásica de segmentos usa `1-8hex-24hex`, pero un generador de ID específico de X-Ray no es universalmente necesario. Elija la propagación X-Amzn-Trace-Id solo donde la integración real aguas arriba/aguas abajo la necesite y defina la precedencia si se aceptan varios formatos de propagación.
+Transaction Search almacena spans estructurados en el grupo de registros `aws/spans` de CloudWatch. Sus controles de muestreo del índice son independientes del muestreo inicial del productor y de la ingesta de spans. X-Ray admite IDs de traza W3C de 128 bits; la representación clásica de segmentos utiliza `1-8hex-24hex`, pero no siempre hace falta un generador de ID del SDK específico de X-Ray. Elige la propagación X-Amzn-Trace-Id solo cuando la integración real con los componentes anteriores o siguientes la necesite, y define la precedencia si aceptas varios formatos de propagación.
 
 ### Consultas de análisis de spans
 
-Las siguientes son **consultas independientes de Logs Insights QL** para `aws/spans`, basadas en los [campos de span documentados](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html). Inspeccione primero los campos reales de su ruta de ingesta; no todos los spans personalizados tienen atributos de servicio local de AWS o de HTTP. No existe una tabla SQL suministrada llamada `xray.traces`. Estos ejemplos se verificaron contra los contratos documentados de consulta/campos, no se ejecutaron en una cuenta gestionada de CloudWatch.
+Las siguientes son **consultas independientes de Logs Insights QL** para `aws/spans`, basadas en los [campos de span documentados](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html). Inspecciona primero los campos reales de tu ruta de ingesta; no todos los spans personalizados tienen atributos de servicio local de AWS o de HTTP. No se proporciona una tabla SQL llamada `xray.traces`. Estos ejemplos se comprobaron frente a los contratos documentados de consultas y campos; no se ejecutaron en una cuenta administrada de CloudWatch.
 
 ```text
 fields @timestamp, durationNano, attributes.aws.local.service
@@ -850,13 +850,13 @@ filter attributes.http.response.status_code >= 500
 | sort sampled_5xx_spans desc
 ```
 
-Seleccione el rango temporal previsto y el alcance de span/servicio en la UI de consulta. Varios spans pueden pertenecer a una sola solicitud; los recuentos de spans muestreados y los percentiles de duración de span no son una tasa de error de la aplicación sin sesgo ni un SLO de latencia de solicitudes. Para tasas a nivel de solicitud, use métricas de solicitud con un alcance coherente, incluyendo el tráfico correcto sin errores, los datos ausentes y el sesgo de muestreo. El orden descendente selecciona los valores más grandes.
+Selecciona el intervalo de tiempo y el alcance de spans y servicios previstos en la interfaz de consulta. Varios spans pueden pertenecer a una misma solicitud; los recuentos de spans muestreados y los percentiles de duración de spans no representan una tasa de error de aplicación sin sesgo ni un SLO de latencia de solicitudes. Para calcular tasas por solicitud, utiliza métricas de solicitudes con un alcance coherente y considera el tráfico correcto sin errores, los datos ausentes y el sesgo del muestreo. El orden descendente selecciona los valores más altos.
 
 ## Grupos y filtros
 
 ### Crear grupos de X-Ray
 
-Use un rol de operador autorizado y la Región prevista. Revise los grupos existentes antes de crearlos; use la operación de actualización para un grupo existente del que sea propietario. El filtro de demostración siguiente coincide con el atributo de entorno indexado explícitamente que emiten los ejemplos de SDK. Reemplácelo por el campo/valor real de producción cuando corresponda.
+Utiliza un rol de operador autorizado y la región prevista. Revisa los grupos existentes antes de crear uno; utiliza la operación de actualización para un grupo existente que administres. El filtro de demostración siguiente coincide con el atributo de entorno indexado explícitamente que emiten los ejemplos del SDK. Sustitúyelo por el campo y valor reales de producción cuando corresponda.
 
 ```bash
 set -euo pipefail
@@ -873,13 +873,13 @@ aws xray create-group --region "$AWS_REGION" --group-name docs-payment \
   --filter-expression 'service("payment-demo")'
 ```
 
-Los grupos filtran las trazas recolectadas y exponen métricas relacionadas; no definen aislamiento de IAM, retención ni muestreo del productor. Configure y pruebe las alarmas de CloudWatch por separado. Los resultados vacíos pueden significar atributos que no coinciden, muestreo, datos ausentes o un rango temporal incorrecto, no una aplicación saludable.
+Los grupos filtran las trazas recopiladas y exponen métricas relacionadas; no definen el aislamiento de IAM, la retención ni el muestreo del productor. Configura y prueba las alarmas de CloudWatch por separado. Los resultados vacíos pueden indicar atributos que no coinciden, muestreo, datos ausentes o un intervalo de tiempo incorrecto; no demuestran que la aplicación esté sana.
 
 ## Buenas prácticas
 
 ### 1. Diseño de segmentos y subsegmentos
 
-Use nombres acotados para operaciones significativas y preserve el contexto padre. El siguiente fragmento del SDK heredado de Java ilustra trabajo síncrono anidado, no una aplicación completa ni una operación de AWS ejecutada. Segment/Subsegment de X-Ray Java 2.21.1 implementan AutoCloseable, por lo que try-with-resources es válido; un segmento creado por middleware debería reutilizarse en lugar de añadir una segunda raíz. Las transiciones asíncronas o entre hilos requieren propagación explícita y admitida del contexto. Prefiera OpenTelemetry para código nuevo.
+Utiliza nombres con un conjunto limitado de valores para operaciones significativas y conserva el contexto padre. El siguiente fragmento del SDK antiguo de Java ilustra trabajo síncrono anidado, no una aplicación completa ni una operación de AWS ejecutada. Segment/Subsegment de X-Ray Java 2.21.1 implementan AutoCloseable, por lo que try-with-resources es válido; reutiliza un segmento creado por middleware en lugar de añadir una segunda raíz. Las transiciones asíncronas o entre hilos requieren propagación explícita y compatible del contexto. Prefiere OpenTelemetry para código nuevo.
 
 ```java
 // Legacy X-Ray SDK structure fragment; no database/payment/queue call is executed.
@@ -902,7 +902,7 @@ try (Segment segment = AWSXRay.beginSegment("ProcessOrder")) {
 
 ### 2. Uso de anotaciones y metadatos
 
-X-Ray indexa hasta **50 anotaciones por traza**, no 50 por cada segmento de forma independiente. Use campos deliberadamente de baja cardinalidad. Los metadatos no se indexan como anotaciones, pero permanecen almacenados y accesibles; no constituyen enmascaramiento ni un límite de privacidad. Elimine tokens de acceso, cookies, claves privadas, payloads sin procesar de solicitud/respuesta, identificadores de usuario y parámetros SQL antes de la recolección. El acceso y la retención de spans/logs de Transaction Search también requieren revisión. El ajuste index_all_attributes=false del collector no elimina los atributos no indexados.
+X-Ray indexa hasta **50 anotaciones por traza**, no 50 por cada segmento de forma independiente. Elige cuidadosamente campos de baja cardinalidad. Los metadatos no se indexan como anotaciones, pero siguen almacenados y accesibles; no eliminan datos sensibles ni establecen un límite de privacidad. Retira los tokens de acceso, las cookies, las claves privadas, los cuerpos sin procesar de solicitudes y respuestas, los identificadores de usuario y los parámetros SQL antes de recopilar datos. También deben revisarse el acceso y la retención de spans y registros de Transaction Search. El ajuste index_all_attributes=false del recolector no elimina los atributos no indexados.
 
 ```java
 // Synthetic, bounded examples. Never attach complete request/response bodies.
@@ -916,7 +916,7 @@ segment.putMetadata("diagnostics", Map.of(
 
 ### 3. Optimización de costes
 
-Use la configuración real del SDK/muestreador remoto o del collector para la ruta elegida; un bloque YAML genérico de sampling.default/errors no es una API de X-Ray ni una configuración de ADOT. Mantenga las exclusiones de health checks por delante de las reglas de API más amplias y mida el efecto. El muestreo en cabeza no puede prometer el 100 % de los errores eventuales. Evalúe por separado el registro, la recuperación/escaneo, la ingesta/indexación de Transaction Search, la retención de CloudWatch y la capacidad del collector frente a los precios actuales. El muestreo de índice y el muestreo del productor son controles distintos; reducir uno no necesariamente reduce todos los spans almacenados ni todos los cargos.
+Utiliza la configuración real del SDK, el muestreador remoto o el recolector para la ruta elegida; un bloque YAML genérico sampling.default/errors no es una API de X-Ray ni una configuración de ADOT. Mantén las exclusiones de comprobaciones de salud por delante de las reglas de API más amplias y mide el efecto. El muestreo inicial no puede garantizar la captura del 100 % de los errores que se produzcan después. Evalúa por separado el registro, la recuperación y el análisis, la ingesta y la indexación de Transaction Search, la retención de CloudWatch y la capacidad del recolector según los precios actuales. El muestreo del índice y el del productor son controles distintos; reducir uno no reduce necesariamente todos los spans almacenados ni todos los cargos.
 
 ## Cuestionario
 
