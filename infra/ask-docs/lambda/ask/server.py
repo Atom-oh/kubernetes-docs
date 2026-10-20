@@ -10,11 +10,16 @@ starts listening, so the readiness probe only passes once the first question can
 """
 import json
 import os
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import app
 
 MAX_BODY_BYTES = 16 * 1024  # WAF already blocks bodies over 4KB at CloudFront
+# Cost control that Lambda's reserved concurrency used to provide: each in-flight question is a Bedrock
+# call, so refuse (429) beyond this many at once per pod. Replicas are fixed, so the total is bounded.
+MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "5"))
+_slots = threading.BoundedSemaphore(MAX_CONCURRENT)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -45,11 +50,16 @@ class Handler(BaseHTTPRequestHandler):
         except app.RequestError as exc:
             return self._send_json(exc.status, {"error": exc.message})
 
-        events = app.ask(request)
-        if "text/event-stream" in (self.headers.get("accept") or ""):
-            self._stream(events)
-        else:
-            self._send_json(*app.collect(events))
+        if not _slots.acquire(blocking=False):
+            return self._send_json(429, {"error": "too many requests in progress, try again shortly"})
+        try:
+            events = app.ask(request)
+            if "text/event-stream" in (self.headers.get("accept") or ""):
+                self._stream(events)
+            else:
+                self._send_json(*app.collect(events))
+        finally:
+            _slots.release()
 
     def _stream(self, events):
         self.send_response(200)

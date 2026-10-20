@@ -18,7 +18,7 @@ metadata:
   name: ask-docs
   namespace: ask-docs
 spec:
-  replicas: 2
+  replicas: 2 # keep fixed (no HPA): with MAX_CONCURRENT this bounds concurrent Bedrock calls
   selector:
     matchLabels: { app: ask-docs }
   strategy:
@@ -50,6 +50,7 @@ spec:
             - { name: MAX_QUESTION_CHARS, value: "500" }
             - { name: MAX_OUTPUT_TOKENS, value: "800" }
             - { name: TOP_K, value: "6" }
+            - { name: MAX_CONCURRENT, value: "5" } # per pod; replicas are fixed, so total Bedrock load is capped
             - { name: CONVERSATION_TABLE, value: "${CONVERSATION_TABLE}" }
           readinessProbe:
             httpGet: { path: /healthz, port: 8080 }
@@ -107,3 +108,21 @@ spec:
         ports:
           - protocol: TCP
             port: 8080
+---
+# Only the internal ALB (isolated subnets of the demo VPC) may reach the pods: other workloads in the
+# cluster cannot call the API directly and bypass CloudFront/WAF. Kubelet probes come from the node.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ask-docs-from-alb
+  namespace: ask-docs
+spec:
+  podSelector:
+    matchLabels: { app: ask-docs }
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - ipBlock: { cidr: 10.0.4.0/24 } # IsolatedSubnet1 (ap-northeast-2a), internal ALB
+        - ipBlock: { cidr: 10.0.5.0/24 } # IsolatedSubnet2 (ap-northeast-2b), internal ALB
+      ports:
+        - { protocol: TCP, port: 8080 }
