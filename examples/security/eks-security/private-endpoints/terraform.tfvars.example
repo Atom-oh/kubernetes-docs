@@ -1,0 +1,11 @@
+# Copy to terraform.tfvars. Demos run only in the shared demo VPC (fsi-demo-vpc, 10.0.0.0/16).
+vpc_id = "vpc-04e77172c67f19814"
+
+private_subnet_ids = [
+  "subnet-0381e6c41375cbc53", # PrivateSubnet1, ap-northeast-2a
+  "subnet-037c396f41efedba8", # PrivateSubnet2, ap-northeast-2b
+]
+
+# Fill in from the demo VPC's private route tables and the client workloads' SGs.
+# private_route_table_ids   = ["rtb-..."]
+# client_security_group_ids = ["sg-..."]

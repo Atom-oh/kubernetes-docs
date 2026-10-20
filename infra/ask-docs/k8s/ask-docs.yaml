@@ -1,0 +1,109 @@
+# Render with envsubst (IMAGE, TARGET_GROUP_ARN, ALB_SG_ID, INDEX_BUCKET, CONVERSATION_TABLE, MODEL_ID),
+# then kubectl apply. The target group and ALB come from the AskDocsAppDemo stack outputs; the pods get
+# their AWS permissions through the Pod Identity association that stack creates for ask-docs/ask-docs.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ask-docs
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ask-docs
+  namespace: ask-docs
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ask-docs
+  namespace: ask-docs
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: ask-docs }
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  template:
+    metadata:
+      labels: { app: ask-docs }
+    spec:
+      serviceAccountName: ask-docs
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: { app: ask-docs }
+      containers:
+        - name: server
+          image: ${IMAGE}
+          ports:
+            - containerPort: 8080
+          env:
+            - { name: AWS_DEFAULT_REGION, value: ap-northeast-2 }
+            - { name: WARMUP, value: "1" }
+            - { name: INDEX_BUCKET, value: "${INDEX_BUCKET}" }
+            - { name: INDEX_PREFIX, value: "index/" }
+            - { name: MODEL_ID, value: "${MODEL_ID}" }
+            - { name: MAX_QUESTION_CHARS, value: "500" }
+            - { name: MAX_OUTPUT_TOKENS, value: "800" }
+            - { name: TOP_K, value: "6" }
+            - { name: CONVERSATION_TABLE, value: "${CONVERSATION_TABLE}" }
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            periodSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            periodSeconds: 5
+            failureThreshold: 30
+          resources:
+            requests: { cpu: 100m, memory: 1Gi }
+            limits: { memory: 2Gi }
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ask-docs
+  namespace: ask-docs
+spec:
+  selector: { app: ask-docs }
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ask-docs
+  namespace: ask-docs
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: { app: ask-docs }
+---
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: ask-docs
+  namespace: ask-docs
+spec:
+  serviceRef:
+    name: ask-docs
+    port: 8080
+  targetGroupARN: ${TARGET_GROUP_ARN}
+  targetType: ip
+  networking:
+    ingress:
+      - from:
+          - securityGroup: { groupID: ${ALB_SG_ID} }
+        ports:
+          - protocol: TCP
+            port: 8080

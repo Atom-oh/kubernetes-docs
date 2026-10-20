@@ -1,12 +1,12 @@
-"""Local HTTP server for the docs Q&A Lambda.
+"""HTTP server for the docs Q&A API, run as a pod on the demo EKS cluster (see k8s/ask-docs.yaml).
 
-AWS Lambda Web Adapter (a layer, AWS_LWA_INVOKE_MODE=response_stream) turns each API Gateway request
-into a request to this server and streams the response back as it is written, so the answer reaches the
-browser while Bedrock is still generating it. An ALB Lambda target cannot stream, which is why the ALB
-forwards to a private API Gateway with STREAM transfer mode instead (see lib/app-stack.ts).
+The internal ALB forwards /kubernetes-docs/api/* straight to this server, which writes the answer as it
+is generated, so it reaches the browser while Bedrock is still streaming it. (An ALB Lambda target
+cannot stream, which is why this runs on EKS rather than Lambda.)
 
 POST .../ask with "Accept: text/event-stream" gets server-sent events (meta, delta..., done | error);
-any other POST gets the buffered JSON response.
+any other POST gets the buffered JSON response. WARMUP=1 loads the search index before the server
+starts listening, so the readiness probe only passes once the first question can be answered fast.
 """
 import json
 import os
@@ -24,7 +24,7 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def do_GET(self):
-        if self.path.split("?", 1)[0] == "/healthz":  # AWS_LWA_READINESS_CHECK_PATH
+        if self.path.split("?", 1)[0] == "/healthz":  # readiness/liveness probes
             self._send_json(200, {"ok": True})
         else:
             self._send_json(405, {"error": "method not allowed"})
@@ -82,4 +82,6 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     port = int(os.environ.get("AWS_LWA_PORT") or os.environ.get("PORT") or 8080)
-    ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
+    if os.environ.get("WARMUP") == "1":  # load the search index before the readiness probe passes
+        app._get_index()
+    ThreadingHTTPServer((os.environ.get("HOST", "127.0.0.1"), port), Handler).serve_forever()

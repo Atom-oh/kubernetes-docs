@@ -5,8 +5,16 @@
     "region": "ap-northeast-2",
     "publicZoneId": "Z01703432E9KT1G1FIRFM",
     "appZoneId": "Z062950321UN61HPBMEOO",
-    "s3PrefixListId": "pl-78a54011",
     "cloudfrontOriginFacingPrefixListId": "pl-22a6434b",
-    "modelId": "global.anthropic.claude-haiku-5-5"
+    "modelId": "global.anthropic.claude-haiku-5-5",
+    "demoVpcId": "vpc-04e77172c67f19814",
+    "demoVpcCidr": "10.0.0.0/16",
+    "demoIsolatedSubnetA": "subnet-021887346ae38b8d6",
+    "demoIsolatedSubnetB": "subnet-028ffa735bb514032",
+    "demoIsolatedRouteTableA": "rtb-0aecdd646fa89ee3f",
+    "demoIsolatedRouteTableB": "rtb-05a1e26b0f0aa22b1",
+    "demoBedrockEndpointSg": "sg-0c1f4e763b172ee7e",
+    "demoClusterName": "fsi-demo-cluster",
+    "demoClusterSg": "sg-0143b07a17cc02c27"
   }
 }
