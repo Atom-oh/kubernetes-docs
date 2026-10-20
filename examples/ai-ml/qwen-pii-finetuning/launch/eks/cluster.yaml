@@ -8,6 +8,14 @@ metadata:
     Experiment: qwen-pii-finetuning
     ExperimentId: ${BASE_EXPERIMENT_ID}
     OwnershipToken: ${OWNERSHIP_TOKEN}
+vpc:
+  id: ${DEMO_VPC_ID}
+  subnets:
+    private:
+      ap-northeast-2a:
+        id: ${DEMO_PRIVATE_SUBNET_A}
+      ap-northeast-2b:
+        id: ${DEMO_PRIVATE_SUBNET_B}
 iam:
   withOIDC: false
   podIdentityAssociations:
@@ -50,6 +58,7 @@ managedNodeGroups:
     volumeType: gp3
     volumeEncrypted: true
     amiFamily: AmazonLinux2023
+    privateNetworking: true
     disablePodIMDS: true
     labels:
       workload: qwen-pii-training

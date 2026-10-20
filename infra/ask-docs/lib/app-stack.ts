@@ -99,7 +99,7 @@ export class AppStack extends cdk.Stack {
     })
 
     const originCert = new acm.Certificate(this, 'OriginCert', {
-      domainName: 'ask-origin.aws.atomai.click',
+      domainName: 'ask-origin-demo.aws.atomai.click',
       validation: acm.CertificateValidation.fromDns(appZone),
     })
 
@@ -159,7 +159,7 @@ export class AppStack extends cdk.Stack {
       conditions: [elbv2.ListenerCondition.pathPatterns(['/kubernetes-docs/api/*'])],
       action: elbv2.ListenerAction.forward([tg]),
     })
-    // The endpoint picks the private API by Host header; CloudFront sends ask-origin.aws.atomai.click.
+    // The endpoint picks the private API by Host header; CloudFront sends ask-origin-demo.aws.atomai.click.
     const rule = https.node.findChild('AskApiRule').node.defaultChild as elbv2.CfnListenerRule
     rule.transforms = [
       {
@@ -172,7 +172,7 @@ export class AppStack extends cdk.Stack {
 
     new route53.ARecord(this, 'OriginAlias', {
       zone: appZone,
-      recordName: 'ask-origin',
+      recordName: 'ask-origin-demo',
       target: route53.RecordTarget.fromAlias(new route53Targets.LoadBalancerTarget(this.alb)),
     })
 

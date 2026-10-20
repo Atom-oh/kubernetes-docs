@@ -378,8 +378,8 @@ Direct Connect나 VPN이 잠시 끊기거나 네트워크가 응답하지 않을
 | 영역 | 동작 |
 |---|---|
 | 실행 중인 Pod | 노드에서 계속 실행됩니다. kubelet이 Lease를 갱신하지 못해 Node의 Ready가 `Unknown`이 되고 `node.kubernetes.io/unreachable` taint가 붙습니다(`NoSchedule`, 조건 충족 시 `NoExecute`). |
-| Pod 이전 | toleration이 없는 Pod는 기본 300초 뒤 컨트롤 플레인이 퇴거시키고 다른 노드에 대체 Pod를 만듭니다. DaemonSet Pod는 이 taint를 기본으로 허용해 노드에 남습니다. |
-| zone label | 노드에 `topology.kubernetes.io/zone`을 지정하면, 한 zone의 노드가 모두 unreachable일 때 Kubernetes가 그 zone의 퇴거를 취소합니다. hybrid 노드에는 cloud-controller-manager가 없으므로 nodeadm `--node-labels`로 데이터센터별 zone을 지정합니다. |
+| Pod 이전 | 일반 Pod에는 `not-ready`와 `unreachable` NoExecute taint에 대한 기본 300초 toleration이 추가됩니다. 해당 NoExecute taint가 적용되고 toleration이 만료되면 컨트롤 플레인이 Pod를 삭제 대상으로 표시하고, 컨트롤러가 적격 노드에 대체 Pod를 만들 수 있습니다. 일치하는 toleration이 실제로 없는 Pod는 300초를 기다리지 않고 퇴거됩니다. 연결이 끊긴 노드의 원래 컨테이너는 kubelet이 재연결될 때까지 계속 실행될 수 있습니다. DaemonSet Pod는 기본으로 이 taint를 무기한 허용합니다. |
+| zone label | zone label만으로 퇴거가 방지되지는 않습니다. 한 zone 전체가 unreachable이어도 다른 zone에 Ready 노드가 남아 있으면 퇴거가 진행될 수 있습니다. 모든 zone에 Ready 노드가 하나도 없으면 Kubernetes가 퇴거를 취소하며, 다른 zone 건강 임계값과 클러스터 크기도 동작에 영향을 줍니다. [AWS Pod failover 문서](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html)의 시나리오를 대조하세요. hybrid 노드에는 cloud-controller-manager가 없으므로 nodeadm `--node-labels`로 데이터센터별 zone을 지정합니다. |
 | Cilium | agent health가 컨트롤 플레인 접근과 묶여 있어 단절 중 agent가 재시작을 반복하고, Cilium BGP Control Plane 세션이 내려갈 수 있습니다(CFP #31702, Cilium 1.17 opt-in 개선). AWS 예시의 MetalLB L2 모드는 단절 중에도 안정적이었습니다. |
 | AWS 서비스 의존 | ECR 이미지 pull, CloudWatch와 Amazon Managed Service for Prometheus, ALB/NLB, S3, RDS 같은 리전 서비스는 단절 중 쓸 수 없습니다. |
 | 로컬 진단 | API 서버에 닿지 않으므로 `kubectl` 대신 호스트에서 `crictl pods`, `crictl ps`, `crictl logs <container>`를 씁니다. |

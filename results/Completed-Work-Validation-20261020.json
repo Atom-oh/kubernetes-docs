@@ -1,0 +1,307 @@
+{
+  "schemaVersion": 1,
+  "validatedAtUTC": "2026-10-20T14:36:48.575354+00:00",
+  "scope": "Completed unpublished Hybrid Nodes content repairs and shared-demo-VPC configurations; source publication, with no AWS deployment.",
+  "baseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+  "branch": "docs/completed-work-20261020",
+  "sourceManifest": {
+    "en/eks-hybrid-nodes/02-network-configuration.md": {
+      "sha256": "2c1ffeb6c8a17b6f19da066c90af614b6a77cdbc118d2a575f16ed6dcf844f5d",
+      "bytes": 57560
+    },
+    "en/eks-hybrid-nodes/08-operations.md": {
+      "sha256": "6791b5107e5737b3720fe1bd58f6cdd2cbabd909afa9aeac1d0e9f2b0fe2377b",
+      "bytes": 36316
+    },
+    "en/eks-hybrid-nodes/10-hybrid-nodes-gateway.md": {
+      "sha256": "da22829de19c72955b8abf5c256cfbee02b1f8911d655cf9014f28f7f0e87b2f",
+      "bytes": 85471
+    },
+    "examples/ai-ml/qwen-pii-finetuning/README.md": {
+      "sha256": "df36fe54bec6abf7cf61a6cdf92cc73bf4fc9f07b6e51af255603d302b49c9f1",
+      "bytes": 10850
+    },
+    "examples/ai-ml/qwen-pii-finetuning/launch/eks/README.md": {
+      "sha256": "8e07fefc9d1f29f861ba7361e323ea30b3b3db99ab04b6c56c102d8dd9d8ca63",
+      "bytes": 3905
+    },
+    "examples/ai-ml/qwen-pii-finetuning/launch/eks/cluster.yaml": {
+      "sha256": "8e7939925831d5cc370215a15d93eab41eaad804552996e5de30f109245fad8c",
+      "bytes": 2316
+    },
+    "examples/ai-ml/qwen-pii-finetuning/launch/eks/run.sh": {
+      "sha256": "a5b9e8829dfb98d3afa3ae8f58aaff8f3b919ebe27ec3f905c9d65fdeaa1bcb7",
+      "bytes": 7199
+    },
+    "examples/security/eks-security/private-endpoints/README.md": {
+      "sha256": "26e2ad560b0b94cbed84af0b326bf9efcd4507f9054f7dc6d52f63683f12e8e8",
+      "bytes": 3322
+    },
+    "examples/security/eks-security/private-endpoints/terraform.tfvars.example": {
+      "sha256": "ddb6ced4080e4b9e5819cce704a6421227f6893bb041eb209b9b109e9b94c621",
+      "bytes": 928
+    },
+    "infra/ask-docs/README.md": {
+      "sha256": "b3459dcc0723be13bf1264732b21781830ba8664ef19837a94bb57271c2f2e22",
+      "bytes": 12173
+    },
+    "infra/ask-docs/bin/app.ts": {
+      "sha256": "06a63e698c31c64ea116604ed2f67598d0da41726c336e726205f42cc3af621b",
+      "bytes": 1639
+    },
+    "infra/ask-docs/cdk.json": {
+      "sha256": "a8497fc7a2af6f8b9432c8a8aac5f230c6ccc6b8e086dc85031a442a8f887c82",
+      "bytes": 579
+    },
+    "infra/ask-docs/lib/app-stack.ts": {
+      "sha256": "c2d63d82fa5ccbb3d3a6811fea98dbf65ac37cc82dfab57f5a4fd77d61485bad",
+      "bytes": 8123
+    },
+    "infra/ask-docs/lib/edge-stack.ts": {
+      "sha256": "373a2b4e3b8c678c9ba38eb1277e74796d56a82665e77f9bbbdee3b080cd6932",
+      "bytes": 10573
+    },
+    "infra/ask-docs/lib/network-stack.ts": {
+      "sha256": "677fdea6ba3154ebdc43610aafbfde2acfec6409812441b77f076115086b6cf2",
+      "bytes": 5918
+    },
+    "infra/ask-docs/package.json": {
+      "sha256": "8aa73393befe764bd145c58e75268b71b19629d6e9106e34b159f07807ff05e9",
+      "bytes": 586
+    },
+    "ko/eks-hybrid-nodes/02-network-configuration.md": {
+      "sha256": "a0dea88aa79cc8283e0fa87fd021375288aeca2c178b9f983852db2e031b2cde",
+      "bytes": 58684
+    },
+    "ko/eks-hybrid-nodes/08-operations.md": {
+      "sha256": "0a65301d0f7fdcfb542e3c8efc11b527bfde4ca9412e04793c9c8f88224d46b2",
+      "bytes": 38682
+    },
+    "ko/eks-hybrid-nodes/10-hybrid-nodes-gateway.md": {
+      "sha256": "d958597a719f183309b9e7f56642470e1e8624095bbc79c29a6b8a808fd84b8f",
+      "bytes": 89954
+    }
+  },
+  "contentReview": {
+    "report": "results/Completed-Work-Content-Review-20261020.json",
+    "completePageReviewCount": 10,
+    "status": "PASS",
+    "minimumNormalizedScore": 98.33,
+    "minimumRawMarkdownScore": 88.5,
+    "rawMarkdownMaximum": 90,
+    "unresolvedMajorIssues": 0,
+    "allAcceptedHashesMatchCandidate": true,
+    "visualBrowserScoreNotClaimed": true
+  },
+  "docsValidation": {
+    "command": "npm run docs:validate",
+    "status": "PASS",
+    "tests": 209,
+    "passed": 209,
+    "newsRecords": 103,
+    "localLinks": "PASS",
+    "imagesFiveLocales": "PASS",
+    "koEnParity": "PASS",
+    "nodeVersion": "22.23.1",
+    "pythonSubprocessVersion": "3.12.13",
+    "logSha256": "e0d94615684ae617955a78b87efb9ba802f18b2632fa2bae95942eba37b3e222",
+    "rerunAfterPrivateContextRemediation": "PASS:209/209 plus news, links, images and parity"
+  },
+  "qwenFullSuite": {
+    "command": "python -B -m pytest -p no:cacheprovider tests -q",
+    "status": "PASS",
+    "tests": 257,
+    "passed": 257,
+    "elapsedSeconds": 12.43,
+    "pythonVersion": "3.12.13",
+    "pytestVersion": "8.4.2",
+    "PyYAMLVersion": "6.0.3",
+    "boto3Version": "1.42.97",
+    "actualRootRun": true,
+    "awsClients": "Mocked; no AWS resource operations"
+  },
+  "eksRenderingAndSchema": {
+    "actualEnvsubstExecutable": "/usr/bin/envsubst",
+    "actualWhitelist": "${EXPERIMENT_ID} ${BASE_EXPERIMENT_ID} ${OWNERSHIP_TOKEN} ${BUCKET_NAME} ${ACCOUNT_ID} ${INPUT_ROLE_NAME} ${DEMO_VPC_ID} ${DEMO_PRIVATE_SUBNET_A} ${DEMO_PRIVATE_SUBNET_B}",
+    "allPlaceholdersResolved": true,
+    "existingVpcAndPrivateSubnetMappingExact": true,
+    "privateNetworkingBooleanTrue": true,
+    "installedEksctlVersion": "0.231.0",
+    "installedEksctlFullSchemaValidation": true,
+    "ownershipIamAndTagFieldsEquivalentToMainAfterRemovingNewNetworkKeys": true,
+    "missingOrEmptyVariables": [
+      {
+        "variable": "DEMO_VPC_ID",
+        "mode": "unset",
+        "returnCode": 1,
+        "failsBeforeRender": true
+      },
+      {
+        "variable": "DEMO_VPC_ID",
+        "mode": "empty",
+        "returnCode": 1,
+        "failsBeforeRender": true
+      },
+      {
+        "variable": "DEMO_PRIVATE_SUBNET_A",
+        "mode": "unset",
+        "returnCode": 1,
+        "failsBeforeRender": true
+      },
+      {
+        "variable": "DEMO_PRIVATE_SUBNET_A",
+        "mode": "empty",
+        "returnCode": 1,
+        "failsBeforeRender": true
+      },
+      {
+        "variable": "DEMO_PRIVATE_SUBNET_B",
+        "mode": "unset",
+        "returnCode": 1,
+        "failsBeforeRender": true
+      },
+      {
+        "variable": "DEMO_PRIVATE_SUBNET_B",
+        "mode": "empty",
+        "returnCode": 1,
+        "failsBeforeRender": true
+      }
+    ],
+    "allVariablesSetGuardsPass": true,
+    "clusterTemplateSha256": "8e7939925831d5cc370215a15d93eab41eaad804552996e5de30f109245fad8c",
+    "runSha256": "a5b9e8829dfb98d3afa3ae8f58aaff8f3b919ebe27ec3f905c9d65fdeaa1bcb7",
+    "noAwsCallsOrResourceOperations": true
+  },
+  "eksFinalChecks": "/tmp/completed-work-eks-example-review-20261020/implementation-final-checks.json",
+  "askDocs": {
+    "checks": {
+      "build": "PASS",
+      "actualNpmScriptBaseNoLookupSynth": "PASS",
+      "edgeNoLookupSynth": "PASS",
+      "sevenMissingRequiredContexts": "7/7 expected failures PASS",
+      "actualReadmeWrapperFailureMock": "PASS, generic exit-status and no context argv traceback",
+      "existingBackendHttpTests": "Earlier actual7/7 AWS-mock HTTP tests PASS; backend/tests unchanged from exact main.",
+      "newVpcSubnetRouteIgwNat": "0 in synthesized new network",
+      "openIngressIntroduced": "0"
+    },
+    "finalCandidateAcceptance": {
+      "validatedAt": "2026-10-20T14:34:47.452755+00:00",
+      "candidateWorktree": "/home/atomoh/kubernetes-docs/.vitepress/cache/completed-work-pr-20261020",
+      "baseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+      "files": {
+        "infra/ask-docs/bin/app.ts": {
+          "sha256": "06a63e698c31c64ea116604ed2f67598d0da41726c336e726205f42cc3af621b",
+          "bytes": 1639,
+          "baseSha256": "c4f71222fdd9b5da2c82b0657bf4d8432192f2e765395be339e80a44fa177d65"
+        },
+        "infra/ask-docs/cdk.json": {
+          "sha256": "a8497fc7a2af6f8b9432c8a8aac5f230c6ccc6b8e086dc85031a442a8f887c82",
+          "bytes": 579,
+          "baseSha256": "c2688fe22dd296a53c8801e497051ffa7037d221fee9db20966b9138ad013aca"
+        },
+        "infra/ask-docs/lib/network-stack.ts": {
+          "sha256": "677fdea6ba3154ebdc43610aafbfde2acfec6409812441b77f076115086b6cf2",
+          "bytes": 5918,
+          "baseSha256": "f7d08a34c898d32cc57c193d8993dab7dd9b2b9c72d38dde33fb61b0c3ffa99d"
+        },
+        "infra/ask-docs/lib/app-stack.ts": {
+          "sha256": "c2d63d82fa5ccbb3d3a6811fea98dbf65ac37cc82dfab57f5a4fd77d61485bad",
+          "bytes": 8123,
+          "baseSha256": "ddc783c4924f05c11ec2ded7f0a0fa7f591a73d681e7068037788299b1d6db79"
+        },
+        "infra/ask-docs/lib/edge-stack.ts": {
+          "sha256": "373a2b4e3b8c678c9ba38eb1277e74796d56a82665e77f9bbbdee3b080cd6932",
+          "bytes": 10573,
+          "baseSha256": "49bc049af9f04a3e2f561b43c5142c221ff19defa3c7ddc8f720eb0140803e17"
+        },
+        "infra/ask-docs/package.json": {
+          "sha256": "8aa73393befe764bd145c58e75268b71b19629d6e9106e34b159f07807ff05e9",
+          "bytes": 586,
+          "baseSha256": "691962fd621dd544f26e934a21f5e83741ade20cb77f532b5acd976e6b2e3e47"
+        },
+        "infra/ask-docs/README.md": {
+          "sha256": "b3459dcc0723be13bf1264732b21781830ba8664ef19837a94bb57271c2f2e22",
+          "bytes": 12173,
+          "baseSha256": null
+        }
+      },
+      "sevenDemoDefaultsEmpty": true,
+      "requiredContextFailureCasesPassed": 7,
+      "requiredContextFailureCasesTotal": 7,
+      "buildPassed": true,
+      "actualNpmSynthScriptBasePassed": true,
+      "edgeSynthPassed": true,
+      "syntheticAccountAndNetworkFixturesOnly": true,
+      "awsLookupsOrWrites": false,
+      "actualSourceNewDemoIdentifiersAndCidrAbsent": true,
+      "privateReadmeWrapperFailureAvoidsArgvTraceback": true,
+      "readmeIndependentWholeDocumentReviewHash": "b3459dcc0723be13bf1264732b21781830ba8664ef19837a94bb57271c2f2e22",
+      "gitDiffWhitespacePassed": true,
+      "networkCreatesNoVpcSubnetRouteIgwNat": true,
+      "newOpenSecurityGroupIngress": false,
+      "backendDataTestsLockfileMainBytesPreserved": true,
+      "runShExecutablePreserved": true,
+      "candidateDependencySymlinkRemovedOnly": true,
+      "originalInstalledDependenciesPreserved": true,
+      "originalUserWorktreeModified": false,
+      "gitIndexOrCommitModifiedByThisAgent": false
+    },
+    "migration": "New Demo App/Network stack identities coexist with old stacks; existing Data identity reused. New DemoVpcOrigin logical resource with stable CloudFront distribution. Rollback/old-stack-retirement limits documented; no deployed-state evidence.",
+    "inheritedFindings": "Wildcard AnyPrincipal private API/VPCE policies and describe-network-interfaces Resource:* match main. Stronger ops-skill blanket IAM mandates are distinguished from user global network/shared-VPC rules. No new auth/backend redesign is introduced.",
+    "remainingLimits": [
+      "Imported VPC/subnet/AZ/routes/endpoints/IGW/NACL/IP availability have not been checked in AWS.",
+      "Account model access/quota/SCP/cross-region permissions and actual Web Adapter stream path have not been invoked.",
+      "Offline synth confirms template shape, not successful live cutover or cleanup."
+    ],
+    "officialSources": [
+      "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-haiku-5-5.html",
+      "https://docs.aws.amazon.com/apigateway/latest/developerguide/response-transfer-mode-lambda.html",
+      "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html"
+    ]
+  },
+  "gitbookCoverage": {
+    "command": "npm run docs:gitbook:check",
+    "status": "FAIL_PRE_EXISTING",
+    "alsoReproducedOnCleanRelevantPathsAtBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+    "locales": [
+      "cn",
+      "jp",
+      "es"
+    ],
+    "missingPerLocale": [
+      "eks-hybrid-nodes/12-connectivity-validation.md",
+      "quizzes/eks-hybrid-nodes/12-connectivity-validation-quiz.md"
+    ],
+    "missingNavigationPerLocale": 2,
+    "newMissingPagesFromThisChange": 0,
+    "existingTranslationPr": 379,
+    "allSixFilesVerifiedInExistingPr": true,
+    "coverageFailureNotClaimedAsPass": true
+  },
+  "deduplication": {
+    "fourteenOriginalBranchCommitsAlreadySquashMergedInPr": 353,
+    "alreadyMergedAskDocsUiBackendIndexPreserved": true,
+    "supersededLocalTranslationScriptsAndClaudeChangesNotReintroduced": true,
+    "personalConnectorConfigurationAndGeneratedArtifactsExcluded": true
+  },
+  "originalWorktreePreserved": {
+    "originalHead": "de0cf16d65fa525825d445bc189f57031b256563",
+    "trackedSourceHashCountVerified": 11,
+    "allOriginalTrackedSourceHashesUnchanged": true
+  },
+  "awsDeploymentOrResourceWrites": false,
+  "githubCiSuccessNotClaimedByLocalAcceptance": true,
+  "publicationDataMinimization": {
+    "destination": "Atom-oh/kubernetes-docs",
+    "destinationIsPublic": true,
+    "authenticatedGitHubLogin": "Atom-oh",
+    "viewerPermission": "ADMIN",
+    "destinationMatchesUserReferencedRepoAndGitRemote": true,
+    "sevenNewDemoDefaultsEmpty": true,
+    "actualNewVpcSubnetRouteAndEndpointGroupIdsExcluded": true,
+    "offlineSynthUsesSyntheticAccountNetworkAndAlbOnly": true,
+    "initialPushRejectedByAutomaticApprovalReview": true,
+    "initialUnsafeCommitWasNotPushed": true,
+    "unpublishedCommitToExcludeFromBranchHistory": "9bcad8c141116dc62e85668c3055d1b5142ff1f0"
+  }
+}
