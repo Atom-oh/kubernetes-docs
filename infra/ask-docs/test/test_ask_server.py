@@ -162,6 +162,20 @@ class ServerTest(unittest.TestCase):
             res, _ = self.post(body, accept="text/event-stream")
             self.assertEqual(res.status, 400, body)
 
+    def test_refuses_questions_beyond_the_concurrency_cap(self):
+        held = 0
+        while server._slots.acquire(blocking=False):  # take every free slot
+            held += 1
+        try:
+            res, text = self.post({"question": "What is a Pod?"})
+            self.assertEqual(res.status, 429)
+            self.assertIn("too many requests", text)
+        finally:
+            for _ in range(held):
+                server._slots.release()
+        res, _ = self.post({"question": "What is a Pod?"})
+        self.assertEqual(res.status, 200)
+
     def test_health_check(self):
         conn = http.client.HTTPConnection("127.0.0.1", self.httpd.server_address[1], timeout=5)
         conn.request("GET", "/healthz")

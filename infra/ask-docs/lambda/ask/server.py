@@ -1,20 +1,25 @@
-"""Local HTTP server for the docs Q&A Lambda.
+"""HTTP server for the docs Q&A API, run as a pod on the demo EKS cluster (see k8s/ask-docs.yaml).
 
-AWS Lambda Web Adapter (a layer, AWS_LWA_INVOKE_MODE=response_stream) turns each API Gateway request
-into a request to this server and streams the response back as it is written, so the answer reaches the
-browser while Bedrock is still generating it. An ALB Lambda target cannot stream, which is why the ALB
-forwards to a private API Gateway with STREAM transfer mode instead (see lib/app-stack.ts).
+The internal ALB forwards /kubernetes-docs/api/* straight to this server, which writes the answer as it
+is generated, so it reaches the browser while Bedrock is still streaming it. (An ALB Lambda target
+cannot stream, which is why this runs on EKS rather than Lambda.)
 
 POST .../ask with "Accept: text/event-stream" gets server-sent events (meta, delta..., done | error);
-any other POST gets the buffered JSON response.
+any other POST gets the buffered JSON response. WARMUP=1 loads the search index before the server
+starts listening, so the readiness probe only passes once the first question can be answered fast.
 """
 import json
 import os
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import app
 
 MAX_BODY_BYTES = 16 * 1024  # WAF already blocks bodies over 4KB at CloudFront
+# Cost control that Lambda's reserved concurrency used to provide: each in-flight question is a Bedrock
+# call, so refuse (429) beyond this many at once per pod. Replicas are fixed, so the total is bounded.
+MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "5"))
+_slots = threading.BoundedSemaphore(MAX_CONCURRENT)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -24,7 +29,7 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def do_GET(self):
-        if self.path.split("?", 1)[0] == "/healthz":  # AWS_LWA_READINESS_CHECK_PATH
+        if self.path.split("?", 1)[0] == "/healthz":  # readiness/liveness probes
             self._send_json(200, {"ok": True})
         else:
             self._send_json(405, {"error": "method not allowed"})
@@ -45,11 +50,16 @@ class Handler(BaseHTTPRequestHandler):
         except app.RequestError as exc:
             return self._send_json(exc.status, {"error": exc.message})
 
-        events = app.ask(request)
-        if "text/event-stream" in (self.headers.get("accept") or ""):
-            self._stream(events)
-        else:
-            self._send_json(*app.collect(events))
+        if not _slots.acquire(blocking=False):
+            return self._send_json(429, {"error": "too many requests in progress, try again shortly"})
+        try:
+            events = app.ask(request)
+            if "text/event-stream" in (self.headers.get("accept") or ""):
+                self._stream(events)
+            else:
+                self._send_json(*app.collect(events))
+        finally:
+            _slots.release()
 
     def _stream(self, events):
         self.send_response(200)
@@ -81,5 +91,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("AWS_LWA_PORT") or os.environ.get("PORT") or 8080)
-    ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
+    port = int(os.environ.get("PORT") or 8080)
+    if os.environ.get("WARMUP") == "1":  # load the search index before the readiness probe passes
+        app._get_index()
+    ThreadingHTTPServer((os.environ.get("HOST", "127.0.0.1"), port), Handler).serve_forever()

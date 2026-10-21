@@ -14,6 +14,7 @@
     "demoIsolatedSubnetB": "",
     "demoIsolatedRouteTableA": "",
     "demoIsolatedRouteTableB": "",
-    "demoBedrockEndpointSg": ""
+    "demoClusterName": "",
+    "demoClusterSg": ""
   }
 }

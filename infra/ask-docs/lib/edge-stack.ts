@@ -146,8 +146,7 @@ function handler(event) {
       domainName: 'ask-origin-demo.aws.atomai.click',
     })
 
-    // Forward only what the API reads. In particular x-apigw-api-id never reaches the execute-api
-    // endpoint, which would otherwise let a viewer pick a different private API.
+    // Forward only what the API reads: the viewer's other headers and cookies never reach the origin.
     const apiOriginRequest = new cloudfront.OriginRequestPolicy(this, 'AskApiOriginRequest', {
       comment: 'ask-docs API: accept and content-type only',
       headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList('accept', 'content-type'),
