@@ -1,6 +1,6 @@
 # Gateway de EKS Hybrid Nodes
 
-< [Anterior: Configuración del sistema operativo en bare metal](./09-bare-metal-os-setup.md) | [Tabla de contenido](./README.md) >
+< [Anterior: Configuración del SO en bare metal](./09-bare-metal-os-setup.md) | [Tabla de contenido](./README.md) >
 
 > **Base de validación**: Gateway/chart 1.0.2; use una versión de Kubernetes compatible con EKS y una versión de Cilium mantenida por AWS que cumpla los requisitos previos del gateway.
 > **Última actualización**: 18 de octubre de 2026
@@ -9,33 +9,33 @@
 
 ## Descripción general
 
-EKS Hybrid Nodes Gateway es un componente de red de código abierto que automatiza la conectividad entre la VPC de Amazon y los Pods de Kubernetes que se ejecutan en Hybrid Nodes en entornos locales o perimetrales. Se anunció como disponible de forma general el 21 de abril de 2026. El gateway automatiza las rutas de Pods que administra y el estado de reenvío VXLAN. La conectividad de la red subyacente, la propiedad del enrutamiento, la planificación del firewall/MTU, el despliegue progresivo y la limpieza aún requieren configuración explícita.
+EKS Hybrid Nodes Gateway es un componente de red de código abierto que automatiza la conectividad entre su Amazon VPC y los Pods de Kubernetes que se ejecutan en Hybrid Nodes en entornos locales o periféricos. Anunciado como disponible de forma general el 21 de abril de 2026, el gateway automatiza las rutas de los Pods que administra y el estado de reenvío VXLAN. La conectividad de la red subyacente, la propiedad de las rutas, la planificación del firewall/MTU, el despliegue y la limpieza aún requieren una configuración explícita.
 
-El gateway establece túneles VXLAN entre instancias dedicadas de EC2 en la VPC y los Hybrid Nodes administrados por Cilium en las instalaciones. Programa automáticamente las tablas de rutas de la VPC, administra las entradas de la base de datos de reenvío (FDB) y configura la integración de Cilium VTEP (VXLAN Tunnel Endpoint) para que los Pods de la VPC puedan comunicarse directamente con los Pods de Hybrid Nodes. El reenvío satisfactorio sigue dependiendo de la configuración revisada de la red subyacente, CNI, IAM, reglas de seguridad y rutas de las aplicaciones.
+El gateway funciona estableciendo túneles VXLAN entre instancias de gateway EC2 dedicadas en su VPC y Hybrid Nodes locales administrados por Cilium. Programa automáticamente las tablas de rutas de la VPC, administra las entradas de la base de datos de reenvío (FDB) y configura la integración VTEP (VXLAN Tunnel Endpoint) de Cilium para que los Pods de la VPC puedan comunicarse directamente con los Pods de Hybrid Nodes. El reenvío correcto sigue dependiendo de una infraestructura subyacente, una CNI, IAM, reglas de seguridad y rutas de aplicación revisadas.
 
 **Características principales:**
 
-- **Código abierto**: Disponible íntegramente en [github.com/aws/eks-hybrid-nodes-gateway](https://github.com/aws/eks-hybrid-nodes-gateway)
-- **Sin cargo por el software del gateway**: EC2, almacenamiento, tarifas de Auto Mode (solo si los nodos del gateway se ejecutan en Auto Mode; también funcionan los grupos de nodos administrados o autoadministrados), tráfico entre zonas de disponibilidad, conectividad y observabilidad siguen generando costos
-- **Administración automatizada de rutas**: el líder programa las rutas agregadas configuradas para los Pods de la VPC; cada réplica reconcilia por separado el estado local del túnel de cada CiliumNode
-- **Alta disponibilidad**: admite un Deployment de 2 réplicas con elección de líder basada en Lease para la conmutación por error
-- **Integración con Cilium**: aprovecha la función VTEP de Cilium para permitir el enrutamiento transparente de Pod a Pod a través del túnel VXLAN
+- **Código abierto**: Disponible por completo en [github.com/aws/eks-hybrid-nodes-gateway](https://github.com/aws/eks-hybrid-nodes-gateway)
+- **Sin cargo por el software del gateway**: EC2, almacenamiento, tarifas de Auto Mode (solo cuando los nodos del gateway se ejecutan en Auto Mode; también funcionan los grupos de nodos administrados o autoadministrados), el tráfico entre zonas de disponibilidad, la conectividad y la observabilidad siguen contribuyendo al costo
+- **Administración automatizada de rutas**: El líder programa las rutas agregadas configuradas para los Pods de la VPC; cada réplica reconcilia por separado el estado local de los túneles por CiliumNode
+- **Alta disponibilidad**: Admite un Deployment de 2 réplicas con elección de líder basada en Lease para la conmutación por error
+- **Integración con Cilium**: Aprovecha la función VTEP de Cilium para habilitar el enrutamiento transparente de Pod a Pod a través del túnel VXLAN
 
 ### Objetivos de aprendizaje
 
 Al terminar este documento, podrá:
 
-1. **Explicar la arquitectura** de EKS Hybrid Nodes Gateway, incluidos los túneles VXLAN, la elección de líder y la administración de rutas de la VPC.
-2. **Implementar y configurar** el gateway con Helm, incluidos los roles de IAM, los grupos de seguridad y la integración con Cilium VTEP.
-3. **Seguir los flujos de tráfico** en ambas direcciones entre los Pods de la VPC y los Pods de Hybrid Nodes.
-4. **Implementar alta disponibilidad** con despliegues de gateway de varias réplicas y comprender el comportamiento de conmutación por error.
-5. **Operar y solucionar problemas** de los despliegues del gateway, incluida la supervisión, el escalado y los escenarios de fallo comunes.
-6. **Comparar enfoques** de red para Hybrid Nodes y decidir cuándo usar el gateway frente al enrutamiento manual.
-7. **Aplicar prácticas recomendadas** de seguridad, rendimiento y optimización de costos en despliegues de gateway de producción.
+1. **Explicar la arquitectura** de EKS Hybrid Nodes Gateway, incluido el túnel VXLAN, la elección de líder y la administración de rutas de la VPC
+2. **Implementar y configurar** el gateway mediante Helm, incluidos los roles de IAM, los grupos de seguridad y la integración VTEP de Cilium
+3. **Rastrear los flujos de tráfico** entre los Pods de la VPC y los Pods de Hybrid Nodes en ambas direcciones
+4. **Implementar alta disponibilidad** con deployments del gateway de varias réplicas y comprender el comportamiento de conmutación por error
+5. **Operar y solucionar problemas** de los deployments del gateway, incluidas la supervisión, el escalado y las situaciones de error habituales
+6. **Comparar enfoques** de redes para Hybrid Nodes y decidir cuándo usar el gateway frente al enrutamiento manual
+7. **Aplicar prácticas recomendadas** de seguridad, rendimiento y optimización de costos en deployments del gateway de producción
 
-### El problema: enrutamiento manual de Pods en entornos Hybrid
+### El problema: enrutamiento manual de Pods en entornos híbridos
 
-Antes de que estuviera disponible el gateway, habilitar la comunicación a nivel de Pod entre la VPC y Hybrid Nodes exigía un esfuerzo manual considerable:
+Antes de que existiera el gateway, habilitar la comunicación a nivel de Pod entre la VPC y los Hybrid Nodes requería un esfuerzo manual considerable:
 
 ```
 Before Gateway (Manual Approach):
@@ -60,7 +60,7 @@ After Gateway (Automated Approach):
    - Updates routes as nodes come and go
 ```
 
-El gateway convierte un desafío de red complejo, propenso a errores y que involucra a varios equipos en una sola instalación de Helm con unos pocos valores de configuración.
+El gateway transforma lo que era un desafío de redes complejo, propenso a errores y que implicaba a varios equipos, en una única instalación de Helm con un puñado de valores de configuración.
 
 ---
 
@@ -68,15 +68,15 @@ El gateway convierte un desafío de red complejo, propenso a errores y que invol
 
 ### Arquitectura de alto nivel
 
-EKS Hybrid Nodes Gateway se sitúa en el límite entre la VPC y la red local y actúa como puente VXLAN para el tráfico de Pods. El siguiente diagrama muestra la arquitectura general:
+EKS Hybrid Nodes Gateway se sitúa en el límite entre su VPC y su red local, y actúa como un puente basado en VXLAN para el tráfico de los Pods. El siguiente diagrama ilustra la arquitectura general:
 
-![Los gateways líder y en espera, alojados en instancias EC2 de la nube, mantienen el estado local de los túneles; las rutas configuradas de la VPC dirigen el tráfico al líder activo.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png)
+![Los gateways líder y en espera en trabajadores EC2 de la nube mantienen el estado local de los túneles; las rutas configuradas de la VPC dirigen el tráfico al líder activo.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html)
 
-### Mecánica del túnel VXLAN
+### Mecanismos del túnel VXLAN
 
-El gateway usa VXLAN (Virtual Extensible LAN) para encapsular el tráfico de Pods entre la VPC y los entornos locales. Así se establece y mantiene el túnel:
+El gateway usa VXLAN (Virtual Extensible LAN) para encapsular el tráfico de los Pods entre la VPC y los entornos locales. A continuación se explica cómo se establece y mantiene el túnel:
 
 #### Interfaz VXLAN del gateway
 
@@ -84,13 +84,13 @@ Cuando el Pod del gateway se inicia en una instancia EC2, crea una interfaz de r
 
 | Parámetro | Valor | Descripción |
 |-----------|-------|-------------|
-| **Nombre de interfaz** | `hybrid_vxlan0` | Interfaz de túnel VXLAN del gateway |
-| **VNI (VXLAN Network Identifier)** | 2 | Valor predeterminado del gateway, compatible con la ruta de Cilium VTEP; no es un campo de CiliumVTEPConfig |
-| **Puerto UDP** | 8472 | Puerto VXLAN del gateway/Cilium; el puerto asignado por IANA a VXLAN es 4789 |
+| **Nombre de la interfaz** | `hybrid_vxlan0` | Interfaz del túnel VXLAN en el gateway |
+| **VNI (VXLAN Network Identifier)** | 2 | Valor predeterminado del gateway compatible con la ruta VTEP de Cilium; no es un campo de CiliumVTEPConfig |
+| **Puerto UDP** | 8472 | Puerto VXLAN del gateway/Cilium; el puerto asignado por IANA para VXLAN es 4789 |
 | **IP local** | IP privada de la instancia EC2 del gateway | IP de origen de los paquetes encapsulados en VXLAN |
 | **Aprendizaje** | Deshabilitado | El gateway programa estáticamente las entradas FDB |
 
-El gateway crea esta interfaz mediante netlink. Lo siguiente es una ilustración conceptual, no un comando que deba ejecutarse junto al controlador. La versión 1.0.2 no asigna una dirección IP a esta interfaz; el túnel externo usa la IP privada del nodo del gateway.
+El gateway crea esta interfaz con netlink. Lo siguiente es una ilustración conceptual, no un comando que se deba ejecutar junto al controlador. La versión 1.0.2 no asigna una dirección IP a esta interfaz; el túnel externo usa la IP privada del nodo del gateway.
 
 ```bash
 # Conceptual equivalent of what the gateway does programmatically
@@ -105,7 +105,7 @@ ip link set hybrid_vxlan0 up
 
 #### Programación de FDB, ARP y rutas
 
-El reconciliador de nodos observa los objetos `CiliumNode` etiquetados con `eks.amazonaws.com/compute-type: hybrid`. Se ejecuta en cada réplica del gateway y programa tres tipos de entradas locales a partir de la IP interna del nodo y del CIDR de Pods asignado:
+El reconciliador de nodos supervisa los objetos `CiliumNode` etiquetados con `eks.amazonaws.com/compute-type: hybrid`. Se ejecuta en cada réplica del gateway y programa tres tipos de entradas locales a partir de la IP interna del nodo y del CIDR de Pod asignado:
 
 ```text
 Per Hybrid Node, the gateway programs:
@@ -124,15 +124,15 @@ Per Hybrid Node, the gateway programs:
    → Directs Pod traffic for this node's CIDR through the VXLAN tunnel
 ```
 
-El controlador deriva la MAC remota de la dirección IPv4 del nodo en lugar de descubrir la MAC de una interfaz de Cilium. Las entradas estáticas de vecino/FDB evitan depender del aprendizaje dinámico para esta ruta. Los errores de reconciliación, las entradas obsoletas y los fallos de la red subyacente aún pueden interrumpir el reenvío. Estas rutas locales son distintas de las entradas de la tabla de rutas de la VPC.
+El controlador deriva la MAC remota de la dirección IPv4 del nodo en vez de descubrir una MAC de interfaz de Cilium. Las entradas estáticas de vecino/FDB evitan depender del aprendizaje dinámico para esta ruta. Los errores de reconciliación, las entradas obsoletas y los fallos de la red subyacente aún pueden interrumpir el reenvío. Estas rutas locales son distintas de las entradas de la tabla de rutas de la VPC.
 
-#### Lado del Hybrid Node (Cilium VTEP)
+#### Lado del Hybrid Node (VTEP de Cilium)
 
-En el lado del Hybrid Node, la función VTEP (VXLAN Tunnel Endpoint) de Cilium gestiona la terminación del túnel. El gateway se registra como VTEP remoto mediante el recurso personalizado `CiliumVTEPConfig`. Esto indica a cada agente de Cilium en los Hybrid Nodes que:
+En el lado del Hybrid Node, la función VTEP (VXLAN Tunnel Endpoint) de Cilium gestiona la terminación del túnel. El gateway se registra como VTEP remoto mediante el recurso personalizado `CiliumVTEPConfig`. Esto indica a cada agente de Cilium de los Hybrid Nodes lo siguiente:
 
-1. El tráfico destinado a los CIDR de la VPC se debe encapsular con VXLAN.
-2. El tráfico encapsulado se debe enviar a la dirección IP del gateway.
-3. El túnel VXLAN usa VNI 2 en el puerto UDP 8472.
+1. El tráfico destinado a CIDR de la VPC debe encapsularse en VXLAN
+2. El tráfico encapsulado debe enviarse a la dirección IP del gateway
+3. El túnel VXLAN usa VNI 2 en el puerto UDP 8472
 
 ```yaml
 # CiliumVTEPConfig created and managed by the gateway
@@ -148,16 +148,16 @@ spec:
       mac: "82:36:6c:89:e6:ad"       # Illustrative; read the leader's actual VXLAN MAC
 ```
 
-Cuando un Pod de un Hybrid Node envía tráfico a una dirección IP de la VPC (por ejemplo, a un Pod del lado de la nube o a un endpoint de servicio de AWS), el agente de Cilium:
+Cuando un Pod de un Hybrid Node envía tráfico a una dirección IP de la VPC (por ejemplo, un Pod del lado de la nube o un punto de conexión de un servicio de AWS), el agente de Cilium:
 
-1. Compara el destino con un `cidr` de endpoint en CiliumVTEPConfig.
-2. Encapsula el paquete con VXLAN y VNI 2.
-3. Envía el paquete UDP externo a la IP del gateway por el puerto 8472.
-4. El gateway desencapsula el paquete y reenvía el paquete interno a la VPC.
+1. Compara el destino con el `cidr` de un endpoint en CiliumVTEPConfig
+2. Encapsula el paquete en VXLAN con VNI 2
+3. Envía el paquete UDP externo a la IP del gateway por el puerto 8472
+4. El gateway desencapsula y reenvía el paquete interno a la VPC
 
 ### Elección de líder y alta disponibilidad
 
-El chart configura de forma predeterminada un Deployment de dos réplicas. Ambas réplicas mantienen sus propias rutas, entradas FDB y de vecino VXLAN locales. Solo el líder actualiza las rutas de la VPC de AWS y el recurso `CiliumVTEPConfig` llamado `hybrid-gateway`, que administra el controlador.
+El chart usa de forma predeterminada un Deployment de dos réplicas. Ambas mantienen interfaces y entradas locales de VXLAN/FDB/vecinos/rutas. Solo el líder actualiza las rutas de la VPC de AWS y el recurso `CiliumVTEPConfig` llamado `hybrid-gateway`, que administra el controlador.
 
 #### Elección de líder basada en Lease
 
@@ -177,58 +177,58 @@ spec:
   leaseTransitions: 3
 ```
 
-Este Lease es una observación ilustrativa, no un manifiesto que se deba aplicar. La identidad del titular no es necesariamente el nombre de un Pod; antes de realizar cualquier operación, identifique el nodo/Pod correspondiente. Estos indicadores binarios controlan el intervalo de elección; el chart 1.0.2 no expone un objeto de valores `leaderElection`:
+Este Lease es una observación ilustrativa, no un manifiesto que se deba aplicar. La identidad del titular no es necesariamente el nombre de un Pod; antes de cualquier acción operativa, identifique el nodo/Pod correspondiente. Estos parámetros binarios controlan los tiempos de la elección; la versión 1.0.2 del chart no expone un objeto `leaderElection` en los valores:
 
 | Parámetro | Valor predeterminado | Descripción |
-|-----------|---------------|-------------|
+|-----------|---------------------|-------------|
 | `--leader-election-lease-duration` | 3s | Duración del Lease de elección |
-| `--leader-election-renew-deadline` | 2s | Plazo para renovar el Lease del líder |
+| `--leader-election-renew-deadline` | 2s | Plazo de renovación del líder |
 | `--leader-election-retry-period` | 1s | Intervalo de reintento de la elección |
 
-#### Funciones del líder
+#### Qué hace el líder
 
-El Pod líder se encarga de:
+El Pod líder es responsable de:
 
-1. **Administración de las tablas de rutas de la VPC**: crea y actualiza rutas en las tablas de rutas de la VPC especificadas para dirigir los CIDR de Pods Hybrid a la ENI de la instancia EC2 del líder.
-2. **Administración de CiliumVTEPConfig**: crea y actualiza el recurso CiliumVTEPConfig para dirigir el tráfico VTEP de los nodos Hybrid a la IP de la instancia EC2 del líder.
-3. **Programación de FDB/ARP/rutas**: programa la interfaz VXLAN local con entradas de todos los nodos Hybrid.
-4. **Observación de nodos**: como la réplica en espera, observa los objetos CiliumNode y actualiza las entradas locales de túnel. No crea ni elimina una ruta de AWS por cada evento de nodo.
+1. **Administración de la tabla de rutas de la VPC**: Crea y actualiza rutas en las tablas de rutas de la VPC especificadas, que dirigen los CIDR de Pod híbridos a la ENI de la instancia EC2 del líder
+2. **Administración de CiliumVTEPConfig**: Crea y actualiza el recurso CiliumVTEPConfig para dirigir el tráfico VTEP de los nodos híbridos a la IP de la instancia EC2 del líder
+3. **Programación de FDB/ARP/rutas**: Programa la interfaz VXLAN local con entradas para todos los nodos híbridos
+4. **Supervisión de nodos**: Al igual que la réplica en espera, supervisa los objetos CiliumNode y actualiza las entradas locales de los túneles. No crea ni elimina una ruta de AWS por cada evento de nodo.
 
-#### Funciones de la réplica en espera
+#### Qué hace la réplica en espera
 
 El Pod en espera:
 
-1. **Mantiene el túnel VXLAN**: conserva activa su interfaz `hybrid_vxlan0` y la configura con entradas FDB/ARP/rutas.
-2. **No programa rutas de la VPC**: solo el líder modifica las tablas de rutas de la VPC.
-3. **No actualiza CiliumVTEPConfig**: solo el líder actualiza la configuración de VTEP.
-4. **Supervisa el Lease**: intenta adquirir el Lease continuamente en caso de que falle el líder.
+1. **Mantiene el túnel VXLAN**: Mantiene activa su interfaz `hybrid_vxlan0` y la programa con entradas FDB/ARP/rutas
+2. **NO programa rutas de la VPC**: Solo el líder modifica las tablas de rutas de la VPC
+3. **NO actualiza CiliumVTEPConfig**: Solo el líder actualiza la configuración VTEP
+4. **Supervisa el Lease**: Intenta continuamente adquirir el Lease por si falla el líder
 
-### Administración automática de las tablas de rutas de la VPC
+### Administración automática de la tabla de rutas de la VPC
 
-Al asumir el liderazgo, el gateway crea o reemplaza rutas para los `podCIDRs` agregados configurados en cada tabla de rutas indicada. Primero actualiza las rutas de AWS y después actualiza CiliumVTEPConfig. La reconciliación de CiliumNode mantiene por separado las entradas locales de túnel de cada nodo en todas las réplicas.
+Al adquirir el liderazgo, el gateway crea o reemplaza rutas para los valores agregados configurados de `podCIDRs` en cada tabla de rutas configurada. Primero actualiza las rutas de AWS y luego actualiza CiliumVTEPConfig. La reconciliación de CiliumNode mantiene de forma independiente las entradas locales de túneles de cada nodo en todas las réplicas.
 
-![Los eventos de CiliumNode actualizan las entradas locales del túnel en todas las réplicas. La configuración independiente del líder actualiza las rutas agregadas de AWS y después los endpoints de VTEP; no elimina rutas de AWS cuando se retira cada nodo.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png)
+![Los eventos de CiliumNode actualizan las entradas locales de los túneles en cada réplica. La configuración separada del líder actualiza las rutas agregadas de AWS y, después, los endpoints VTEP; no elimina rutas de AWS cuando se retira cada nodo.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html)
 
 El gateway usa la API de EC2 para administrar rutas:
 
-| Llamada a la API | Cuándo se usa | Propósito |
+| Llamada a la API | Cuándo se usa | Finalidad |
 |----------|-----------|---------|
-| `ec2:DescribeRouteTables` | Comprobación de acceso y configuración inicial del líder | Leer las tablas de rutas configuradas explícitamente |
-| `ec2:CreateRoute` | Configuración inicial del líder cuando falta una ruta CIDR configurada | Agregar la ruta agregada del CIDR de Pods |
-| `ec2:ReplaceRoute` | Configuración inicial del líder cuando su destino es distinto | Dirigir la ruta configurada a la ENI principal del líder actual |
-| `ec2:DescribeInstances` | Inicio y conmutación por error | Descubrir los ID de las ENI de las instancias EC2 del gateway |
+| `ec2:DescribeRouteTables` | Comprobación de acceso y configuración del líder | Leer las tablas de rutas especificadas explícitamente |
+| `ec2:CreateRoute` | Configuración del líder cuando no existe una ruta CIDR configurada | Agregar la ruta agregada del CIDR de Pod |
+| `ec2:ReplaceRoute` | Configuración del líder cuando el destino no coincide | Redirigir la ruta configurada a la ENI principal del líder actual |
+| `ec2:DescribeInstances` | Inicio, conmutación por error | Identificar los ID de ENI de las instancias EC2 del gateway |
 
-El runtime del gateway no llama a `DeleteRoute`. La eliminación de Helm no limpia las rutas de AWS. Se pueden reemplazar rutas existentes para el mismo CIDR aunque las haya creado otro sistema: antes de la instalación, revise quién es su propietario y el plan de transición/reversión.
+El runtime del gateway no llama a `DeleteRoute`. La eliminación mediante Helm no limpia las rutas de AWS. Se pueden reemplazar las rutas existentes del mismo CIDR aunque las haya creado otro sistema: antes de la instalación, revise la propiedad y el plan de transición/reversión.
 
-Estos contratos se verificaron con la [implementación 1.0.2](https://github.com/aws/eks-hybrid-nodes-gateway/tree/v1.0.2/internal) y la [guía de operaciones de AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html). Las lecturas de la API, el estado de disponibilidad o una métrica del líder por sí solos no demuestran que el reenvío de extremo a extremo funcione.
+Estos contratos se comprobaron en la [implementación 1.0.2](https://github.com/aws/eks-hybrid-nodes-gateway/tree/v1.0.2/internal) y en las [guías operativas de AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html). Las lecturas de la API, el estado de preparación o una métrica de líder por sí solos no demuestran que el reenvío funcione de extremo a extremo.
 
 ### Resumen de la interacción entre componentes
 
 El siguiente diagrama muestra cómo interactúan todos los componentes:
 
-![Las réplicas del gateway observan CiliumNode en los nodos de trabajo EC2 de la nube, mientras el líder programa las rutas agregadas de AWS y los endpoints de CiliumVTEPConfig.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png)
+![Las réplicas del gateway supervisan CiliumNode en trabajadores EC2 de la nube, mientras que el líder programa las rutas agregadas de AWS y los endpoints de CiliumVTEPConfig.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html)
 
@@ -236,47 +236,47 @@ El siguiente diagrama muestra cómo interactúan todos los componentes:
 
 ## Requisitos previos
 
-Antes de desplegar EKS Hybrid Nodes Gateway, asegúrese de cumplir todos los requisitos previos siguientes.
+Antes de implementar EKS Hybrid Nodes Gateway, asegúrese de cumplir todos los requisitos previos siguientes.
 
-### Configuración del clúster de EKS
+### Configuración del clúster EKS
 
 | Requisito | Detalles |
 |-------------|---------|
-| **Versión de EKS** | Una versión compatible actualmente con EKS y los complementos elegidos |
-| **Familia de direcciones** | IPv4; redes de VPC, Service, nodo remoto y Pod remoto que no se superpongan |
-| **Hybrid Nodes** | Al menos un Hybrid Node configurado e incorporado al clúster |
+| **Versión de EKS** | Una versión actualmente compatible con EKS y los complementos elegidos |
+| **Familia de direcciones** | IPv4; redes de VPC, Service, nodo remoto y Pod remoto sin superposición |
+| **Hybrid Nodes** | Al menos un Hybrid Node configurado y unido al clúster |
 | **Modo de autenticación** | `API` o `API_AND_CONFIG_MAP` |
-| **Acceso al endpoint** | Solo público o solo privado (no «público y privado») |
-| **Red de Pods remota** | CIDR de Pods configurados para los nodos Hybrid del clúster |
+| **Acceso a endpoints** | Solo público O solo privado (no «Público y privado») |
+| **Red de Pods remotos** | CIDR de Pod configurados para los nodos híbridos del clúster |
 
-### Requisitos del CNI
+### Requisitos de CNI
 
-El gateway requiere una configuración específica del CNI:
+El gateway requiere una configuración de CNI específica:
 
 | Ubicación | CNI | Versión | Compatibilidad con VTEP |
 |----------|-----|---------|--------------|
-| **Nodos de la nube administrados/autoadministrados** | Amazon VPC CNI | Versión de complemento compatible; configure la exclusión de SNAT de ClusterIP de Hybrid | No se requiere |
-| **Nodos de la nube en Auto Mode** | Redes integradas | Use la configuración compatible con Auto Mode | No se requiere |
-| **Nodos Hybrid** | Cilium mantenido por AWS | Cumpla el mínimo de rama indicado en [Configuración del CNI](#cni-configuration) | VTEP habilitado; proxy L7 deshabilitado |
+| **Nodos de nube administrados/autoadministrados** | Amazon VPC CNI | Versión de complemento compatible; configure la exclusión SNAT de ClusterIP híbrido | No se requiere |
+| **Nodos de nube de Auto Mode** | Redes integradas | Use la configuración compatible con Auto Mode | No se requiere |
+| **Nodos híbridos** | Cilium mantenido por AWS | Cumpla el mínimo de la rama indicado en [Configuración de CNI](#cni-configuration) | VTEP habilitado, proxy L7 deshabilitado |
 
-> Esta implementación del gateway requiere la integración VTEP de Cilium mantenida por AWS; no es un controlador compatible con Calico. Si los requisitos de CNI/L7 no se ajustan, use un diseño compatible independiente de Pods enrutables. Los [requisitos de creación del clúster Hybrid](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cluster-create.html) exigen autenticación API/API_AND_CONFIG_MAP, IPv4 y conectividad del endpoint solo pública o solo privada para Hybrid Nodes.
+> Esta implementación del gateway requiere la integración VTEP de Cilium de AWS; no es un controlador compatible con Calico. Si sus requisitos de CNI/L7 no encajan, use un diseño enrutado de Pods compatible por separado. Los [requisitos para crear clústeres híbridos](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cluster-create.html) exigen autenticación API/API_AND_CONFIG_MAP, IPv4 y conectividad de endpoint solo pública o solo privada para Hybrid Nodes.
 
 ### Conectividad de red
 
-La conectividad privada entre la VPC y el entorno local debe estar establecida previamente:
+La conectividad privada entre la VPC y el entorno local debe estar ya establecida:
 
-| Tipo de conectividad | Cuándo se usa | Notas |
+| Tipo de conectividad | Cuándo usarla | Notas |
 |-------------------|-------------|-------|
-| **AWS Direct Connect** | Cargas de trabajo de producción que requieren baja latencia constante | Conectividad dedicada; la resiliencia y la latencia dependen del diseño redundante real |
-| **AWS Site-to-Site VPN** | Conectividad híbrida estándar | Conectividad IPsec; el rendimiento depende de la oferta de túnel elegida, la combinación de paquetes y el enrutamiento |
+| **AWS Direct Connect** | Cargas de trabajo de producción que requieren una latencia baja y constante | Conectividad dedicada; la resiliencia y la latencia dependen del diseño redundante real |
+| **AWS Site-to-Site VPN** | Conectividad híbrida estándar | Conectividad IPsec; el rendimiento depende de la oferta de túnel seleccionada, la combinación de paquetes y el enrutamiento |
 | **Transit Gateway + VPN** | Entornos con varias VPC | Terminación centralizada de VPN; admite ECMP para un mayor rendimiento |
 | **VPN personalizada (por ejemplo, WireGuard)** | Requisitos especializados | Túnel autoadministrado; útil cuando preocupan las limitaciones de AWS VPN |
 
-> **Nota**: el gateway no establece la conectividad básica entre la VPC y las instalaciones. Agrega una superposición VXLAN sobre la conectividad existente para enrutar Pods.
+> **Nota**: El gateway no establece la conectividad básica entre la VPC y el entorno local. Agrega una superposición VXLAN sobre la conectividad existente para el enrutamiento a nivel de Pod.
 
 ### Instancias EC2 del gateway
 
-Se necesitan al menos dos instancias EC2 en la VPC para ejecutar los Pods del gateway:
+Necesita al menos dos instancias EC2 en la VPC para ejecutar los Pods del gateway:
 
 ```yaml
 # Recommended EC2 instance configuration for gateway nodes
@@ -288,33 +288,33 @@ EBS: 20 GiB gp3 (minimal storage needed)
 
 Las instancias del gateway deben:
 
-1. Ser nodos EC2 de la nube registrados; distinga Amazon VPC CNI de los nodos administrados/autoadministrados y las redes integradas de Auto Mode.
-2. Tener el rol de nodo apropiado y un rol de carga de trabajo del gateway con alcance independiente (consulte [Configuración de IAM](#iam-configuration)).
-3. Tener etiquetas para programar los Pods del gateway (consulte [Instalación](#installation-and-configuration)).
+1. Ser nodos EC2 de nube registrados; distinga entre Amazon VPC CNI de AWS administrado/autoadministrado y las redes integradas de Auto Mode
+2. Tener el rol de nodo adecuado y un rol de carga de trabajo del gateway con alcance independiente (consulte [Configuración de IAM](#iam-configuration))
+3. Tener etiquetas para programar los Pods del gateway (consulte [Instalación](#installation-and-configuration))
 
-### Configuración de grupos de seguridad
+### Configuración del grupo de seguridad
 
-Use los CIDR reales de nodos/Pods y los puertos revisados. El puerto UDP 8472 por sí solo no establece todas las rutas de la aplicación o del plano de control. Revise por separado estos flujos:
+Use los CIDR reales de nodos/Pods y los puertos revisados. UDP8472 por sí solo no establece todas las rutas de aplicación o del plano de control. Separe estos flujos:
 
-| Flujo | Comprobación requerida |
+| Flujo | Revisión necesaria |
 |---|---|
-| IP principal del gateway ↔ IP del nodo Hybrid | UDP 8472 de VXLAN externo en ambas direcciones |
-| Cargas de trabajo de la nube ↔ Pods Hybrid | Protocolos/puertos internos previstos de la aplicación y su tráfico de retorno |
-| Nodos → API de Kubernetes, API/registro de AWS y DNS | Endpoints/resolutores reales, TCP 443 y rutas DNS necesarias |
-| Plano de control → kubelet | TCP 10250 hacia los nodos previstos; independiente del tráfico saliente del nodo hacia la API por TCP 443 |
-| Prometheus → gateway | Restrinja TCP 10080 al origen de recopilación previsto |
+| IP principal del gateway ↔ IP del nodo híbrido | UDP8472 externo de VXLAN en ambas direcciones |
+| Cargas de trabajo de la nube ↔ Pods híbridos | Protocolos/puertos de aplicación internos previstos y su tráfico de retorno |
+| Nodos → API de Kubernetes, API/registro de AWS y DNS | Endpoints/resolutores reales, TCP443 y rutas DNS requeridas |
+| Plano de control → kubelet | TCP10250 hacia los nodos previstos; es distinto del tráfico API443 saliente de un nodo |
+| Prometheus → gateway | Restringir TCP10080 al origen de scraping previsto |
 
-Tenga en cuenta por separado los grupos de seguridad, las NACL sin estado y los firewalls locales. No agregue reglas de entrada generales para toda la VPC como sustituto de los flujos de aplicación necesarios. Proteja las direcciones IP de todos los nodos que puedan ser líderes, incluida la capacidad de reemplazo.
+Tenga en cuenta por separado los grupos de seguridad, las NACL sin estado y los firewalls locales. No agregue una regla de entrada general desde toda la VPC como sustituto de los flujos de aplicación necesarios. Proteja todas las IP posibles de los nodos líderes, incluida la capacidad de reemplazo.
 
-#### Ejemplo de grupo de seguridad con Terraform
+#### Ejemplo de grupo de seguridad de Terraform
 
-Administre la matriz de reglas aprobada en la pila de Terraform existente para los nodos/la red. Una regla UDP exclusiva del gateway es un fragmento, no un grupo de seguridad completo para los nodos. Conserve los requisitos existentes del clúster para el arranque, DNS, API y aplicaciones, e inspeccione el plan final; no cree un grupo de seguridad duplicado sin restricciones suponiendo que una regla VXLAN lo hace seguro.
+Administre la matriz de reglas aprobada en la pila de Terraform existente de nodos/red. Una regla UDP exclusiva del gateway es un fragmento, no un grupo de seguridad de nodo completo. Conserve los requisitos de arranque, DNS, API y aplicación del clúster e inspeccione el plan final; evite crear un grupo de seguridad duplicado sin restricciones y suponer que una regla VXLAN lo hace seguro.
 
 ### Configuración del firewall local
 
-Use las **IP privadas de nodo** del gateway, accesibles por la red subyacente privada, no las IP elásticas. Permita la ruta UDP 8472 necesaria para cada líder/réplica en espera elegible y revise por separado los flujos de API de Kubernetes/kubelet, DNS y aplicaciones. Concilie las actualizaciones del firewall cuando Auto Mode u otro administrador de nodos reemplace instancias del gateway. Ni este capítulo ni una tabla estática de grupos de seguridad demuestran cuál es la ruta real del firewall.
+Use las **IP privadas de los nodos** del gateway accesibles por la red privada subyacente, no las IP elásticas. Permita la ruta UDP8472 necesaria para cada líder/réplica en espera elegible y revise por separado los flujos de API de Kubernetes/kubelet, DNS y aplicación. Ajuste las actualizaciones del firewall cuando Auto Mode u otro administrador de nodos reemplace las instancias del gateway. Ni este capítulo ni una tabla estática de grupos de seguridad demuestran que la ruta real del firewall funcione.
 
-Verifique la comprobación de origen/destino en la ENI principal prevista. Auto Mode usa el ajuste de reenvío de NodeClass; el aprovisionamiento administrado/autoadministrado es responsable de cualquier modificación requerida de la ENI. Lo siguiente solo lee su valor actual:
+Verifique la comprobación de origen/destino en la ENI principal prevista. Auto Mode utiliza la configuración de reenvío de NodeClass; el aprovisionamiento administrado/autoadministrado controla cualquier modificación de ENI necesaria. Lo siguiente solo lee su valor actual:
 
 ```bash
 : "${AWS_REGION:?Set the reviewed Region}"
@@ -325,27 +325,27 @@ aws ec2 describe-network-interface-attribute --region "$AWS_REGION" \
 
 ### Consideraciones sobre MTU
 
-VXLAN IPv4 suele agregar 50 bytes, incluido el encabezado Ethernet interno. Use la MTU efectiva de extremo a extremo de la red subyacente, no la MTU máxima de la interfaz EC2. Las siguientes cifras originales de MTU son ilustraciones de planificación, no resultados de medición de la ruta ni ajustes universales de DX/VPN:
+VXLAN IPv4 suele agregar 50 bytes, incluido el encabezado Ethernet interno. Use la MTU efectiva de extremo a extremo de la red subyacente, no el máximo de la interfaz EC2. Las siguientes cifras originales de MTU son ilustraciones de planificación, no resultados medidos de la ruta ni configuraciones universales de DX/VPN:
 
 | Componente | MTU recomendada | Notas |
 |-----------|----------------|-------|
-| Instancia EC2 del gateway | 9001 (tramas gigantes) | Valor predeterminado de la mayoría de los tipos de instancia EC2 en una VPC |
-| Nodos Hybrid locales | 1500 o superior | Depende de la infraestructura de red |
-| Interfaz VXLAN (efectiva) | MTU de la ruta − 50 | Por ejemplo, 1450 si la MTU de la ruta es 1500 |
-| Direct Connect | 9001 (tramas gigantes) | Si la conexión DX lo admite |
-| Túnel VPN | 1399–1500 | Varía según la configuración de VPN |
+| Instancia EC2 del gateway | 9001 (tramas jumbo) | Valor predeterminado de la mayoría de los tipos de instancia EC2 en la VPC |
+| Hybrid Nodes locales | 1500 o más | Depende de la infraestructura de red |
+| Interfaz VXLAN (efectiva) | MTU de la ruta - 50 | Por ejemplo, 1450 si la MTU de la ruta es 1500 |
+| Direct Connect | 9001 (tramas jumbo) | Si la conexión DX lo admite |
+| Túnel VPN | 1399-1500 | Varía según la configuración de VPN |
 
-Si la ruta de red entre la VPC y las instalaciones usa una MTU estándar de 1500:
+Si la ruta de red entre la VPC y el entorno local usa una MTU estándar de 1500:
 
 ```
 Effective Pod MTU calculation:
 Physical MTU:        1500 bytes
-VXLAN overhead:      - 50 bytes (outer IP + outer UDP + VXLAN header)
+VXLAN overhead:      - 50 bytes (outer IPv4 + outer UDP + VXLAN + inner Ethernet headers)
 VPN overhead (IPsec): - 57-73 bytes (if applicable)
 Effective Pod MTU:   ~1377-1450 bytes
 ```
 
-Cilium en los nodos Hybrid se puede configurar con la MTU adecuada:
+Cilium en los nodos híbridos se puede configurar con la MTU adecuada:
 
 ```yaml
 # Cilium Helm values for hybrid nodes
@@ -354,17 +354,17 @@ mtu: 1400  # Illustrative only; replace using validated path MTU and chosen Cili
 
 ---
 
-## Configuración de IAM {#iam-configuration}
+## Configuración de IAM
 
-### Permisos IAM requeridos
+### Permisos de IAM necesarios
 
-Separe el rol de carga de trabajo del gateway del rol de nodo EC2 y de los permisos de aprovisionamiento/limpieza del operador. La [guía de inicio de AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html) recomienda EKS Pod Identity. Su agente debe estar disponible en los nodos administrados/autoadministrados elegibles; Auto Mode proporciona compatibilidad con Pod Identity. No cree a ciegas un complemento encima de una instalación existente.
+Separe el rol de carga de trabajo del gateway del rol de nodo EC2 y de los permisos de aprovisionamiento/limpieza del operador. La [guía de inicio de AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html) recomienda EKS Pod Identity. Su agente debe estar disponible en los nodos administrados/autoadministrados elegibles; Auto Mode proporciona compatibilidad con Pod Identity. No cree a ciegas un complemento sobre una instalación existente.
 
-Las acciones del runtime del gateway son `ec2:DescribeRouteTables`, `ec2:DescribeInstances`, `ec2:CreateRoute` y `ec2:ReplaceRoute`. Las operaciones Describe requieren `Resource: "*"`; restrinja la región. Para escribir rutas se pueden usar los ARN exactos de las tablas de rutas y una condición de VPC. Eliminar rutas obsoletas es una acción del operador, no un permiso del runtime.
+Las acciones de runtime del gateway son `ec2:DescribeRouteTables`, `ec2:DescribeInstances`, `ec2:CreateRoute` y `ec2:ReplaceRoute`. Las operaciones Describe requieren `Resource: "*"`; restrinja la región. Las escrituras de rutas pueden usar los ARN exactos de las tablas de rutas y una condición de VPC. Eliminar rutas retiradas es una acción del operador, no un permiso de runtime.
 
-### Política IAM de alcance limitado (recomendada para producción)
+### Política de IAM con alcance restringido (recomendada para producción)
 
-Después de reemplazar la cuenta, la región, la VPC y los ID de las tablas de rutas con el inventario revisado, guarde lo siguiente como `gateway-permissions.json`. Son identificadores ilustrativos, no recursos aprovisionados durante esta auditoría. La política no restringe qué CIDR de destino puede modificar el rol dentro de esas tablas de rutas: considérelas un límite de seguridad de enrutamiento y controle quién puede editar los valores del Gateway o usar su ServiceAccount.
+Guarde lo siguiente como `gateway-permissions.json` después de reemplazar la cuenta, la región, la VPC y los ID de tablas de rutas por los del inventario revisado. Son identificadores ilustrativos, no recursos aprovisionados por esta auditoría. La política no restringe qué CIDR de destino puede modificar el rol dentro de esas tablas de rutas: trátelas como un límite de seguridad de enrutamiento y controle quién puede editar los valores del Gateway o usar su ServiceAccount.
 
 ```json
 {
@@ -405,11 +405,11 @@ Después de reemplazar la cuenta, la región, la VPC y los ID de las tablas de r
 }
 ```
 
-El alcance mediante ARN de tabla de rutas y `ec2:Vpc` sigue el [ejemplo de política de tablas de rutas de EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html). Una solicitud Describe satisfactoria no demuestra autorización para CreateRoute/ReplaceRoute. Antes de la transición, pruebe la autorización y la propiedad de las rutas en un entorno aprobado.
+El alcance del ARN de la tabla de rutas y de `ec2:Vpc` sigue el [ejemplo de política de tablas de rutas EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html). Una solicitud Describe correcta no demuestra autorización para CreateRoute/ReplaceRoute. Pruebe la autorización y la propiedad de las rutas en un entorno aprobado antes del cambio.
 
-### Configuración IAM con Terraform
+### Configuración de IAM con Terraform
 
-Para Pod Identity, guarde esta política de confianza como `gateway-trust.json` después de reemplazar el ARN exacto del clúster. Las etiquetas de sesión deben permanecer habilitadas porque las condiciones vinculan el clúster, el espacio de nombres y el ServiceAccount. Además de los permisos de IAM, restrinja la creación de Pods/ServiceAccounts y la administración de asociaciones de Pod Identity.
+Para Pod Identity, guarde esta política de confianza como `gateway-trust.json` y reemplace el ARN exacto del clúster. Las etiquetas de sesión deben seguir habilitadas porque las condiciones vinculan el clúster, el espacio de nombres y el ServiceAccount. Restrinja tanto la creación de Pods/ServiceAccounts y la administración de asociaciones de Pod Identity como los permisos de IAM.
 
 ```json
 {
@@ -436,7 +436,7 @@ Para Pod Identity, guarde esta política de confianza como `gateway-trust.json` 
 }
 ```
 
-La [política de confianza de Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html) y las [etiquetas de sesión](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-abac.html) definen estas condiciones. El siguiente HCL es un fragmento de integración, no una pila completa de proveedor/clúster; para cada recurso, use la administración de Terraform o la ruta de CLI.
+La [política de confianza de Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html) y las [etiquetas de sesión](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-abac.html) definen estas condiciones. El siguiente HCL es un fragmento de integración, no una pila completa de proveedor/clúster; use Terraform o la ruta de CLI para administrar cada recurso, pero no ambas.
 
 ```hcl
 # Fragment in the existing reviewed AWS provider/cluster stack.
@@ -460,7 +460,7 @@ resource "aws_eks_pod_identity_association" "gateway" {
 
 ### Configuración de IAM con AWS CLI
 
-Prepare el rol con el JSON de confianza/permisos revisado junto con el responsable de IAM. El nombre de ServiceAccount de la asociación debe coincidir con el del chart renderizado; los cambios en el nombre/las anulaciones de la versión de Helm pueden modificarlo. La configuración de la asociación es independiente de los valores del chart: la versión 1.0.2 ignora `serviceAccount.annotations`.
+Prepare el rol con el JSON de confianza/permisos revisado mediante su responsable de IAM. El nombre del ServiceAccount de la asociación debe coincidir con el del chart renderizado; cambiar las sobrescrituras del nombre/versión de Helm puede cambiarlo. La configuración de la asociación es independiente de los valores del chart: la versión 1.0.2 del chart ignora `serviceAccount.annotations`.
 
 ```bash
 : "${AWS_REGION:?Set the reviewed Region}"
@@ -477,17 +477,17 @@ aws eks create-pod-identity-association --region "$AWS_REGION" \
   --no-disable-session-tags
 ```
 
-IRSA sigue siendo una alternativa, pero requiere una política de confianza OIDC real y una anotación en el ServiceAccount renderizado, administradas mediante un parche/superposición revisado; un valor que Helm ignora no puede establecer IRSA. Evite asociar permisos para escribir rutas de forma generalizada a todas las cargas de trabajo de los nodos. Las consultas del binario a los metadatos de EC2 para obtener la identidad del nodo y la cadena de credenciales del SDK son aspectos independientes; no deshabilite los metadatos a ciegas sin proporcionar y verificar los datos de identidad requeridos por el nodo.
+IRSA sigue siendo una alternativa con una política de confianza OIDC real y una anotación en el ServiceAccount renderizado, administrada mediante un parche/superposición revisados; un valor que Helm ignora no puede establecer IRSA. Evite asignar permisos de escritura de rutas de forma generalizada a todas las cargas de trabajo de los nodos. Las consultas de metadatos EC2 del binario para obtener la identidad del nodo y la cadena de credenciales del SDK son cuestiones independientes; no deshabilite los metadatos a ciegas sin proporcionar y verificar las entradas de identidad del nodo necesarias.
 
-El reenvío de Auto Mode usa `NodeClass.spec.advancedNetworking.sourceDestCheck: DisabledPrimaryENI`. El arranque de los nodos administrados/autoadministrados debe deshabilitar la comprobación de origen/destino en la ENI principal prevista mediante permisos independientes y de alcance limitado para nodos/operadores. `ModifyNetworkInterfaceAttribute` y la creación de clúster/rol/complemento no forman parte de la política de carga de trabajo del gateway anterior.
+El reenvío de Auto Mode usa `NodeClass.spec.advancedNetworking.sourceDestCheck: DisabledPrimaryENI`. El arranque de nodos administrados/autoadministrados debe deshabilitar la comprobación de origen/destino en la ENI principal prevista mediante permisos de nodo/operador con alcance independiente. `ModifyNetworkInterfaceAttribute` y la creación de clústeres/roles/complementos no forman parte de la política de carga de trabajo del gateway anterior.
 
 ---
 
-## Instalación y configuración {#installation-and-configuration}
+## Instalación y configuración
 
 ### Paso 1: Etiquetar los nodos del gateway
 
-Primero aprovisione nodos EC2 elegibles de la nube. Para los nodos administrados/autoadministrados, use `autoMode.enabled=false`; Auto Mode necesita un NodeClass/NodePool preparado y `autoMode.enabled=true`. Etiquete únicamente los nodos cuyos requisitos de reenvío, grupos de seguridad e IAM se hayan verificado. No invente etiquetas de tipos de instancia ni de zonas de disponibilidad administradas por el proveedor. Se prefieren dos nodos elegibles en distintas zonas de disponibilidad.
+Primero aprovisione los nodos EC2 de nube elegibles. Los nodos administrados/autoadministrados usan `autoMode.enabled=false`; Auto Mode necesita un NodeClass/NodePool preparado y `autoMode.enabled=true`. Etiquete solo los nodos cuyos requisitos previos de reenvío, grupos de seguridad e IAM se hayan verificado. No invente etiquetas de tipo de instancia ni de zona de disponibilidad administradas por el proveedor. Si es posible, elija dos nodos elegibles en distintas zonas de disponibilidad.
 
 ```bash
 : "${KUBE_CONTEXT:?Set the reviewed Kubernetes context}"
@@ -501,7 +501,7 @@ kubectl --context "$KUBE_CONTEXT" label node "$GW_NODE_A" "$GW_NODE_B"   hybrid-
 
 ### Paso 2: Recopilar los valores de configuración
 
-Confirme la cuenta de AWS, la VPC del clúster, los CIDR de Pods remotos, las ENI reales del gateway y las tablas de rutas afectadas de las subredes/el plano de control. Seleccione solo las tablas de rutas que pertenezcan a este diseño de enrutamiento; enumerar todas las tablas de una VPC no autoriza a modificarlas todas. `remoteNetworkConfig` va directamente bajo `cluster`, no bajo `kubernetesNetworkConfig`.
+Confirme la cuenta de AWS, la VPC del clúster, los CIDR de Pod remotos, las ENI reales del gateway y las tablas de rutas de subred/plano de control afectadas. Seleccione solo las tablas de rutas propiedad de este diseño de enrutamiento; enumerar todas las tablas de una VPC no autoriza a modificarlas todas. `remoteNetworkConfig` está directamente debajo de `cluster`, no de `kubernetesNetworkConfig`.
 
 ```bash
 : "${AWS_REGION:?Set the reviewed AWS Region}"
@@ -522,11 +522,11 @@ aws ec2 describe-route-tables --region "$AWS_REGION" \
 
 ### Paso 3: Instalar con Helm
 
-Complete los pasos de CNI, nodo e IAM de la carga de trabajo antes de la instalación. Es posible que el líder reemplace inmediatamente las rutas existentes de los CIDR configurados. Después de revisar la propiedad, el enrutamiento de retorno y la reversión, use el archivo de valores de abajo. Este capítulo valida la configuración localmente; no indica que se haya realizado un despliegue activo.
+Complete los pasos de CNI, nodos e IAM de carga de trabajo antes de la instalación. El líder puede reemplazar de inmediato las rutas existentes de los CIDR configurados. Use el archivo de valores siguiente después de comprobar la propiedad, el enrutamiento inverso y el plan de reversión. Los pasos de instalación se comprobaron localmente; no son constancia de una instalación activa correcta. Las observaciones de laboratorio y los videos de demostración, fechados por separado a continuación, describen un entorno simulado y no validan su deployment.
 
 ### Referencia completa de valores de Helm
 
-El chart publicado 1.0.2 requiere **cadenas CSV**, no matrices YAML, para `podCIDRs` y `routeTableIDs`. Use un archivo de valores para que el análisis de listas/comas de `helm --set` no cambie sus tipos.
+El chart publicado 1.0.2 acepta **cadenas CSV**, no matrices YAML, para `podCIDRs` y `routeTableIDs`. Use un archivo de valores para que el análisis de listas/comas de `helm --set` no cambie sus tipos.
 
 ```yaml
 # values.yaml: replace CIDRs/table IDs from the reviewed network inventory.
@@ -539,9 +539,9 @@ autoMode:
   enabled: false  # MNG/self-managed. Set true only for prepared Auto Mode nodes.
 ```
 
-El chart también admite `image.repository`, `image.tag`, `image.pullPolicy` y auxiliares de nomenclatura. Sus plantillas **no usan** los valores `replicaCount`, `nodeSelector`, `resources`, `affinity`, `topologySpreadConstraints`, `serviceAccount.annotations`, `leaderElection`, `logLevel`, `metrics`, `extraEnv` ni los volúmenes personalizados. No interprete que se haya aplicado un ajuste solo porque el YAML lo acepte. Configure la identidad de la carga de trabajo por separado; si hace falta un post-renderer mantenido para otro ajuste, revise expresamente el Deployment resultante y su comportamiento al actualizarlo.
+El chart también admite `image.repository`, `image.tag`, `image.pullPolicy` y asistentes de nombres. Sus plantillas **no** conectan `replicaCount`, `nodeSelector`, `resources`, `affinity`, `topologySpreadConstraints`, `serviceAccount.annotations`, `leaderElection`, `logLevel`, `metrics`, `extraEnv` ni valores de volúmenes personalizados. No interprete que el YAML acepta un valor como prueba de que se aplicó. Configure la identidad de la carga de trabajo por separado; si se necesita un post-renderizador mantenido para otro ajuste, revise explícitamente el Deployment resultante y su comportamiento durante las actualizaciones.
 
-Ambos modos usan red del host, NET_ADMIN, anti-afinidad de host obligatoria y anti-afinidad de zona de disponibilidad preferida. El chart no crea un Service, ServiceMonitor ni PDB. Auto Mode usa maxSurge=1/maxUnavailable=0; los demás nodos usan 0/1. Ninguna estrategia tiene en cuenta al líder ni garantiza que el reenvío no se interrumpa. El despliegue maxSurge de Auto Mode requiere otro nodo elegible debido a la anti-afinidad de host.
+Ambos modos usan redes del host, NET_ADMIN, antiafinidad obligatoria entre hosts y antiafinidad preferida entre zonas de disponibilidad. El chart no crea un Service, ServiceMonitor ni PDB. Auto Mode usa maxSurge=1/maxUnavailable=0; los demás nodos usan 0/1. Ninguna de las dos estrategias tiene en cuenta al líder ni garantiza un reenvío ininterrumpido. El aumento de capacidad de Auto Mode necesita otro nodo elegible debido a la antiafinidad entre hosts.
 
 ```bash
 : "${KUBE_CONTEXT:?Set the reviewed Kubernetes context}"
@@ -559,7 +559,7 @@ helm upgrade --install eks-hybrid-nodes-gateway \
 
 ### Paso 4: Verificar la instalación
 
-Lea el titular real del Lease, el nodo/IP del Pod del gateway, el endpoint/MAC de VTEP y la ENI de la ruta; confirme que todos correspondan al mismo líder. `holderIdentity` puede contener el nombre de host de un nodo más un UUID, así que no lo pase directamente a `kubectl logs` ni a `kubectl delete pod`.
+Lea el titular real del Lease, el nodo/IP del Pod del gateway, el endpoint/MAC de VTEP y la ENI de la ruta; verifique que todos correspondan al mismo líder. Una holderIdentity puede ser el nombre de host de un nodo seguido de un UUID, por lo que no debe pasarse directamente a `kubectl logs` ni a `kubectl delete pod`.
 
 ```bash
 : "${KUBE_CONTEXT:?Set the reviewed Kubernetes context}"
@@ -576,17 +576,17 @@ kubectl --context "$KUBE_CONTEXT" -n eks-hybrid-nodes-gateway logs \
   -l app.kubernetes.io/name=eks-hybrid-nodes-gateway --all-containers=true --tail=50
 ```
 
-Un Pod en estado Running, una respuesta de disponibilidad y una métrica de líder no demuestran que el reenvío funcione. Pruebe ambas direcciones, IP de Pods directas, Services ClusterIP con endpoints Hybrid, llamadas reales al webhook y tráfico de retorno desde cargas de trabajo seleccionadas explícitamente de la nube y Hybrid. El servidor debe estar escuchando realmente en el puerto probado. Mantenga los registros en privado y oculte los datos sensibles de las cargas de trabajo antes de compartirlos.
+Un Pod en estado Running, una respuesta de disponibilidad y una métrica de líder no demuestran que el reenvío funcione. Pruebe ambas direcciones, las IP directas de los Pods, los servicios ClusterIP con endpoints híbridos, las llamadas reales de webhook y el tráfico de retorno desde cargas de trabajo de nube e híbridas seleccionadas explícitamente. El servidor debe estar escuchando realmente en el puerto probado. Mantenga los registros en privado y enmascare los datos sensibles de las cargas de trabajo antes de compartirlos.
 
 ---
 
-## Configuración del CNI {#cni-configuration}
+## Configuración de CNI
 
 ### Configuración de Cilium VTEP en Hybrid Nodes
 
-Use la compilación de Cilium mantenida por AWS. Los [requisitos previos del CNI del gateway](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html) especifican las versiones mínimas de rama **1.17.13-1, 1.18.8-1 o 1.19.2-1**; son mínimos funcionales, no recomendaciones para degradar ni ignorar la compatibilidad de rama. Conserve los selectores de nodo existentes, los rangos de IPAM y los demás valores revisados de la versión.
+Use la compilación de Cilium mantenida por AWS. Los [requisitos previos de CNI del gateway](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html) especifican los mínimos de rama **1.17.13-1, 1.18.8-1 o 1.19.2-1**; son mínimos de funcionalidad, no recomendaciones para degradar ni ignorar la compatibilidad de la rama. Conserve los selectores de nodo, los rangos de IPAM y otros valores revisados de la versión.
 
-El cambio requerido es `vtep.enabled=true` y **`l7Proxy=false`**. El perfil L7 de Cilium Ingress/Gateway API de [Operaciones](./08-operations.md) no se puede habilitar en esa misma instalación de Cilium. Esto no impide que las aplicaciones HTTP comunes usen la ruta enrutada. No deduzca que VXLAN cifra el tráfico ni habilite WireGuard solo porque lo mencione un ejemplo no relacionado; valide la combinación específica de datapath/cifrado que sea compatible.
+El cambio necesario es `vtep.enabled=true` y **`l7Proxy=false`**. El perfil L7 de Cilium Ingress/Gateway API de [Operaciones](./08-operations.md) no se puede habilitar en esa misma instalación de Cilium. Esto no impide que las aplicaciones HTTP habituales usen la ruta enrutada. No deduzca que VXLAN proporciona cifrado ni habilite WireGuard solo porque lo mencione un ejemplo no relacionado; valide la combinación concreta compatible de plano de datos/cifrado.
 
 #### Verificación de Cilium VTEP en Hybrid Nodes
 
@@ -604,11 +604,11 @@ kubectl --context "$KUBE_CONTEXT" -n kube-system get configmap cilium-config \
   -o jsonpath='{.data.enable-vtep}{"\n"}{.data.enable-l7-proxy}{"\n"}'
 ```
 
-Los dos valores de ConfigMap impresos deben ser `true` y después `false`. Inspeccione también el estado de Cilium en cada nodo Hybrid y el objeto VTEP administrado por el controlador. Use la CLI incluida en la imagen de Cilium seleccionada y revise su ayuda antes de confiar en un comando `bpf vtep` específico; un solo Pod seleccionado por el DaemonSet no abarca todos los nodos.
+Los dos valores impresos del ConfigMap deben ser primero `true` y luego `false`. Inspeccione también el estado de Cilium en cada nodo híbrido y el objeto VTEP administrado por el controlador. Use la CLI incluida en la imagen de Cilium seleccionada y revise su ayuda antes de depender de un comando `bpf vtep` concreto; un Pod seleccionado del DaemonSet no representa a todos los nodos.
 
-### Configuración de VPC CNI en nodos de la nube
+### Configuración de VPC CNI en los nodos de nube
 
-En los nodos de la nube que ejecutan AWS VPC CNI, se deben excluir del SNAT los CIDR de Pods Hybrid para el **tráfico ClusterIP a endpoints Hybrid**. El tráfico directo a IP de Pod puede funcionar incluso si falta este ajuste, por lo que una prueba solo con IP directa no basta. Conserve las demás exclusiones y coordine el cambio con quien administra la configuración del complemento.
+En los nodos de nube que ejecutan AWS VPC CNI, se deben excluir los CIDR de Pod híbridos de SNAT para el **tráfico ClusterIP hacia endpoints híbridos**. El tráfico directo por IP de Pod puede funcionar aunque falte este ajuste, por lo que una prueba solo de IP directa no basta. Conserve las demás exclusiones y coordine el cambio con el responsable de la configuración del complemento.
 
 ```bash
 : "${KUBE_CONTEXT:?Set the reviewed Kubernetes context}"
@@ -620,11 +620,11 @@ kubectl --context "$KUBE_CONTEXT" -n kube-system set env daemonset/aws-node \
   AWS_VPC_K8S_CNI_EXCLUDE_SNAT_CIDRS="$SNAT_EXCLUDE_CIDRS"
 ```
 
-Auto Mode proporciona redes integradas, no un DaemonSet `aws-node` que haya que configurar. No instale ni reemplace sus redes con esta receta de DaemonSet. Valide por separado la ruta de servicios Hybrid compatible; en clústeres mixtos, aplique el ajuste de `aws-node` a los nodos de la nube que realmente administra ese componente. La delegación de prefijos y las opciones de redes personalizadas son decisiones de diseño independientes, no requisitos previos del gateway.
+Auto Mode proporciona redes integradas en lugar de un DaemonSet `aws-node` que haya que configurar. No instale ni reemplace sus redes con esta receta del DaemonSet. Valide por separado la ruta de servicio híbrido compatible; en clústeres mixtos, aplique el ajuste de aws-node a los nodos de nube que realmente administre ese componente. La delegación de prefijos y la configuración de redes personalizadas son decisiones de diseño independientes, no requisitos previos del gateway.
 
-### Detalles de la CRD CiliumVTEPConfig
+### Detalles del CRD CiliumVTEPConfig
 
-El código [upsert de la versión 1.0.2](https://github.com/aws/eks-hybrid-nodes-gateway/blob/v1.0.2/internal/cilium/vtep.go) del controlador usa la siguiente forma de API. El gateway administra el objeto denominado `hybrid-gateway`; esto no significa que Kubernetes permita un solo objeto CiliumVTEPConfig en el clúster.
+El código de actualización de la [versión 1.0.2 del controlador](https://github.com/aws/eks-hybrid-nodes-gateway/blob/v1.0.2/internal/cilium/vtep.go) usa la siguiente forma de API. El gateway es propietario del objeto llamado `hybrid-gateway`; esto no significa que Kubernetes permita solo un objeto CiliumVTEPConfig en el clúster.
 
 ```yaml
 # Illustrative controller-owned observation; do not apply over the running controller.
@@ -640,57 +640,57 @@ spec:
     mac: "82:36:6c:89:e6:ad"  # Read the actual leader VXLAN MAC.
 ```
 
-Al cambiar el líder, se actualizan `tunnelEndpoint` y `mac`. Cada endpoint tiene un `cidr`; varios prefijos de VPC configurados producen varias entradas. La MAC es la de la interfaz VXLAN real del líder, no una constante ficticia arbitraria. Observe la convergencia de Cilium y la recuperación de la aplicación en lugar de suponer que la propagación siempre tarda de 1 a 5 segundos. Ese intervalo anterior era una ilustración no verificada, no un resultado medido.
+Al cambiar el liderazgo, actualiza `tunnelEndpoint` y `mac`. Cada endpoint tiene un `cidr`; varios prefijos de VPC configurados generan varias entradas. La MAC es la de la interfaz VXLAN real del líder, no una constante ficticia arbitraria. Observe la convergencia de Cilium y la recuperación de las aplicaciones, en vez de suponer una garantía universal de propagación de 1–5 segundos. Ese intervalo anterior era una ilustración no verificada, no un resultado medido.
 
 ---
 
 ## Patrones de flujo de tráfico
 
-Comprender cómo fluye el tráfico por el gateway es esencial para solucionar problemas y planificar capacidad. Esta sección sigue los paquetes por el sistema para cada patrón principal de comunicación. Los diagramas históricos usan un rango de Pods ilustrativo independiente, 10.100.0.0/20; no combine ese plan de direcciones con el ejemplo de instalación sin conciliar todos los CIDR reales.
+Comprender cómo fluye el tráfico por el gateway es esencial para solucionar problemas y planificar la capacidad. Esta sección sigue los paquetes por el sistema en cada patrón de comunicación principal. Los diagramas históricos usan un rango de Pods ilustrativo independiente, 10.100.0.0/20; no combine ese plan de direcciones con el ejemplo de instalación sin conciliar todos los CIDR reales.
 
-### Patrón 1: de un Pod de la VPC a un Pod Hybrid
+### Patrón 1: Pod de la VPC a Pod híbrido
 
-Este es el patrón más común: un Pod que se ejecuta en un nodo de la nube dentro de la VPC necesita comunicarse con un Pod que se ejecuta en un nodo Hybrid en las instalaciones.
+Este es el patrón más común: un Pod que se ejecuta en un nodo de nube de la VPC necesita comunicarse con un Pod que se ejecuta en un nodo híbrido local.
 
-![Un paquete de la VPC sigue la ruta agregada configurada hasta el líder y después una ruta local por nodo a través de hybrid_vxlan0 hasta el Pod Hybrid.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png)
+![Un paquete de la VPC sigue la ruta agregada configurada hasta el líder y, después, una ruta local por nodo a través de hybrid_vxlan0 hasta el Pod híbrido.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html)
 
-**Flujo del paquete paso a paso:**
+**Flujo de paquetes paso a paso:**
 
-1. El Pod de la nube (`10.0.64.15`) envía un paquete al Pod Hybrid (`10.100.0.42`).
-2. El paquete entra en la red de la VPC; la tabla de rutas de la VPC coincide con la ruta agregada configurada `10.100.0.0/20 -> gateway ENI`.
-3. El paquete llega a la ENI principal de la instancia EC2 del gateway.
-4. La tabla de enrutamiento de Linux del gateway coincide con la ruta: `10.100.0.0/24 via <hybrid-node-internal-ip> dev hybrid_vxlan0 onlink`.
-5. El gateway encapsula el paquete con VXLAN (origen externo: IP del gateway; destino externo: IP del nodo Hybrid; VNI: 2; puerto UDP de destino externo: 8472).
-6. El paquete encapsulado atraviesa Direct Connect/VPN hasta la red local.
-7. El agente de Cilium del nodo Hybrid recibe el paquete UDP en el puerto 8472.
-8. Cilium desencapsula el paquete VXLAN y entrega el paquete interno al Pod de destino.
+1. El Pod de nube (`10.0.64.15`) envía un paquete al Pod híbrido (`10.100.0.42`)
+2. El paquete entra en la red de la VPC; la tabla de rutas de la VPC coincide con la ruta agregada configurada `10.100.0.0/20 -> gateway ENI`
+3. El paquete llega a la ENI principal de la instancia EC2 del gateway
+4. La tabla de enrutamiento de Linux del gateway coincide con la ruta: `10.100.0.0/24 via <hybrid-node-internal-ip> dev hybrid_vxlan0 onlink`
+5. El gateway encapsula el paquete en VXLAN (origen externo: IP del gateway, destino externo: IP del nodo híbrido, VNI: 2, puerto UDP de destino externo: 8472)
+6. El paquete encapsulado atraviesa Direct Connect/VPN hasta la red local
+7. El agente de Cilium del nodo híbrido recibe el paquete UDP en el puerto 8472
+8. Cilium desencapsula el paquete VXLAN y entrega el paquete interno al Pod de destino
 
-### Patrón 2: de un Pod Hybrid a un Pod de la VPC
+### Patrón 2: Pod híbrido a Pod de la VPC
 
-Cuando un Pod de un nodo Hybrid necesita acceder a un Pod (o a cualquier IP) de la VPC:
+Cuando un Pod de un nodo híbrido necesita llegar a un Pod (o cualquier IP) de la VPC.
 
-![Cilium coincide con el cidr del endpoint, encapsula hacia el endpoint del túnel líder y el gateway reenvía el paquete desencapsulado por la VPC.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png)
+![Cilium compara el endpoint cidr, encapsula hacia el endpoint de túnel del líder y el gateway reenvía el paquete desencapsulado a través de la VPC.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html)
 
-**Flujo del paquete paso a paso:**
+**Flujo de paquetes paso a paso:**
 
-1. El Pod Hybrid (`10.100.0.42`) envía un paquete al Pod de la nube (`10.0.64.15`).
-2. El agente de Cilium del nodo Hybrid hace una búsqueda BPF y descubre que `10.0.64.15` coincide con el `cidr` de endpoint `10.0.0.0/16` de VTEP.
-3. Cilium encapsula el paquete con VXLAN (destino externo: IP del gateway `10.0.1.100`; VNI: 2; puerto UDP de destino externo: 8472).
-4. El paquete encapsulado atraviesa Direct Connect/VPN hasta la VPC.
-5. La instancia EC2 del gateway recibe el paquete UDP en el puerto 8472.
-6. El gateway desencapsula el paquete VXLAN y extrae el paquete interno (destino: `10.0.64.15`).
-7. El paquete interno se reenvía a la VPC mediante la ENI de la instancia EC2 del gateway.
-8. El enrutamiento estándar de la VPC entrega el paquete al Pod de la nube.
+1. El Pod híbrido (`10.100.0.42`) envía un paquete al Pod de nube (`10.0.64.15`)
+2. El agente de Cilium del nodo híbrido realiza una búsqueda BPF y determina que `10.0.64.15` coincide con el `cidr` del endpoint VTEP `10.0.0.0/16`
+3. Cilium encapsula el paquete en VXLAN (destino externo: IP del gateway `10.0.1.100`, VNI: 2, puerto UDP de destino externo: 8472)
+4. El paquete encapsulado atraviesa Direct Connect/VPN hasta la VPC
+5. La instancia EC2 del gateway recibe el paquete UDP en el puerto 8472
+6. El gateway desencapsula el paquete VXLAN y extrae el paquete interno (destino: `10.0.64.15`)
+7. El paquete interno se reenvía a la VPC a través de la ENI de la instancia EC2 del gateway
+8. El enrutamiento estándar de la VPC entrega el paquete al Pod de nube
 
-> La comprobación de origen/destino debe estar deshabilitada en la ENI principal real del gateway por quien administra el aprovisionamiento del nodo. Consulte arriba los requisitos de Auto Mode y de nodos administrados/autoadministrados; leer la ruta no verifica este ajuste.
+> La ENI principal real del gateway debe tener deshabilitada la comprobación de origen/destino a través del responsable de aprovisionamiento de sus nodos. Consulte los requisitos anteriores de Auto Mode frente a los nodos administrados/autoadministrados; leer la ruta no verifica este ajuste.
 
-### Patrón 3: del plano de control a un webhook de un nodo Hybrid
+### Patrón 3: Plano de control a webhook en un nodo híbrido
 
-Cuando un webhook mutador o validador se ejecuta en un nodo Hybrid, el plano de control de EKS necesita acceder a él.
+Cuando un webhook de mutación o validación se ejecuta en un nodo híbrido, el plano de control de EKS debe poder acceder a él.
 
 ```text
 Webhook invocation → resolved remote Pod endpoint
@@ -699,54 +699,56 @@ Webhook invocation → resolved remote Pod endpoint
   → verified reverse path for the response
 ```
 
-La red de Pods remota configurada, las rutas de las subredes del plano de control, el Service/endpoint/TLS del webhook, las reglas de seguridad y la ruta de retorno deben coincidir. No suponga que el plano de control administrado implementa kube-proxy/iptables. Un diseño nativo de Pods enrutables también puede admitir webhooks Hybrid; esta capacidad no es exclusiva del gateway.
+La red de Pods remotos configurada, las rutas de las subredes del plano de control, el Service/endpoint/TLS del webhook, las reglas de seguridad y la ruta de retorno deben ser compatibles entre sí. No suponga una implementación de kube-proxy/iptables dentro del plano de control administrado. Un diseño nativo de Pods enrutables también puede admitir webhooks híbridos; esta capacidad no es exclusiva del gateway.
 
-### Patrón 4: de los servicios de AWS a Pods Hybrid
+### Patrón 4: Servicios de AWS a Pods híbridos
 
-| Ruta | Configuración requerida |
+| Ruta | Configuración necesaria |
 |---|---|
-| Destinos IP de ALB/NLB | Registre las IP de los Pods elegibles mediante el controlador previsto; verifique las rutas de las subredes del balanceador, las comprobaciones de estado, los puertos de aplicación, la identidad de origen y el tráfico de retorno |
-| Recopilador administrado de AMP | El recopilador accede a los endpoints de métricas mediante las rutas de VPC/Pods remotos y los puertos de firewall abiertos; la guía del complemento Hybrid también exige acceso al endpoint privado del clúster |
-| Prometheus remote_write | Un recopilador de Prometheus/ADOT envía muestras al endpoint de ingesta del workspace de AMP; el workspace no es un recopilador entrante |
-| CloudWatch/exportación de trazas | Un agente/recopilador configurado adecuadamente envía datos al endpoint del servicio; las rutas necesarias de IAM/API/DNS/salida son independientes del enrutamiento entrante de Pods |
-| PrivateLink | Endpoint del consumidor → servicio/balanceador del proveedor → destinos, según el diseño de ese servicio; un servicio genérico de AWS no inicia conexiones arbitrarias a Pods Hybrid a través de un endpoint |
+| Destinos IP de ALB/NLB | Registre las IP de Pod elegibles mediante el controlador previsto; verifique las rutas de subredes del LB, las comprobaciones de estado, los puertos de aplicación, la identidad de origen y el tráfico de retorno |
+| Recolector administrado de AMP | El scraper llega a los endpoints de métricas a través de las rutas de VPC/Pods remotos y los puertos de firewall abiertos; la guía del complemento híbrido también requiere acceso privado al endpoint del clúster |
+| Prometheus remote_write | Un recolector de Prometheus/ADOT envía muestras al endpoint de ingesta del espacio de trabajo de AMP; el espacio de trabajo no actúa por sí mismo como scraper entrante |
+| Exportación a CloudWatch/trazas | Un agente/recolector configurado adecuadamente envía datos al endpoint del servicio; las rutas de IAM/API/DNS/egreso necesarias son independientes del enrutamiento entrante de Pods |
+| PrivateLink | Endpoint de consumidor → servicio/LB de proveedor → destinos, según el diseño del servicio; un servicio de AWS genérico no inicia conexiones arbitrarias a través de un endpoint hacia Pods híbridos |
 
-La [guía de complementos Hybrid](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html) admite explícitamente la recopilación administrada de AMP cuando se cumplen estos requisitos de endpoint y red. Distinga ese recopilador de `remote_write` autoadministrado; ninguno aparece solo por instalar el gateway.
+La [guía de complementos híbridos](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html) admite explícitamente la recopilación administrada de AMP cuando se cumplen estos requisitos previos de endpoint y red. Distinga ese scraper de remote_write autoadministrado; ninguno aparece simplemente por haber instalado el gateway.
 
-#### Medición: destinos IP de ALB en Pods Hybrid (18-10-2026)
+#### Medido: destinos IP de ALB en Pods híbridos (2026-10-18)
 
-Medición en un entorno simulado (se sustituyeron las instalaciones por una VPC separada conectada mediante TGW; gateway 1.0.2, chart 3.6.0 de AWS Load Balancer Controller y ALB interno). No es una configuración de producción compatible y las cifras no son garantías.
+Las notas de ejecución proporcionadas informan observaciones de un entorno simulado (el entorno local se sustituyó por una VPC separada a través de TGW, gateway 1.0.2, chart 3.6.0 de AWS Load Balancer Controller, ALB interno). Esta no es una configuración de producción compatible y las cifras no son garantías.
+
+Los registros de solicitudes sin procesar y las capturas de paquetes de las observaciones 20/20, 54 s, 0 de 276 y 1 de 191 no se incluyen en este documento. Trátelas como ejemplos de las notas de laboratorio proporcionadas, no como pruebas de aceptación reproducibles de forma independiente. La [prueba de enrutamiento nativo de 38 comprobaciones](12-connectivity-validation.md) es un experimento independiente y no corrobora estos resultados del gateway. Para su deployment, use los diagnósticos de [Configuración de red](02-network-configuration.md) y pruebe las rutas de aplicación de ida y vuelta desde clientes de nube e híbridos. Conserve resultados de clientes con marca de tiempo, direcciones de origen, estado de los destinos y cambios de rutas/Lease.
 
 | Comprobación | Resultado |
 |---|---|
-| Registro de destinos | LBC registró las IP de los Pods Hybrid (`172.17.0.202`, `172.17.0.48`) como destinos `ip`. Están fuera de la VPC, por lo que `AvailabilityZone` es `all`; las comprobaciones de estado pasaron por la ruta del gateway |
-| Solicitud | Cliente de la VPC → ALB interno → ruta de la VPC `172.17.0.0/16` (ENI del líder) → VXLAN → Pod Hybrid, 20/20 |
-| Reemplazo del Pod | Reinicio progresivo durante la carga; los destinos convergieron a las nuevas IP de Pod en 54 s, con 0 de 276 solicitudes fallidas (`preStop` 15 s, retraso de baja 10 s) |
-| Cambio de líder | Se eliminó el Pod líder durante la carga; transferencia en 4 s, con 1 de 191 solicitudes fallidas (cliente sin reintentos) |
+| Registro de destinos | LBC registró las IP de los Pods híbridos (`172.17.0.202`, `172.17.0.48`) como destinos `ip`. Están fuera de la VPC, por lo que `AvailabilityZone` es `all`; las comprobaciones de estado pasaron a través de la ruta del gateway |
+| Solicitud | Cliente de VPC → ALB interno → ruta de VPC `172.17.0.0/16` (ENI del líder) → VXLAN → Pod híbrido, 20/20 |
+| Reemplazo de Pods | Reinicio del rollout con carga; los destinos convergieron en las nuevas IP de Pod en 54 s, 0 de 276 solicitudes fallidas (preStop 15 s, retraso de cancelación del registro 10 s) |
+| Cambio de líder | Se eliminó el Pod líder con carga; traspaso de 4 s, 1 de 191 solicitudes fallidas (cliente sin reintentos) |
 
-El **AWS Load Balancer Controller**, no el gateway, actualiza los destinos cuando cambian las IP de Pod. El gateway solo proporciona la ruta a las IP de Pods que están fuera de la VPC, por lo que el CIDR de Pods debe ser enrutable desde la VPC. Durante la instalación, el objeto `kind: List` del chart 3.6.0 de LBC (IngressClassParams e IngressClass) no superó la validación OpenAPI del cliente con `the server is currently unable to handle the request`; `--disable-openapi-validation` permitió continuar. Si reduce a 5 s el intervalo de la comprobación de estado, establezca también un timeout inferior a 5 s o fallará la creación del grupo de destinos.
+El **AWS Load Balancer Controller**, no el gateway, actualiza los destinos cuando cambian las IP de los Pods. El gateway solo proporciona la ruta a las IP de Pod que están fuera de la VPC, por lo que el CIDR de Pod debe ser enrutables desde la VPC. Durante la instalación, el objeto `kind: List` del chart 3.6.0 de LBC (IngressClassParams e IngressClass) falló la validación OpenAPI del lado del cliente con `the server is currently unable to handle the request`; `--disable-openapi-validation` permitió sortearlo. Si reduce a 5 s el intervalo de comprobación de estado, establezca también un tiempo de espera inferior a 5 s o fallará la creación del grupo de destino.
 
-### Patrón 5: de clientes locales a Pods de la región (dirección inversa)
+### Patrón 5: Clientes locales a Pods de la región (dirección inversa)
 
-Un cliente local entra mediante un balanceador de carga y llega a Pods en nodos de la región (VPC). En esta dirección, la ruta predeterminada es el propio enrutamiento de la VPC, no el gateway.
+Un cliente local entra a través de un balanceador de carga y llega a Pods de nodos de la región (VPC). La ruta predeterminada en esta dirección es el propio enrutamiento de la VPC, no el gateway.
 
-| Ruta | Comportamiento | Medición (18-10-2026) |
+| Ruta | Comportamiento | Medido (2026-10-18) |
 |---|---|---|
-| Instalaciones → ALB interno → Pod de VPC CNI | El DNS local resuelve el nombre del ALB a IP privadas (endpoint entrante de Route 53 Resolver); el tráfico entra en la VPC por DX/VPN/TGW y el ALB lo reenvía a las IP de Pods de VPC CNI. No pasa por el gateway | 20/20 |
-| Instalaciones → ALB interno → Pod Hybrid | Misma ruta, con retorno a las instalaciones mediante el gateway; atraviesa DX dos veces, lo que aumenta la latencia y el costo de transferencia | 20/20 |
-| Instalaciones → NodePort Hybrid → Pod de VPC CNI | kube-proxy hace SNAT a la IP del nodo y el enrutamiento del host lo envía por la red subyacente, sin usar el gateway (VTEP). Los grupos de seguridad de los nodos de la región deben permitir el puerto de la aplicación desde el CIDR de los nodos remotos | Falló (el grupo de seguridad del clúster solo permitía 443 desde el CIDR de los nodos remotos) |
+| Entorno local → ALB interno → Pod de VPC CNI | El DNS local resuelve el nombre del ALB a IP privadas (endpoint de entrada de Route 53 Resolver); el tráfico entra en la VPC por DX/VPN/TGW y el ALB lo reenvía a las IP de Pod de VPC CNI. No pasa por el gateway | 20/20 |
+| Entorno local → ALB interno → Pod híbrido | La misma ruta más un retorno a la red local a través del gateway, que atraviesa la conexión privada en ambas direcciones. Esta simulación usó TGW; una ruta de producción por DX o VPN debe evaluarse por separado en cuanto a latencia y costo de transferencia | 20/20 |
+| Entorno local → NodePort de Hybrid Node → Pod de VPC CNI | La ruta de laboratorio informada usó SNAT de IP de nodo y enrutamiento de red subyacente sin el gateway (VTEP). Ese comportamiento depende de la política de tráfico del Service, el plano de datos de kube-proxy/Cilium y la configuración de masquerading. Inspeccione la IP de origen y la ruta de retorno; si se aplica SNAT de IP de nodo, los grupos de seguridad de los nodos de la región deben permitir el puerto de aplicación desde el CIDR de nodos remotos | Falló (el grupo de seguridad del clúster de laboratorio solo permitía 443 desde el CIDR de nodos remotos) |
 
-La [guía de Ingress de AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html) recomienda ALB con Load Balancer Controller para el tráfico que se origina en la región, e Ingress local para el tráfico que se origina en las instalaciones. Como el gateway requiere `l7Proxy=false` de Cilium, Cilium Ingress y Gateway API no están disponibles en la misma instalación; para el acceso desde las instalaciones, considere un Service `LoadBalancer` L4 (Cilium LB IPAM/BGP) o un balanceador de hardware existente con NodePort.
+La [guía de Ingress de AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html) recomienda ALB con Load Balancer Controller para el tráfico originado en la región e Ingress local para el tráfico originado en el entorno local. Como el gateway requiere `l7Proxy=false` en Cilium, Cilium Ingress y Gateway API no están disponibles en la misma instalación; para el tráfico entrante local, considere un Service `LoadBalancer` L4 (Cilium LB IPAM/BGP) o un balanceador de hardware existente con NodePort.
 
-#### Vídeo de demostración: destinos IP de ALB y ruta de retorno
+#### Video de demostración: destinos ip de ALB y ruta inversa
 
-[![Vídeo de demostración V3: destinos IP de ALB en Pods Hybrid y ruta de retorno desde las instalaciones (sin sonido, 3 min 12 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v3-alb-reverse.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v3-alb-reverse.mp4)
+[![Video de demostración V3: destinos ip de ALB en Pods híbridos y ruta inversa desde el entorno local (sin sonido, 3 min 12 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v3-alb-reverse.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v3-alb-reverse.mp4)
 
-Vídeo sin sonido que reinicia progresivamente los Pods Hybrid bajo carga para que los destinos `ip` del ALB cambien a las nuevas IP de Pod; después prueba las tres rutas que parten de un host de las instalaciones. Grabado el 18 de octubre de 2026 en un entorno simulado (instancias EC2 que representan los sistemas locales a través de TGW; no es una configuración de producción compatible). En la ejecución grabada, solo las nuevas IP de Pod siguieron superando las comprobaciones de estado 50 s después del reinicio progresivo; fallaron 0 de 174 solicitudes y, desde las instalaciones, `/cloud` respondió 3/3, `/hybrid` 3/3 y la ruta NodePort falló en los 3 intentos. Las cifras de 54 s, 276 solicitudes, 4 s y 1 de 191 de las tablas anteriores proceden de una medición anterior del mismo día (02:11 UTC). Consulta el [material de la sesión de 1 hora](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) para ver el recorrido completo.
+Video sin sonido que reinicia el rollout de los Pods híbridos con carga para que los destinos `ip` del ALB pasen a las nuevas IP de Pod; después, prueba las tres rutas que parten de un host local. Grabado el 18 de octubre de 2026 en un entorno simulado (hosts EC2 que simulan el entorno local a través de TGW; no es una configuración de producción compatible). En la ejecución grabada, solo las nuevas IP de Pod seguían en buen estado 50 s después del reinicio del rollout, fallaron 0 de 174 solicitudes y, desde el entorno local, `/cloud` respondió 3/3, `/hybrid` 3/3 y la ruta NodePort falló en los 3 intentos. Las cifras de 54 s, 276 solicitudes, 4 s y 1 de 191 de las tablas anteriores corresponden a una medición anterior del mismo día (02:11 UTC). Consulte la [presentación de la sesión de 1 hora](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) para ver el recorrido completo.
 
-### Patrón 6: comparación — con y sin gateway
+### Patrón 6: Comparación: con y sin gateway
 
-El enrutamiento nativo/BGP/estático y este gateway son rutas de datos distintas, administradas por componentes diferentes. El gateway agrega un salto VXLAN activo/en espera y automatiza rutas agregadas, pero mantiene las responsabilidades sobre la red subyacente, CIDR, firewall, IAM y aplicaciones. Las secciones siguientes sobre comparación y migración describen sus límites; ninguno de los enfoques garantiza automáticamente la disponibilidad de webhooks/balanceadores.
+El enrutamiento nativo/BGP/estático y este gateway son planos de datos distintos, con propietarios diferentes. El gateway agrega un salto VXLAN activo-en espera y automatización de rutas agregadas, pero mantiene las responsabilidades de infraestructura subyacente, CIDR, firewall, IAM y aplicaciones. Las secciones de comparación y migración siguientes describen sus límites; ninguno de los dos enfoques garantiza automáticamente la disponibilidad de webhooks/LB.
 
 ---
 
@@ -754,70 +756,70 @@ El enrutamiento nativo/BGP/estático y este gateway son rutas de datos distintas
 
 ### Arquitectura del Deployment
 
-El despliegue de producción recomendado usa 2 réplicas del gateway distribuidas entre zonas de disponibilidad:
+El deployment de producción recomendado usa 2 réplicas del gateway distribuidas entre zonas de disponibilidad:
 
-![El líder controla las rutas de AWS y los endpoints de VTEP mientras la réplica en espera ya reconcilia el estado local del túnel; se debe verificar la ubicación entre zonas de disponibilidad.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png)
+![El líder controla las rutas de AWS y los endpoints VTEP mientras la réplica en espera ya reconcilia el estado local de los túneles; se debe verificar la ubicación por zona de disponibilidad.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html)
 
 ### Secuencia de conmutación por error
 
-Cuando el Pod líder del gateway deja de estar disponible (fallo del nodo, caída del Pod o partición de red), se produce la siguiente secuencia de conmutación por error:
+Cuando el Pod del gateway líder deja de estar disponible (fallo de nodo, bloqueo del Pod o partición de red), se produce la siguiente secuencia de conmutación por error:
 
-![Después del cambio de líder, primero se actualizan las rutas agregadas de AWS y luego los endpoints de VTEP. Los ajustes de elección no garantizan un tiempo de recuperación fijo.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png)
+![Tras el cambio de liderazgo, primero se actualizan las rutas agregadas de AWS y después los endpoints VTEP. Los ajustes de elección no garantizan un tiempo de recuperación fijo.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html)
 
-### Cronología de conmutación por error
+### Cronología de la conmutación por error
 
-**Ilustración histórica, no evidencia medida**: la tabla original no tiene un registro de prueba reproducible. Conserve sus valores como contexto, no como SLO. La guía actual de AWS calcula aproximadamente 3–5 segundos, mientras que el README etiquetado del proyecto presenta otra estimación; es necesario probar la convergencia real de rutas, API, Cilium y aplicaciones. La configuración del líder actualiza las rutas de la VPC **antes** que el objeto VTEP, no en paralelo. Ninguno de los intervalos garantiza la recuperación ante un fallo de nodo, zona de disponibilidad o plano de control.
+**Ilustración histórica, no evidencia medida:** la tabla original siguiente no cuenta con un registro de pruebas reproducible. Conserve sus valores como contexto, no como SLO. Las guías actuales de AWS estiman aproximadamente entre 3 y 5 segundos, mientras que el README etiquetado del proyecto contiene una estimación diferente; se deben probar la convergencia real de rutas/API/Cilium/aplicaciones. La configuración del líder actualiza las rutas de la VPC **antes** que el objeto VTEP, no en paralelo. Ninguno de los intervalos garantiza la recuperación ante un fallo de nodo, zona de disponibilidad o plano de control.
 
 | Fase | Duración | Descripción |
 |-------|----------|-------------|
-| **Detección** | 0–3 s | El líder actual deja de renovar el Lease; este vence después de `leaseDuration` |
-| **Elección** | 0–1 s | La réplica en espera adquiere el Lease en el siguiente intervalo de `retryPeriod` |
-| **Actualización de rutas** | 1–3 s | El nuevo líder llama a `ec2:ReplaceRoute` para actualizar las rutas de la VPC |
-| **Actualización de VTEP** | 1–5 s | El nuevo líder actualiza `CiliumVTEPConfig`; los agentes de Cilium vuelven a cargar los mapas BPF |
-| **Total** | **~5–10 s** | Tiempo de conmutación por error de extremo a extremo |
+| **Detección** | 0-3s | El líder actual no renueva el Lease; el Lease caduca después de `leaseDuration` |
+| **Elección** | 0-1s | La réplica en espera adquiere el Lease en el siguiente intervalo de `retryPeriod` |
+| **Actualización de rutas** | 1-3s | El nuevo líder llama a `ec2:ReplaceRoute` para actualizar las rutas de la VPC |
+| **Actualización de VTEP** | 1-5s | El nuevo líder actualiza `CiliumVTEPConfig`; los agentes de Cilium vuelven a cargar los mapas BPF |
+| **Total** | **~5-10s** | Tiempo de conmutación por error de extremo a extremo |
 
-Durante la ventana de conmutación por error:
+Durante el intervalo de conmutación por error:
 
-- **Tráfico de la VPC a Hybrid**: se pierde hasta que se actualizan las rutas de la VPC (los paquetes se envían a la ENI del gateway que falló).
-- **Tráfico de Hybrid a la VPC**: se pierde hasta que se actualiza CiliumVTEPConfig (Cilium envía el tráfico a la IP del gateway anterior).
-- **Rutas internas de Hybrid y del nodo/plano de control**: las rutas que no atraviesan el gateway pueden seguir funcionando solo si su propia red subyacente, CNI, DNS y dependencias continúan en buen estado; un fallo compartido de zona de disponibilidad/red también puede afectarlas.
+- **Tráfico de la VPC al entorno híbrido**: Se descarta hasta que se actualicen las rutas de la VPC (los paquetes se dirigen a la ENI del gateway que falló)
+- **Tráfico del entorno híbrido a la VPC**: Se descarta hasta que se actualice CiliumVTEPConfig (Cilium envía el tráfico a la IP anterior del gateway)
+- **Rutas internas del entorno híbrido y rutas de nodos/plano de control**: Las rutas que no atraviesan el gateway pueden continuar solo si su propia infraestructura subyacente, CNI, DNS y dependencias siguen en buen estado; un fallo compartido de zona de disponibilidad/red también puede afectarlas.
 
-#### Vídeo de demostración: conmutación por error del líder del gateway
+#### Video de demostración: conmutación por error del líder del gateway
 
-[![Vídeo de demostración V1: conmutación por error del líder del gateway (sin sonido, 2 min 58 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v1-gateway-failover.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v1-gateway-failover.mp4)
+[![Video de demostración V1: conmutación por error del líder del gateway (sin sonido, 2 min 58 s)](../.gitbook/assets/en-eks-hybrid-nodes-demo-v1-gateway-failover.jpg)](https://presentation.atomai.click/eks-hybrid-nodes-1h/media/v1-gateway-failover.mp4)
 
-Vídeo sin sonido que elimina el Pod líder del gateway y muestra el cambio de titularidad del Lease, el cambio de ENI de la ruta de la VPC y los resultados de sondas a intervalos de 1 s. Es una grabación real de terminal realizada el 18 de octubre de 2026 en un entorno simulado (instancias EC2 que representan los sistemas locales a través de TGW; no es una configuración de producción compatible). En la ejecución grabada, el cambio de titularidad del Lease tardó 5 s y fallaron 2 de 60 sondas. Las tres ejecuciones anteriores que se muestran al final (del 15 de octubre de 2026) midieron cambios de titularidad de 3 s, 5 s y 5 s, con 1 de 60, 1 de 60 y 2 de 45 sondas fallidas. Al igual que la estimación de aproximadamente 3 a 5 s de la documentación de AWS, estas cifras no son garantías. Consulta el [material de la sesión de 1 hora](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) para ver el recorrido completo.
+Video sin sonido que elimina el Pod líder del gateway y muestra el traspaso del Lease, el cambio de ENI de la ruta de la VPC y los resultados de sondeos de 1 segundo. Es una grabación real del terminal, hecha el 18 de octubre de 2026 en un entorno simulado (hosts EC2 que simulan el entorno local a través de TGW; no es una configuración de producción compatible). En la ejecución grabada, el traspaso del Lease tardó 5 s y fallaron 2 de 60 sondeos. Las tres ejecuciones anteriores que se muestran al final (15 de octubre de 2026) registraron traspasos de 3 s, 5 s y 5 s, con 1 de 60, 1 de 60 y 2 de 45 sondeos fallidos. Al igual que la estimación aproximada de 3 a 5 s de la documentación de AWS, estas cifras no son garantías. Consulte la [presentación de la sesión de 1 hora](https://presentation.atomai.click/eks-hybrid-nodes-1h/index.html) para ver el recorrido completo.
 
-### Fallo de un único gateway y varios centros de datos
+### Fallo de un solo gateway y varios centros de datos
 
-El gateway (1.0.2) se despliega como un único conjunto por clúster con un solo líder activo. El líder crea una ruta en cada tabla configurada **para cada CIDR** de `podCIDRs` (CSV), y las entradas del túnel se administran por cada `CiliumNode` Hybrid. Un único gateway atiende centros de datos con CIDR de Pods diferentes (por ejemplo, centro A `10.85.0.0/16` y centro B `10.86.0.0/16`), siempre que cada CIDR aparezca tanto en `remotePodNetworks` del clúster como en `podCIDRs` del gateway. Los rangos no necesitan ser contiguos.
+El gateway (1.0.2) se implementa como un conjunto por clúster, con un único líder activo. El líder crea una ruta en cada tabla de rutas configurada **para cada CIDR** de `podCIDRs` (CSV), y las entradas de túnel se administran por cada `CiliumNode` híbrido. Los centros de datos con distintos CIDR de Pod (por ejemplo, DC A `10.85.0.0/16`, DC B `10.86.0.0/16`) reciben servicio de un único gateway siempre que cada CIDR aparezca tanto en `remotePodNetworks` del clúster como en `podCIDRs` del gateway. Los rangos no tienen que ser contiguos.
 
 | Elemento | Detalles |
 |---|---|
-| Cantidad de CIDR | Hasta 15 CIDR de red de Pods remotos (límite de EKS). Cada CIDR agrega una ruta por tabla de rutas; compruebe también la cuota de rutas por tabla (50 de forma predeterminada) |
-| Rendimiento | El tráfico entre la VPC y Pods Hybrid de todos los centros de datos pasa por un único líder. El modo activo/en espera no permite escalar horizontalmente; dimensione la instancia y el rendimiento de su red |
-| Firewall | Los nodos Hybrid de todos los centros de datos deben poder acceder por UDP 8472 a las IP tanto del líder como de la réplica en espera |
-| Separación por centro de datos | No está documentado ejecutar un gateway independiente por centro de datos dentro de un clúster. En 1.0.2, los nombres del Lease (`hybrid-gateway-leader`) y de CiliumVTEPConfig (`hybrid-gateway`) son fijos, por lo que es probable que varias versiones entren en conflicto (no verificado) |
+| Número de CIDR | Hasta 15 CIDR de redes de Pods remotos (límite de EKS). Cada CIDR agrega una ruta por tabla de rutas; compruebe también la cuota de rutas por tabla (50 de forma predeterminada) |
+| Rendimiento | El tráfico de Pods VPC↔Hybrid de todos los centros de datos pasa por un líder. El modo activo/en espera no escala horizontalmente; dimensione la instancia y su rendimiento de red |
+| Firewall | Los nodos híbridos de todos los centros de datos deben poder acceder a UDP 8472 en las IP de los nodos líder **y** en espera |
+| División por centro de datos | No está documentada la ejecución de un gateway independiente por centro de datos dentro de un mismo clúster. En 1.0.2, los nombres del Lease (`hybrid-gateway-leader`) y de CiliumVTEPConfig (`hybrid-gateway`) son fijos, por lo que es probable que varias versiones entren en conflicto (no verificado) |
 
-Si solo hay un Pod de gateway o fallan ambos, el tráfico entre la VPC y los CIDR de Pods Hybrid de **todos** los centros de datos se detiene a la vez. El runtime nunca llama a `DeleteRoute`, por lo que las rutas de la VPC siguen apuntando a la ENI fallida.
+Si falla el único Pod del gateway o fallan ambas réplicas, el tráfico de Pods entre la VPC y los CIDR de Pods híbridos de **todos** los centros de datos se interrumpe al mismo tiempo. Un líder en buen estado aún puede reenviar tráfico, pero sin una réplica en espera no hay redundancia de gateway. El runtime nunca llama a `DeleteRoute`, por lo que las rutas de la VPC siguen apuntando a la ENI que falló hasta que un operador o un líder recuperado las cambie.
 
-| Rutas que se interrumpen | Rutas que continúan (si su propia red y DNS están en buen estado) |
+| Rutas que se interrumpen | Rutas que permanecen (si sus propias redes y DNS funcionan) |
 |---|---|
-| Pods de la VPC ↔ Pods Hybrid en ambas direcciones, webhooks en Pods Hybrid, destinos ALB/NLB en Pods Hybrid y recopilador AMP → endpoints Hybrid | Plano de control ↔ kubelet (ruta del CIDR de nodo), tráfico Hybrid a Hybrid dentro de un centro de datos, tráfico Hybrid entre centros de datos enrutado localmente, rutas de IP de nodo (NodePort, hostNetwork) |
+| Pod de VPC ↔ Pod híbrido en ambas direcciones, webhooks en Pods híbridos, destinos ALB/NLB en Pods híbridos, scraper de AMP → endpoints híbridos | Plano de control ↔ kubelet (ruta de CIDR de nodo), comunicación entre Hybrid Nodes de un mismo centro de datos, tráfico híbrido entre centros de datos enrutado localmente, rutas de IP de nodo (NodePort, hostNetwork) |
 
-Por tanto, en la práctica se requieren dos réplicas en nodos elegibles de zonas de disponibilidad distintas. Si el mismo Service también tiene Pods en la VPC, el grupo de destinos incluye esos nodos de la nube, por lo que el balanceador puede seguir respondiendo desde allí cuando las comprobaciones de estado descarten los destinos Hybrid (esta combinación no se midió).
+Por lo tanto, se necesitan prácticamente dos réplicas en nodos elegibles de distintas zonas de disponibilidad. Si el mismo Service también tiene Pods en la VPC, el grupo de destinos contiene también destinos de nube, por lo que, tras perderse los destinos híbridos en las comprobaciones de estado, el balanceador de carga puede seguir respondiendo desde los destinos de nube (esta combinación no se midió).
 
-### Recomendaciones para despliegues multizona
+### Recomendaciones para deployments multizona
 
-El chart 1.0.2 exige hosts distintos, pero solo prefiere zonas de disponibilidad distintas. Seleccione/aprovisione nodos elegibles en varias zonas e inspeccione su ubicación real; no establezca etiquetas de topología falsas. Los valores `affinity` y `topologySpreadConstraints` de ejemplos antiguos no están conectados en este chart. Si se requieren restricciones estrictas por zona, mantenga una superposición de Deployment revisada y tenga en cuenta que los Pods pueden quedar Pending cuando una zona/la capacidad no esté disponible.
+La versión 1.0.2 del chart exige hosts diferentes, pero solo prefiere zonas de disponibilidad diferentes. Seleccione/aprovisione nodos elegibles en distintas zonas de disponibilidad e inspeccione la ubicación real; no establezca etiquetas de topología falsas. Los valores `affinity` y `topologySpreadConstraints` de ejemplos anteriores no están conectados en este chart. Si se necesitan restricciones estrictas de zona de disponibilidad, mantenga una superposición de deployment revisada y tenga en cuenta que los Pods pueden quedar Pending cuando una zona de disponibilidad/capacidad no esté disponible.
 
-### PodDisruptionBudget
+### Pod Disruption Budget
 
-Este PDB opcional limita el desalojo voluntario mediante la API de desalojo. No impide la eliminación directa de Pods, los despliegues del Deployment ni los fallos involuntarios, y no conserva el líder activo por su identidad:
+Este PDB opcional limita la expulsión voluntaria a través de la API de eviction. No impide la eliminación directa de Pods, los rollouts del Deployment ni los fallos involuntarios, y no conserva el líder activo por su identidad:
 
 ```yaml
 apiVersion: policy/v1
@@ -832,9 +834,9 @@ spec:
       app.kubernetes.io/name: eks-hybrid-nodes-gateway
 ```
 
-### Recuperación tras el fallo total del gateway
+### Recuperación tras un fallo total del gateway
 
-Inspeccione ambos Pods del gateway, los nodos de la nube elegibles, el Lease, los destinos de ruta y el estado de VTEP. Distinga la pérdida del gateway de un fallo más amplio de la red subyacente/API/Cilium. La conectividad existente entre las IP de nodo y el plano de control es una ruta independiente; no suponga que todas las cargas de trabajo conservan el acceso a DNS o a servicios de la nube.
+Inspeccione ambos Pods del gateway, los nodos de nube elegibles, el Lease, los destinos de las rutas y el estado de VTEP. Distinga la pérdida del gateway de una interrupción más amplia de la infraestructura subyacente/API/Cilium. La conectividad existente entre las IP de nodo y el plano de control es una ruta independiente; no suponga que todas las cargas de trabajo conservan el DNS o las dependencias de nube.
 
 ```bash
 : "${KUBE_CONTEXT:?Set the reviewed Kubernetes context}"
@@ -844,7 +846,7 @@ kubectl --context "$KUBE_CONTEXT" -n eks-hybrid-nodes-gateway   get lease hybrid
 kubectl --context "$KUBE_CONTEXT" get ciliumvtepconfig hybrid-gateway -o yaml
 ```
 
-Antes de etiquetarlo, el nodo de reemplazo debe cumplir los requisitos de IAM, reenvío de la ENI principal, red y ubicación del chart. Una vez restaurado el liderazgo, vuelva a comprobar las ENI de las rutas de la VPC y las pruebas bidireccionales de las aplicaciones. El estado de disponibilidad y las métricas del líder por sí solos no son criterios de aceptación. Un ejercicio destructivo de conmutación por error debe realizarse en una ventana aprobada, con identidades verificadas de Pod/nodo, pruebas de tráfico y una persona responsable de la recuperación; no deduzca a ciegas el Pod que debe eliminar a partir de `holderIdentity`.
+Antes de etiquetarlo, un nodo de reemplazo debe cumplir los requisitos de IAM, reenvío de ENI principal, red y ubicación del chart. Una vez restablecido el liderazgo, vuelva a comprobar las ENI de las rutas de la VPC y las pruebas de aplicación bidireccionales. Las métricas de disponibilidad/liderazgo no bastan como criterios de aceptación. Los ejercicios destructivos de conmutación por error deben realizarse en una ventana aprobada, con una identidad de Pod/nodo verificada, pruebas de tráfico y un responsable de recuperación; no deduzca a ciegas el destino de eliminación de un Pod a partir de holderIdentity.
 
 ---
 
@@ -854,24 +856,24 @@ Antes de etiquetarlo, el nodo de reemplazo debe cumplir los requisitos de IAM, r
 
 #### Métricas clave que se deben observar
 
-La versión 1.0.2 expone `/metrics` en el puerto **10080**, con `/healthz` y `/readyz` en el puerto 8088. Las [definiciones de métricas etiquetadas](https://github.com/aws/eks-hybrid-nodes-gateway/blob/v1.0.2/internal/metrics/metrics.go) y el [recopilador](https://github.com/aws/eks-hybrid-nodes-gateway/blob/v1.0.2/internal/metrics/collector.go) definen estos nombres/tipos:
+La versión 1.0.2 expone `/metrics` en el puerto **10080**, y `/healthz` y `/readyz` en 8088. Las [definiciones de métricas etiquetadas](https://github.com/aws/eks-hybrid-nodes-gateway/blob/v1.0.2/internal/metrics/metrics.go) y el [recolector](https://github.com/aws/eks-hybrid-nodes-gateway/blob/v1.0.2/internal/metrics/collector.go) definen estos nombres y tipos:
 
 | Métrica | Tipo | Interpretación |
 |---|---|---|
-| `hybrid_gateway_leader_is_active` | Gauge | Estado de liderazgo de esta réplica; no demuestra que las rutas se hayan configurado correctamente |
-| `hybrid_gateway_hybrid_nodes_configured` | Gauge | Cantidad de nodos configurados localmente por esta réplica |
+| `hybrid_gateway_leader_is_active` | Gauge | Estado de líder de esta réplica; no demuestra que la configuración de rutas haya finalizado correctamente |
+| `hybrid_gateway_hybrid_nodes_configured` | Gauge | Número de nodos configurados localmente en esta réplica |
 | `hybrid_gateway_vxlan_tx_bytes_total`, `hybrid_gateway_vxlan_rx_bytes_total` | Counter | Contadores de bytes de la interfaz del kernel; use la tasa y tenga en cuenta los reinicios |
-| `hybrid_gateway_vxlan_tx_packets_total`, `hybrid_gateway_vxlan_rx_packets_total` | Counter | Contadores de paquetes, no de solicitudes de aplicación satisfactorias |
+| `hybrid_gateway_vxlan_tx_packets_total`, `hybrid_gateway_vxlan_rx_packets_total` | Counter | Contadores de paquetes, no de éxito de aplicaciones |
 | `hybrid_gateway_vxlan_interface_up` | Gauge | Estado de la interfaz, no accesibilidad de extremo a extremo |
-| `hybrid_gateway_vxlan_fdb_entries`, `hybrid_gateway_vxlan_route_count` | Gauge | Recuentos de tablas observados localmente |
-| `hybrid_gateway_aws_route_table_update_total`, `hybrid_gateway_aws_route_table_update_errors_total` | Counter | Eventos satisfactorios o fallidos de operaciones de ruta |
-| `hybrid_gateway_aws_route_table_update_duration_seconds`, `hybrid_gateway_leader_setup_duration_seconds` | Histogram | Observaciones de duración; sin eventos no se obtiene una estimación útil de latencia |
+| `hybrid_gateway_vxlan_fdb_entries`, `hybrid_gateway_vxlan_route_count` | Gauge | Cantidad de entradas observadas localmente |
+| `hybrid_gateway_aws_route_table_update_total`, `hybrid_gateway_aws_route_table_update_errors_total` | Counter | Eventos correctos/de error de operaciones de rutas |
+| `hybrid_gateway_aws_route_table_update_duration_seconds`, `hybrid_gateway_leader_setup_duration_seconds` | Histogram | Observaciones de duración; si no hay eventos, no existe una estimación de latencia útil |
 
-El código emite las métricas de red con sufijo `_total` como contadores, incluso cuando una tabla en prosa las denomina gauges. `LeaderIsActive` se activa antes de completar la configuración de rutas/VTEP, y la disponibilidad no es una prueba de aplicación. Investigue la ausencia/proliferación sostenida de líderes junto con el estado de recopilación y los errores de API; una sola muestra transitoria no demuestra una división de cerebro.
+El código emite métricas de red `_total` como contadores aunque una tabla en prosa las etiquete como gauges. `LeaderIsActive` se establece antes de que finalice la configuración de rutas/VTEP, y la disponibilidad no es una prueba de aplicación. Investigue la ausencia/multiplicidad sostenida de líderes junto con el estado del scraping y los errores de la API; una sola muestra transitoria no demuestra split-brain.
 
 #### ServiceMonitor de Prometheus
 
-El chart no crea un Service. Este ejemplo independiente crea uno y vincula un ServiceMonitor con el **puerto nombrado del Service**. Prometheus Operator/CRD, la selección de espacios de nombres y el `serviceMonitorSelector` real ya deben estar configurados. Cambie la etiqueta de ejemplo `release` para que coincida con esa pila. Restrinja el acceso al puerto de métricas de red del host mediante controles del nodo/la red.
+El chart no crea un Service. Este ejemplo independiente proporciona uno y vincula un ServiceMonitor al **puerto con nombre del Service**. Prometheus Operator/CRD, la selección de espacios de nombres y el `serviceMonitorSelector` real deben estar ya configurados. Reemplace la etiqueta de ejemplo `release` para que coincida con esa pila. Restrinja el acceso al puerto de métricas de la red del host mediante controles de nodo/red.
 
 ```yaml
 apiVersion: v1
@@ -912,7 +914,7 @@ spec:
     path: /metrics
 ```
 
-#### Consultas de ejemplo para el panel de Grafana
+#### Ejemplos de consultas de dashboard de Grafana
 
 ```promql
 # Expected steady-state leader count, scoped to this one Service scrape job.
@@ -932,25 +934,25 @@ hybrid_gateway_hybrid_nodes_configured{namespace="eks-hybrid-nodes-gateway",serv
 up{namespace="eks-hybrid-nodes-gateway",service="hybrid-gateway-metrics"}
 ```
 
-La ausencia de series temporales requiere una alerta por destino/recopilación ausente; una suma sin series no equivale automáticamente a cero. Derive los períodos de alerta y las cantidades esperadas de nodos del despliegue real. Menos tráfico puede significar que las aplicaciones están inactivas, no que haya un fallo, y los errores acumulados siguen siendo distintos de cero tras un incidente anterior.
+Las series temporales ausentes requieren una alerta de destino/scraping ausente; una suma sin series no equivale automáticamente a cero. Derive los intervalos de alerta y las expectativas de cantidad de nodos del deployment real. La disminución del tráfico puede significar que las aplicaciones están inactivas, no que haya un fallo, y los errores acumulados siguen siendo distintos de cero después de un incidente antiguo.
 
 #### Integración con CloudWatch
 
-`NetworkIn`/`NetworkOut` de EC2 son contadores a nivel de instancia, no métricas exclusivas de VXLAN/ENI. Para usar métricas personalizadas del gateway en CloudWatch, primero configure un recopilador con espacio de nombres, dimensiones, unidades y tratamiento de contadores acumulativos explícitos; después, verifique las muestras publicadas. Un comando `put-metric-alarm` no crea su métrica ni demuestra que el tráfico haya fallado. Incluya en el diseño de alarmas los huecos del exportador, los períodos de inactividad y los reinicios de contadores.
+`NetworkIn`/`NetworkOut` de EC2 son contadores a nivel de instancia, no métricas exclusivas de la ENI VXLAN. Para usar métricas personalizadas del gateway en CloudWatch, configure primero un recolector con un espacio de nombres, dimensiones, unidades y gestión de contadores acumulativos explícitos; después, verifique las muestras publicadas. El comando put-metric-alarm no crea la métrica ni demuestra un fallo de tráfico. Incluya en el diseño de alertas las interrupciones del exportador, los períodos inactivos y los reinicios de contadores.
 
-### Registro de eventos
+### Registro
 
-Recopile registros acotados en privado y mantenga los fallos de API/permisos como fallos. Un selector de etiquetas selecciona ambas réplicas, no solo el líder. `holderIdentity` no es necesariamente el nombre de un Pod. Algunos mensajes útiles de 1.0.2 son `Processing CiliumNode`, `Adding hybrid node to gateway`, `Remote VTEP added` y `Reconciling CiliumVTEPConfig`; use los registros estructurados reales, no texto supuesto sobre una operación AWS DeleteRoute que el runtime nunca realiza.
+Recopile registros acotados en privado y conserve los errores de API/permisos como errores. Un selector de etiquetas selecciona ambas réplicas, no solo el líder. holderIdentity no es necesariamente el nombre de un Pod. Entre los mensajes útiles de la versión 1.0.2 se incluyen `Processing CiliumNode`, `Adding hybrid node to gateway`, `Remote VTEP added` y `Reconciling CiliumVTEPConfig`; use los registros estructurados reales en lugar de suponer mensajes de una operación DeleteRoute de AWS que el runtime nunca ejecuta.
 
 #### Habilitar el registro de depuración
 
-El chart 1.0.2 no conecta `logLevel=debug`; ese valor de Helm no habilita el modo de depuración. Inspeccione las marcas de registro compatibles con el binario seleccionado y mantenga explícitamente cualquier superposición de Deployment que se requiera. Al aumentar el nivel de detalle, evite exponer credenciales o contenido de las cargas de trabajo.
+La versión 1.0.2 del chart no conecta `logLevel=debug`; ese valor de Helm no puede habilitar la depuración. Inspeccione las marcas de registro admitidas por el binario seleccionado y mantenga explícitamente cualquier superposición de deployment necesaria. Evite exponer credenciales o cargas útiles de las cargas de trabajo al aumentar la verbosidad.
 
 ### Solución de problemas
 
 #### Problema: los Pods no pueden comunicarse a través del gateway
 
-Este script de recopilación se detiene si falla una consulta a la API o a los registros. No interpreta los errores de autenticación/transporte como ausencia del recurso. Antes de compartir artefactos privados, revíselos y oculte la información sensible.
+Este script de recopilación se detiene ante una consulta de API/registros fallida. No etiqueta los errores de autenticación/transporte como ausencia de recursos. Revise y enmascare los artefactos privados antes de compartirlos.
 
 ```bash
 #!/usr/bin/env bash
@@ -973,59 +975,59 @@ kubectl --context "$KUBE_CONTEXT" -n eks-hybrid-nodes-gateway logs \
 printf 'Private diagnostic files: %s\n' "$OUT_DIR"
 ```
 
-Compare el nodo/IP del Pod del líder real, la IP/MAC de VTEP, la ruta de la ENI principal y los CIDR de CiliumNode. Compruebe toda la ruta de retorno y la configuración requerida `VTEP=true`/`L7=false`. No reinicie Cilium a ciegas porque falte un mapa; primero inspeccione la versión, la configuración y los errores de reconciliación.
+Compare el nodo/IP del Pod del líder real, la IP/MAC de VTEP, la ruta de la ENI principal y los CIDR de CiliumNode. Compruebe toda la ruta de retorno y la configuración necesaria VTEP=true/L7=false. No reinicie Cilium a ciegas porque falte un mapa; primero inspeccione la versión, la configuración y los errores de reconciliación.
 
 #### Problema: configuración incorrecta del grupo de seguridad
 
-UDP no tiene un protocolo de enlace de conexión. Que `nc -uz` indique éxito no demuestra que el tráfico VXLAN haya llegado ni se haya desencapsulado. Compruebe los grupos de seguridad, las NACL sin estado, los firewalls locales y ambas direcciones de la red subyacente mediante capturas/contadores aprobados y acotados. Un filtro de captura en la interfaz física ve el UDP 8472 externo; una captura en `hybrid_vxlan0` ve el tráfico interno, así que filtrar esa interfaz por el UDP 8472 externo puede ocultar el tráfico que se intenta diagnosticar.
+UDP no tiene protocolo de enlace de conexión. Que `nc -uz` informe de éxito no demuestra que haya llegado tráfico VXLAN ni que se haya desencapsulado. Compruebe los grupos de seguridad, las NACL sin estado, los firewalls locales y ambas direcciones de la red subyacente mediante capturas/contadores acotados y aprobados. Una captura filtrada en la interfaz física ve UDP8472 externo; una captura en `hybrid_vxlan0` ve el tráfico interno, por lo que filtrar esa interfaz por UDP8472 externo puede no detectar el tráfico que se está diagnosticando.
 
 #### Problema: faltan rutas de la VPC
 
-Confirme los ID de las tablas configuradas, los prefijos exactos de Pods, la ENI principal del gateway y la identidad IAM de la carga de trabajo. El comando `sts get-caller-identity` del operador no demuestra qué rol usa el SDK del gateway. Una prueba DryRun distingue los resultados `DryRunOperation` y `UnauthorizedOperation` y debe usar el principal/parámetros previstos; no modifica rutas satisfactoriamente. Inspeccione la comprobación de origen/destino de la ENI principal real, no solo un atributo supuesto del nodo.
+Confirme los ID de tablas configurados, los prefijos exactos de los Pods, la ENI principal del gateway y la identidad IAM de la carga de trabajo. El comando `sts get-caller-identity` de un operador no demuestra qué rol usa el SDK del gateway. Una prueba DryRun tiene resultados distintos, `DryRunOperation` y `UnauthorizedOperation`, y debe usar el principal/parámetros previstos; no constituye una modificación correcta de ruta. Inspeccione la comprobación de origen/destino en la ENI principal real, no en un atributo de nodo supuesto.
 
-#### Problema: cambios frecuentes de líder
+#### Problema: transiciones frecuentes de líder
 
-Inspeccione el Lease indicado, la latencia/accesibilidad de la API, el estado del nodo del gateway y la presión de recursos. La pérdida del liderazgo no demuestra que otra réplica haya terminado de configurar las rutas. El controlador de disponibilidad hace una comprobación booleana local. Un `wget` sin autenticación al servidor de API puede fallar por TLS/autenticación sin demostrar que la red esté caída.
+Inspeccione el Lease especificado, la latencia/accesibilidad de la API, el estado de los nodos del gateway y la presión de recursos. La pérdida del liderazgo no demuestra que otra réplica ya haya completado la configuración de rutas. El controlador de disponibilidad es una comprobación booleana local. Un wget no autenticado al servidor de API puede fallar por TLS/autenticación sin demostrar que la red esté caída.
 
 #### Problema: problemas de MTU
 
-Use una imagen/entorno de diagnóstico que realmente incluya iproute2/iputils. `ping` de BusyBox no siempre admite la opción `-M do` de iputils. Limite la cantidad de paquetes y el timeout, elija ambos endpoints deliberadamente y recuerde que la carga útil ICMP de IPv4 también necesita 28 bytes para los encabezados IP/ICMP antes de la encapsulación. Una respuesta ICMP bloqueada no permite medir la MTU de forma concluyente. Importa más la MTU mínima de extremo a extremo de la red subyacente, incluida la encapsulación VPN/DX, que restar 50 a la NIC de EC2 por sí sola.
+Use una imagen/entorno de diagnóstico que incluya iproute2/iputils. Ping de BusyBox no admite universalmente la opción `-M do` de iputils. Limite la cantidad de paquetes y el tiempo de espera, elija deliberadamente ambos endpoints y recuerde que una carga útil ICMP IPv4 también necesita 28 bytes para los encabezados IP/ICMP antes de la encapsulación. Una respuesta ICMP bloqueada no constituye una medición concluyente de MTU. Importa más la MTU mínima de extremo a extremo de la infraestructura subyacente, incluida la encapsulación VPN/DX, que restar 50 solo a la NIC EC2.
 
-#### Árbol de decisión para solucionar problemas
+#### Árbol de decisiones para la solución de problemas
 
-1. Confirme los dos objetos del plano de control y las identidades reales de los nodos de la nube/Hybrid; conserve los errores de API.
-2. Verifique por separado la propiedad/destino de la ruta agregada y las rutas/FDB/vecinos locales de cada nodo.
-3. Verifique la accesibilidad del UDP externo y la comprobación de origen/destino de la ENI principal.
-4. Verifique la versión de Cilium mantenida por AWS, los ajustes de VTEP/L7 y el endpoint VTEP actual.
-5. Pruebe por separado la IP directa de Pod y ClusterIP; después, la ruta real del webhook/balanceador.
-6. Investigue la MTU, la pérdida de paquetes, el listener/TLS de la aplicación y el enrutamiento de retorno mediante diagnósticos acotados.
+1. Confirme ambos objetos del plano de control y las identidades reales de los nodos de nube/híbridos; conserve los errores de API.
+2. Verifique por separado la propiedad/destino de la ruta agregada y la FDB/vecinos/rutas locales por nodo.
+3. Verifique la accesibilidad UDP externa y la comprobación de origen/destino en la ENI principal.
+4. Verifique la versión de AWS Cilium, los ajustes de VTEP/L7 y el endpoint VTEP actual.
+5. Pruebe por separado la IP directa del Pod y ClusterIP y, después, la ruta real de webhook/LB.
+6. Investigue la MTU, la pérdida de paquetes, el listener/TLS de la aplicación y el enrutamiento de retorno con diagnósticos acotados.
 
 ### Escalado
 
 #### Agregar más Hybrid Nodes
 
-Cada réplica del gateway reconcilia objetos CiliumNode etiquetados y crea entradas locales de túnel. Cuando asume el liderazgo, el líder administra las rutas agregadas configuradas de CIDR de Pods; no agrega una ruta de AWS por cada nodo nuevo. Verifique las nuevas direcciones/CIDR de nodo y los recuentos locales en ambas réplicas. Una cantidad mayor de nodos por sí sola no determina el rendimiento; las réplicas adicionales proporcionan capacidad en espera, no distribución activa-activa de la carga.
+Cada réplica del gateway reconcilia los objetos CiliumNode etiquetados en entradas de túnel locales. El líder administra las rutas agregadas configuradas de CIDR de Pod cuando asume el liderazgo; no agrega una ruta de AWS por cada nodo nuevo. Verifique las direcciones/CIDR de los nodos nuevos y las cantidades locales en ambas réplicas. Una cantidad mayor de nodos no determina por sí sola el rendimiento; las réplicas adicionales proporcionan capacidad en espera, no distribución de carga activa-activa.
 
 #### Dimensionamiento de instancias del gateway
 
-Dimensione según la tasa máxima de bytes, los paquetes por segundo, las conexiones/túneles concurrentes, la CPU, la memoria y la capacidad de reserva ante fallos. Solo una réplica reenvía el tráfico administrado por el gateway a la vez.
+Dimensione según la tasa máxima de bytes, los paquetes por segundo, las conexiones/túneles simultáneos, la CPU, la memoria y el margen para fallos. Solo una réplica reenvía el tráfico administrado por el gateway en cada momento.
 
-**Ilustración histórica de dimensionamiento:** la tabla siguiente conserva estimaciones originales, no límites probados de cantidad de nodos ni rendimiento validado. Consulte las especificaciones actuales de EC2; en particular, la entrada de 50 Gbps para c6in.2xlarge no es una especificación sostenida verificada.
+**Ilustración histórica de dimensionamiento:** la tabla siguiente conserva estimaciones originales, no límites de cantidad de nodos probados ni rendimiento validado. Consulte las especificaciones EC2 actuales; en particular, la entrada de 50 Gbps para c6in.2xlarge no es una especificación sostenida verificada.
 
-| Tipo de instancia | vCPU | Memoria | Ancho de banda de red | Uso recomendado |
+| Tipo de instancia | vCPU | Memoria | Ancho de banda de red | Recomendado para |
 |---------------|------|--------|-------------------|-----------------|
-| c6i.large | 2 | 4 GiB | Hasta 12.5 Gbps | Desarrollo/pruebas, menos de 10 nodos Hybrid |
-| c6i.xlarge | 4 | 8 GiB | Hasta 12.5 Gbps | Producción pequeña, 10–50 nodos |
-| c6i.2xlarge | 8 | 16 GiB | Hasta 12.5 Gbps | Producción mediana, 50–100 nodos |
-| c6i.4xlarge | 16 | 32 GiB | Hasta 12.5 Gbps | Producción grande, más de 100 nodos |
+| c6i.large | 2 | 4 GiB | Hasta 12.5 Gbps | Desarrollo/pruebas, < 10 nodos híbridos |
+| c6i.xlarge | 4 | 8 GiB | Hasta 12.5 Gbps | Producción pequeña, 10-50 nodos |
+| c6i.2xlarge | 8 | 16 GiB | Hasta 12.5 Gbps | Producción mediana, 50-100 nodos |
+| c6i.4xlarge | 16 | 32 GiB | Hasta 12.5 Gbps | Producción grande, 100+ nodos |
 | c6in.2xlarge | 8 | 16 GiB | Hasta 50 Gbps | Cargas de trabajo de alto rendimiento |
 | c6in.4xlarge | 16 | 32 GiB | Hasta 50 Gbps | Rendimiento muy alto |
 
-> La tabla no garantiza capacidad. El procesamiento de VXLAN consume CPU y memoria; también se aplican los límites de ancho de banda en ráfaga/base de EC2, PPS y ruta de tráfico. Valide la combinación real de instancia/paquetes en lugar de elegir solo por el ancho de banda de red máximo anunciado.
+> La tabla no garantiza capacidad. El procesamiento VXLAN consume CPU y memoria, y siguen aplicándose los límites de ancho de banda de ráfaga/referencia, PPS y ruta de tráfico de EC2. Valide la instancia/combinación de paquetes real en vez de elegirla solo por el máximo de red anunciado.
 
 #### Planificación de capacidad del gateway
 
-El cálculo original de abajo se conserva como un **ejemplo de planificación no medido**. El cálculo de 800 Mbps usa KB/MB decimales y presupone 10 KB por solicitud en cada dirección. Si los 10 KB ya incluyen la solicitud y la respuesta, multiplicarlos por dos los cuenta dos veces. El tamaño de paquete, los encabezados, la concurrencia máxima y los reintentos requieren cálculos independientes. No demuestra que la instancia indicada tenga suficiente capacidad de reserva sostenida:
+El cálculo original siguiente se conserva como **ejemplo de planificación no medido**. El cálculo de 800 Mbps usa KB/MB decimales y supone 10 KB en cada dirección por solicitud. Si los 10 KB ya incluyen solicitud más respuesta, multiplicar por dos los cuenta dos veces. El tamaño de paquetes, los encabezados, la concurrencia máxima y los reintentos requieren cálculos por separado. Esto no demuestra que la instancia indicada tenga suficiente margen sostenido:
 
 ```
 Throughput estimation:
@@ -1043,7 +1045,7 @@ Recommendation: c6i.xlarge (12.5 Gbps) with comfortable headroom
 
 ### Actualización del gateway
 
-Revise una versión realmente publicada y sus contratos de chart/aplicación. Esta auditoría validó la versión 1.0.2; el comando anterior para 1.1.0 era un ejemplo sin verificar, no una actualización ejecutada. Haga una copia privada de los valores/manifiestos propios y del inventario de rutas, inspeccione el historial de Helm y elija la revisión exacta a la que volver, en vez de suponer que la revisión 1 es adecuada.
+Revise una versión realmente publicada y sus contratos de chart/aplicación. Esta auditoría validó la versión 1.0.2; el antiguo comando 1.1.0 era un ejemplo no verificado, no una actualización ejecutada. Haga una copia de seguridad privada de los valores/manifiestos administrados y del inventario de rutas, inspeccione el historial de Helm y elija la revisión exacta para la reversión en vez de suponer que la revisión 1 es adecuada.
 
 ```bash
 : "${KUBE_CONTEXT:?Set the reviewed Kubernetes context}"
@@ -1064,11 +1066,11 @@ kubectl --context "$KUBE_CONTEXT" -n eks-hybrid-nodes-gateway \
   rollout status deployment/eks-hybrid-nodes-gateway --timeout=300s
 ```
 
-Las actualizaciones progresivas de Deployment no tienen en cuenta al líder: no garantizan reemplazar primero la réplica en espera. El chart 1.0.2 no conecta un valor `strategy` personalizado. La anti-afinidad/capacidad de hosts, los cambios de Lease y la convergencia de rutas/VTEP pueden interrumpir el tráfico. Los ejemplos históricos de 5–10 s y 40–55 s no son SLO de actualización. Una reversión de Helm también requiere CRD/configuración compatibles y verificación de aplicaciones/rutas; no restaura automáticamente todas las rutas externas de AWS.
+Las actualizaciones progresivas del Deployment no tienen en cuenta al líder: no garantizan el reemplazo primero de la réplica en espera. La versión 1.0.2 del chart no conecta un valor `strategy` personalizado. La antiafinidad/capacidad de hosts, los cambios de Lease y la convergencia de rutas/VTEP pueden interrumpir el tráfico. Los ejemplos históricos de 5–10 s y 40–55 s no son SLO de actualización. Una reversión de Helm también requiere CRD/configuración compatibles y verificación de aplicaciones/rutas; no restaura automáticamente todas las rutas externas de AWS.
 
 ### Limpieza
 
-**La desinstalación de Helm deja rutas de AWS.** Antes de instalar y antes de quitar el gateway, registre las tablas, los CIDR, los destinos anteriores y las ENI actuales del gateway. Primero migre/desagende el tráfico que depende del gateway. Detenga el controlador antes de modificar el objeto VTEP que administra para que no lo vuelva a crear.
+**La desinstalación de Helm deja las rutas de AWS.** Registre las tablas, CIDR, destinos anteriores y ENI actuales del gateway antes de instalarlo y antes de eliminarlo. Migre/drene primero el tráfico que depende del gateway. Detenga el controlador antes de cambiar el objeto VTEP que administra para que no lo vuelva a crear.
 
 ```bash
 : "${KUBE_CONTEXT:?Set the reviewed Kubernetes context}"
@@ -1081,54 +1083,54 @@ kubectl --context "$KUBE_CONTEXT" get ciliumvtepconfig hybrid-gateway -o yaml
 helm uninstall eks-hybrid-nodes-gateway -n eks-hybrid-nodes-gateway   --kube-context "$KUBE_CONTEXT" --wait --timeout=180s
 ```
 
-Después de eliminar los Pods del gateway, restaure el destino de ruta anterior cuando así lo exija el plan de migración; elimine una ruta solo si su tabla/CIDR/destino actual y propiedad coinciden con el plan de retiro. Nunca elimine a ciegas todos los CIDR configurados: otro propietario podría haber cambiado el destino. Vuelva a consultar el estado de AWS después de cada cambio aprobado y distinga los errores de acceso/transporte de la ausencia del recurso.
+Después de que desaparezcan los Pods del gateway, restaure el destino de ruta anterior cuando así lo requiera el plan de migración; elimine una ruta solo si su tabla/CIDR/destino actual y propiedad coinciden con el plan de retiro. Nunca elimine a ciegas todos los CIDR configurados: otro responsable puede haber cambiado el destino. Vuelva a consultar el estado de AWS después de cada cambio aprobado y distinga los errores de acceso/transporte de la ausencia de recursos.
 
-Elimine `ciliumvtepconfig/hybrid-gateway`, administrado por el controlador, solo después de confirmar que ningún consumidor/controlador lo siga usando. Quite la asociación/rol de Pod Identity de esta versión, los recursos de métricas y la capacidad dedicada mediante su responsable de infraestructura registrado; que se haya desinstalado el release de Helm no demuestra que hayan desaparecido esos recursos facturables. Elimine un espacio de nombres o una etiqueta de nodo solo si es de uso exclusivo y no quedan cargas de trabajo ajenas. Verifique las rutas resultantes de las aplicaciones, las rutas de red, las asociaciones y la capacidad.
+Elimine `ciliumvtepconfig/hybrid-gateway`, propiedad del controlador, solo después de confirmar que ningún consumidor/controlador lo sigue usando. Elimine la asociación/rol de Pod Identity de esta versión, los recursos de métricas y la capacidad dedicada a través de su responsable de infraestructura registrado; una versión de Helm desinstalada no demuestra que esos recursos facturables hayan desaparecido. Elimine un espacio de nombres o una etiqueta de nodo solo si son de uso exclusivo y no quedan otras cargas de trabajo relacionadas. Verifique las rutas de aplicación, las rutas, las asociaciones y la capacidad resultantes.
 
 ---
 
 ## Comparación: con y sin gateway
 
-### Comparación de funciones
+### Comparación de características
 
-| Aspecto | Pods enrutables sin este gateway | EKS Hybrid Nodes Gateway |
+| Aspecto | Pods enrutables sin este gateway | Gateway de Hybrid Nodes |
 |---|---|---|
-| Enrutamiento | BGP/enrutamiento estático u otra ruta de automatización propia | Rutas agregadas de la VPC más VTEP de Cilium/reconciliación local de túneles |
-| Configuración | Planificación de red subyacente/enrutadores/CNI/direcciones | La misma planificación de red subyacente más nodos de gateway elegibles, IAM, perfil VTEP/L7 de Cilium de AWS y propiedad de rutas |
-| Webhooks y destinos IP de ALB/NLB | Posibles con rutas válidas, redes de Pods remotos, rutas de retorno y reglas de seguridad | También requieren esos requisitos de aplicación/plano de control; instalar Helm no los establece |
-| CNI | Elija un diseño compatible de Pods enrutables | Requiere la integración VTEP de Cilium mantenida por AWS con el proxy L7 deshabilitado |
-| Capacidad | Límites reales de enrutadores/enlaces/CNI/hosts | Capacidad de un gateway activo más los límites de todos los enlaces/rutas subyacentes |
-| Alta disponibilidad | Diseño de convergencia/red administrado por el cliente | Lease activo/en espera y convergencia de rutas/VTEP; pueden producirse interrupciones temporales |
-| Costos | Clúster/Hybrid Nodes, conectividad, infraestructura y operaciones | Esos costos más EC2/almacenamiento del gateway, tarifas de Auto Mode cuando sus nodos lo usan y posible tráfico adicional entre zonas |
-| Retiro | Conciliar rutas/recursos propios | Helm no elimina rutas externas de AWS, asociaciones de IAM ni capacidad dedicada |
+| Enrutamiento | BGP/enrutamiento estático u otra ruta de automatización administrada | Rutas agregadas de la VPC más VTEP de Cilium/reconciliación local de túneles |
+| Configuración | Planificación de infraestructura subyacente/enrutadores/CNI/direcciones | La misma planificación de infraestructura subyacente más nodos de gateway elegibles, IAM, perfil de VTEP/L7 de AWS Cilium y propiedad de rutas |
+| Webhooks y destinos IP de ALB/NLB | Posibles con rutas, redes de Pods remotos, rutas de retorno y reglas de seguridad válidas | También requieren esos requisitos previos de aplicación/plano de control; instalar Helm no los establece por sí solo |
+| CNI | Elegir un diseño de Pods enrutables compatible | Requiere la integración VTEP de Cilium mantenida por AWS, con el proxy L7 deshabilitado |
+| Capacidad | Límites reales de enrutador/enlace/CNI/host | Capacidad de un gateway activo más todos los límites de rutas y enlaces subyacentes |
+| HA | Diseño de red/convergencia administrado | Lease activo-en espera y convergencia de rutas/VTEP; puede haber interrupciones temporales |
+| Costos | Clúster/Hybrid Nodes, conectividad, infraestructura y operaciones | Esos costos más EC2/almacenamiento del gateway, tarifas de Auto Mode cuando los nodos del gateway usan Auto Mode y posible tráfico adicional entre zonas de disponibilidad |
+| Eliminación | Reconciliar las rutas/recursos administrados | Helm no elimina las rutas externas de AWS, las asociaciones de IAM ni la capacidad dedicada |
 
 ### Cuándo usar el gateway
 
-Úselo cuando su perfil VTEP de Cilium de AWS y el salto activo/en espera se ajusten a la carga de trabajo y simplifiquen la propiedad de las rutas de Pods. No elimina la responsabilidad del equipo de red sobre la accesibilidad privada de los nodos, la MTU, los CIDR, las reglas de seguridad ni la recuperación ante fallos. El enrutamiento nativo existente, los requisitos incompatibles de CNI/L7 u otras necesidades de capacidad/dominios de fallo pueden favorecer otro diseño. Ninguna opción ofrece una ventaja universal de latencia, disponibilidad o costo.
+Úselo cuando su perfil AWS Cilium/VTEP y el salto activo-en espera se adapten a la carga de trabajo y simplifiquen la administración de rutas de Pods. No elimina la responsabilidad del equipo de redes sobre la accesibilidad privada de los nodos, la MTU, los CIDR, las reglas de seguridad y la recuperación ante fallos. El enrutamiento nativo existente, los requisitos incompatibles de CNI/L7 u otras necesidades de capacidad/dominios de fallo pueden favorecer otro diseño. Ninguna opción tiene una ventaja universal de latencia, disponibilidad o costo.
 
 ### Características de rendimiento
 
-**Las estimaciones originales siguientes son ilustraciones no medidas, no resultados actuales de pruebas de rendimiento.** El enrutamiento nativo también tiene retrasos de procesamiento/cola, y el costo de VXLAN depende del tamaño de paquete, CPU, límites del enlace y descarga de procesamiento. Un salto adicional puede ser relevante incluso con tramas gigantes.
+**Las estimaciones originales siguientes son ilustraciones no medidas, no resultados de pruebas comparativas actuales.** El enrutamiento nativo también tiene retrasos de procesamiento/colas, y el costo de VXLAN depende del tamaño de los paquetes, la CPU, los límites del enlace y el comportamiento de descarga. Un salto adicional puede importar incluso con tramas jumbo.
 
-| Métrica | Ilustración original de enrutamiento nativo/BGP | Ilustración original de VXLAN |
+| Métrica | Ilustración original nativa/BGP | Ilustración original VXLAN |
 |---|---|---|
-| Sobrecarga de latencia | ~0 ms | ~0,1–0,5 ms |
-| Rendimiento | Ancho de banda DX/VPN completo | Mínimo entre el ancho de banda del gateway y el de DX/VPN |
-| Sobrecarga por paquete | 0 bytes para esta superposición | ~50 bytes con VXLAN IPv4 |
-| Jitter | Depende de DX/VPN | Depende de DX/VPN y del procesamiento VXLAN |
-| PPS | Limitado por la red | Puede limitarlo la CPU del gateway |
+| Sobrecarga de latencia | ~0 ms | ~0.1–0.5 ms |
+| Rendimiento | Ancho de banda completo de DX/VPN | Mínimo(ancho de banda de la instancia del gateway, ancho de banda de DX/VPN) |
+| Sobrecarga de paquetes | 0 bytes para esta superposición | ~50 bytes con VXLAN IPv4 |
+| Jitter | Depende de DX/VPN | DX/VPN más procesamiento VXLAN |
+| PPS | Limitado por la red | La CPU del gateway puede limitarlo |
 
-Las expresiones de rendimiento omiten ráfagas/base, PPS, CPU y restricciones de la aplicación; no las considere garantías. Las afirmaciones anteriores de conmutación por error en 5–10 s y de «baja complejidad/instalación única» también requieren las salvedades operativas ya indicadas.
+Las expresiones de rendimiento omiten las limitaciones de ráfaga/referencia, PPS, CPU y aplicación; no las trate como garantías. Las antiguas afirmaciones de conmutación por error de 5–10 s y de «baja complejidad/instalación única» también requieren las salvedades operativas anteriores.
 
 ### Migración del enrutamiento manual al gateway
 
-1. Registre en privado la propiedad exacta de las tablas/CIDR/destinos actuales y el estado existente de BGP/enrutamiento estático/NAT/CNI. Planifique la reversión y valide la red subyacente, el firewall y los rangos de red.
-2. Prepare los nodos de gateway elegibles, IAM de la carga de trabajo y el perfil VTEP/L7 de Cilium de AWS revisado. El cambio de CNI en sí puede interrumpir el tráfico.
-3. Trate la instalación del controlador como un **cambio de rutas**: su líder puede reemplazar una ruta existente para el mismo CIDR. No suponga que CreateRoute fallará sin modificar el destino anterior.
-4. Verifique las IP directas de la nube/Hybrid, ClusterIP, el tráfico real de webhooks/balanceadores y ambas rutas de retorno. Coordine otros controladores de rutas para evitar que se sobrescriban continuamente.
+1. Registre en privado la propiedad exacta de tabla/CIDR/destino actual y el estado existente de BGP/enrutamiento estático/NAT/CNI. Planifique la reversión y valide la infraestructura subyacente, el firewall y la superposición de redes.
+2. Prepare los nodos de gateway elegibles, IAM de la carga de trabajo y el perfil de VTEP/L7 de AWS Cilium revisado. El cambio de CNI en sí puede interrumpir el tráfico.
+3. Considere la instalación del controlador como un **cambio que modifica rutas**: su líder puede reemplazar una ruta existente para el mismo CIDR. No suponga que CreateRoute simplemente fallará y dejará intacto el destino anterior.
+4. Verifique las IP directas de nube/Hybrid, ClusterIP, el tráfico real de webhook/LB y ambas rutas de retorno. Coordine con los demás controladores de rutas para que no se sobrescriban continuamente.
 5. Retire solo los recursos obsoletos cuya propiedad esté confirmada. No elimine todas las rutas manuales/BGP después de que el gateway ya haya reutilizado la misma tabla/CIDR.
 
-La reversión requiere detener el controlador del gateway, restaurar los destinos anteriores registrados y la configuración compatible de Cilium/red, y volver a verificar el tráfico. La reversión/desinstalación de Helm por sí sola no revierte cambios de rutas externas. Las rutas más específicas son un diseño deliberado con efectos de prefijo más largo, no una solución genérica a conflictos.
+La reversión requiere detener el controlador del gateway, restaurar los destinos anteriores registrados y la configuración compatible de Cilium/red, y volver a verificar el tráfico. La reversión/desinstalación de Helm por sí sola no deshace los cambios de rutas externas. Las rutas más específicas son un diseño deliberado de enrutamiento con efectos de prefijo más largo, no una solución genérica a los conflictos.
 
 ---
 
@@ -1136,29 +1138,29 @@ La reversión requiere detener el controlador del gateway, restaurar los destino
 
 ### Seguridad
 
-#### IAM con privilegios mínimos
+#### IAM con privilegio mínimo
 
-Use las cuatro acciones del runtime y la política exacta para tablas de rutas propias descrita arriba; reserve DeleteRoute para el responsable de limpieza aprobado. Controle el acceso a los valores de Gateway, el ServiceAccount, las etiquetas de nodo y las asociaciones de Pod Identity. NET_ADMIN con red del host proporciona acceso privilegiado a la infraestructura, aunque el contenedor no tenga marcado `privileged: true`.
+Use las cuatro acciones de runtime y la política exacta para las tablas de rutas administradas indicada anteriormente; reserve DeleteRoute para el responsable de limpieza aprobado. Controle el acceso a los valores del Gateway, el ServiceAccount, las etiquetas de nodo y las asociaciones de Pod Identity. NET_ADMIN con redes del host es acceso privilegiado a la infraestructura, aunque el contenedor no esté marcado como `privileged: true`.
 
 #### Prácticas recomendadas para grupos de seguridad
 
-Use los CIDR privados reales de nodos Hybrid, los puertos previstos de las aplicaciones y las rutas específicas de API/DNS/métricas. Las NACL no tienen estado: permitir solo UDP 8472 entrante no define una política bidireccional funcional. Revise las direcciones de los nodos de reemplazo y todo el tráfico de retorno necesario.
+Use los CIDR privados reales de los nodos híbridos, los puertos de aplicación previstos y las rutas específicas de API/DNS/métricas. Las NACL no tienen estado: una sola regla de entrada que permita UDP8472 no define una política bidireccional funcional. Revise las direcciones de los nodos de reemplazo y todo el tráfico de retorno necesario.
 
 #### Segmentación de red
 
-El Gateway usa la red del host. El tratamiento del tráfico `hostNetwork` por la política de red habitual de Pods depende de la implementación; no sustituye los controles de nodo/ENI/firewall. Aplique políticas L3/L4 compatibles a los endpoints reales de las cargas de trabajo y verifique la identidad de origen después de NAT/encapsulación. Un selector CIDR no identifica un espacio de nombres de Kubernetes. Las reglas L7 de Cilium entran en conflicto con el perfil `l7Proxy=false` requerido por este gateway.
+El Gateway se ejecuta con redes del host. El tratamiento habitual de NetworkPolicy para Pods con hostNetwork depende de la implementación; no sustituye los controles del nodo/ENI/firewall. Aplique políticas L3/L4 compatibles a los endpoints reales de las cargas de trabajo y verifique la identidad de origen después de NAT/encapsulación. Un selector de CIDR no identifica un espacio de nombres de Kubernetes. Las reglas L7 de Cilium entran en conflicto con el perfil `l7Proxy=false` que exige este gateway.
 
 ### Rendimiento
 
 #### Dimensionamiento de instancias del gateway
 
-Use el ancho de banda sostenido/por ráfagas permitido, PPS, tamaños de paquete, CPU/memoria y capacidad de reserva ante fallos. Las reglas originales de «actualizar por encima del 60 %, reducir por debajo del 20 %, elegir c6in por encima de 25 Gbps/hasta 100 Gbps» son heurísticas no medidas, no garantías de capacidad ni especificaciones actuales de familias de instancia. La tabla actual de operaciones de gateway de AWS enumera c6in.2xlarge con **hasta 40 Gbps**; la entrada anterior de 50 Gbps se conserva solo como cifra histórica no verificada.
+Use las asignaciones de ancho de banda sostenido/de ráfaga, PPS, tamaños de paquetes, CPU/memoria y margen para fallos. Las reglas originales de «actualizar por encima del 60 %, reducir por debajo del 20 %, elegir c6in por encima de 25 Gbps/hasta 100 Gbps» son heurísticas no medidas, no garantías de capacidad ni especificaciones actuales de familias de instancias. La tabla de operaciones actual de AWS para el gateway indica c6in.2xlarge con **hasta 40 Gbps**; la cifra anterior de 50 Gbps se conserva solo como dato histórico no verificado.
 
-La suma de NetworkIn/NetworkOut de EC2 durante un intervalo da bytes; divídala por el intervalo para obtener bytes/s. Estas métricas de instancia incluyen otro tráfico y por sí solas no miden el rendimiento de VXLAN/de la aplicación. No trate los puntos de datos Average/Maximum como una garantía de tasa de bits sostenida.
+La suma de NetworkIn/NetworkOut de EC2 durante un intervalo proporciona bytes; divídala por el intervalo para obtener bytes/s. Estas métricas de instancia incluyen otro tráfico y no miden por sí solas el rendimiento de VXLAN/aplicación. No trate los puntos de datos Average/Maximum como una garantía de tasa de bits sostenida.
 
 #### Supervisión de latencia
 
-Prepare cargas de trabajo cliente existentes y aprobadas que tengan curl instalado; no instale paquetes al iniciar la prueba ni suponga que `compute-type=ec2` selecciona nodos de la nube. El destino debe estar realmente escuchando. Ejecute esta comprobación acotada desde cada ubicación seleccionada explícitamente, una vez para la IP directa del Pod y otra para ClusterIP/el endpoint real de la aplicación. `time_total` incluye DNS, conexión/TLS y procesamiento del servidor; no es el RTT de red aislado ni una prueba de sobrecarga.
+Prepare cargas de trabajo de cliente existentes y aprobadas que tengan curl instalado; no instale paquetes al iniciar las pruebas ni suponga que `compute-type=ec2` selecciona nodos de nube. El destino debe estar realmente escuchando. Ejecute esta comprobación acotada desde cada ubicación elegida explícitamente, una vez para una IP directa de Pod y por separado para el ClusterIP/endpoint de aplicación real. `time_total` incluye DNS, conexión/TLS y procesamiento del servidor; no es el RTT de red aislado ni una prueba comparativa de sobrecarga.
 
 ```bash
 #!/usr/bin/env bash
@@ -1177,41 +1179,41 @@ for attempt in 1 2 3; do
 done
 ```
 
-### Costos
+### Costo
 
 #### Costos del gateway
 
-El software del gateway no tiene costo. Cuente EC2, almacenamiento, tarifas de administración de Auto Mode (solo para nodos del gateway que se ejecutan en Auto Mode), transferencia de datos entre zonas, conectividad privada y observabilidad, además de los costos normales del clúster/Hybrid Nodes. Que algo esté «dentro de la misma VPC» no significa que la transferencia entre zonas sea gratuita. Enrutar por otra zona puede agregar cargos de tráfico. Solo hay un líder activo; por eso, aunque haya nodos de gateway en varias zonas, el tráfico Hybrid de Pods, ALB o recopiladores en otras zonas pasa a la zona del líder ([guía de operaciones de AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html)). En rutas de gran volumen, enrute directamente los CIDR de Pods mediante Cilium BGP para que el tráfico salga por TGW/VGW en la zona del propio Pod, y conserve el gateway para webhooks y tráfico de bajo volumen entre Pods.
+No se cobra por el software del gateway. Cuente EC2, almacenamiento, tarifas de administración de Auto Mode (solo para los nodos del gateway que se ejecuten en Auto Mode), transferencia de datos entre zonas de disponibilidad, conectividad privada y observabilidad, además de los costos habituales del clúster/Hybrid Nodes. «Dentro de la misma VPC» no implica que la transferencia entre zonas de disponibilidad sea gratuita. El enrutamiento a través de otra zona puede agregar cargos de tráfico. Solo hay un líder activo, por lo que, incluso si hay nodos del gateway en varias zonas de disponibilidad, el tráfico híbrido de Pods, ALB o scrapers de otras zonas entra en la zona de disponibilidad del líder ([guía de operaciones de AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html)). Para volúmenes de tráfico altos, compare el gateway con un diseño alternativo de CIDR de Pods enrutables que use Cilium BGP o rutas estáticas. El gateway es propietario de las rutas de CIDR de Pod configuradas y de la configuración VTEP de Cilium; no selecciona una ruta según la aplicación, el webhook o el volumen de tráfico. No permita que la automatización de enrutamiento nativo y la del gateway administren la misma ruta de destino. Un diseño combinado requiere propiedad de rutas explícitamente disjunta y rutas de ida y vuelta validadas, y ninguno de los diseños garantiza la salida por la zona de disponibilidad del Pod cliente.
 
-**Estimaciones históricas, no cotizaciones actuales ni ahorros medidos:** no se puede recuperar la fuente de verificación de los siguientes precios/descuentos originales. Se conservan como contexto; antes de comprometerse, vuelva a calcular una estimación regional y fechada según el uso real y la [página de precios de EKS](https://aws.amazon.com/eks/pricing/), las condiciones de EC2 y las rutas de transferencia de datos.
+**Estimaciones históricas, no cotizaciones actuales ni ahorros medidos:** los siguientes precios/descuentos originales no tienen una fuente de verificación recuperable. Se conservan como contexto; antes de comprometerse, elabore una estimación regional fechada basada en el uso real y en la [página de precios de EKS](https://aws.amazon.com/eks/pricing/), las condiciones de EC2 y las rutas de transferencia de datos.
 
-| Componente | Estimación mensual original sin verificar (us-west-2) | Notas |
+| Componente | Estimación mensual original no verificada (us-west-2) | Notas |
 |-----------|-------------------------|-------|
-| 2 × c6i.large (instancias del gateway) | ~$124 ($0,085/h cada una) | Precio bajo demanda |
-| 2 × c6i.large (reservadas, 1 año) | ~$78 | RI sin pago inicial |
-| 2 × c6i.large (Savings Plan, 1 año) | ~$81 | Compute Savings Plan |
-| EBS (2 × gp3 de 20 GiB) | ~$3,20 | Almacenamiento mínimo |
-| Transferencia de datos (supuesto original) | $0 | No es una regla universal; pueden aplicarse cargos entre zonas |
+| 2x c6i.large (instancias del gateway) | ~$124 ($0.085/hr cada una) | Precios bajo demanda |
+| 2x c6i.large (reservadas 1 año) | ~$78 | RI sin pago anticipado |
+| 2x c6i.large (Savings Plan 1 año) | ~$81 | Compute Savings Plan |
+| EBS (20 GiB gp3 x 2) | ~$3.20 | Almacenamiento mínimo |
+| Transferencia de datos (supuesto original) | $0 | Incorrecto como regla universal; pueden aplicarse cargos entre zonas de disponibilidad |
 | **Total (bajo demanda)** | **~$127/mes** | Para 2 instancias del gateway |
 
 #### Consejos para optimizar costos
 
-Dimensione según las mediciones y el requisito de réplica en espera/fallo. Evalúe descuentos por compromiso según el uso estable y las condiciones reales en vez de suponer un ahorro fijo. Elija los tipos de capacidad conforme a un presupuesto de interrupciones explícito; no deduzca que Spot sea seguro porque existan dos réplicas ni que todos los despliegues del gateway toleren las interrupciones por igual.
+Ajuste el tamaño a partir de mediciones y del requisito de réplica en espera/fallos. Evalúe los descuentos por compromiso según el uso estable y las condiciones reales, en vez de suponer un ahorro fijo. Elija los tipos de capacidad conforme a un presupuesto explícito de interrupciones; no deduzca que Spot es seguro porque haya dos réplicas ni que todos los deployments del gateway toleren las interrupciones por igual.
 
-### Integración con funciones existentes de Hybrid Nodes
+### Integración con las funciones existentes de Hybrid Nodes
 
-| Función | Límite que se debe tener en cuenta |
+| Función | Límite necesario |
 |---|---|
-| Cargas de trabajo de GPU | La accesibilidad de red es independiente de los controladores, complementos de dispositivos y compatibilidad con cargas GPU |
+| Cargas de trabajo de GPU | La accesibilidad de red es independiente de los controladores, los complementos de dispositivos y la compatibilidad con cargas de trabajo de GPU |
 | Ubicación | Aplique etiquetas/taints a los nodos elegibles; un selector no aprovisiona capacidad |
-| Redes restringidas | Proporcione las rutas privadas/API/registro/DNS necesarias; los nodos Hybrid no están completamente desconectados de AWS ni de las dependencias del plano de control |
-| SSM / IAM Roles Anywhere | Las credenciales del nodo Hybrid son independientes del rol de carga de trabajo del Gateway en la nube |
-| Ciclo de vida de nodeadm | La incorporación de nodos y la reconciliación del túnel del Gateway son responsabilidades distintas |
+| Redes restringidas | Proporcione las rutas necesarias a redes privadas/API/registro/DNS; los nodos híbridos no están completamente desconectados de las dependencias de AWS/plano de control |
+| SSM / IAM Roles Anywhere | Las credenciales de los nodos híbridos son independientes del rol de carga de trabajo del Gateway en la nube |
+| Ciclo de vida de nodeadm | La unión de nodos y la reconciliación de túneles del Gateway son responsabilidades distintas |
 | Políticas de red | Valide el comportamiento L3/L4 compatible y las excepciones de red del host; no hay compatibilidad L7 general |
-| Services y webhooks | Verifique SNAT de ClusterIP, rutas, accesibilidad de endpoints y la ruta real de solicitudes |
-| DNS | Los distintos tipos de nodos necesitan la configuración DNS adecuada; la instalación del Gateway no establece la disponibilidad de DNS |
+| Services y webhooks | Verifique SNAT de ClusterIP, rutas, accesibilidad de endpoints y la ruta real de solicitud |
+| DNS | Los tipos de nodo mixtos necesitan la configuración DNS adecuada; la instalación del Gateway no establece la disponibilidad de DNS |
 
-Cada despliegue de Gateway pertenece a un clúster de EKS. El acceso desde VPC adicionales requiere un diseño independiente y compatible de rutas/seguridad/direcciones; no deduzca que un solo release de Helm crea enrutamiento multiclúster o de Transit Gateway. Los prefijos de VPC configurados determinan la coincidencia de VTEP, no una ruta predeterminada automática a Internet. Los ajustes existentes de DX/VPN pueden requerir cambios de MTU, rutas y firewall aunque el gateway no cree la conexión subyacente.
+Cada deployment de Gateway pertenece a un clúster EKS. El acceso desde otras VPC requiere un diseño de rutas/seguridad/direcciones compatible por separado; no deduzca que una sola versión de Helm crea enrutamiento multiclúster o de Transit Gateway. Los prefijos de VPC configurados determinan la coincidencia de VTEP, no una ruta predeterminada automática a Internet. Es posible que los ajustes existentes de DX/VPN necesiten cambios de MTU, rutas y firewall aunque el gateway no cree la conexión subyacente.
 
 ---
 
@@ -1221,16 +1223,16 @@ Cada despliegue de Gateway pertenece a un clúster de EKS. El acceso desde VPC a
 
 - [Descripción general de EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html)
 - [Redes de EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)
-- [Configuración de CNI para EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Configuración de CNI de EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
 - [Solución de problemas de EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-troubleshooting.html)
 - [Tablas de rutas de VPC](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html)
-- [Requisitos del CNI de Gateway](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html)
+- [Requisitos de CNI del gateway](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html)
 
 ### Código abierto
 
 - [Repositorio de EKS Hybrid Nodes Gateway en GitHub](https://github.com/aws/eks-hybrid-nodes-gateway)
 - [Documentación de Cilium VTEP](https://docs.cilium.io/en/stable/network/vtep/)
-- [Documentación de VXLAN en Linux](https://www.kernel.org/doc/html/latest/networking/vxlan.html)
+- [Documentación de Linux VXLAN](https://www.kernel.org/doc/html/latest/networking/vxlan.html)
 
 ### Documentos internos relacionados
 
@@ -1238,10 +1240,10 @@ Cada despliegue de Gateway pertenece a un clúster de EKS. El acceso desde VPC a
 - [Configuración de red](./02-network-configuration.md)
 - [Arranque de nodos](./04-node-bootstrap.md)
 - [Operaciones y mantenimiento](./08-operations.md)
-- [Configuración del sistema operativo en bare metal](./09-bare-metal-os-setup.md)
+- [Configuración del SO en bare metal](./09-bare-metal-os-setup.md)
 - [Análisis detallado de Cilium](../networking/cilium/README.md)
 - [VPC CNI](../networking/01-vpc-cni.md)
 
 ---
 
-< [Anterior: Configuración del sistema operativo en bare metal](./09-bare-metal-os-setup.md) | [Tabla de contenido](./README.md) >
+< [Anterior: Configuración del SO en bare metal](./09-bare-metal-os-setup.md) | [Tabla de contenido](./README.md) >
