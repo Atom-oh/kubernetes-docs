@@ -147,3 +147,28 @@ advancedNetworking:
 `associatePublicIPAddress: false`는 공인 IP 할당을 막지만 NAT 경로나 VPC 엔드포인트를 만들지는 않습니다. 완전한 NodeClass의 identity·보안 그룹 구성을 제공하고 readiness를 확인해야 합니다.
 
 </details>
+
+### 7. 기존 Auto Mode NodeClass에서 `maxPods` 같은 kubelet 설정을 바꾸면 어떻게 되나요?
+
+- A) EKS가 실행 중인 노드의 kubelet을 중단 없이 제자리에서 패치한다
+- B) 기존 노드는 이전 설정을 유지하고 새 노드만 변경 내용을 사용한다
+- C) 해당 NodeClass를 쓰는 노드가 drift로 표시되고 EKS가 새 설정의 노드로 교체한다
+- D) 모든 노드에 SSH로 접속해 kubelet을 직접 재시작해야 한다
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) 해당 NodeClass를 쓰는 노드가 drift로 표시되고 EKS가 새 설정의 노드로 교체한다**
+
+**설명:**
+`spec.advancedCompute.kubelet`의 kubelet 설정은 노드가 생성될 때 적용됩니다. 값을 바꾸면 기존 노드가 drift 상태가 되어 EKS가 실행 중인 노드를 고치지 않고 교체합니다. 먼저 PDB와 disruption budget을 검토하세요. `maxPods`는 상한일 뿐이며 실제 값은 설정값, 인스턴스 타입이 제공하는 IP 수, Auto Mode의 노드당 Pod 110개 한도 중 가장 작은 값입니다.
+
+```yaml
+# NodeClass 일부
+advancedCompute:
+  kubelet:
+    maxPods: 60
+    podPidsLimit: 4096
+```
+
+</details>

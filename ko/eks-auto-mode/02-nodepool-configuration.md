@@ -1,7 +1,7 @@
 # NodePool 구성 및 최적화
 
 > **지원 버전**: EKS Auto Mode GA; 예제 기준 EKS 1.36
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 21일
 
 AWS 관리 기본 풀, 커스텀 NodePool 제약과 AWS 전용 NodeClass API를 구분합니다. 먼저 [시작하기](./01-getting-started.md)를 완료하고 대상 계정·컨텍스트를 확인하세요. 적용 전에 모든 IAM/profile 이름과 네트워크 태그를 검토합니다. 예제의 용량 제한은 설명용이며 상당한 비용을 허용할 수도 있습니다.
 
@@ -182,6 +182,73 @@ spec:
 `ephemeralStorage`는 임의의 블록 디바이스 매핑이 아니라 노드 임시 스토리지를 구성합니다. `100Gi`, 3000 IOPS, 125 MiB/s는 예시입니다. 현재 Auto Mode 필드 제한, 인스턴스 스토리지 동작과 비용을 확인하세요. 고객 KMS 설정 위치는 `ephemeralStorage.kmsKeyID`이며 노드의 루트·데이터 **EBS** 볼륨에 적용됩니다. 로컬 NVMe instance store의 암호화 키를 선택하거나 애플리케이션 PVC 암호화를 보장하지 않습니다.
 
 이전 bootstrap 예제는 `vm.max_map_count`를 바꿨습니다. 지원되는 대안은 노드 부팅 시 적용하는 `advancedCompute.kernel.sysctl`입니다. 지원되는 커널 설정을 바꾸면 기존 노드에 drift·교체가 발생하며, 실행 중인 노드에 즉시 셸 명령을 적용하는 방식이 아닙니다. 해당 설정이 필요한 워크로드에만 구성하고 중단 동작을 검토하세요.
+
+### Kubelet 설정
+
+Auto Mode는 자체 kubelet 기본값을 적용합니다. 워크로드가 다른 Pod 밀도, eviction, 로그 로테이션이나 OOM 동작을 요구할 때만 `spec.advancedCompute.kubelet`으로 재정의하세요. 아래는 AWS 문서에 있는 재정의 항목 전체입니다. 자체 관리 Karpenter `EC2NodeClass`의 `spec.kubelet` 필드 가운데 여기에 없는 것(예: `kubeReserved`, `systemReserved`, `clusterDNS`, `podsPerCore`, 이미지 GC 임계값)은 Auto Mode NodeClass에서 노출하지 않습니다.
+
+다음 내용을 `kubelet-nodeclass.yaml`로 저장합니다. 값은 설명용이며 권장값이 아닙니다. identity와 selector 값은 앞의 예제처럼 검토한 리소스로 바꾸세요.
+
+```yaml
+apiVersion: eks.amazonaws.com/v1
+kind: NodeClass
+metadata:
+  name: kubelet-nodeclass
+spec:
+  instanceProfile: eks-node-instance-profile
+  subnetSelectorTerms:
+  - tags:
+      kubernetes.io/role/internal-elb: '1'
+      Environment: production
+  securityGroupSelectorTerms:
+  - tags:
+      kubernetes.io/cluster/my-cluster: owned
+      Type: worker-node
+  advancedCompute:
+    kernel:
+      sysctl:
+        user.max_user_namespaces: 65536   # 아래에서 idsPerPod를 설정하므로 필요
+    kubelet:
+      maxPods: 60
+      podPidsLimit: 4096
+      idsPerPod: 65536
+      singleProcessOOMKill: false
+      eviction:
+        hard:
+          memory.available: 100Mi
+          nodefs.available: 10%
+        soft:
+          memory.available: 500Mi
+          nodefs.available: 15%
+        softGracePeriod:                  # soft 신호마다 필수
+          memory.available: 1m30s
+          nodefs.available: 2m
+        maxPodGracePeriod: 60
+      logging:
+        containerLogMaxSize: 10Mi
+        containerLogMaxFiles: 5
+      allowedUnsafeSysctls:
+      - net.core.somaxconn
+```
+
+| 필드 | 의미 | 제약 |
+|------|------|------|
+| `maxPods` | 노드당 Pod 수 상한 | 1–110. 실제 값은 이 설정, 인스턴스 타입이 제공할 수 있는 IP 수, Auto Mode의 한도 110 중 가장 작은 값 |
+| `podPidsLimit` | Pod당 최대 프로세스 ID 수 | `-1`은 제한 해제, 그 외에는 100 이상(0–99는 거부됨) |
+| `idsPerPod` | kubelet이 각 Pod의 user namespace에 할당하는 UID·GID 수 | 65536의 배수, 65536–4294967295. 같은 NodeClass에 `advancedCompute.kernel.sysctl.user.max_user_namespaces`가 0보다 커야 함 |
+| `singleProcessOOMKill` | OOM 시 컨테이너 프로세스를 그룹이 아니라 하나씩 종료 | Kubernetes 1.32 이상 필요. 이전 버전에서는 효과가 없고 EKS가 NodeClass에 warning 이벤트를 남김 |
+| `eviction.hard` / `eviction.soft` | 신호별 eviction 임계값. 수량(`500Mi`) 또는 비율(`10%`) | 신호: `memory.available`, `nodefs.available`, `nodefs.inodesFree`, `imagefs.available`, `imagefs.inodesFree`, `pid.available` |
+| `eviction.softGracePeriod` | eviction이 시작되기 전에 soft 임계값이 유지돼야 하는 시간 | soft 임계값이 있는 신호마다 필수 |
+| `eviction.maxPodGracePeriod` | soft 임계값으로 evict되는 Pod의 최대 종료 유예 시간(초) | `0`이면 각 Pod의 `terminationGracePeriodSeconds` 사용 |
+| `logging.containerLogMaxSize` / `logging.containerLogMaxFiles` | 컨테이너 로그 로테이션 크기와 보관 파일 수 | `containerLogMaxFiles`는 2 이상 |
+| `allowedUnsafeSysctls` | 노드의 Pod가 설정할 수 있는 unsafe sysctl 또는 `*`로 끝나는 패턴 | 최대 64개. 허용 패턴은 `kernel.shm*`, `kernel.msg*`, `kernel.sem`, `fs.mqueue.*`, `net.*` |
+
+운영 NodeClass를 바꾸기 전에 다음 동작을 검토하세요.
+
+- **노드는 패치가 아니라 교체됩니다.** 기존 NodeClass의 kubelet 설정을 바꾸면 해당 노드가 drift로 표시되고 EKS가 새 구성의 노드로 교체합니다. 실행 중인 노드에 제자리 적용되지 않으므로 먼저 disruption budget과 PDB를 검토하세요.
+- **`maxPods`는 상한입니다.** 설정값을 그대로 가정하지 말고 교체된 노드에서 `kubectl get node <node> -o jsonpath='{.status.capacity.pods}'`로 결과를 확인하세요.
+- **soft 임계값은 hard보다 먼저 작동해야 합니다.** 같은 신호에서 soft는 hard보다 덜 공격적이어야 합니다. 수량과 비율을 섞어 쓸 수 있으며, EKS가 인스턴스 타입마다 두 값을 계산해 규칙을 어기는 인스턴스 타입을 NodeClass와 호환되지 않는 것으로 표시합니다.
+- **`allowedUnsafeSysctls`는 허용만 합니다.** 노드의 Pod가 해당 sysctl을 요청할 수 있게 할 뿐이며, 각 Pod가 `securityContext.sysctls`에 직접 나열해야 합니다. 노드 수준 커널 값은 `advancedCompute.kernel.sysctl`로 따로 설정합니다.
 
 ### 고정된 IMDS 보안 설정
 
