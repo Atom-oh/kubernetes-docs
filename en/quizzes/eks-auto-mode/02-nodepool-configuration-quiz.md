@@ -147,3 +147,28 @@ advancedNetworking:
 Setting `associatePublicIPAddress: false` prevents public IP assignment but does not create NAT routes or VPC endpoints. Provide the complete NodeClass identity/security-group configuration and verify readiness.
 
 </details>
+
+### 7. What happens when you change kubelet settings, such as `maxPods`, on an existing Auto Mode NodeClass?
+
+- A) EKS patches the kubelet on running nodes in place without disruption
+- B) Existing nodes keep the old settings and only new nodes use the change
+- C) The nodes that use the NodeClass are marked as drifted and EKS replaces them with nodes that use the new settings
+- D) You must restart the kubelet on every node by SSH
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C) The nodes that use the NodeClass are marked as drifted and EKS replaces them with nodes that use the new settings**
+
+**Explanation:**
+Kubelet settings under `spec.advancedCompute.kubelet` are applied when a node is created. Editing them drifts the existing nodes, so EKS replaces them rather than changing a running node; review PDBs and disruption budgets first. `maxPods` is only a ceiling: the effective value is the lowest of your setting, the IP addresses the instance type supplies and Auto Mode's limit of 110 Pods per node.
+
+```yaml
+# NodeClass fragment
+advancedCompute:
+  kubelet:
+    maxPods: 60
+    podPidsLimit: 4096
+```
+
+</details>

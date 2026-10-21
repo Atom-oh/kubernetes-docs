@@ -1,7 +1,7 @@
 # NodePool Configuration and Optimization
 
 > **Supported Versions**: EKS Auto Mode GA; example baseline EKS 1.36
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 21, 2026
 
 This chapter distinguishes AWS-managed defaults, custom NodePool constraints and the AWS-specific NodeClass API. Complete [Getting Started](./01-getting-started.md) first, use the intended account/context, and review all IAM/profile names and network tags before applying a template. The capacity limits shown are illustrative and can still permit substantial cost.
 
@@ -182,6 +182,73 @@ Verify that the cluster role can create and tag resources using any custom keys 
 `ephemeralStorage` configures node ephemeral storage rather than arbitrary block-device mappings. The `100Gi` size and 3000 IOPS/125 MiB/s settings are examples; check current Auto Mode field limits, instance storage behavior and cost. Customer KMS configuration belongs at `ephemeralStorage.kmsKeyID` and applies to the node's root/data **EBS** volumes. It does not select the key for local NVMe instance-store encryption or establish encryption for application PVCs.
 
 The old bootstrap example changed `vm.max_map_count`. The supported replacement is `advancedCompute.kernel.sysctl`, applied at node boot. Changing supported kernel settings marks existing nodes for drift/replacement; it is not an immediate in-place shell update. Configure it only for workloads that need that setting, and review disruption behavior.
+
+### Kubelet settings
+
+Auto Mode applies its own kubelet defaults. Override them only through `spec.advancedCompute.kubelet` when a workload needs different Pod density, eviction, log rotation or OOM behavior. The AWS-documented overrides below are the complete set; the self-managed Karpenter `EC2NodeClass` `spec.kubelet` fields that are not listed (for example `kubeReserved`, `systemReserved`, `clusterDNS`, `podsPerCore` and the image-GC thresholds) are not exposed by the Auto Mode NodeClass.
+
+Save the following as `kubelet-nodeclass.yaml`. The values are illustrative, not recommendations; replace the identity and selector values with reviewed resources as in the previous example.
+
+```yaml
+apiVersion: eks.amazonaws.com/v1
+kind: NodeClass
+metadata:
+  name: kubelet-nodeclass
+spec:
+  instanceProfile: eks-node-instance-profile
+  subnetSelectorTerms:
+  - tags:
+      kubernetes.io/role/internal-elb: '1'
+      Environment: production
+  securityGroupSelectorTerms:
+  - tags:
+      kubernetes.io/cluster/my-cluster: owned
+      Type: worker-node
+  advancedCompute:
+    kernel:
+      sysctl:
+        user.max_user_namespaces: 65536   # required because idsPerPod is set below
+    kubelet:
+      maxPods: 60
+      podPidsLimit: 4096
+      idsPerPod: 65536
+      singleProcessOOMKill: false
+      eviction:
+        hard:
+          memory.available: 100Mi
+          nodefs.available: 10%
+        soft:
+          memory.available: 500Mi
+          nodefs.available: 15%
+        softGracePeriod:                  # required for every soft signal
+          memory.available: 1m30s
+          nodefs.available: 2m
+        maxPodGracePeriod: 60
+      logging:
+        containerLogMaxSize: 10Mi
+        containerLogMaxFiles: 5
+      allowedUnsafeSysctls:
+      - net.core.somaxconn
+```
+
+| Field | Meaning | Constraint |
+|-------|---------|------------|
+| `maxPods` | Upper bound on Pods per node | 1–110; the effective value is the lowest of this setting, the IP addresses the instance type can supply and Auto Mode's limit of 110 |
+| `podPidsLimit` | Maximum process IDs per Pod | `-1` disables the limit; otherwise 100 or greater (0–99 is rejected) |
+| `idsPerPod` | UIDs and GIDs the kubelet allocates to each Pod's user namespace | A multiple of 65536 from 65536 to 4294967295; requires `advancedCompute.kernel.sysctl.user.max_user_namespaces` greater than 0 on the same NodeClass |
+| `singleProcessOOMKill` | Kill processes in a container one at a time on OOM instead of as a group | Needs Kubernetes 1.32 or later; on earlier versions it has no effect and EKS emits a warning event on the NodeClass |
+| `eviction.hard` / `eviction.soft` | Eviction thresholds per signal, as a quantity (`500Mi`) or a percentage (`10%`) | Signals: `memory.available`, `nodefs.available`, `nodefs.inodesFree`, `imagefs.available`, `imagefs.inodesFree`, `pid.available` |
+| `eviction.softGracePeriod` | How long a soft threshold must hold before eviction starts | Required for each signal that has a soft threshold |
+| `eviction.maxPodGracePeriod` | Maximum termination grace, in seconds, for Pods evicted on a soft threshold | `0` uses each Pod's `terminationGracePeriodSeconds` |
+| `logging.containerLogMaxSize` / `logging.containerLogMaxFiles` | Container log rotation size and retained file count | `containerLogMaxFiles` is at least 2 |
+| `allowedUnsafeSysctls` | Unsafe sysctls, or patterns ending in `*`, that Pods on the node may set | Up to 64 entries; allowed patterns are `kernel.shm*`, `kernel.msg*`, `kernel.sem`, `fs.mqueue.*` and `net.*` |
+
+Review these behaviors before changing a production NodeClass:
+
+- **Nodes are replaced, not patched.** Changing kubelet settings on an existing NodeClass marks its nodes as drifted and EKS replaces them with nodes that use the new configuration. Settings are never applied to a running node in place, so review disruption budgets and PDBs first.
+- **`maxPods` is a ceiling.** Confirm the result on a replacement node with `kubectl get node <node> -o jsonpath='{.status.capacity.pods}'` rather than assuming the configured value.
+- **Soft thresholds must trigger earlier than hard ones.** A soft threshold must be less aggressive than the hard threshold for the same signal. A quantity and a percentage can be mixed; EKS resolves both for each instance type and marks instance types that break the rule as incompatible with the NodeClass.
+- **`allowedUnsafeSysctls` only permits.** It lets Pods on the node request the sysctl; each Pod must still list it in `securityContext.sysctls`. Node-level kernel values are set separately through `advancedCompute.kernel.sysctl`.
 
 ### Fixed IMDS security configuration
 
