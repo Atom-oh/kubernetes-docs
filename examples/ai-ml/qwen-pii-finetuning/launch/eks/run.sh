@@ -34,6 +34,11 @@ BUCKET_NAME=$(jq -er '.bucket_name' "$INVENTORY")
 OWNERSHIP_TOKEN=$(jq -er '.ownership_token' "$INVENTORY")
 ACCOUNT_ID=$(jq -er '.account_id' "$INVENTORY")
 EXPERIMENT_ID="${BASE_EXPERIMENT_ID}-${MODE}-eks"
+# Demo workloads run only in the shared demo VPC (fsi-demo-vpc); never let eksctl create a VPC.
+: "${DEMO_VPC_ID:?set DEMO_VPC_ID to the demo VPC id}"
+: "${DEMO_PRIVATE_SUBNET_A:?set DEMO_PRIVATE_SUBNET_A (ap-northeast-2a private subnet)}"
+: "${DEMO_PRIVATE_SUBNET_B:?set DEMO_PRIVATE_SUBNET_B (ap-northeast-2b private subnet)}"
+export DEMO_VPC_ID DEMO_PRIVATE_SUBNET_A DEMO_PRIVATE_SUBNET_B
 STEPS=80
 [[ "$MODE" == "smoke" ]] && STEPS=10
 mkdir -p "$RESULTS_DIR"
@@ -67,7 +72,7 @@ jq -e --arg key "eks:$EXPERIMENT_ID" '.resources[$key].expected_export' \
 EXECUTION_ID=$(jq -er '.execution_id' "$RENDER_DIR/expected-export.json")
 INPUT_ROLE_NAME=$(jq -er --arg key "eks:$EXPERIMENT_ID" '.resources[$key].workload_identity.role_name' "$INVENTORY")
 export EXECUTION_ID INPUT_ROLE_NAME
-envsubst '${EXPERIMENT_ID} ${BASE_EXPERIMENT_ID} ${OWNERSHIP_TOKEN} ${BUCKET_NAME} ${ACCOUNT_ID} ${INPUT_ROLE_NAME}' \
+envsubst '${EXPERIMENT_ID} ${BASE_EXPERIMENT_ID} ${OWNERSHIP_TOKEN} ${BUCKET_NAME} ${ACCOUNT_ID} ${INPUT_ROLE_NAME} ${DEMO_VPC_ID} ${DEMO_PRIVATE_SUBNET_A} ${DEMO_PRIVATE_SUBNET_B}' \
   < "$SCRIPT_DIR/cluster.yaml" > "$RENDER_DIR/cluster.yaml"
 # Failure never grants cleanup ownership. The creating journal survives host loss.
 eksctl create cluster -f "$RENDER_DIR/cluster.yaml" \

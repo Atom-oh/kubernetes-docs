@@ -7,6 +7,13 @@
     "appZoneId": "Z062950321UN61HPBMEOO",
     "s3PrefixListId": "pl-78a54011",
     "cloudfrontOriginFacingPrefixListId": "pl-22a6434b",
-    "modelId": "global.anthropic.claude-haiku-5-5"
+    "modelId": "global.anthropic.claude-haiku-5-5",
+    "demoVpcId": "",
+    "demoVpcCidr": "",
+    "demoIsolatedSubnetA": "",
+    "demoIsolatedSubnetB": "",
+    "demoIsolatedRouteTableA": "",
+    "demoIsolatedRouteTableB": "",
+    "demoBedrockEndpointSg": ""
   }
 }

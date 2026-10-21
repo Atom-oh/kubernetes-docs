@@ -1,0 +1,2019 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "/root/draft_362_content_review",
+  "createdAt": "2026-10-20T14:25:43.810764+00:00",
+  "rubricPath": "/home/atomoh/.codex/plugins/cache/oh-my-cloud-skills/aws-content-plugin/3.0.4/agents/content-review-agent.md",
+  "scope": "6 owned Hybrid Nodes pages originally and after repairs, plus 4 complete candidate READMEs. Not a repository-wide review or global translation completion claim.",
+  "reviewCount": 10,
+  "completePageReviewCount": 10,
+  "originalUserHead": "de0cf16d65fa525825d445bc189f57031b256563",
+  "candidateBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+  "candidateWorktree": "/home/atomoh/kubernetes-docs/.vitepress/cache/completed-work-pr-20261020",
+  "scale": {
+    "markdownRawMaximum": 90,
+    "excluded": "10-point visual evaluation requires browser; it is not scored in this Markdown-only content review.",
+    "normalizedScoreFormula": "rawScore / 90 * 100",
+    "warningDeduction": "Each Warning deducts 25% of its category maximum; category totals rounded once to nearest 0.5, exact quarters up; no invented critical deductions.",
+    "publicationGate": "Every final normalized score >=85 and no unresolved major content issue."
+  },
+  "finalContentGate": "PASS",
+  "minimumFinalNormalizedScore": 98.33,
+  "reviews": {
+    "en/eks-hybrid-nodes/02-network-configuration.md": {
+      "reviewer": "/root/draft_362_content_review",
+      "originalUserHead": "de0cf16d65fa525825d445bc189f57031b256563",
+      "candidateBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+      "initialTargetSha256": "7f934fe081dc956e1036212f1b4c9fae46294c97fbadfb5f2b6f710acdf2e88e",
+      "initialReviewedSnapshot": "/tmp/hybrid-content-review-frozen-20261020/00/current.md",
+      "targetSha256": "2c1ffeb6c8a17b6f19da066c90af614b6a77cdbc118d2a575f16ed6dcf844f5d",
+      "reviewedTargetSnapshot": "/tmp/hybrid-final-review-frozen-20261020/en/eks-hybrid-nodes/02-network-configuration.md",
+      "originalScore": 95.0,
+      "score": 100.0,
+      "originalRubric": {
+        "rawScore": 85.5,
+        "rawMaximum": 90,
+        "normalizedScore": 95.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 9.0,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 3.5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 2,
+        "rubricVerdict": "PASS"
+      },
+      "finalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "originalUnresolvedMajorIssues": 1,
+      "unresolvedMajorIssues": 0,
+      "completePageComparison": true,
+      "fullOriginalTargetRead": true,
+      "fullRepairedTargetReread": true,
+      "scope": "Entire original and repaired page prose, headings, tables, labels, links, conditions, exceptions and security terminology were manually read. All original unique fenced code was read; unchanged final fenced code was verified by exact SHA256 and the one repaired EN MTU fence was read in full. Targeted AWS official primary references were read for disputed claims; this is not independent validation of every linked release or a live AWS lab execution.",
+      "findings": [
+        {
+          "id": "N1",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "NoHallucination",
+          "initialLine": 661,
+          "description": "NetworkPolicy presence was described as enforcement without the VPC CNI enablement/support conditions.",
+          "resolution": "Specify enabled supported EC2 Linux VPC CNI policy enforcement and configured Hybrid CNI separately.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html"
+          ],
+          "initialExcerpt": "| Policy and observability | One CNI (NetworkPolicy, Cilium policies, Hubble) | Each CNI enforces standard Kubernetes NetworkPolicy. Cilium-specific policies and Hubble exist only on the hybrid side | One CNI, but incident response and upgrades for the cloud side are on you or a vendor |",
+          "resolved": true
+        },
+        {
+          "id": "N2",
+          "severity": "Warning",
+          "publicationMajor": false,
+          "category": "MessageClarity",
+          "initialLine": 653,
+          "description": "The comparison presented Cilium/Calico as unconditional current choices for every Hybrid node.",
+          "resolution": "Scope this comparison to the current AWS-maintained Cilium path; existing Calico deployments require separate support checking.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html"
+          ],
+          "initialExcerpt": "The VPC CNI is not compatible with hybrid nodes, so **hybrid nodes always run Cilium (or Calico).** The question \"Cilium only or mixed with the VPC CNI?\" is therefore really about **whether the cluster has cloud nodes, and if so, which CNI they run.**",
+          "resolved": true
+        }
+      ],
+      "remainingWarnings": [],
+      "sourceReferences": [
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html"
+      ],
+      "contentPublicationGate": "PASS"
+    },
+    "en/eks-hybrid-nodes/08-operations.md": {
+      "reviewer": "/root/draft_362_content_review",
+      "originalUserHead": "de0cf16d65fa525825d445bc189f57031b256563",
+      "candidateBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+      "initialTargetSha256": "cc895282629978cb6e473a51578e32ff39729733e1704238c36b824a6763904a",
+      "initialReviewedSnapshot": "/tmp/hybrid-content-review-frozen-20261020/01/current.md",
+      "targetSha256": "6791b5107e5737b3720fe1bd58f6cdd2cbabd909afa9aeac1d0e9f2b0fe2377b",
+      "reviewedTargetSnapshot": "/tmp/hybrid-final-review-frozen-20261020/en/eks-hybrid-nodes/08-operations.md",
+      "originalScore": 93.33,
+      "score": 100.0,
+      "originalRubric": {
+        "rawScore": 84.0,
+        "rawMaximum": 90,
+        "normalizedScore": 93.33,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 6.0,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 2,
+        "rubricVerdict": "PASS"
+      },
+      "finalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "originalUnresolvedMajorIssues": 2,
+      "unresolvedMajorIssues": 0,
+      "completePageComparison": true,
+      "fullOriginalTargetRead": true,
+      "fullRepairedTargetReread": true,
+      "scope": "Entire original and repaired page prose, headings, tables, labels, links, conditions, exceptions and security terminology were manually read. All original unique fenced code was read; unchanged final fenced code was verified by exact SHA256 and the one repaired EN MTU fence was read in full. Targeted AWS official primary references were read for disputed claims; this is not independent validation of every linked release or a live AWS lab execution.",
+      "findings": [
+        {
+          "id": "O1",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "NoHallucination",
+          "initialLine": 382,
+          "description": "Eviction was said to stop whenever every node in one zone was unreachable, omitting ready nodes in another zone.",
+          "resolution": "Document the all-cluster-zero-ready cancellation and the other-zone-ready path, with thresholds/size conditions and link to detailed scenarios.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html",
+            "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html"
+          ],
+          "initialExcerpt": "| Zone label | If nodes carry `topology.kubernetes.io/zone`, Kubernetes cancels evictions for a zone when all nodes in that zone are unreachable. Hybrid nodes have no cloud-controller-manager, so set a per-data-center zone with nodeadm `--node-labels`. |",
+          "resolved": true
+        },
+        {
+          "id": "O2",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "NoHallucination",
+          "initialLine": 381,
+          "description": "The 300 second waiting period was assigned to Pods without a matching toleration.",
+          "resolution": "Attribute 300 seconds to default ordinary Pod NoExecute tolerations from taint application; no matching toleration permits immediate eviction, DaemonSet defaults differ, and old disconnected containers may continue.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html"
+          ],
+          "initialExcerpt": "| Pod failover | Pods without a toleration are evicted by the control plane after the default 300 seconds and replacement pods are created on other nodes. DaemonSet pods tolerate this taint by default and stay on the node. |",
+          "resolved": true
+        }
+      ],
+      "remainingWarnings": [],
+      "sourceReferences": [
+        "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html",
+        "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html",
+        "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html"
+      ],
+      "contentPublicationGate": "PASS"
+    },
+    "en/eks-hybrid-nodes/10-hybrid-nodes-gateway.md": {
+      "reviewer": "/root/draft_362_content_review",
+      "originalUserHead": "de0cf16d65fa525825d445bc189f57031b256563",
+      "candidateBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+      "initialTargetSha256": "de122f0fa7701483185e2fe43d8fb534983ae0348e39226523b32959bbc0a4f8",
+      "initialReviewedSnapshot": "/tmp/hybrid-content-review-frozen-20261020/02/current.md",
+      "targetSha256": "da22829de19c72955b8abf5c256cfbee02b1f8911d655cf9014f28f7f0e87b2f",
+      "reviewedTargetSnapshot": "/tmp/hybrid-final-review-frozen-20261020/en/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+      "originalScore": 84.44,
+      "score": 98.33,
+      "originalRubric": {
+        "rawScore": 76.0,
+        "rawMaximum": 90,
+        "normalizedScore": 84.44,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 4.0,
+          "NoHallucination": 6.0,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 3.5,
+          "Legal": 5,
+          "MessageClarity": 2.5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 7,
+        "rubricVerdict": "REVIEW"
+      },
+      "finalRubric": {
+        "rawScore": 88.5,
+        "rawMaximum": 90,
+        "normalizedScore": 98.33,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 3.5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 1,
+        "rubricVerdict": "PASS"
+      },
+      "originalUnresolvedMajorIssues": 3,
+      "unresolvedMajorIssues": 0,
+      "completePageComparison": true,
+      "fullOriginalTargetRead": true,
+      "fullRepairedTargetReread": true,
+      "scope": "Entire original and repaired page prose, headings, tables, labels, links, conditions, exceptions and security terminology were manually read. All original unique fenced code was read; unchanged final fenced code was verified by exact SHA256 and the one repaired EN MTU fence was read in full. Targeted AWS official primary references were read for disputed claims; this is not independent validation of every linked release or a live AWS lab execution.",
+      "findings": [
+        {
+          "id": "G1",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "NoHallucination",
+          "initialLine": 1169,
+          "description": "The AZ cost advice implied Gateway can select BGP for high volume and Gateway for webhooks sharing the same destinations.",
+          "resolution": "Describe BGP/static routing as an alternative, destination-prefix route ownership, disjoint ownership for combined designs, and explicit return-path verification.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "initialExcerpt": "There is no gateway software charge. Count EC2, storage, Auto Mode management fees (only for gateway nodes running on Auto Mode), cross-AZ data transfer, private connectivity and observability as well as normal cluster/Hybrid Nodes costs. “Inside the same VPC” does not imply free cross-AZ transfer. Routing through another AZ can add traffic charges. There is only one active leader, so even with gateway nodes in several AZs, Hybrid traffic from Pods, ALBs or scrapers in other AZs crosses into the leader's AZ ([AWS operations guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html)). For high-volume paths, route the Pod CIDRs directly with Cilium BGP so traffic leaves through the TGW/VGW in the Pod's own AZ, and keep the gateway for webhooks and low-volume Pod-to-Pod traffic.",
+          "resolved": true
+        },
+        {
+          "id": "G2",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "NoHallucination",
+          "initialLine": 791,
+          "description": "One remaining Gateway Pod was treated as a traffic-stop condition even if it was healthy.",
+          "resolution": "Traffic can continue through a healthy sole leader without redundancy; stop cases are its failure or both replica failures, until repair/operator intervention.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "initialExcerpt": "If only one gateway Pod exists, or both fail, Pod traffic between the VPC and the Hybrid Pod CIDRs of **all** data centers stops together. The runtime never calls `DeleteRoute`, so VPC routes keep pointing at the failed ENI.",
+          "resolved": true
+        },
+        {
+          "id": "G3",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "MessageClarity",
+          "initialLine": 735,
+          "description": "NodePort SNAT and underlay source/return routing were presented as universal.",
+          "resolution": "Scope node SNAT to the reported lab and require checking Service policy, dataplane, masquerade, observed source IP and return route.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html",
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html"
+          ],
+          "initialExcerpt": "| On-premises → Hybrid NodePort → VPC CNI Pod | kube-proxy SNATs to the node IP and host routing sends it over the underlay, so the gateway (VTEP) is not used. Region node security groups must allow the app port from the remote node CIDR | Failed (cluster SG allowed only 443 from the remote node CIDR) |",
+          "resolved": true
+        },
+        {
+          "id": "G4",
+          "severity": "Warning",
+          "publicationMajor": false,
+          "category": "Terminology",
+          "initialLine": 734,
+          "description": "The simulated TGW reverse-path lab was labelled as twice traversing Direct Connect.",
+          "resolution": "State twice traversing the private connection and assess the production DX/VPN design separately.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "initialExcerpt": "| On-premises → internal ALB → Hybrid Pod | The same path plus a hairpin back to on-premises through the gateway; it crosses DX twice, adding latency and transfer cost | 20/20 |",
+          "resolved": true
+        },
+        {
+          "id": "G5",
+          "severity": "Warning",
+          "publicationMajor": false,
+          "category": "DataAccuracyExternalRefs",
+          "initialLine": 714,
+          "description": "20/20, 0/276 and 1/191 numeric observations lacked attached raw request/capture provenance.",
+          "resolution": "Retain the supplied dated lab notes as an explicitly qualified example; distinguish the separate 38-check experiment and require readers to collect their own timestamped evidence.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "initialExcerpt": "#### Measured: ALB IP Targets on Hybrid Pods (2026-10-18)",
+          "resolved": true
+        },
+        {
+          "id": "G6",
+          "severity": "Warning",
+          "publicationMajor": false,
+          "category": "MessageClarity",
+          "initialLine": 523,
+          "description": "A whole-chapter local-only installation audit disclaimer conflicted with later separately dated lab/demo reports.",
+          "resolution": "Distinguish local installation checking from supplied simulated-lab run notes; neither proves the reader deployment.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "initialExcerpt": "Complete the CNI, node and workload IAM steps before installation. The leader may immediately replace existing routes for the configured CIDRs. Use the values file below after checking ownership, reverse routing and rollback. This chapter validates configuration locally; it does not report a live deployment.",
+          "resolved": true
+        },
+        {
+          "id": "G7",
+          "severity": "Warning",
+          "publicationMajor": false,
+          "category": "Terminology",
+          "initialLine": 341,
+          "description": "The 50-byte VXLAN overhead parenthesis omitted the inner Ethernet header.",
+          "resolution": "Include outer IPv4, outer UDP, VXLAN and inner Ethernet headers while preserving the numerical 50-byte calculation.",
+          "sourceReferences": [],
+          "initialExcerpt": "VXLAN overhead:      - 50 bytes (outer IP + outer UDP + VXLAN header)",
+          "resolved": true
+        }
+      ],
+      "remainingWarnings": [
+        {
+          "id": "G5-LIMITATION",
+          "severity": "Warning",
+          "publicationMajor": false,
+          "category": "DataAccuracyExternalRefs",
+          "initialLine": 714,
+          "description": "Raw lab request/capture logs remain unavailable; the final document explicitly limits the historical numbers to supplied example notes.",
+          "resolution": "Retain the supplied dated lab notes as an explicitly qualified example; distinguish the separate 38-check experiment and require readers to collect their own timestamped evidence.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "resolved": true
+        }
+      ],
+      "sourceReferences": [
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html"
+      ],
+      "contentPublicationGate": "PASS"
+    },
+    "ko/eks-hybrid-nodes/02-network-configuration.md": {
+      "reviewer": "/root/draft_362_content_review",
+      "originalUserHead": "de0cf16d65fa525825d445bc189f57031b256563",
+      "candidateBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+      "initialTargetSha256": "834fea659593c4c6dc80451bea9b9b3d566e0bf4847667ad9b9bb66937e6cdce",
+      "initialReviewedSnapshot": "/tmp/hybrid-content-review-frozen-20261020/03/current.md",
+      "targetSha256": "a0dea88aa79cc8283e0fa87fd021375288aeca2c178b9f983852db2e031b2cde",
+      "reviewedTargetSnapshot": "/tmp/hybrid-final-review-frozen-20261020/ko/eks-hybrid-nodes/02-network-configuration.md",
+      "originalScore": 95.0,
+      "score": 100.0,
+      "originalRubric": {
+        "rawScore": 85.5,
+        "rawMaximum": 90,
+        "normalizedScore": 95.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 9.0,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 3.5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 2,
+        "rubricVerdict": "PASS"
+      },
+      "finalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "originalUnresolvedMajorIssues": 1,
+      "unresolvedMajorIssues": 0,
+      "completePageComparison": true,
+      "fullOriginalTargetRead": true,
+      "fullRepairedTargetReread": true,
+      "scope": "Entire original and repaired page prose, headings, tables, labels, links, conditions, exceptions and security terminology were manually read. All original unique fenced code was read; unchanged final fenced code was verified by exact SHA256 and the one repaired EN MTU fence was read in full. Targeted AWS official primary references were read for disputed claims; this is not independent validation of every linked release or a live AWS lab execution.",
+      "findings": [
+        {
+          "id": "N1",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "NoHallucination",
+          "initialLine": 661,
+          "description": "NetworkPolicy presence was described as enforcement without the VPC CNI enablement/support conditions.",
+          "resolution": "Specify enabled supported EC2 Linux VPC CNI policy enforcement and configured Hybrid CNI separately.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html"
+          ],
+          "initialExcerpt": "| 정책과 관측 | Cilium 하나로 통일 (NetworkPolicy, Cilium 정책, Hubble) | 표준 Kubernetes NetworkPolicy는 양쪽 CNI가 각각 적용. Cilium 전용 정책과 Hubble은 hybrid 쪽만 | 한 CNI로 통일되지만 클라우드 쪽 장애 대응과 업그레이드 책임은 고객이나 벤더 |",
+          "resolved": true
+        },
+        {
+          "id": "N2",
+          "severity": "Warning",
+          "publicationMajor": false,
+          "category": "MessageClarity",
+          "initialLine": 653,
+          "description": "The comparison presented Cilium/Calico as unconditional current choices for every Hybrid node.",
+          "resolution": "Scope this comparison to the current AWS-maintained Cilium path; existing Calico deployments require separate support checking.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html"
+          ],
+          "initialExcerpt": "VPC CNI는 hybrid 노드와 호환되지 않으므로 **hybrid 노드에는 항상 Cilium(또는 Calico)이 들어갑니다.** 따라서 \"Cilium만 쓸지, VPC CNI와 섞을지\"는 실제로는 **클라우드 노드를 둘지, 둔다면 어떤 CNI를 쓸지**에 대한 질문입니다.",
+          "resolved": true
+        }
+      ],
+      "remainingWarnings": [],
+      "sourceReferences": [
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html"
+      ],
+      "contentPublicationGate": "PASS"
+    },
+    "ko/eks-hybrid-nodes/08-operations.md": {
+      "reviewer": "/root/draft_362_content_review",
+      "originalUserHead": "de0cf16d65fa525825d445bc189f57031b256563",
+      "candidateBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+      "initialTargetSha256": "78d285b8fc72bbbe0c06483fa65c18c630b540f7731c389ca3f1ef15f1ebcb98",
+      "initialReviewedSnapshot": "/tmp/hybrid-content-review-frozen-20261020/04/current.md",
+      "targetSha256": "0a65301d0f7fdcfb542e3c8efc11b527bfde4ca9412e04793c9c8f88224d46b2",
+      "reviewedTargetSnapshot": "/tmp/hybrid-final-review-frozen-20261020/ko/eks-hybrid-nodes/08-operations.md",
+      "originalScore": 93.33,
+      "score": 100.0,
+      "originalRubric": {
+        "rawScore": 84.0,
+        "rawMaximum": 90,
+        "normalizedScore": 93.33,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 6.0,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 2,
+        "rubricVerdict": "PASS"
+      },
+      "finalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "originalUnresolvedMajorIssues": 2,
+      "unresolvedMajorIssues": 0,
+      "completePageComparison": true,
+      "fullOriginalTargetRead": true,
+      "fullRepairedTargetReread": true,
+      "scope": "Entire original and repaired page prose, headings, tables, labels, links, conditions, exceptions and security terminology were manually read. All original unique fenced code was read; unchanged final fenced code was verified by exact SHA256 and the one repaired EN MTU fence was read in full. Targeted AWS official primary references were read for disputed claims; this is not independent validation of every linked release or a live AWS lab execution.",
+      "findings": [
+        {
+          "id": "O1",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "NoHallucination",
+          "initialLine": 382,
+          "description": "Eviction was said to stop whenever every node in one zone was unreachable, omitting ready nodes in another zone.",
+          "resolution": "Document the all-cluster-zero-ready cancellation and the other-zone-ready path, with thresholds/size conditions and link to detailed scenarios.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html",
+            "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html"
+          ],
+          "initialExcerpt": "| zone label | 노드에 `topology.kubernetes.io/zone`을 지정하면, 한 zone의 노드가 모두 unreachable일 때 Kubernetes가 그 zone의 퇴거를 취소합니다. hybrid 노드에는 cloud-controller-manager가 없으므로 nodeadm `--node-labels`로 데이터센터별 zone을 지정합니다. |",
+          "resolved": true
+        },
+        {
+          "id": "O2",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "NoHallucination",
+          "initialLine": 381,
+          "description": "The 300 second waiting period was assigned to Pods without a matching toleration.",
+          "resolution": "Attribute 300 seconds to default ordinary Pod NoExecute tolerations from taint application; no matching toleration permits immediate eviction, DaemonSet defaults differ, and old disconnected containers may continue.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html"
+          ],
+          "initialExcerpt": "| Pod 이전 | toleration이 없는 Pod는 기본 300초 뒤 컨트롤 플레인이 퇴거시키고 다른 노드에 대체 Pod를 만듭니다. DaemonSet Pod는 이 taint를 기본으로 허용해 노드에 남습니다. |",
+          "resolved": true
+        }
+      ],
+      "remainingWarnings": [],
+      "sourceReferences": [
+        "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html",
+        "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html",
+        "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html"
+      ],
+      "contentPublicationGate": "PASS"
+    },
+    "ko/eks-hybrid-nodes/10-hybrid-nodes-gateway.md": {
+      "reviewer": "/root/draft_362_content_review",
+      "originalUserHead": "de0cf16d65fa525825d445bc189f57031b256563",
+      "candidateBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+      "initialTargetSha256": "f04121bfaa4e4e48ee034c53a43e53c29af7ca027e3b3ae15aaebb59380a7ddb",
+      "initialReviewedSnapshot": "/tmp/hybrid-content-review-frozen-20261020/05/current.md",
+      "targetSha256": "d958597a719f183309b9e7f56642470e1e8624095bbc79c29a6b8a808fd84b8f",
+      "reviewedTargetSnapshot": "/tmp/hybrid-final-review-frozen-20261020/ko/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+      "originalScore": 86.67,
+      "score": 98.33,
+      "originalRubric": {
+        "rawScore": 78.0,
+        "rawMaximum": 90,
+        "normalizedScore": 86.67,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 6.0,
+          "NoHallucination": 6.0,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 3.5,
+          "Legal": 5,
+          "MessageClarity": 2.5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 6,
+        "rubricVerdict": "REVIEW"
+      },
+      "finalRubric": {
+        "rawScore": 88.5,
+        "rawMaximum": 90,
+        "normalizedScore": 98.33,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 3.5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 1,
+        "rubricVerdict": "PASS"
+      },
+      "originalUnresolvedMajorIssues": 3,
+      "unresolvedMajorIssues": 0,
+      "completePageComparison": true,
+      "fullOriginalTargetRead": true,
+      "fullRepairedTargetReread": true,
+      "scope": "Entire original and repaired page prose, headings, tables, labels, links, conditions, exceptions and security terminology were manually read. All original unique fenced code was read; unchanged final fenced code was verified by exact SHA256 and the one repaired EN MTU fence was read in full. Targeted AWS official primary references were read for disputed claims; this is not independent validation of every linked release or a live AWS lab execution.",
+      "findings": [
+        {
+          "id": "G1",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "NoHallucination",
+          "initialLine": 1099,
+          "description": "The AZ cost advice implied Gateway can select BGP for high volume and Gateway for webhooks sharing the same destinations.",
+          "resolution": "Describe BGP/static routing as an alternative, destination-prefix route ownership, disjoint ownership for combined designs, and explicit return-path verification.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "initialExcerpt": "Gateway 소프트웨어 요금은 없지만 EC2/storage·(Gateway 노드가 Auto Mode일 때만) Auto Mode 관리 요금·cross-AZ 전송·private 연결·관측성과 cluster/Hybrid Nodes 요금은 별도입니다. 같은 VPC라도 cross-AZ 전송이 무료인 것은 아닙니다. 활성 leader는 하나이므로 Gateway 노드를 여러 AZ에 두어도 leader와 다른 AZ의 Pod·ALB·scraper가 보내는 Hybrid 트래픽은 모두 leader AZ로 건너갑니다([AWS 운영 문서](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html)). 트래픽이 큰 경로는 Cilium BGP로 Pod CIDR을 직접 라우팅해 Pod가 있는 AZ의 TGW/VGW로 바로 나가게 하고, Gateway는 webhook이나 적은 양의 Pod 간 통신에 두는 구성을 검토합니다.",
+          "resolved": true
+        },
+        {
+          "id": "G2",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "NoHallucination",
+          "initialLine": 755,
+          "description": "One remaining Gateway Pod was treated as a traffic-stop condition even if it was healthy.",
+          "resolution": "Traffic can continue through a healthy sole leader without redundancy; stop cases are its failure or both replica failures, until repair/operator intervention.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "initialExcerpt": "Gateway Pod가 하나뿐이거나 둘 다 실패하면 **모든 데이터센터**의 Hybrid Pod CIDR과 VPC 사이 Pod 트래픽이 함께 끊깁니다. Runtime은 `DeleteRoute`를 호출하지 않으므로 VPC route는 실패한 ENI를 계속 가리킵니다.",
+          "resolved": true
+        },
+        {
+          "id": "G3",
+          "severity": "Warning",
+          "publicationMajor": true,
+          "category": "MessageClarity",
+          "initialLine": 677,
+          "description": "NodePort SNAT and underlay source/return routing were presented as universal.",
+          "resolution": "Scope node SNAT to the reported lab and require checking Service policy, dataplane, masquerade, observed source IP and return route.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html",
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html"
+          ],
+          "initialExcerpt": "| 온프레미스 → Hybrid NodePort → VPC CNI Pod | kube-proxy가 노드 IP로 SNAT한 뒤 host routing으로 underlay를 지나므로 Gateway(VTEP)를 타지 않음. 리전 노드 SG가 remote node CIDR에서 오는 앱 포트를 허용해야 함 | 실패 (cluster SG가 remote node CIDR에 443만 허용) |",
+          "resolved": true
+        },
+        {
+          "id": "G4",
+          "severity": "Warning",
+          "publicationMajor": false,
+          "category": "Terminology",
+          "initialLine": 676,
+          "description": "The simulated TGW reverse-path lab was labelled as twice traversing Direct Connect.",
+          "resolution": "State twice traversing the private connection and assess the production DX/VPN design separately.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "initialExcerpt": "| 온프레미스 → internal ALB → Hybrid Pod | 위 경로에 Gateway를 거쳐 온프레미스로 되돌아오는 hairpin. DX를 두 번 지나 지연과 전송 비용 증가 | 20/20 |",
+          "resolved": true
+        },
+        {
+          "id": "G5",
+          "severity": "Warning",
+          "publicationMajor": false,
+          "category": "DataAccuracyExternalRefs",
+          "initialLine": 656,
+          "description": "20/20, 0/276 and 1/191 numeric observations lacked attached raw request/capture provenance.",
+          "resolution": "Retain the supplied dated lab notes as an explicitly qualified example; distinguish the separate 38-check experiment and require readers to collect their own timestamped evidence.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "initialExcerpt": "#### 실측: ALB IP target에 Hybrid Pod 연결 (2026-10-18)",
+          "resolved": true
+        },
+        {
+          "id": "G6",
+          "severity": "Warning",
+          "publicationMajor": false,
+          "category": "MessageClarity",
+          "initialLine": 428,
+          "description": "A whole-chapter local-only installation audit disclaimer conflicted with later separately dated lab/demo reports.",
+          "resolution": "Distinguish local installation checking from supplied simulated-lab run notes; neither proves the reader deployment.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "initialExcerpt": "적격 cloud EC2 노드를 먼저 준비합니다. 관리형/자체 관리 노드는 `autoMode.enabled=false`를 사용합니다. Auto Mode는 NodeClass/NodePool을 준비하고 `autoMode.enabled=true`를 사용합니다. IAM·source/destination check·CNI·security group과 반환 경로를 확인한 뒤 설치합니다. Leader가 기존 CIDR 라우트를 즉시 바꿀 수 있으므로 소유자·전환·복구 계획을 먼저 정합니다. 이 장의 검증은 로컬 구성 검증이며 실제 설치 성공 기록이 아닙니다.",
+          "resolved": true
+        }
+      ],
+      "remainingWarnings": [
+        {
+          "id": "G5-LIMITATION",
+          "severity": "Warning",
+          "publicationMajor": false,
+          "category": "DataAccuracyExternalRefs",
+          "initialLine": 656,
+          "description": "Raw lab request/capture logs remain unavailable; the final document explicitly limits the historical numbers to supplied example notes.",
+          "resolution": "Retain the supplied dated lab notes as an explicitly qualified example; distinguish the separate 38-check experiment and require readers to collect their own timestamped evidence.",
+          "sourceReferences": [
+            "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html"
+          ],
+          "resolved": true
+        }
+      ],
+      "sourceReferences": [
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html"
+      ],
+      "contentPublicationGate": "PASS"
+    },
+    "infra/ask-docs/README.md": {
+      "reviewer": "/root/draft_362_content_review",
+      "candidateBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+      "initialTargetSha256": "c20b1f2003896bf1f89d7d30349b3cfe84c5afa7eb4e8b90b74f8e0ff6bc4b0a",
+      "targetSha256": "b3459dcc0723be13bf1264732b21781830ba8664ef19837a94bb57271c2f2e22",
+      "reviewedTargetSnapshot": "/tmp/completed-work-readme-review-frozen-20261020/askdocs-final-sanitized-reviewed.md",
+      "score": 100.0,
+      "originalScore": 100.0,
+      "originalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "finalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "unresolvedMajorIssues": 0,
+      "completePageComparison": true,
+      "fullTargetRead": true,
+      "scope": "All final 228 README lines, headings, tables, prerequisite/condition/rollback prose and all three complete fenced command examples were actually reread after the private-context sanitization and exception repair. Compared seven empty demo defaults, required-context guard, base and edge synthetic fixtures, account override, explicit CLI precedence, network/data/app-before-edge construction and stack selection against the complete current cdk.json, network-stack.ts, bin/app.ts and package.json. Previous targeted primary AWS fact verification remains applicable because those service claims did not change. No new deployment, AWS lookup or live streaming claim is made.",
+      "findings": [
+        {
+          "id": "ASK-PRIVATE-ERROR-ARGV",
+          "severity": "Warning",
+          "category": "MessageClarity",
+          "publicationMajor": false,
+          "resolved": true,
+          "description": "An intermediate private-context example could expose CLI input values in an uncaught subprocess exception.",
+          "resolution": "Final example catches CalledProcessError and emits only exit status; explicitly keeps CDK child diagnostics/output directory private and states local process argument visibility."
+        }
+      ],
+      "remainingWarnings": [],
+      "sourceEvidence": [
+        {
+          "path": "infra/ask-docs/bin/app.ts",
+          "sha256": "06a63e698c31c64ea116604ed2f67598d0da41726c336e726205f42cc3af621b"
+        },
+        {
+          "path": "infra/ask-docs/cdk.json",
+          "sha256": "a8497fc7a2af6f8b9432c8a8aac5f230c6ccc6b8e086dc85031a442a8f887c82"
+        },
+        {
+          "path": "infra/ask-docs/lib/network-stack.ts",
+          "sha256": "677fdea6ba3154ebdc43610aafbfde2acfec6409812441b77f076115086b6cf2"
+        },
+        {
+          "path": "infra/ask-docs/lib/edge-stack.ts",
+          "sha256": "373a2b4e3b8c678c9ba38eb1277e74796d56a82665e77f9bbbdee3b080cd6932"
+        },
+        {
+          "path": "infra/ask-docs/lib/app-stack.ts",
+          "sha256": "c2d63d82fa5ccbb3d3a6811fea98dbf65ac37cc82dfab57f5a4fd77d61485bad"
+        },
+        {
+          "path": "infra/ask-docs/package.json",
+          "sha256": "8aa73393befe764bd145c58e75268b71b19629d6e9106e34b159f07807ff05e9"
+        }
+      ],
+      "sourceReferences": [
+        "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html",
+        "https://docs.aws.amazon.com/apigateway/latest/developerguide/response-transfer-mode-lambda.html",
+        "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-haiku-5-5.html"
+      ],
+      "contentPublicationGate": "PASS",
+      "repositoryEditsByReviewer": false,
+      "reviewHistory": [
+        {
+          "version": "pre-sanitization-full-page-review",
+          "sha256": "c20b1f2003896bf1f89d7d30349b3cfe84c5afa7eb4e8b90b74f8e0ff6bc4b0a",
+          "reviewedSnapshot": "/tmp/completed-work-readme-review-frozen-20261020/askdocs-pre-sanitization-reviewed.md",
+          "score": 100.0,
+          "completePageComparison": true,
+          "scope": "All 141 README lines and fenced commands were read. Compared existing-VPC imports, prefix-list restricted ALB, execute-api endpoint private DNS choice, stack ordering, conditional edge context, separate demo DNS/origin identities, STREAM invocation and Haiku 5.5 inference profile against actual source and the relevant AWS official documents. No deployment or connectivity result is claimed.",
+          "sourceEvidence": [
+            {
+              "path": "infra/ask-docs/bin/app.ts",
+              "sha256": "06a63e698c31c64ea116604ed2f67598d0da41726c336e726205f42cc3af621b"
+            },
+            {
+              "path": "infra/ask-docs/cdk.json",
+              "sha256": "25f588a6b1bf6a5d16bdf3b1d33cae92a6e98850d6459218628a296837586eaf"
+            },
+            {
+              "path": "infra/ask-docs/lib/network-stack.ts",
+              "sha256": "32f6df724d5bf33b3e13362faa84cab636eaeebf7ebb3d0ae1bcbb5f0db91e55"
+            },
+            {
+              "path": "infra/ask-docs/lib/edge-stack.ts",
+              "sha256": "373a2b4e3b8c678c9ba38eb1277e74796d56a82665e77f9bbbdee3b080cd6932"
+            },
+            {
+              "path": "infra/ask-docs/lib/app-stack.ts",
+              "sha256": "c2d63d82fa5ccbb3d3a6811fea98dbf65ac37cc82dfab57f5a4fd77d61485bad"
+            }
+          ]
+        },
+        {
+          "version": "private-context-initial-full-page-review",
+          "sha256": "d9faba8aa883bf4f43a459312c36f6be6e050e6a2d269971a59bfd48bf4048e9",
+          "reviewedSnapshot": "/tmp/completed-work-readme-review-frozen-20261020/askdocs-private-context-initial.md",
+          "score": 98.33,
+          "rawScore": 88.5,
+          "rawMaximum": 90,
+          "completePageComparison": true,
+          "finding": {
+            "id": "ASK-PRIVATE-ERROR-ARGV",
+            "category": "MessageClarity",
+            "severity": "Warning",
+            "publicationMajor": false,
+            "description": "Uncaught subprocess.CalledProcessError includes the complete command argument list on failure, conflicting with the initial no-printing-values claim. Reproduced using /bin/false and only a synthetic argument.",
+            "resolution": "Catch CalledProcessError, report only exit code, suppress exception chain; clarify that child stdout/stderr must also remain private.",
+            "resolved": true
+          }
+        }
+      ],
+      "fullRepairedTargetReread": true,
+      "finalWholePageLinesRead": 228,
+      "sanitizedContextVerification": {
+        "requiredKeys": [
+          "demoVpcId",
+          "demoVpcCidr",
+          "demoIsolatedSubnetA",
+          "demoIsolatedSubnetB",
+          "demoIsolatedRouteTableA",
+          "demoIsolatedRouteTableB",
+          "demoBedrockEndpointSg"
+        ],
+        "allTrackedDefaultsEmpty": true,
+        "baseAndEdgeOfflineExamplesUseOnlySyntheticNetworkAndAccount": true,
+        "privateConfigOutsideEveryGitWorktree": true,
+        "trackedContextNotUsedAsPrivateStorage": true,
+        "noLookupSynthIsNotConnectivityEvidence": true,
+        "failedChildArgumentExposureProbe": {
+          "syntheticInputsOnly": true,
+          "exitCode": 1,
+          "stdout": "",
+          "stderr": "CDK synth failed (exit 1); keep diagnostics private.\n",
+          "argumentValueAbsent": true
+        },
+        "parentPriorPushStatus": "Parent reported automatic approval rejected unsanitized metadata push; remote pushes of that unpublished commit were zero. No push performed by content reviewer."
+      }
+    },
+    "examples/ai-ml/qwen-pii-finetuning/README.md": {
+      "reviewer": "/root/draft_362_content_review",
+      "candidateBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+      "initialTargetSha256": "df36fe54bec6abf7cf61a6cdf92cc73bf4fc9f07b6e51af255603d302b49c9f1",
+      "targetSha256": "df36fe54bec6abf7cf61a6cdf92cc73bf4fc9f07b6e51af255603d302b49c9f1",
+      "reviewedTargetSnapshot": "/tmp/completed-work-readme-review-frozen-20261020/examples/ai-ml/qwen-pii-finetuning/README.md",
+      "score": 100.0,
+      "originalScore": 100.0,
+      "originalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "finalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "unresolvedMajorIssues": 0,
+      "completePageComparison": true,
+      "fullTargetRead": true,
+      "scope": "All 187 README lines, tables and fenced commands were read, including the new four-line EKS prerequisite link. Compared the September16 receipt and complete execution config for 4 steps, 384 changed tensors, 53528920-byte adapter, 1140 billable seconds, 21.39GiB peak, baseline/tuned F1 and parse rates, and 600-step 36-hour submission. README explicitly keeps smoke evidence, poor small-sample metrics, budget reservation and submitted full training distinct from a production-quality result or completed full run. Historical GPU/AWS execution was not independently rerun.",
+      "findings": [],
+      "remainingWarnings": [],
+      "sourceEvidence": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/config/execution-20260916.json",
+          "sha256": "e928748485193f3ab695217010bd58dbdbb391ff6bc043c9349e88ed70e66e0a"
+        },
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/results/execution-smoke-20260916.json",
+          "sha256": "4933f4070fcbd7af724e7d237465f422c31cf4c0dc36db57353eb3a901b83a39"
+        },
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/src/runtime_contract.py",
+          "sha256": "4974edbdfe17d025e7fd498bdff5f7a56b3c2a7d2410a37786eb4d64103232fa"
+        }
+      ],
+      "sourceReferences": [],
+      "contentPublicationGate": "PASS",
+      "repositoryEditsByReviewer": false
+    },
+    "examples/ai-ml/qwen-pii-finetuning/launch/eks/README.md": {
+      "reviewer": "/root/draft_362_content_review",
+      "candidateBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+      "initialTargetSha256": "8e07fefc9d1f29f861ba7361e323ea30b3b3db99ab04b6c56c102d8dd9d8ca63",
+      "targetSha256": "8e07fefc9d1f29f861ba7361e323ea30b3b3db99ab04b6c56c102d8dd9d8ca63",
+      "reviewedTargetSnapshot": "/tmp/completed-work-readme-review-frozen-20261020/examples/ai-ml/qwen-pii-finetuning/launch/eks/README.md",
+      "score": 100.0,
+      "originalScore": 100.0,
+      "originalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "finalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "unresolvedMajorIssues": 0,
+      "completePageComparison": true,
+      "fullTargetRead": true,
+      "scope": "All 72 lines and commands were read. cluster.yaml was read in full; compared early runtime check, required DEMO input variables, substitution and journal/export/deletion statements with focused launcher source. Private node placement is correctly distinguished from Kubernetes API endpoint access; GHCR, pip, model download and NVIDIA Helm dependencies require separately supplied egress or mirrors. The ownership and export machinery is not independently end-to-end executed by this reviewer.",
+      "findings": [],
+      "remainingWarnings": [],
+      "sourceEvidence": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/cluster.yaml",
+          "sha256": "8e7939925831d5cc370215a15d93eab41eaad804552996e5de30f109245fad8c"
+        },
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/run.sh",
+          "sha256": "a5b9e8829dfb98d3afa3ae8f58aaff8f3b919ebe27ec3f905c9d65fdeaa1bcb7"
+        },
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/training-job.yaml",
+          "sha256": "238a2558c0addf85d74f0079efa89973028c238d2233dec2d4953ca26715857d"
+        },
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/mlflow.yaml",
+          "sha256": "78b0c7a83592d585c305e5d03000dd459b521ef2d31b7487815195545e21f71f"
+        }
+      ],
+      "sourceReferences": [],
+      "contentPublicationGate": "PASS",
+      "repositoryEditsByReviewer": false
+    },
+    "examples/security/eks-security/private-endpoints/README.md": {
+      "reviewer": "/root/draft_362_content_review",
+      "candidateBaseCommit": "872979aca000b608166e93a00f7717a36cb77f7f",
+      "initialTargetSha256": "26e2ad560b0b94cbed84af0b326bf9efcd4507f9054f7dc6d52f63683f12e8e8",
+      "targetSha256": "26e2ad560b0b94cbed84af0b326bf9efcd4507f9054f7dc6d52f63683f12e8e8",
+      "reviewedTargetSnapshot": "/tmp/completed-work-readme-review-frozen-20261020/examples/security/eks-security/private-endpoints/README.md",
+      "score": 100.0,
+      "originalScore": 100.0,
+      "originalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "finalRubric": {
+        "rawScore": 90,
+        "rawMaximum": 90,
+        "normalizedScore": 100.0,
+        "categoryScores": {
+          "Layout": 8,
+          "Terminology": 8,
+          "NoHallucination": 12,
+          "LanguageConsistency": 8,
+          "NoSensitiveData": 12,
+          "ContentType": 2,
+          "IconUsage": 5,
+          "Readability": 5,
+          "Accessibility": 5,
+          "StructuralCompleteness": 5,
+          "DataAccuracyExternalRefs": 5,
+          "Legal": 5,
+          "MessageClarity": 5,
+          "DuplicationGaps": 5
+        },
+        "warningCount": 0,
+        "rubricVerdict": "PASS"
+      },
+      "unresolvedMajorIssues": 0,
+      "completePageComparison": true,
+      "fullTargetRead": true,
+      "scope": "All 54 lines and commands were read; main.tf and terraform.tfvars were read in full. Compared mandatory existing VPC/subnet/client-SG/route table inputs, empty default interface service map, endpoint private DNS, client TCP443 ingress and caller-supplied S3 gateway endpoint policy. Correctly states that these resources do not provide all EKS bootstrap or external dependencies and are not connectivity proof.",
+      "findings": [],
+      "remainingWarnings": [],
+      "sourceEvidence": [
+        {
+          "path": "examples/security/eks-security/private-endpoints/main.tf",
+          "sha256": "530cc0f50c5cfa5e1fcebd4c6569149b1511ee8d52c400e2568e603508aba2f1"
+        },
+        {
+          "path": "examples/security/eks-security/private-endpoints/terraform.tfvars.example",
+          "sha256": "ddb6ced4080e4b9e5819cce704a6421227f6893bb041eb209b9b109e9b94c621"
+        }
+      ],
+      "sourceReferences": [],
+      "contentPublicationGate": "PASS",
+      "repositoryEditsByReviewer": false
+    }
+  },
+  "fencedCodeEvidence": {
+    "en/eks-hybrid-nodes/02-network-configuration.md": {
+      "count": 34,
+      "unchangedBlocks": 34,
+      "changedBlocks": [],
+      "allChangedBlocksReadInFull": true,
+      "unchangedBlocksPreviouslyReadInOriginalFullReview": true,
+      "bothCompleteDocumentsSha256Checked": true
+    },
+    "en/eks-hybrid-nodes/08-operations.md": {
+      "count": 20,
+      "unchangedBlocks": 20,
+      "changedBlocks": [],
+      "allChangedBlocksReadInFull": true,
+      "unchangedBlocksPreviouslyReadInOriginalFullReview": true,
+      "bothCompleteDocumentsSha256Checked": true
+    },
+    "en/eks-hybrid-nodes/10-hybrid-nodes-gateway.md": {
+      "count": 31,
+      "unchangedBlocks": 30,
+      "changedBlocks": [
+        {
+          "blockIndexZeroBased": 7,
+          "oldSha256": "9d7ad7c4e7fc32503c5a5572b91a1d56e49259aa6109bc0734bb6ecc62e0aacc",
+          "newSha256": "5477da8c0a71d9491b0bc403e3aee4915c02956f7a33a1cdf5b043e5cec6c1a8",
+          "oldLine": 338,
+          "newLine": 338
+        }
+      ],
+      "allChangedBlocksReadInFull": true,
+      "unchangedBlocksPreviouslyReadInOriginalFullReview": true,
+      "bothCompleteDocumentsSha256Checked": true
+    },
+    "ko/eks-hybrid-nodes/02-network-configuration.md": {
+      "count": 34,
+      "unchangedBlocks": 34,
+      "changedBlocks": [],
+      "allChangedBlocksReadInFull": true,
+      "unchangedBlocksPreviouslyReadInOriginalFullReview": true,
+      "bothCompleteDocumentsSha256Checked": true
+    },
+    "ko/eks-hybrid-nodes/08-operations.md": {
+      "count": 20,
+      "unchangedBlocks": 20,
+      "changedBlocks": [],
+      "allChangedBlocksReadInFull": true,
+      "unchangedBlocksPreviouslyReadInOriginalFullReview": true,
+      "bothCompleteDocumentsSha256Checked": true
+    },
+    "ko/eks-hybrid-nodes/10-hybrid-nodes-gateway.md": {
+      "count": 35,
+      "unchangedBlocks": 35,
+      "changedBlocks": [],
+      "allChangedBlocksReadInFull": true,
+      "unchangedBlocksPreviouslyReadInOriginalFullReview": true,
+      "bothCompleteDocumentsSha256Checked": true
+    }
+  },
+  "relativeFileEvidence": {
+    "en/eks-hybrid-nodes/02-network-configuration.md": {
+      "relativeFileLinksAndImageReferences": [
+        {
+          "line": 8,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 12,
+          "target": "11-network-separation-security.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 565,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-10.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 573,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-11.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 581,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-12.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 591,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-13.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 599,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-14.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 613,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-15.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 661,
+          "target": "10-hybrid-nodes-gateway.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 667,
+          "target": "08-operations.md#mixed-mode-webhook-operations",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 679,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 685,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-1.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 852,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-2.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 946,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-3.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 1165,
+          "target": "01-prerequisites.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1165,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1165,
+          "target": "03-airgap-setup.md",
+          "image": false,
+          "exists": true
+        }
+      ],
+      "missingFiles": [],
+      "fragmentResolution": "Separate renderer/validator scope; no claim of full browser rendering by content reviewer."
+    },
+    "en/eks-hybrid-nodes/08-operations.md": {
+      "relativeFileLinksAndImageReferences": [
+        {
+          "line": 3,
+          "target": "./07-node-lifecycle.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 3,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 3,
+          "target": "./09-bare-metal-os-setup.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 18,
+          "target": "../container-registry/03-harbor.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 187,
+          "target": "./07-node-lifecycle.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 214,
+          "target": "./10-hybrid-nodes-gateway.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 284,
+          "target": "./02-network-configuration.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 374,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 495,
+          "target": "./07-node-lifecycle.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 513,
+          "target": "./07-node-lifecycle.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 513,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 513,
+          "target": "./09-bare-metal-os-setup.md",
+          "image": false,
+          "exists": true
+        }
+      ],
+      "missingFiles": [],
+      "fragmentResolution": "Separate renderer/validator scope; no claim of full browser rendering by content reviewer."
+    },
+    "en/eks-hybrid-nodes/10-hybrid-nodes-gateway.md": {
+      "relativeFileLinksAndImageReferences": [
+        {
+          "line": 3,
+          "target": "./09-bare-metal-os-setup.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 3,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 73,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 209,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 230,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 587,
+          "target": "./08-operations.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 653,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 672,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 718,
+          "target": "12-connectivity-validation.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 718,
+          "target": "02-network-configuration.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 759,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 767,
+          "target": "../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 1237,
+          "target": "./01-prerequisites.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1238,
+          "target": "./02-network-configuration.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1239,
+          "target": "./04-node-bootstrap.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1240,
+          "target": "./08-operations.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1241,
+          "target": "./09-bare-metal-os-setup.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1242,
+          "target": "../networking/cilium/README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1243,
+          "target": "../networking/01-vpc-cni.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1247,
+          "target": "./09-bare-metal-os-setup.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1247,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        }
+      ],
+      "missingFiles": [],
+      "fragmentResolution": "Separate renderer/validator scope; no claim of full browser rendering by content reviewer."
+    },
+    "ko/eks-hybrid-nodes/02-network-configuration.md": {
+      "relativeFileLinksAndImageReferences": [
+        {
+          "line": 8,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-prereq-0.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 12,
+          "target": "11-network-separation-security.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 565,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-10.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 573,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-11.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 581,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-12.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 591,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-13.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 599,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-14.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 613,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-15.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 661,
+          "target": "10-hybrid-nodes-gateway.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 667,
+          "target": "08-operations.md#혼합-모드-웹훅-운영",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 679,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-0.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 685,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-1.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 852,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-2.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 946,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-02-network-configuration-3.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 1165,
+          "target": "01-prerequisites.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1165,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1165,
+          "target": "03-airgap-setup.md",
+          "image": false,
+          "exists": true
+        }
+      ],
+      "missingFiles": [],
+      "fragmentResolution": "Separate renderer/validator scope; no claim of full browser rendering by content reviewer."
+    },
+    "ko/eks-hybrid-nodes/08-operations.md": {
+      "relativeFileLinksAndImageReferences": [
+        {
+          "line": 3,
+          "target": "./07-node-lifecycle.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 3,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 3,
+          "target": "./09-bare-metal-os-setup.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 18,
+          "target": "../container-registry/03-harbor.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 187,
+          "target": "./07-node-lifecycle.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 214,
+          "target": "./10-hybrid-nodes-gateway.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 284,
+          "target": "./02-network-configuration.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 374,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 495,
+          "target": "./07-node-lifecycle.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 513,
+          "target": "./07-node-lifecycle.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 513,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 513,
+          "target": "./09-bare-metal-os-setup.md",
+          "image": false,
+          "exists": true
+        }
+      ],
+      "missingFiles": [],
+      "fragmentResolution": "Separate renderer/validator scope; no claim of full browser rendering by content reviewer."
+    },
+    "ko/eks-hybrid-nodes/10-hybrid-nodes-gateway.md": {
+      "relativeFileLinksAndImageReferences": [
+        {
+          "line": 3,
+          "target": "./09-bare-metal-os-setup.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 3,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 56,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 185,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 527,
+          "target": "./08-operations.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 597,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 614,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 630,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 640,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 660,
+          "target": "12-connectivity-validation.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 660,
+          "target": "02-network-configuration.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 695,
+          "target": "../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png",
+          "image": true,
+          "exists": true
+        },
+        {
+          "line": 1290,
+          "target": "./02-network-configuration.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1291,
+          "target": "./04-node-bootstrap.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1292,
+          "target": "./08-operations.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1293,
+          "target": "./09-bare-metal-os-setup.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1294,
+          "target": "./01-prerequisites.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1304,
+          "target": "./09-bare-metal-os-setup.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 1304,
+          "target": "./README.md",
+          "image": false,
+          "exists": true
+        }
+      ],
+      "missingFiles": [],
+      "fragmentResolution": "Separate renderer/validator scope; no claim of full browser rendering by content reviewer."
+    },
+    "infra/ask-docs/README.md": {
+      "relativeFileLinksAndImageReferences": [],
+      "missingFiles": [],
+      "fragmentResolution": "Separate renderer/validator scope; no claim of full browser rendering by content reviewer."
+    },
+    "examples/ai-ml/qwen-pii-finetuning/README.md": {
+      "relativeFileLinksAndImageReferences": [
+        {
+          "line": 25,
+          "target": "config/execution-20260916.json",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 32,
+          "target": "results/execution-smoke-20260916.json",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 122,
+          "target": "launch/eks/README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 144,
+          "target": "../../../en/ai-ml/sagemaker-ai/README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 145,
+          "target": "../../../en/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 146,
+          "target": "../../../en/ai-ml/sagemaker-ai/06-data-augmentation-workshop.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 147,
+          "target": "../../../en/ai-ml/sagemaker-ai/07-pii-evaluation-release.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 149,
+          "target": "../../../ko/ai-ml/sagemaker-ai/README.md",
+          "image": false,
+          "exists": true
+        }
+      ],
+      "missingFiles": [],
+      "fragmentResolution": "Separate renderer/validator scope; no claim of full browser rendering by content reviewer."
+    },
+    "examples/ai-ml/qwen-pii-finetuning/launch/eks/README.md": {
+      "relativeFileLinksAndImageReferences": [
+        {
+          "line": 4,
+          "target": "../../README.md",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 26,
+          "target": "run.sh",
+          "image": false,
+          "exists": true
+        },
+        {
+          "line": 57,
+          "target": "../../../../security/eks-security/private-endpoints/README.md",
+          "image": false,
+          "exists": true
+        }
+      ],
+      "missingFiles": [],
+      "fragmentResolution": "Separate renderer/validator scope; no claim of full browser rendering by content reviewer."
+    },
+    "examples/security/eks-security/private-endpoints/README.md": {
+      "relativeFileLinksAndImageReferences": [
+        {
+          "line": 46,
+          "target": "../../../ai-ml/qwen-pii-finetuning/launch/eks/README.md",
+          "image": false,
+          "exists": true
+        }
+      ],
+      "missingFiles": [],
+      "fragmentResolution": "Separate renderer/validator scope; no claim of full browser rendering by content reviewer."
+    }
+  },
+  "officialEvidence": {
+    "provider": "AWS Documentation MCP read_documentation; actual primary AWS page text read, targeted sections only when long documents truncate.",
+    "references": {
+      "failover": "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html",
+      "gatewayOperations": "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html",
+      "credentials": "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html",
+      "webhooks": "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html",
+      "cni": "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+      "networkPolicy": "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+      "disconnection": "https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html",
+      "gatewayPrerequisites": "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html",
+      "gatewayCni": "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html",
+      "cloudfront": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html",
+      "apiStream": "https://docs.aws.amazon.com/apigateway/latest/developerguide/response-transfer-mode-lambda.html",
+      "bedrockModel": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-haiku-5-5.html"
+    },
+    "conflictingOfficialGuidance": "The network-disconnection overview has a blanket zone-eviction statement; the dedicated Kubernetes Pod failover guide details the other-zone-ready eviction and all-cluster-no-ready cancellation cases. Repairs explicitly use the detailed scenario conditions; the disagreement is not hidden."
+  },
+  "labProvenanceAudit": {
+    "searchedScope": "en/eks-hybrid-nodes, ko/eks-hybrid-nodes and docs for 20/20, 0 of 276 / 276건, 1 of 191 / 191건, 02:11 UTC; manually read relevant sections in both 12-connectivity-validation pages.",
+    "result": "The lab numbers occur in Gateway body/demo descriptions; attached raw request/capture records were not found in this bounded repository search. The 38-check 2026-10-19 native-routing experiment is separate from Gateway 2026-10-18 observations.",
+    "finalHandling": "Explicit example/trace limitation in both languages, timestamped reader-side verification required.",
+    "remainingMajorIssue": false
+  },
+  "conflictResolution": {
+    "count": 8,
+    "strategy": "Retained latest-main wording and demo sections before applying intended user patch and targeted factual repairs.",
+    "ownedFilesOnly": true,
+    "originalUserWorktreeModified": false,
+    "gitIndexCommitPushByReviewer": false
+  },
+  "independentVerificationLimits": [
+    "No browser-based visual score.",
+    "No live AWS deployment, packet test, GPU retraining or rerun of historical lab.",
+    "No claim that every external release/version reference was researched again.",
+    "Root-reported automated checks are separate evidence, not the source of content scores."
+  ],
+  "rootReportedValidation": {
+    "docsValidate": "Root reports actual 209/209 PASS, news103 records and links/images/ko-en parity PASS; not rerun by this content reviewer.",
+    "gitbookCoverage": "Root reports existing missing CN/JP/ES connectivity page/quiz coverage fails equally on base872 main; separate pre-existing coverage issue, not silently asserted PASS."
+  },
+  "lastUpdatedAt": "2026-10-20T14:33:09.286902+00:00",
+  "lastAddendum": "AskDocs final safer publication variant received actual full-page rereview; final hash replaced, initial and intermediate actual grades/evidence preserved. Other 9 reviewed documents byte-identical."
+}

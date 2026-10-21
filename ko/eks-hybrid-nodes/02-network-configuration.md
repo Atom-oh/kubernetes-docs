@@ -652,7 +652,7 @@ KUBE-SERVICES → KUBE-SVC-* → KUBE-SEP-* → endpoint DNAT
 
 ## CNI 구성 선택: Cilium 단독과 VPC CNI 혼합
 
-VPC CNI는 hybrid 노드와 호환되지 않으므로 **hybrid 노드에는 항상 Cilium(또는 Calico)이 들어갑니다.** 따라서 "Cilium만 쓸지, VPC CNI와 섞을지"는 실제로는 **클라우드 노드를 둘지, 둔다면 어떤 CNI를 쓸지**에 대한 질문입니다.
+VPC CNI는 hybrid 노드와 호환되지 않습니다. **이 비교는 현재 CNI 문서의 AWS-maintained Cilium을 hybrid 노드에서 사용하는 구성을 전제로 합니다.** 기존 Calico 설치는 현재 지원 범위와 운영 책임을 별도로 확인합니다. 따라서 "Cilium만 쓸지, VPC CNI와 섞을지"는 실제로는 **클라우드 노드를 둘지, 둔다면 어떤 CNI를 쓸지**에 대한 질문입니다.
 
 | 기준 | ① hybrid 전용 클러스터 (Cilium만) | ② 혼합 모드 (클라우드 VPC CNI + hybrid Cilium) | ③ 클라우드 노드까지 Cilium |
 |---|---|---|---|
@@ -660,7 +660,7 @@ VPC CNI는 hybrid 노드와 호환되지 않으므로 **hybrid 노드에는 항�
 | webhook 위치 | hybrid 노드에서 실행. 컨트롤 플레인이 Pod IP로 들어오므로 온프렘 Pod CIDR을 BGP나 static으로 라우팅해야 함 | 클라우드 노드에 배치. 온프렘 Pod CIDR을 라우팅하지 않아도 됨 | 클라우드 Cilium의 IPAM과 라우팅 방식에 따라 달라 직접 검증해야 함 |
 | 클라우드와 온프렘 Pod 통신 | 해당 없음 | 온프렘 Pod CIDR 라우팅 또는 [Hybrid Nodes Gateway](10-hybrid-nodes-gateway.md) | 터널이나 라우팅을 직접 설계. Hybrid Nodes Gateway는 gateway 노드를 포함한 클라우드 노드가 VPC CNI(Auto Mode면 내장 네트워킹)여야 해서 사용 불가 |
 | 버스팅과 Auto Mode | 클라우드 용량이 없어 불가 | Karpenter로 클라우드 노드 확장 가능. Auto Mode는 내장 네트워킹 | Auto Mode는 CNI 교체 불가. Karpenter 노드의 Cilium도 직접 운영 |
-| 정책과 관측 | Cilium 하나로 통일 (NetworkPolicy, Cilium 정책, Hubble) | 표준 Kubernetes NetworkPolicy는 양쪽 CNI가 각각 적용. Cilium 전용 정책과 Hubble은 hybrid 쪽만 | 한 CNI로 통일되지만 클라우드 쪽 장애 대응과 업그레이드 책임은 고객이나 벤더 |
+| 정책과 관측 | 정책 적용을 구성한 Cilium 하나로 통일 (NetworkPolicy, Cilium 정책, Hubble) | CNI별로 NetworkPolicy 적용을 구성하고 검증. VPC CNI는 지원되는 EC2 Linux 노드에서 정책 적용 기능을 활성화해야 하며, NetworkPolicy 객체만 만들면 활성화되지 않음. Cilium 전용 정책과 Hubble은 hybrid 쪽만 | 정책 적용을 구성한 한 CNI로 통일되지만 클라우드 쪽 장애 대응과 업그레이드 책임은 고객이나 벤더 |
 
 선택 기준:
 
@@ -670,6 +670,7 @@ VPC CNI는 hybrid 노드와 호환되지 않으므로 **hybrid 노드에는 항�
 
 참고:
 - [Configure CNI for hybrid nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Restrict Pod traffic with Kubernetes network policies](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
 - [Configure webhooks for hybrid nodes: considerations for mixed mode clusters](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
 - [Get started with EKS Hybrid Nodes gateway](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
 

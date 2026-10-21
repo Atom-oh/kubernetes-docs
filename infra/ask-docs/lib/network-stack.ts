@@ -4,10 +4,12 @@ import * as iam from 'aws-cdk-lib/aws-iam'
 import * as cr from 'aws-cdk-lib/custom-resources'
 import { Construct } from 'constructs'
 
-// Private network for the docs Q&A API. No internet gateway, no NAT:
-// AWS services are reached only through VPC endpoints.
+// Security groups and the execute-api endpoint for the docs Q&A API inside the shared demo VPC
+// (fsi-demo-vpc). This stack never creates a VPC: the demo VPC already has the S3 and DynamoDB
+// gateway endpoints, the bedrock-runtime interface endpoint (VPC-wide 443) and the internet gateway
+// CloudFront VPC origins need. The isolated subnets have no route to the IGW or NAT.
 export class NetworkStack extends cdk.Stack {
-  public readonly vpc: ec2.Vpc
+  public readonly vpc: ec2.IVpc
   public readonly albSecurityGroup: ec2.SecurityGroup
   public readonly lambdaSecurityGroup: ec2.SecurityGroup
   public readonly executeApiEndpoint: ec2.InterfaceVpcEndpoint
@@ -20,43 +22,32 @@ export class NetworkStack extends cdk.Stack {
     const DYNAMODB_PREFIX_LIST = 'pl-48a54021'
     const CLOUDFRONT_ORIGIN_FACING_PREFIX_LIST = 'pl-22a6434b'
 
-    this.vpc = new ec2.Vpc(this, 'Vpc', {
-      ipAddresses: ec2.IpAddresses.cidr('10.240.0.0/16'),
-      maxAzs: 2,
-      natGateways: 0,
-      subnetConfiguration: [{ name: 'isolated', subnetType: ec2.SubnetType.PRIVATE_ISOLATED, cidrMask: 24 }],
-    })
-
-    // CloudFront VPC origins require an internet gateway attached to the VPC. It only marks the
-    // VPC as able to receive CloudFront traffic: no route table points to it, so the subnets stay
-    // isolated (AWS docs: "The internet gateway is not used for routing traffic to origins").
-    const igw = new ec2.CfnInternetGateway(this, 'VpcOriginIgw', {})
-    new ec2.CfnVPCGatewayAttachment(this, 'VpcOriginIgwAttachment', {
-      vpcId: this.vpc.vpcId,
-      internetGatewayId: igw.ref,
-    })
-
-    this.vpc.addGatewayEndpoint('S3', {
-      service: ec2.GatewayVpcEndpointAwsService.S3,
-      subnets: [{ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }],
-    })
-    this.vpc.addGatewayEndpoint('DynamoDb', {
-      service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
-      subnets: [{ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }],
-    })
-
-    const endpointSg = new ec2.SecurityGroup(this, 'EndpointSg', {
-      vpc: this.vpc,
-      description: 'Bedrock runtime interface endpoint',
-      allowAllOutbound: false,
+    const ctx = (key: string) => {
+      const value = this.node.tryGetContext(key) as string | undefined
+      if (typeof value !== 'string' || !value.trim()) {
+        throw new Error(`context "${key}" is required; pass -c ${key}=... from a private context file outside Git`)
+      }
+      return value
+    }
+    this.vpc = ec2.Vpc.fromVpcAttributes(this, 'DemoVpc', {
+      vpcId: ctx('demoVpcId'),
+      vpcCidrBlock: ctx('demoVpcCidr'),
+      availabilityZones: ['ap-northeast-2a', 'ap-northeast-2b'],
+      isolatedSubnetIds: [ctx('demoIsolatedSubnetA'), ctx('demoIsolatedSubnetB')],
+      isolatedSubnetRouteTableIds: [ctx('demoIsolatedRouteTableA'), ctx('demoIsolatedRouteTableB')],
     })
 
     this.lambdaSecurityGroup = new ec2.SecurityGroup(this, 'LambdaSg', {
       vpc: this.vpc,
-      description: 'Ask-docs Lambda: egress only to endpoints and S3',
+      description: 'Ask-docs Lambda: egress only to endpoints, S3 and DynamoDB',
       allowAllOutbound: false,
     })
-    this.lambdaSecurityGroup.addEgressRule(endpointSg, ec2.Port.tcp(443), 'Bedrock runtime endpoint')
+    // The demo VPC's existing bedrock-runtime endpoint SG already admits 443 from the VPC CIDR.
+    this.lambdaSecurityGroup.addEgressRule(
+      ec2.Peer.securityGroupId(ctx('demoBedrockEndpointSg')),
+      ec2.Port.tcp(443),
+      'Bedrock runtime endpoint'
+    )
     this.lambdaSecurityGroup.addEgressRule(
       ec2.Peer.prefixList(S3_PREFIX_LIST),
       ec2.Port.tcp(443),
@@ -67,15 +58,6 @@ export class NetworkStack extends cdk.Stack {
       ec2.Port.tcp(443),
       'DynamoDB gateway endpoint'
     )
-    endpointSg.addIngressRule(this.lambdaSecurityGroup, ec2.Port.tcp(443), 'from ask-docs Lambda')
-
-    new ec2.InterfaceVpcEndpoint(this, 'BedrockRuntime', {
-      vpc: this.vpc,
-      service: new ec2.InterfaceVpcEndpointService(`com.amazonaws.${this.region}.bedrock-runtime`, 443),
-      subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
-      privateDnsEnabled: true,
-      securityGroups: [endpointSg],
-    })
 
     // Internal ALB: only CloudFront origin-facing addresses may reach it (CLAUDE.md allows the
     // CloudFront managed prefix list). Egress only to the execute-api endpoint below.
@@ -91,8 +73,8 @@ export class NetworkStack extends cdk.Stack {
     )
 
     // An ALB Lambda target cannot stream a response, so the ALB forwards the API to a private API
-    // Gateway (STREAM transfer mode) through this endpoint's ENIs. Private DNS stays off: nothing in
-    // the VPC calls execute-api by name, and the ALB sets the API's Host header itself.
+    // Gateway (STREAM transfer mode) through this endpoint's ENIs. Private DNS stays off so the
+    // shared demo VPC's other workloads are unaffected, and the ALB sets the API's Host header itself.
     const apiEndpointSg = new ec2.SecurityGroup(this, 'ApiEndpointSg', {
       vpc: this.vpc,
       description: 'execute-api interface endpoint: from the internal ALB only',
@@ -109,8 +91,8 @@ export class NetworkStack extends cdk.Stack {
       open: false, // no VPC-CIDR ingress; only the ALB rule above
     })
     // The endpoint picks the API by Host or x-apigw-api-id header, so it must not be usable for any
-    // other private API: only this account's ask route. (The API id lives in AskDocsApp, which depends
-    // on this stack, hence the stage/route match instead of the exact id.)
+    // other private API: only this account's ask route. (The API id lives in the app stack, which
+    // depends on this stack, hence the stage/route match instead of the exact id.)
     this.executeApiEndpoint.addToPolicy(
       new iam.PolicyStatement({
         principals: [new iam.AnyPrincipal()],

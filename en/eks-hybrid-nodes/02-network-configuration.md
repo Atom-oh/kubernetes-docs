@@ -652,7 +652,7 @@ Use supported API-server-mediated diagnostics and appropriate authorization. The
 
 ## Choosing a CNI Design: Cilium Only or Mixed with VPC CNI
 
-The VPC CNI is not compatible with hybrid nodes, so **hybrid nodes always run Cilium (or Calico).** The question "Cilium only or mixed with the VPC CNI?" is therefore really about **whether the cluster has cloud nodes, and if so, which CNI they run.**
+The VPC CNI is not compatible with hybrid nodes. **This comparison assumes Cilium on hybrid nodes, using the AWS-maintained build described in the current CNI guide.** For an existing Calico installation, confirm its current support and operational responsibility separately. The question "Cilium only or mixed with the VPC CNI?" is therefore really about **whether the cluster has cloud nodes, and if so, which CNI they run.**
 
 | Criterion | ① Hybrid-only cluster (Cilium only) | ② Mixed mode (VPC CNI in the cloud + Cilium on hybrid) | ③ Cilium on cloud nodes too |
 |---|---|---|---|
@@ -660,7 +660,7 @@ The VPC CNI is not compatible with hybrid nodes, so **hybrid nodes always run Ci
 | Webhook placement | Runs on hybrid nodes. The control plane connects to pod IPs, so the on-premises pod CIDR must be routable with BGP or static routes | Run on cloud nodes. The on-premises pod CIDR does not need to be routable | Depends on the IPAM and routing of Cilium in the cloud; you must validate it yourself |
 | Cloud to on-premises pod traffic | Not applicable | Routable on-premises pod CIDR or the [Hybrid Nodes gateway](10-hybrid-nodes-gateway.md) | Design tunnels or routing yourself. The Hybrid Nodes gateway requires the VPC CNI (or Auto Mode built-in networking) on cloud nodes, including the gateway nodes, so it cannot be used |
 | Bursting and Auto Mode | Not possible without cloud capacity | Karpenter can add cloud nodes. Auto Mode uses built-in networking | Auto Mode cannot replace its CNI. Cilium on Karpenter nodes is also self-operated |
-| Policy and observability | One CNI (NetworkPolicy, Cilium policies, Hubble) | Each CNI enforces standard Kubernetes NetworkPolicy. Cilium-specific policies and Hubble exist only on the hybrid side | One CNI, but incident response and upgrades for the cloud side are on you or a vendor |
+| Policy and observability | One CNI (NetworkPolicy, Cilium policies, Hubble), with policy enforcement configured | Configure and verify NetworkPolicy enforcement separately for each CNI. VPC CNI enforcement must be enabled on supported EC2 Linux nodes; a NetworkPolicy object alone does not enable it. Cilium-specific policies and Hubble exist only on the hybrid side | One CNI with policy enforcement configured, but incident response and upgrades for the cloud side are on you or a vendor |
 
 How to choose:
 
@@ -670,6 +670,7 @@ How to choose:
 
 References:
 - [Configure CNI for hybrid nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Restrict Pod traffic with Kubernetes network policies](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
 - [Configure webhooks for hybrid nodes: considerations for mixed mode clusters](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
 - [Get started with EKS Hybrid Nodes gateway](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
 

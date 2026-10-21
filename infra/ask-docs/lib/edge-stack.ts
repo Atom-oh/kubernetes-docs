@@ -128,17 +128,22 @@ function handler(event) {
       securityGroupId: props.albSgId,
       vpc: ec2.Vpc.fromVpcAttributes(this, 'AskVpc', {
         vpcId: props.vpcId,
-        vpcCidrBlock: '10.240.0.0/16',
-        availabilityZones: ['ap-northeast-2a', 'ap-northeast-2b'], // the subnets CDK created (maxAzs: 2)
+        vpcCidrBlock: this.node.tryGetContext('demoVpcCidr') as string,
+        availabilityZones: ['ap-northeast-2a', 'ap-northeast-2b'], // demo VPC isolated subnets
       }),
     })
-    const apiOrigin = origins.VpcOrigin.withApplicationLoadBalancer(alb, {
+    // A VPC origin cannot be updated while a distribution uses it, so it is its own resource: moving
+    // to another ALB means a new logical id, then the distribution switches, then the old one is deleted.
+    const vpcOrigin = new cloudfront.VpcOrigin(this, 'DemoVpcOrigin', {
+      endpoint: cloudfront.VpcOriginEndpoint.applicationLoadBalancer(alb),
       protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
       httpsPort: 443,
       originSslProtocols: [cloudfront.OriginSslPolicy.TLS_V1_2],
-      vpcOriginName: 'ask-docs-internal-alb',
-      // The ALB certificate is for ask-origin.aws.atomai.click, so CloudFront connects with that name.
-      domainName: 'ask-origin.aws.atomai.click',
+      vpcOriginName: 'ask-docs-demo-vpc-alb',
+    })
+    const apiOrigin = origins.VpcOrigin.withVpcOrigin(vpcOrigin, {
+      // The ALB certificate is for ask-origin-demo.aws.atomai.click, so CloudFront connects with that name.
+      domainName: 'ask-origin-demo.aws.atomai.click',
     })
 
     // Forward only what the API reads. In particular x-apigw-api-id never reaches the execute-api
