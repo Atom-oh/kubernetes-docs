@@ -338,7 +338,7 @@ If your network path between VPC and on-premises uses standard 1500 MTU:
 ```
 Effective Pod MTU calculation:
 Physical MTU:        1500 bytes
-VXLAN overhead:      - 50 bytes (outer IP + outer UDP + VXLAN header)
+VXLAN overhead:      - 50 bytes (outer IPv4 + outer UDP + VXLAN + inner Ethernet headers)
 VPN overhead (IPsec): - 57-73 bytes (if applicable)
 Effective Pod MTU:   ~1377-1450 bytes
 ```
@@ -520,7 +520,7 @@ aws ec2 describe-route-tables --region "$AWS_REGION" \
 
 ### Step 3: Install via Helm
 
-Complete the CNI, node and workload IAM steps before installation. The leader may immediately replace existing routes for the configured CIDRs. Use the values file below after checking ownership, reverse routing and rollback. This chapter validates configuration locally; it does not report a live deployment.
+Complete the CNI, node and workload IAM steps before installation. The leader may immediately replace existing routes for the configured CIDRs. Use the values file below after checking ownership, reverse routing and rollback. The installation steps here were checked locally; they are not a record of a successful live installation. The separately dated lab observations and demo videos below describe a simulated environment and do not validate your deployment.
 
 ### Full Helm Values Reference
 
@@ -713,7 +713,9 @@ The [Hybrid add-on guide](https://docs.aws.amazon.com/eks/latest/userguide/hybri
 
 #### Measured: ALB IP Targets on Hybrid Pods (2026-10-18)
 
-Measured in a simulated environment (on-premises replaced by a separate VPC over TGW, gateway 1.0.2, AWS Load Balancer Controller chart 3.6.0, internal ALB). This is not a supported production setup and the numbers are not guarantees.
+The supplied run notes report observations from a simulated environment (on-premises replaced by a separate VPC over TGW, gateway 1.0.2, AWS Load Balancer Controller chart 3.6.0, internal ALB). This is not a supported production setup and the numbers are not guarantees.
+
+Raw request logs and packet captures for the 20/20, 54 s, 0-of-276 and 1-of-191 observations are not attached to this document. Treat them as examples from the supplied lab notes, rather than independently reproducible acceptance evidence. The [38-check native-routing test](12-connectivity-validation.md) is a separate experiment and does not corroborate these gateway results. For your deployment, use the diagnostics in [Network Configuration](02-network-configuration.md) and test forward and return application paths from both cloud and Hybrid clients. Retain timestamped client results, source addresses, target health and route/Lease changes.
 
 | Check | Result |
 |---|---|
@@ -731,8 +733,8 @@ An on-premises client enters through a load balancer and reaches Pods on Region 
 | Path | Behavior | Measured (2026-10-18) |
 |---|---|---|
 | On-premises → internal ALB → VPC CNI Pod | On-premises DNS resolves the ALB name to private IPs (Route 53 Resolver inbound endpoint); traffic enters the VPC over DX/VPN/TGW and the ALB forwards to VPC CNI Pod IPs. No gateway hop | 20/20 |
-| On-premises → internal ALB → Hybrid Pod | The same path plus a hairpin back to on-premises through the gateway; it crosses DX twice, adding latency and transfer cost | 20/20 |
-| On-premises → Hybrid NodePort → VPC CNI Pod | kube-proxy SNATs to the node IP and host routing sends it over the underlay, so the gateway (VTEP) is not used. Region node security groups must allow the app port from the remote node CIDR | Failed (cluster SG allowed only 443 from the remote node CIDR) |
+| On-premises → internal ALB → Hybrid Pod | The same path plus a hairpin back to on-premises through the gateway, traversing the private connection in both directions. This simulation used TGW; a production DX or VPN path must be assessed separately for latency and transfer cost | 20/20 |
+| On-premises → Hybrid NodePort → VPC CNI Pod | The reported lab path used node-IP SNAT and underlay routing without the gateway (VTEP). That behavior depends on the Service traffic policy, kube-proxy/Cilium dataplane and masquerading configuration. Inspect the actual source IP and return route; if node-IP SNAT applies, Region node security groups must allow the app port from the remote node CIDR | Failed (the reported lab cluster SG allowed only 443 from the remote node CIDR) |
 
 The [AWS Ingress guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html) recommends ALB with the Load Balancer Controller for traffic that originates in the Region and on-premises Ingress for traffic that originates on-premises. Because the gateway requires Cilium `l7Proxy=false`, Cilium Ingress and Gateway API are not available in the same installation; for on-premises entry consider an L4 `LoadBalancer` Service (Cilium LB IPAM/BGP) or an existing hardware LB with NodePort.
 
@@ -800,7 +802,7 @@ The gateway (1.0.2) is deployed as one set per cluster with a single active lead
 | Firewall | Hybrid nodes in every data center must reach UDP 8472 on **both** the leader and standby node IPs |
 | Per-data-center split | Running a separate gateway per data center inside one cluster is not documented. In 1.0.2 the Lease (`hybrid-gateway-leader`) and CiliumVTEPConfig (`hybrid-gateway`) names are fixed, so multiple releases are likely to conflict (not verified) |
 
-If only one gateway Pod exists, or both fail, Pod traffic between the VPC and the Hybrid Pod CIDRs of **all** data centers stops together. The runtime never calls `DeleteRoute`, so VPC routes keep pointing at the failed ENI.
+If the only gateway Pod fails, or both replicas fail, Pod traffic between the VPC and the Hybrid Pod CIDRs of **all** data centers stops together. One healthy leader can still forward traffic, but without a standby it has no gateway redundancy. The runtime never calls `DeleteRoute`, so VPC routes keep pointing at the failed ENI until an operator or a recovered leader changes them.
 
 | Paths that break | Paths that remain (when their own network and DNS are healthy) |
 |---|---|
@@ -1178,7 +1180,7 @@ done
 
 #### Gateway Costs
 
-There is no gateway software charge. Count EC2, storage, Auto Mode management fees (only for gateway nodes running on Auto Mode), cross-AZ data transfer, private connectivity and observability as well as normal cluster/Hybrid Nodes costs. “Inside the same VPC” does not imply free cross-AZ transfer. Routing through another AZ can add traffic charges. There is only one active leader, so even with gateway nodes in several AZs, Hybrid traffic from Pods, ALBs or scrapers in other AZs crosses into the leader's AZ ([AWS operations guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html)). For high-volume paths, route the Pod CIDRs directly with Cilium BGP so traffic leaves through the TGW/VGW in the Pod's own AZ, and keep the gateway for webhooks and low-volume Pod-to-Pod traffic.
+There is no gateway software charge. Count EC2, storage, Auto Mode management fees (only for gateway nodes running on Auto Mode), cross-AZ data transfer, private connectivity and observability as well as normal cluster/Hybrid Nodes costs. “Inside the same VPC” does not imply free cross-AZ transfer. Routing through another AZ can add traffic charges. There is only one active leader, so even with gateway nodes in several AZs, Hybrid traffic from Pods, ALBs or scrapers in other AZs crosses into the leader's AZ ([AWS operations guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html)). For high-volume traffic, compare the gateway with an alternative routable Pod CIDR design using Cilium BGP or static routes. The gateway owns the configured Pod CIDR routes and Cilium VTEP configuration; it does not select a path by application, webhook or traffic volume. Do not let native-routing and gateway automation manage the same destination route. A combined design requires explicitly disjoint routing ownership and validated forward and return paths, and neither design guarantees an exit through the client Pod's AZ.
 
 **Historical estimates, not current quotes or measured savings:** the following original prices/discounts have no recoverable verification source. They are preserved for context; rebuild a dated regional estimate from actual usage and the [EKS pricing page](https://aws.amazon.com/eks/pricing/), EC2 terms and data-transfer paths before making a commitment.
 

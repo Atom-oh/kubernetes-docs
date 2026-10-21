@@ -17,7 +17,9 @@ export class NetworkStack extends cdk.Stack {
 
     const ctx = (key: string) => {
       const value = this.node.tryGetContext(key) as string | undefined
-      if (!value) throw new Error(`context "${key}" is required (demo VPC settings in cdk.json)`)
+      if (typeof value !== 'string' || !value.trim()) {
+        throw new Error(`context "${key}" is required; pass -c ${key}=... from a private context file outside Git`)
+      }
       return value
     }
     this.vpc = ec2.Vpc.fromVpcAttributes(this, 'DemoVpc', {
@@ -29,7 +31,7 @@ export class NetworkStack extends cdk.Stack {
     })
 
     // Internal ALB: only CloudFront origin-facing addresses may reach it (CLAUDE.md allows the
-    // CloudFront managed prefix list). Egress only to the execute-api endpoint below.
+    // CloudFront managed prefix list). Egress only to the EKS pods below.
     this.albSecurityGroup = new ec2.SecurityGroup(this, 'AlbSg', {
       vpc: this.vpc,
       description: 'Internal ALB for ask-docs: CloudFront origin-facing only',

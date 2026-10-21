@@ -91,7 +91,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("AWS_LWA_PORT") or os.environ.get("PORT") or 8080)
+    port = int(os.environ.get("PORT") or 8080)
     if os.environ.get("WARMUP") == "1":  # load the search index before the readiness probe passes
         app._get_index()
     ThreadingHTTPServer((os.environ.get("HOST", "127.0.0.1"), port), Handler).serve_forever()

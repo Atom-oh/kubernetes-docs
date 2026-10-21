@@ -34,6 +34,9 @@ export class AppStack extends cdk.Stack {
       hostedZoneId: this.node.tryGetContext('appZoneId') as string,
     })
     const clusterName = this.node.tryGetContext('demoClusterName') as string
+    if (typeof clusterName !== 'string' || !clusterName.trim()) {
+      throw new Error('context "demoClusterName" is required; pass -c demoClusterName=... from a private context file outside Git')
+    }
 
     // Created ahead of the first deploy (scan on push, keep the last 10 images) so the image can be
     // pushed before the Lambda is retired; the stack only refers to it.

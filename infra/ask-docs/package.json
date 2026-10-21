@@ -5,7 +5,7 @@
   "description": "Docs Q&A API (Haiku 5.5): CloudFront -> internal ALB -> private API Gateway (streaming) -> Lambda, with the chunk index in S3",
   "scripts": {
     "build": "tsc --noEmit",
-    "synth": "cdk synth AskDocsNetwork AskDocsData AskDocsApp",
+    "synth": "cdk synth AskDocsDemoNetwork AskDocsData AskDocsAppDemo",
     "diff": "cdk diff"
   },
   "dependencies": {

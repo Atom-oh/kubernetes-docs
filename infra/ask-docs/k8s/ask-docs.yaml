@@ -1,4 +1,5 @@
-# Render with envsubst (IMAGE, TARGET_GROUP_ARN, ALB_SG_ID, INDEX_BUCKET, CONVERSATION_TABLE, MODEL_ID),
+# Render with envsubst (IMAGE, TARGET_GROUP_ARN, ALB_SG_ID, ALB_SUBNET_CIDR_A/B, INDEX_BUCKET,
+# CONVERSATION_TABLE, MODEL_ID),
 # then kubectl apply. The target group and ALB come from the AskDocsAppDemo stack outputs; the pods get
 # their AWS permissions through the Pod Identity association that stack creates for ask-docs/ask-docs.
 apiVersion: v1
@@ -122,7 +123,7 @@ spec:
   policyTypes: [Ingress]
   ingress:
     - from:
-        - ipBlock: { cidr: 10.0.4.0/24 } # IsolatedSubnet1 (ap-northeast-2a), internal ALB
-        - ipBlock: { cidr: 10.0.5.0/24 } # IsolatedSubnet2 (ap-northeast-2b), internal ALB
+        - ipBlock: { cidr: ${ALB_SUBNET_CIDR_A} } # isolated subnet A, where the internal ALB runs
+        - ipBlock: { cidr: ${ALB_SUBNET_CIDR_B} } # isolated subnet B
       ports:
         - { protocol: TCP, port: 8080 }

@@ -1,11 +1,17 @@
-# Copy to terraform.tfvars. Demos run only in the shared demo VPC (fsi-demo-vpc, 10.0.0.0/16).
-vpc_id = "vpc-04e77172c67f19814"
+# Copy to a private variable file and replace every placeholder before use.
+# Demos use only the approved existing fsi-demo-vpc in ap-northeast-2.
+# Verify its account/ID and subnet membership; a matching name is not approval.
+# See README.md for all required inputs and network prerequisites.
+vpc_id = "vpc-REPLACE_WITH_APPROVED_DEMO_VPC"
 
 private_subnet_ids = [
-  "subnet-0381e6c41375cbc53", # PrivateSubnet1, ap-northeast-2a
-  "subnet-037c396f41efedba8", # PrivateSubnet2, ap-northeast-2b
+  "subnet-REPLACE_WITH_PRIVATE_SUBNET_A", # ap-northeast-2a
+  "subnet-REPLACE_WITH_PRIVATE_SUBNET_B", # ap-northeast-2b
 ]
 
-# Fill in from the demo VPC's private route tables and the client workloads' SGs.
-# private_route_table_ids   = ["rtb-..."]
-# client_security_group_ids = ["sg-..."]
+# Required: the selected private subnets' route tables and approved client SGs.
+# private_route_table_ids   = ["rtb-REPLACE_WITH_PRIVATE_ROUTE_TABLE"]
+# client_security_group_ids = ["sg-REPLACE_WITH_APPROVED_CLIENT"]
+# Required: a reviewed JSON string for s3_endpoint_policy_json.
+# Optional: interface_service_names maps logical names to exact Region-verified
+# service names. Its default is empty; no interface endpoints are then created.

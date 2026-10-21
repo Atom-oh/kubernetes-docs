@@ -425,7 +425,7 @@ Auto Mode는 `NodeClass.spec.advancedNetworking.sourceDestCheck: DisabledPrimary
 
 #### 기본 설치
 
-적격 cloud EC2 노드를 먼저 준비합니다. 관리형/자체 관리 노드는 `autoMode.enabled=false`를 사용합니다. Auto Mode는 NodeClass/NodePool을 준비하고 `autoMode.enabled=true`를 사용합니다. IAM·source/destination check·CNI·security group과 반환 경로를 확인한 뒤 설치합니다. Leader가 기존 CIDR 라우트를 즉시 바꿀 수 있으므로 소유자·전환·복구 계획을 먼저 정합니다. 이 장의 검증은 로컬 구성 검증이며 실제 설치 성공 기록이 아닙니다.
+적격 cloud EC2 노드를 먼저 준비합니다. 관리형/자체 관리 노드는 `autoMode.enabled=false`를 사용합니다. Auto Mode는 NodeClass/NodePool을 준비하고 `autoMode.enabled=true`를 사용합니다. IAM·source/destination check·CNI·security group과 반환 경로를 확인한 뒤 설치합니다. Leader가 기존 CIDR 라우트를 즉시 바꿀 수 있으므로 소유자·전환·복구 계획을 먼저 정합니다. 이 설치 절차는 로컬에서 검증했으며 실제 설치 성공 기록이 아닙니다. 아래에 별도 날짜로 기록한 실험 관측과 데모 영상은 시뮬레이션 환경의 사례이며 독자의 배포가 검증됐다는 뜻은 아닙니다.
 
 AWS account·cluster VPC·remote Pod CIDR과 해당 subnet/control-plane route table을 확인합니다. VPC의 모든 table을 조회했다고 모두 변경해도 되는 것은 아닙니다. `remoteNetworkConfig`는 `cluster` 바로 아래에 있으며 `kubernetesNetworkConfig`의 하위 필드가 아닙니다.
 
@@ -655,7 +655,9 @@ ALB/NLB IP target과 AMP managed collector의 scraper처럼 VPC에서 Hybrid end
 
 #### 실측: ALB IP target에 Hybrid Pod 연결 (2026-10-18)
 
-시뮬레이션 환경(온프레미스를 별도 VPC와 TGW로 대체, Gateway 1.0.2, AWS Load Balancer Controller chart 3.6.0, internal ALB)에서 확인한 값입니다. 프로덕션 지원 구성이 아니며 보장값이 아닙니다.
+제공된 실험 기록에 기재된 시뮬레이션 환경(온프레미스를 별도 VPC와 TGW로 대체, Gateway 1.0.2, AWS Load Balancer Controller chart 3.6.0, internal ALB)의 관측값입니다. 프로덕션 지원 구성이 아니며 보장값이 아닙니다.
+
+20/20, 54초, 276건 중 실패 0, 191건 중 실패 1의 원시 요청 로그와 패킷 캡처는 이 문서에 첨부되어 있지 않습니다. 제공된 실험 기록의 관측 예시이며 독립적으로 재현할 수 있는 인수 검증 증거로 간주하지 마세요. [Native routing 38개 연결 검증](12-connectivity-validation.md)은 별도 실험으로 이 Gateway 결과를 뒷받침하지 않습니다. 실제 배포에서는 [네트워크 구성](02-network-configuration.md)의 진단 절차와 함께 cloud·Hybrid client 양쪽에서 앱 정방향·반환 경로를 시험합니다. 시각이 기록된 client 결과·출발지 주소·target health·route/Lease 변경을 보관합니다.
 
 | 검증 | 결과 |
 |---|---|
@@ -673,8 +675,8 @@ Pod IP가 바뀔 때 target을 갱신하는 주체는 Gateway가 아니라 **AWS
 | 경로 | 동작 | 실측 (2026-10-18) |
 |---|---|---|
 | 온프레미스 → internal ALB → VPC CNI Pod | 온프레미스 DNS가 ALB 이름을 private IP로 해석(Route 53 Resolver inbound endpoint), DX/VPN/TGW로 VPC에 진입, ALB가 VPC CNI Pod IP로 전달. Gateway 미경유 | 20/20 |
-| 온프레미스 → internal ALB → Hybrid Pod | 위 경로에 Gateway를 거쳐 온프레미스로 되돌아오는 hairpin. DX를 두 번 지나 지연과 전송 비용 증가 | 20/20 |
-| 온프레미스 → Hybrid NodePort → VPC CNI Pod | kube-proxy가 노드 IP로 SNAT한 뒤 host routing으로 underlay를 지나므로 Gateway(VTEP)를 타지 않음. 리전 노드 SG가 remote node CIDR에서 오는 앱 포트를 허용해야 함 | 실패 (cluster SG가 remote node CIDR에 443만 허용) |
+| 온프레미스 → internal ALB → Hybrid Pod | 위 경로에 Gateway를 거쳐 온프레미스로 되돌아오는 hairpin으로 private 연결을 양방향으로 통과. 이 시뮬레이션은 TGW를 사용했으며 프로덕션 DX·VPN 경로의 지연과 전송 비용은 별도 평가 | 20/20 |
+| 온프레미스 → Hybrid NodePort → VPC CNI Pod | 기록된 실험 경로는 노드 IP SNAT과 underlay routing으로 Gateway(VTEP)를 미경유. 이 동작은 Service traffic policy, kube-proxy/Cilium dataplane, masquerading 설정에 따라 달라지므로 실제 출발지 IP와 반환 경로를 확인. 노드 IP SNAT이 적용되면 리전 노드 SG가 remote node CIDR에서 오는 앱 포트를 허용해야 함 | 실패 (기록된 실험의 cluster SG가 remote node CIDR에 443만 허용) |
 
 [AWS Ingress 문서](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-ingress.html)는 리전에서 시작하는 트래픽에는 ALB와 Load Balancer Controller를, 온프레미스에서 시작하는 트래픽에는 온프레미스 쪽 Ingress를 권장합니다. Gateway를 사용하면 Cilium `l7Proxy=false`가 필요해 Cilium Ingress와 Gateway API를 같은 설치에서 쓸 수 없으므로, 온프레미스 진입은 L4 `LoadBalancer` Service(Cilium LB IPAM/BGP 등)나 기존 하드웨어 LB와 NodePort 조합을 검토합니다.
 
@@ -764,7 +766,7 @@ Gateway(1.0.2)는 클러스터당 한 세트이며 활성 leader는 항상 하�
 | 방화벽 | 모든 데이터센터의 Hybrid 노드가 leader와 standby **양쪽** 노드 IP의 UDP 8472에 도달해야 함 |
 | 데이터센터별 분리 | 한 클러스터 안에서 데이터센터마다 Gateway를 따로 두는 구성은 문서에 없음. 1.0.2는 Lease(`hybrid-gateway-leader`)와 CiliumVTEPConfig(`hybrid-gateway`) 이름이 고정이라 복수 release는 충돌 가능성이 높음 (미검증) |
 
-Gateway Pod가 하나뿐이거나 둘 다 실패하면 **모든 데이터센터**의 Hybrid Pod CIDR과 VPC 사이 Pod 트래픽이 함께 끊깁니다. Runtime은 `DeleteRoute`를 호출하지 않으므로 VPC route는 실패한 ENI를 계속 가리킵니다.
+유일한 Gateway Pod가 실패하거나 두 replica가 모두 실패하면 **모든 데이터센터**의 Hybrid Pod CIDR과 VPC 사이 Pod 트래픽이 함께 끊깁니다. 정상 leader 하나는 계속 전달할 수 있지만 standby가 없으면 Gateway 이중화가 없습니다. Runtime은 `DeleteRoute`를 호출하지 않으므로 운영자나 복구된 leader가 변경할 때까지 VPC route는 실패한 ENI를 계속 가리킵니다.
 
 | 끊기는 경로 | 유지되는 경로 (자체 네트워크·DNS가 정상일 때) |
 |---|---|
@@ -1108,7 +1110,7 @@ done
 
 #### 1. 인스턴스 비용 추정
 
-Gateway 소프트웨어 요금은 없지만 EC2/storage·(Gateway 노드가 Auto Mode일 때만) Auto Mode 관리 요금·cross-AZ 전송·private 연결·관측성과 cluster/Hybrid Nodes 요금은 별도입니다. 같은 VPC라도 cross-AZ 전송이 무료인 것은 아닙니다. 활성 leader는 하나이므로 Gateway 노드를 여러 AZ에 두어도 leader와 다른 AZ의 Pod·ALB·scraper가 보내는 Hybrid 트래픽은 모두 leader AZ로 건너갑니다([AWS 운영 문서](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html)). 트래픽이 큰 경로는 Cilium BGP로 Pod CIDR을 직접 라우팅해 Pod가 있는 AZ의 TGW/VGW로 바로 나가게 하고, Gateway는 webhook이나 적은 양의 Pod 간 통신에 두는 구성을 검토합니다.
+Gateway 소프트웨어 요금은 없지만 EC2/storage·(Gateway 노드가 Auto Mode일 때만) Auto Mode 관리 요금·cross-AZ 전송·private 연결·관측성과 cluster/Hybrid Nodes 요금은 별도입니다. 같은 VPC라도 cross-AZ 전송이 무료인 것은 아닙니다. 활성 leader는 하나이므로 Gateway 노드를 여러 AZ에 두어도 leader와 다른 AZ의 Pod·ALB·scraper가 보내는 Hybrid 트래픽은 모두 leader AZ로 건너갑니다([AWS 운영 문서](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html)). 대량 트래픽에는 Gateway 방식과 Cilium BGP 또는 static route를 사용하는 routable Pod CIDR 대안을 비교합니다. Gateway는 구성한 Pod CIDR 라우트와 Cilium VTEP 설정을 소유하며 앱·webhook·트래픽량에 따라 경로를 선택하지 않습니다. Native routing과 Gateway 자동화가 같은 목적지 라우트를 관리하게 해서는 안 됩니다. 조합하려면 라우팅 소유 범위를 명시적으로 분리하고 정방향·반환 경로를 검증해야 하며, 어느 방식도 client Pod가 있는 AZ를 통한 출구를 보장하지 않습니다.
 
 **아래는 출처를 재확인할 수 없는 이전 가격·할인·인건비 추정입니다.** 원 수치를 보존하지만 현재 견적이나 측정한 절감 효과가 아닙니다. 실제 Region·사용량·약정·데이터 경로를 [EKS 가격](https://aws.amazon.com/eks/pricing/)과 관련 요금에 대조하여 새로 산정합니다.
 

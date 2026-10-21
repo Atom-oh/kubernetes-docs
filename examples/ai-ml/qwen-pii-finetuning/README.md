@@ -118,6 +118,10 @@ bucket/inventory before running `python3 -m launch.aws.upload_inputs --inventory
 results/resource-inventory.json --execute`. The upload helper checks split
 hashes, bucket ownership tags, and remote SHA-256 readback.
 
+The historical EKS launcher also requires the approved existing demo VPC and
+private subnets. Read the [EKS launch prerequisites](launch/eks/README.md)
+before preparing its environment; the runtime support guard remains in force.
+
 Preserve submission journals and the ownership inventory across interruptions.
 Cleanup is not guaranteed by shell traps; query errors remain unknown and
 old inventories without ownership evidence require manual reconciliation.
