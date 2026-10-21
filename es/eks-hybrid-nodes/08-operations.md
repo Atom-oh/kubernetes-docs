@@ -1,29 +1,29 @@
 # Operaciones y mantenimiento
 
-< [Anterior: Administración del ciclo de vida de los nodos](./07-node-lifecycle.md) | [Tabla de contenido](./README.md) | [Siguiente: Configuración del sistema operativo en bare metal](./09-bare-metal-os-setup.md) >
+< [Anterior: Gestión del ciclo de vida de los nodos](./07-node-lifecycle.md) | [Tabla de contenido](./README.md) | [Siguiente: Configuración del SO en bare metal](./09-bare-metal-os-setup.md) >
 
-> **Base de validación**: nodeadm 1.0.20; CRD de Cilium 1.18.3; Prometheus Operator 0.94.1; kube-prometheus-stack 92.9.0; Harbor 2.15.4. Son referencias revisadas, no una matriz universal de versiones compatibles.
+> **Referencia de validación**: nodeadm 1.0.20; CRD de Cilium 1.18.3; Prometheus Operator 0.94.1; kube-prometheus-stack 92.9.0; Harbor 2.15.4. Son referencias revisadas, no una matriz universal de versiones compatibles.
 > **Última actualización**: 18 de octubre de 2026
 
-Este documento abarca las tareas diarias de operaciones y mantenimiento de entornos de EKS Hybrid Nodes, incluidas la supervisión, las copias de seguridad y la resolución de problemas.
+Este documento abarca las tareas cotidianas de operación y mantenimiento de los entornos de EKS Hybrid Nodes, incluidas la supervisión, las copias de seguridad y la resolución de problemas.
 
 ## Automatización del análisis de vulnerabilidades de Harbor
 
-Use el programador integrado de Harbor para analizar todo, en lugar de un CronJob que contenga una contraseña de administrador y enumere solo la etiqueta más reciente. En la interfaz de usuario del administrador del sistema, abra **Administration → Interrogation Services → Vulnerability → Schedule to scan all**. Se admiten programaciones por hora, diarias, semanales y personalizadas; en la interfaz documentada, «Diaria» significa a medianoche. Para una ventana de mantenimiento a las 02:00, verifique la sintaxis de la programación personalizada, la zona horaria y la próxima ejecución para la versión implementada.
+Usa el programador integrado de Harbor para analizarlo todo en lugar de recurrir a un CronJob que almacene una contraseña de administrador y enumere únicamente la etiqueta más reciente. En la interfaz de usuario de administración del sistema, abre **Administration → Interrogation Services → Vulnerability → Schedule to scan all**. Se admiten programaciones por hora, diarias, semanales y personalizadas; en la interfaz documentada, «Diario» significa a medianoche. Para una ventana de mantenimiento a las 02:00, verifica la sintaxis de la programación personalizada, la zona horaria y la próxima ejecución de la versión desplegada.
 
-Harbor 2.15.4 expone GET/POST/PUT `/api/v2.0/system/scanAll/schedule`. Use la interfaz de usuario o una integración de API aprobada con validación de una CA de confianza, credenciales protegidas y los permisos requeridos a nivel del sistema. Los permisos de robot de un proyecto no otorgan autoridad para configurar análisis globales. No coloque una contraseña de administrador en los argumentos del comando o el entorno de un Pod, ni desactive la verificación de TLS.
+Harbor 2.15.4 expone `GET/POST/PUT /api/v2.0/system/scanAll/schedule`. Usa la interfaz de usuario o una integración de API aprobada con validación de una CA de confianza, credenciales protegidas y los permisos necesarios a nivel de sistema. Los permisos de robot de un proyecto no implican autoridad para configurar análisis globales. No incluyas una contraseña de administrador en las variables de entorno ni en los argumentos de comandos de un Pod, y no desactives la verificación de TLS.
 
-Registre la disponibilidad del escáner, la actualización de la base de datos de vulnerabilidades, la finalización real de los análisis y los errores. El envío de una solicitud o una respuesta vacía de la API no constituyen una evaluación de vulnerabilidades satisfactoria. Los artefactos no compatibles requieren un tratamiento aparte, y los análisis globales consumen recursos. La automatización de artefactos seleccionados debe enumerar todas las páginas y los digests requeridos, codificar correctamente las rutas de los repositorios y comprobar cada respuesta; un bucle que solo abarque la etiqueta más reciente no cubre el registro.
+Registra la disponibilidad del escáner, la vigencia de la base de datos de vulnerabilidades, la finalización efectiva de los análisis y los errores. El envío de una solicitud o una respuesta de API vacía no constituye una evaluación de vulnerabilidades satisfactoria. Los artefactos no compatibles necesitan un tratamiento aparte, y los análisis globales consumen recursos. La automatización de artefactos seleccionados debe enumerar todas las páginas y los resúmenes criptográficos necesarios, codificar correctamente las rutas de los repositorios y comprobar cada respuesta; un bucle que solo cubra la etiqueta más reciente no abarca el registro.
 
-Consulte la [guía de Harbor](../container-registry/03-harbor.md) y el [procedimiento oficial de programación](https://github.com/goharbor/website/blob/main/docs/administration/vulnerability-scanning/schedule-scans.md).
+Consulta la [guía de Harbor](../container-registry/03-harbor.md) y el [procedimiento oficial de programación](https://github.com/goharbor/website/blob/main/docs/administration/vulnerability-scanning/schedule-scans.md).
 
 ## Procedimiento de copia de seguridad de la base de datos
 
-Defina el objetivo de recuperación y haga un inventario antes de copiar los datos. La recuperación de Harbor requiere metadatos de base de datos compatibles, blobs del registro/almacenamiento de objetos, configuración y secretos/claves de cifrado protegidos. Un volcado de PostgreSQL por sí solo no es una copia de seguridad completa. Las versiones modernas de Harbor ya no incluyen Notary v1; no dé por sentado que existen las bases de datos notarysigner/notaryserver.
+Define el objetivo de recuperación y el inventario antes de copiar los datos. Para recuperar Harbor se necesitan metadatos de base de datos compatibles, blobs del registro o almacenamiento de objetos, configuración y secretos/llaves de cifrado protegidos. Un volcado de PostgreSQL por sí solo no es una copia de seguridad completa. Las versiones modernas de Harbor ya no incluyen Notary v1; no des por hecho que existen las bases de datos notarysigner/notaryserver.
 
-El [procedimiento oficial de Velero para Harbor](https://github.com/goharbor/website/blob/main/docs/administration/backup-restore/_index.md) utiliza el modo de solo lectura del repositorio y recursos/PV de Kubernetes seleccionados. Su copia de seguridad es **consistente tras un fallo, no coherente con la aplicación**, excluye Redis, puede perder metadatos/sesiones no sincronizados y dejar tareas que requieran reparación. Cubre la base de datos interna, no una base de datos externa administrada. Seleccione complementos compatibles de instantáneas/copia de archivos/movimiento de datos y verifique que el sitio de recuperación pueda acceder a todos los datos necesarios de volúmenes/objetos; una referencia a una instantánea no es necesariamente una copia portátil.
+El [procedimiento oficial de Harbor Velero](https://github.com/goharbor/website/blob/main/docs/administration/backup-restore/_index.md) utiliza un modo de solo lectura del repositorio y recursos de Kubernetes/PV seleccionados. Su copia de seguridad es **consistente ante fallos, no consistente a nivel de aplicación**, excluye Redis, puede perder metadatos/sesiones no sincronizados y puede dejar tareas que necesiten reparación. Abarca la base de datos interna, no una base de datos externa administrada. Selecciona complementos compatibles para instantáneas, copias de archivos o movimiento de datos, y verifica que el sitio de recuperación pueda acceder a todos los datos necesarios de volúmenes/objetos; una referencia a una instantánea no es necesariamente una copia portátil.
 
-Lo siguiente es solo un **ejemplo de volcado del componente de base de datos** para el Pod de PostgreSQL interno verificado, con pg_dump/pg_restore y autenticación local ya configurados. Las bases de datos externas usan su propio proceso autenticado de copia de seguridad/restauración. Las credenciales no se pasan en los argumentos del comando. Deténgase ante errores y mantenga privada cualquier salida parcial; no la publique como un volcado completo.
+Lo siguiente es solo un **ejemplo de volcado del componente de base de datos** para el Pod verificado de PostgreSQL interno, con pg_dump/pg_restore y autenticación local ya configurados. Las bases de datos externas usan su propio proceso autenticado de copia de seguridad/restauración. Las credenciales no se pasan en los argumentos de los comandos. Detente si se producen errores y mantén privada cualquier salida parcial; no la publiques como un volcado completado.
 
 ```bash
 set -euo pipefail
@@ -45,19 +45,19 @@ mv "$BACKUP_DIR/registry.dump.partial" "$BACKUP_DIR/registry.dump"
 printf 'Database archive created: %s; full Harbor recovery requires separate evidence.\n' "$BACKUP_DIR"
 ```
 
-La lista de un archivo no demuestra que la restauración se haya realizado correctamente. Pruebe la restauración con versiones compatibles de PostgreSQL/Harbor y valide la descarga de artefactos, los metadatos, los permisos y las integraciones. Proteja y compruebe la suma de verificación del inventario completo de copias de seguridad, y coordine el modo de solo lectura, los trabajos y la actividad de carga/GC. No desactive automáticamente el modo de solo lectura después de una operación fallida sin evaluar su estado.
+La lista del archivo no demuestra que la restauración se haya realizado correctamente. Prueba la restauración con versiones compatibles de PostgreSQL/Harbor y valida la descarga de artefactos, los metadatos, los permisos y las integraciones. Protege y comprueba el inventario completo de la copia de seguridad, y coordina el modo de solo lectura, los trabajos y la actividad de carga/recolección de basura (GC). No desactives automáticamente el modo de solo lectura tras una operación fallida sin evaluar su estado.
 
-BGSAVE de Redis es asíncrono; copiar dump.rdb inmediatamente puede capturar una generación anterior. Si un diseño independiente incluye persistencia de Redis, verifique con su operador que se haya completado y compruebe el estado y la generación. No mezcle silenciosamente ese diseño personalizado con el tutorial oficial que excluye Redis. No se ejecutó ninguna copia de seguridad ni restauración para este capítulo.
+BGSAVE de Redis es asíncrono; copiar dump.rdb inmediatamente puede capturar una generación anterior. Si un diseño independiente incluye persistencia de Redis, verifica con su operador que se haya completado y comprueba su estado y generación. No mezcles silenciosamente ese diseño personalizado con el tutorial oficial, que excluye Redis. No se ejecutó ninguna copia de seguridad ni restauración para este capítulo.
 
-## Recopilación de métricas de Prometheus
+## Recopilación de métricas con Prometheus
 
-Mantenga separadas las métricas del host, de kubelet/contenedores y de GPU. `node_cpu_seconds_total` y `node_memory_*` provienen de Node Exporter, no de un endpoint de kubelet. Use un perfil de Node Exporter/DCGM instalado y revisado, y verifique los montajes reales del host, los privilegios, la ubicación de los nodos y la disponibilidad de las métricas. Container Insights no proporciona métricas de nivel de host de Hybrid a través de EC2 IMDS.
+Mantén separadas las métricas del host, de kubelet/contenedores y de GPU. `node_cpu_seconds_total` y `node_memory_*` provienen de Node Exporter, no de un endpoint de kubelet. Usa un perfil de Node Exporter/DCGM instalado y revisado, y verifica los montajes reales del host, los privilegios, la ubicación de los nodos y la disponibilidad de las métricas. Container Insights no proporciona métricas de nivel de host para Hybrid a través de EC2 IMDS.
 
-El siguiente ejemplo de descubrimiento utiliza las etiquetas/el puerto del Service de Node Exporter de kube-prometheus-stack 92.9.0 con la versión `kube-prom` en `monitoring`. La parte de DCGM presupone Pods verificados con la etiqueta `app: nvidia-dcgm-exporter` en `gpu-operator` y un puerto de contenedor llamado `metrics`; ajústela al exportador instalado. Ninguno de estos recursos instala un exportador. Haga coincidir los selectores de monitores/espacios de nombres del recurso de Prometheus y evite recopilar dos veces las métricas del mismo exportador mediante un monitor existente.
+El siguiente ejemplo de descubrimiento usa las etiquetas/puerto del Service de Node Exporter de kube-prometheus-stack 92.9.0, con el release `kube-prom` en `monitoring`. La parte de DCGM presupone Pods verificados etiquetados con `app: nvidia-dcgm-exporter` en `gpu-operator`, con un puerto de contenedor llamado `metrics`; ajústala al exportador instalado. Ninguno de estos recursos instala un exportador. Haz coincidir los selectores de monitores/espacios de nombres del recurso Prometheus y evita recopilar dos veces métricas del mismo exportador mediante un monitor existente.
 
-`attachMetadata.node` pone a disposición los metadatos de descubrimiento de Node; no copia automáticamente las etiquetas en las métricas. Requiere Prometheus >= 2.37 para ServiceMonitor o >= 2.35 para PodMonitor y permisos `list`/`watch` de Node para Prometheus. La configuración de relabeling conserva los nodos que realmente tienen `eks.amazonaws.com/compute-type=hybrid` y crea etiquetas estables `node`/`compute_type` para el destino. No deduzca la ubicación Hybrid a partir del prefijo del nombre de Node de SSM.
+`attachMetadata.node` hace que estén disponibles los metadatos de descubrimiento de Node; no copia automáticamente las etiquetas a las métricas. Requiere Prometheus >=2.37 para ServiceMonitor o >=2.35 para PodMonitor, y permisos `list`/`watch` sobre Node para Prometheus. La nueva asignación de etiquetas conserva los nodos que realmente tienen `eks.amazonaws.com/compute-type=hybrid` y crea etiquetas de destino estables `node`/`compute_type`. No deduzcas la ubicación Hybrid a partir del prefijo del nombre de un Node de SSM.
 
-Estos ejemplos usan los endpoints HTTP protegidos de métricas de los exportadores, no el endpoint HTTPS de kubelet. Restrinja la conectividad del recopilador. Si el tráfico cruza un límite no confiable, configure TLS/autenticación del exportador o un proxy revisado, junto con la configuración correspondiente de CA/autorización; no use `insecureSkipVerify`. Mantenga la recopilación de métricas de kubelet en su configuración aparte, con autenticación y verificación de CA.
+Estos ejemplos usan los endpoints HTTP protegidos de métricas de los exportadores, no el endpoint HTTPS de kubelet. Restringe la conectividad con los colectores. Si el tráfico atraviesa un límite no confiable, configura TLS/autenticación para el exportador o un proxy revisado, junto con la CA y los ajustes de autorización correspondientes; no uses `insecureSkipVerify`. Mantén la recopilación de métricas de kubelet en su configuración separada, con autenticación y verificación de CA.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -116,9 +116,9 @@ spec:
       replacement: hybrid
 ```
 
-### Ejemplos de consultas para el panel de Grafana
+### Ejemplos de consultas para paneles de Grafana
 
-Estas consultas requieren las etiquetas de destino anteriores y métricas de exportador compatibles. Verifique las unidades, la identidad de GPU/MIG, los indicadores de valores/errores no compatibles, las recopilaciones ausentes y las series duplicadas. El uso de memoria de framebuffer de GPU divide por la capacidad total (`used + free`), no por la capacidad libre; se excluyen las series con capacidad cero. Las consultas son expresiones que se pueden probar localmente, no mediciones de este entorno.
+Estas consultas requieren las etiquetas de destino anteriores y métricas de exportadores compatibles. Verifica las unidades, la identidad de GPU/MIG, los valores centinela de error/no compatibles, las recopilaciones que falten y las series duplicadas. El uso de memoria framebuffer de GPU se calcula dividiendo por la capacidad total (`used + free`), no por la capacidad libre; se excluyen las series con capacidad cero. Las consultas son expresiones que se pueden probar localmente, no mediciones de este entorno.
 
 ```promql
 # Host CPU utilization percent
@@ -139,11 +139,11 @@ and
 
 ## Validación del rendimiento de Direct Connect
 
-Separe un plan de pruebas de una garantía de servicio de AWS. Los ejemplos anteriores de RTT < 5 ms, variación < 2 ms, pérdida < 0,01 % y rendimiento > 1 Gbps son objetivos ilustrativos de planificación, no resultados medidos ni promesas universales de Direct Connect. Elija objetivos para la ubicación, el circuito, el endpoint, la carga de trabajo y la capacidad contratada reales; confirme que la ruta medida usa Direct Connect y no una VPN u otra ruta.
+Distingue un plan de pruebas de una garantía del servicio de AWS. Los ejemplos anteriores de RTT <5ms, variación <2ms, pérdida <0.01% y rendimiento >1Gbps son objetivos ilustrativos para la planificación, no resultados medidos ni promesas universales de Direct Connect. Elige objetivos adecuados para la ubicación, el circuito, el endpoint, la carga de trabajo y la capacidad contratada reales; confirma que la ruta medida utiliza Direct Connect, no una VPN u otra ruta.
 
-`ping` informa el RTT de ICMP y, en Linux iputils, el RTT mdev. Esa dispersión no es la misma estadística que la variación del retardo unidireccional ni que el jitter UDP de iperf3. El filtrado/priorización de ICMP puede diferir del tráfico de aplicaciones. Una prueba de 1.000 paquetes tiene incrementos de pérdida del 0,1 %; observar cero pérdidas no demuestra una tasa de pérdida a largo plazo inferior al 0,01 %.
+`ping` informa el RTT de ICMP y, en Linux iputils, el mdev del RTT. Esa dispersión no es la misma estadística que la variación del retardo unidireccional ni que el jitter UDP de iperf3. El filtrado o la priorización reducida de ICMP pueden diferir del tráfico de la aplicación. Una prueba de 1.000 paquetes tiene incrementos de pérdida del 0,1%; observar cero pérdidas no demuestra que la tasa de pérdida a largo plazo sea inferior al 0,01%.
 
-Use un servidor de pruebas privado aprobado con iperf3 ya en ejecución, una ventana coordinada, un límite deliberado de tráfico y almacenamiento protegido de resultados. No ejecute iperf3 contra un endpoint de la API de EKS. El ejemplo acotado siguiente requiere Bash, Python3, ping de iputils, GNU timeout e iperf3 con las opciones indicadas. Un fallo detiene la secuencia; la falta de herramientas, el JSON no válido o un error de iperf3 no constituyen una prueba de rendimiento aprobada.
+Usa un servidor de pruebas privado aprobado con iperf3 ya en ejecución, una ventana coordinada, un límite de tráfico deliberado y almacenamiento protegido de los resultados. No ejecutes iperf3 contra un endpoint de la API de EKS. El siguiente ejemplo acotado requiere Bash, Python3, ping de iputils, GNU timeout e iperf3 con las opciones indicadas. Si hay un error, la secuencia se detiene; la ausencia de herramientas, un JSON no válido o un error de iperf3 no constituyen una prueba de rendimiento aprobada.
 
 ```bash
 set -euo pipefail
@@ -178,13 +178,13 @@ PY
 printf 'Private observations: %s; this does not establish an AWS latency/throughput guarantee.\n' "$RUN_DIR"
 ```
 
-Esta prueba TCP limitada no establece la capacidad máxima del enlace. Revise el rendimiento del receptor, las retransmisiones, la dirección, la duración y la congestión. Para una prueba UDP aprobada por separado, use `--udp` y una tasa de bits explícita; después, conserve e interprete la pérdida/jitter del receptor en el JSON de esa versión. Registre las pruebas fallidas/omitidas como tales. Durante esta auditoría no se ejecutó ninguna prueba de carga de red.
+Esta prueba TCP con límite no determina la capacidad máxima del enlace. Examina el rendimiento en el receptor, las retransmisiones, la dirección, la duración y la congestión. Para una prueba UDP aprobada por separado, usa `--udp` y una tasa de bits explícita; luego conserva e interpreta la pérdida/jitter del receptor en el JSON de esa versión. Registra las pruebas fallidas/omitidas como tales. Durante esta auditoría no se ejecutó ninguna prueba de carga de red.
 
-## Administración de la renovación de certificados
+## Gestión de la renovación de certificados
 
-Identifique qué certificado se está comprobando: el certificado del servidor TLS de Harbor, su cadena de CA, un certificado de servicio de kubelet, la CA del plano de control de EKS o el certificado del host de IAM Roles Anywhere. Un certificado de CA válido no demuestra que el certificado de servidor final sea válido, y un heartbeat de Node Ready no demuestra la fecha de expiración del certificado. AWS administra los certificados del plano de control de EKS; no ejecute comandos de renovación de kubeadm como procedimiento de reparación de EKS.
+Identifica qué certificado se está comprobando: el certificado TLS del servidor Harbor, su cadena de CA, un certificado de servicio de kubelet, la CA del plano de control de EKS o el certificado del host de IAM Roles Anywhere. Un certificado de CA válido no demuestra que el certificado hoja del servidor sea válido, y un heartbeat Node Ready no es evidencia de vencimiento del certificado. AWS administra los certificados del plano de control de EKS; no ejecutes comandos de renovación de kubeadm como procedimiento de reparación de EKS.
 
-Esta comprobación local de expiración falla si el certificado falta, no se puede leer, no es válido o vence dentro del período de advertencia de ejemplo de 30 días. No valida la cadena, el nombre de host, la revocación ni si el servicio presenta realmente ese certificado. Use la conexión TLS verificada siguiente para el endpoint servido y el [procedimiento del ciclo de vida de credenciales](./07-node-lifecycle.md) para renovar el certificado del host.
+Esta comprobación local del vencimiento falla si falta el certificado, no se puede leer, no es válido o vence dentro del plazo de advertencia de ejemplo de 30 días. No valida la cadena, el nombre de host, la revocación ni si el servicio presenta realmente ese certificado. Usa la conexión TLS verificada que aparece a continuación para el endpoint publicado y el [procedimiento del ciclo de vida de las credenciales](./07-node-lifecycle.md) para renovar el certificado del host.
 
 ```bash
 set -euo pipefail
@@ -193,15 +193,15 @@ test -r "$CERT_PATH"
 openssl x509 -in "$CERT_PATH" -checkend 2592000 -noout
 ```
 
-Haga seguimiento del emisor/responsable real, la ruta configurada del certificado, la expiración y la entrega de alertas. Las rutas de credenciales de servicio/cliente de kubelet dependen de la configuración; habilitar solo serverTLSBootstrap no aprueba las CSR de servicio ni rota un certificado de IAM Roles Anywhere.
+Registra el emisor/responsable real, la ruta del certificado configurado, el vencimiento y la entrega de alertas. Las rutas de las credenciales de servicio/cliente de kubelet dependen de la configuración; habilitar solo serverTLSBootstrap no aprueba las CSR de servicio ni renueva un certificado de IAM Roles Anywhere.
 
 ## Configuración de Ingress
 
 ### Ingress de ALB (modo de destino ip)
 
-El AWS Load Balancer Controller autoadministrado puede registrar IP de Pod de Hybrid enrutables mediante `alb.ingress.kubernetes.io/target-type: ip`. Las rutas, el tráfico de retorno, los grupos de seguridad/cortafuegos y la configuración de red de Pod remoto de EKS deben ser coherentes.
+El AWS Load Balancer Controller autoadministrado puede registrar IP de Pod de Hybrid enrutables mediante `alb.ingress.kubernetes.io/target-type: ip`. Las rutas, el tráfico de retorno, los grupos de seguridad/cortafuegos y la configuración de la red remota de Pod de EKS deben ser coherentes.
 
-La receta de AWS para el webhook de modo mixto coloca el controlador en nodos de la nube. Es una recomendación de ubicación para ese diseño, no una incapacidad universal para ejecutar un webhook en Hybrid Nodes: la guía del complemento permite la ubicación Hybrid cuando el plano de control puede acceder al CIDR de Pod remoto configurado. Prefiera etiquetas de ubicación administrativas positivas en vez de `compute-type NotIn [hybrid]`, que también coincide con nodos que no tienen esa etiqueta. La etiqueta de ejemplo siguiente solo debe asignarse a nodos de la nube cuya elegibilidad se haya verificado.
+La receta del webhook de AWS para el modo mixto coloca el controlador en nodos de la nube. Es una recomendación de ubicación para ese diseño, no una afirmación de que sea imposible ejecutar un webhook en Hybrid Nodes: la guía del complemento permite ubicarlo en Hybrid cuando el plano de control puede llegar al CIDR de Pod remoto configurado. Es preferible usar etiquetas de ubicación administrativas positivas a `compute-type NotIn [hybrid]`, que también coincide con nodos que no tienen esa etiqueta. La etiqueta del ejemplo siguiente solo debe asignarse a nodos de la nube cuya elegibilidad se haya verificado.
 
 ```yaml
 # Fragment under the controller Deployment's spec.template.spec:
@@ -211,9 +211,9 @@ nodeSelector:
 
 ### Cilium Ingress Controller
 
-Los ejemplos de Cilium Ingress y Gateway API de esta sección requieren una configuración de Cilium con L7 habilitado. No se aplican a la misma instalación de Cilium configurada para [EKS Hybrid Nodes Gateway](./10-hybrid-nodes-gateway.md): su [configuración de VTEP requerida por AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html) establece `vtep.enabled=true` y `l7Proxy=false`. Elija el diseño de red antes de habilitar estas funciones. Esta restricción se refiere a las funciones de proxy L7 de Cilium; no prohíbe que las aplicaciones HTTP usen la ruta de red enrutada del gateway.
+Los ejemplos de Cilium Ingress y Gateway API de esta sección requieren una configuración de Cilium con L7 habilitado. No se aplican a la misma instalación de Cilium configurada para [EKS Hybrid Nodes Gateway](./10-hybrid-nodes-gateway.md): su [configuración VTEP requerida por AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html) establece `vtep.enabled=true` y `l7Proxy=false`. Elige el diseño de red antes de habilitar estas funciones. Esta restricción afecta a las funciones de proxy L7 de Cilium; no impide que las aplicaciones HTTP utilicen la ruta de red enrutada del gateway.
 
-Los requisitos previos de Ingress de Cilium 1.18.3 upstream incluyen compatibilidad con NodePort (o sustitución de kube-proxy), compatibilidad con el proxy L7 y una vía disponible de exposición del balanceador de carga. El fragmento siguiente no autoriza a cambiar el CNI de los nodos de la nube en un clúster mixto. Conserve la configuración revisada de Cilium Hybrid y confirme los límites de compatibilidad de AWS para funciones adicionales. Cambiar el modo dedicado/compartido puede cambiar las direcciones e interrumpir las conexiones existentes.
+Los requisitos previos de Ingress de Cilium 1.18.3 upstream incluyen compatibilidad con NodePort (o sustitución de kube-proxy), compatibilidad con proxy L7 y una ruta disponible de exposición mediante balanceador de carga. El fragmento siguiente no autoriza a cambiar la CNI de los nodos de la nube en un clúster mixto. Conserva la configuración revisada de Cilium para Hybrid y confirma los límites de compatibilidad de AWS para las funciones adicionales. Cambiar entre modo dedicado y compartido puede modificar direcciones e interrumpir conexiones existentes.
 
 ```yaml
 # Merge into the reviewed Cilium release values, not a full installation:
@@ -227,7 +227,7 @@ ingressController:
 
 ### Cilium Gateway API
 
-Instale las CRD y las versiones de recursos de Gateway API compatibles con la versión del controlador elegida, verifique los requisitos previos de NodePort/sustitución de kube-proxy y L7, y compruebe las condiciones de GatewayClass/Gateway/Route. Establecer una sola opción de Helm no instala esas CRD ni establece accesibilidad externa.
+Instala las CRD de Gateway API y las versiones de recursos compatibles con el release del controlador elegido, verifica sus requisitos previos de NodePort/sustitución de kube-proxy y L7, y comprueba las condiciones de GatewayClass/Gateway/Route. Establecer una sola opción de Helm no instala esas CRD ni garantiza la accesibilidad externa.
 
 ```yaml
 # Required Gateway API CRDs and controller prerequisites must already be met:
@@ -235,9 +235,9 @@ gatewayAPI:
   enabled: true
 ```
 
-### IPAM de LoadBalancer (Cilium)
+### LoadBalancer IPAM (Cilium)
 
-El siguiente grupo usa la API `cilium.io/v2` verificada con la CRD 1.18.3 y selecciona únicamente Services etiquetados explícitamente. Sustituya el CIDR ilustrativo por un rango de direcciones reservado y no superpuesto del inventario de red. La asignación de IP no anuncia la dirección a los enrutadores ni garantiza una ruta de datos funcional.
+El siguiente pool usa la API `cilium.io/v2`, verificada con la CRD 1.18.3, y selecciona únicamente Services etiquetados de forma explícita. Sustituye el CIDR ilustrativo por un rango de direcciones reservado y no superpuesto del inventario de red. La asignación de IP no anuncia la dirección a los routers ni garantiza una ruta de datos funcional.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -256,13 +256,13 @@ spec:
 
 ### NLB (modo de destino ip)
 
-Para el AWS Load Balancer Controller autoadministrado, use un Service `LoadBalancer` de su propiedad con `spec.loadBalancerClass: service.k8s.aws/nlb` y `service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip`, o la ruta documentada de propiedad `aws-load-balancer-type: external` para el controlador elegido. Una anotación de tipo de destino por sí sola no selecciona el controlador. Los destinos de Pod de Hybrid y las rutas de retorno deben ser accesibles desde AWS; elija deliberadamente la exposición interna/pública, las subredes y los controles de acceso.
+Para AWS Load Balancer Controller autoadministrado, usa un Service `LoadBalancer` bajo su control con `spec.loadBalancerClass: service.k8s.aws/nlb` y `service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip`, o la ruta de control documentada `aws-load-balancer-type: external` para el controlador elegido. Una anotación de tipo de destino por sí sola no selecciona el controlador. Los destinos de Pod de Hybrid y las rutas de retorno deben ser accesibles desde AWS; elige deliberadamente la exposición interna/pública, las subredes y los controles de acceso.
 
-Esta no es una receta de propiedad de EKS Auto Mode. No cambie la clase/controlador de un Service existente como migración in situ sin revisar los efectos en el reemplazo y el tráfico.
+Esta no es una receta de control de EKS Auto Mode. No cambies la clase/controlador de un Service existente como migración en el mismo lugar sin revisar los efectos de sustitución y tráfico.
 
 ### Cilium LB + BGP
 
-Use los esquemas `cilium.io/v2` instalados. Los tipos de dirección de Service pertenecen en `advertisements[].service.addresses`. El ejemplo anuncia únicamente las IP de LoadBalancer de los Services etiquetados `exposure: onprem-bgp`; no usa un selector `NotIn` que seleccione efectivamente todos los Services.
+Usa los esquemas `cilium.io/v2` instalados. Los tipos de dirección del Service deben estar en `advertisements[].service.addresses`. El ejemplo anuncia únicamente las IP de LoadBalancer de los Services etiquetados con `exposure: onprem-bgp`; no utiliza un selector `NotIn` que, en la práctica, seleccione todos los Services.
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -281,13 +281,13 @@ spec:
         exposure: onprem-bgp
 ```
 
-Configure la selección de nodos/peers de CiliumBGPClusterConfig y las familias de CiliumBGPPeerConfig. El selector de anuncios de la configuración del peer debe coincidir con `advertise: hybrid-services`; el selector de Service debe coincidir con las etiquetas reales del Service. Habilite el plano de control BGP revisado, establezca sesiones con los enrutadores y valide las rutas aceptadas, los siguientes saltos, las rutas de retorno y la política de tráfico. Un IPPool/Advertisement por sí solo está incompleto. Consulte los [fundamentos de redes](./02-network-configuration.md) y la documentación BGP de la versión instalada antes de aplicar cambios.
+Configura la selección de nodos/peers de CiliumBGPClusterConfig y las familias de CiliumBGPPeerConfig. El selector de anuncios de la configuración de peers debe coincidir con `advertise: hybrid-services`; el selector de Service debe coincidir con las etiquetas reales del Service. Habilita el plano de control BGP revisado, establece sesiones con los routers y valida las rutas aceptadas, los siguientes saltos, las rutas de retorno y la política de tráfico. Un IPPool/Advertisement por sí solo no es suficiente. Consulta la [base de redes](./02-network-configuration.md) y la documentación BGP de la versión instalada antes de aplicar cambios.
 
 ## Configuración detallada de complementos
 
 ### Agente de observabilidad de CloudWatch
 
-Use la configuración compatible de Pod Identity y verifique la asociación IAM real y los permisos de la carga de trabajo. La variable de compatibilidad Hybrid `RUN_WITH_IRSA` sigue siendo obligatoria en el procedimiento actual de AWS, pese a su nombre. Añádala a la **lista spec.env** del recurso `AmazonCloudWatchAgent` existente, conservando entradas como `K8S_NODE_NAME`; no es un `env` arbitrario de nivel superior en configurationValues del complemento de EKS.
+Usa la configuración compatible de Pod Identity y verifica la asociación y los permisos IAM reales de la carga de trabajo. La variable de compatibilidad `RUN_WITH_IRSA` para Hybrid sigue siendo necesaria según el procedimiento actual de AWS, pese a su nombre. Añádela a la **lista spec.env** del recurso existente `AmazonCloudWatchAgent`, conservando entradas como `K8S_NODE_NAME`; no es un campo `env` arbitrario de nivel superior en configurationValues del complemento de EKS.
 
 ```yaml
 # Add this item to the existing AmazonCloudWatchAgent.spec.env list:
@@ -295,16 +295,16 @@ Use la configuración compatible de Pod Identity y verifique la asociación IAM 
   value: "True"
 ```
 
-Inspeccione `amazoncloudwatchagents/cloudwatch-agent` en el espacio de nombres `amazon-cloudwatch` antes de editar y revise cómo el complemento/operador reconcilia esa configuración. Confirme después el despliegue progresivo del agente y la recopilación. Las métricas de clúster/carga de trabajo/Pod/contenedor Hybrid están disponibles, pero las métricas de nivel de nodo de Container Insights no están disponibles porque falta su dependencia de EC2 IMDS. Si su operador se ejecuta en Hybrid Nodes, garantice la accesibilidad del webhook desde el plano de control.
+Inspecciona `amazoncloudwatchagents/cloudwatch-agent` en el espacio de nombres `amazon-cloudwatch` antes de editarlo y revisa cómo el complemento/operador reconcilia esa configuración. Después, confirma el despliegue gradual del agente y la recopilación. Las métricas de clúster/carga de trabajo/Pod/contenedor de Hybrid están disponibles, pero no lo están las métricas de Container Insights de nivel de nodo, porque no se cuenta con la dependencia de EC2 IMDS. Si el operador se ejecuta en Hybrid Nodes, garantiza la conectividad del webhook con el plano de control.
 
-### Agente de EKS Pod Identity
+### EKS Pod Identity Agent
 
-| Sistema operativo del host | Mínimo documentado | DaemonSet Hybrid / ruta de credenciales |
+| SO del host | Mínimo documentado | DaemonSet de Hybrid / ruta de credenciales |
 | --- | --- | --- |
 | Ubuntu, RHEL, AL2023 | Complemento 1.3.3-eksbuild.1 | `hybrid`; `/eks-hybrid/.aws/credentials` |
-| Bottlerocket (variantes VMware compatibles) | Complemento 1.3.7-eksbuild.2 y SO 1.39.0 | `hybrid-bottlerocket`; `/var/eks-hybrid/.aws/credentials` |
+| Bottlerocket (variantes compatibles de VMware) | Complemento 1.3.7-eksbuild.2 y SO 1.39.0 | `hybrid-bottlerocket`; `/var/eks-hybrid/.aws/credentials` |
 
-Estos son requisitos mínimos de funcionalidad, no una recomendación para instalar una versión antigua. Seleccione una versión del complemento compatible en la actualidad e inspeccione su esquema de configuración. En Ubuntu/RHEL/AL2023, combine este fragmento con el NodeConfig completo existente de cada host:
+Estas son versiones mínimas para la función, no una recomendación para instalar una versión antigua. Elige una versión del complemento actualmente compatible y revisa su esquema de configuración. En Ubuntu/RHEL/AL2023, combina este fragmento con el NodeConfig completo existente de cada host:
 
 ```yaml
 # Merge this fragment into each host's complete, protected NodeConfig:
@@ -313,9 +313,9 @@ spec:
     enableCredentialsFile: true
 ```
 
-AWS requiere una reconciliación planificada de `nodeadm init -c file:///path/to/nodeconfig.yaml` en cada host afectado, incluidos los nodos que ya se unieron. No vuelva a inicializar a ciegas todos los nodos de producción: conserve la identidad/configuración, siga el procedimiento del ciclo de vida y valide un host a la vez. Bottlerocket usa la ruta de configuración documentada en lugar de este fragmento de nodeadm. Estos archivos temporales de credenciales son sensibles; no los imprima.
+AWS requiere una reconciliación planificada de `nodeadm init -c file:///path/to/nodeconfig.yaml` en cada host afectado, incluidos los nodos que ya se hayan unido. No vuelvas a inicializar a ciegas todos los nodos de producción: conserva la identidad/configuración, sigue el procedimiento del ciclo de vida y valida un host a la vez. Bottlerocket utiliza la ruta de configuración documentada, no este fragmento de nodeadm. Estos archivos temporales de credenciales son sensibles; no los muestres.
 
-Para el DaemonSet Hybrid que no es de Bottlerocket, la configuración del complemento incluye:
+Para el DaemonSet de Hybrid que no es Bottlerocket, la configuración del complemento incluye lo siguiente:
 
 ```json
 {
@@ -327,17 +327,17 @@ Para el DaemonSet Hybrid que no es de Bottlerocket, la configuración del comple
 }
 ```
 
-Para Bottlerocket, use la configuración documentada `hybrid-bottlerocket` de la versión seleccionada. Inspeccione y combine los ajustes existentes. Cree un complemento solo si no existe; actualice uno existente con un tratamiento de conflictos revisado, en lugar de usar a ciegas create o OVERWRITE. El agente y el archivo de credenciales no crean la asociación de Pod Identity de cada aplicación: verifique el espacio de nombres, la ServiceAccount, la confianza/permisos del rol de IAM, la resolución de credenciales del SDK y la autorización satisfactoria.
+Para Bottlerocket, usa la configuración documentada `hybrid-bottlerocket` para la versión seleccionada. Inspecciona y combina los ajustes existentes. Crea un complemento solo si no existe; actualiza uno existente con una gestión de conflictos revisada, en lugar de usar create u OVERWRITE a ciegas. El agente y el archivo de credenciales no crean la asociación de Pod Identity de cada aplicación: verifica el espacio de nombres, el ServiceAccount, la confianza/permisos del rol IAM, la resolución de credenciales del SDK y la autorización correcta.
 
-## Operaciones de webhooks en modo mixto {#mixed-mode-webhook-operations}
+## Operaciones de webhooks en modo mixto
 
-En el patrón compatible de modo mixto de AWS, VPC CNI se ejecuta en nodos de la nube y Cilium/Calico en Hybrid Nodes. AWS recomienda ubicar los webhooks en la nube en ese patrón. Un webhook alojado en Hybrid necesita además un CIDR de Pod remoto enrutable y accesibilidad desde el plano de control; inspeccione el endpoint real en lugar de suponer que todos los webhooks deben o pueden ejecutarse en cualquier lugar.
+En el patrón de modo mixto compatible con AWS, VPC CNI se ejecuta en nodos de la nube y Cilium/Calico en Hybrid Nodes. AWS recomienda ubicar los webhooks en la nube en ese patrón. Un webhook alojado en Hybrid también necesita un CIDR de Pod remoto enrutable y conectividad con el plano de control; inspecciona el endpoint real en vez de dar por hecho que todos los webhooks deben o pueden ejecutarse en cualquier lugar.
 
 ### Ubicación de CoreDNS
 
-AWS recomienda al menos una réplica de CoreDNS en nodos de la nube y otra en Hybrid Nodes para este diseño de modo mixto. Verifique que haya al menos dos réplicas deseadas, capacidad elegible, selectores, tolerancias y endpoints reales. `maxSkew: 1` por sí solo no crea dos dominios ni garantiza un Pod por dominio, y es posible que los nodos de la nube no tengan la etiqueta `eks.amazonaws.com/compute-type`.
+AWS recomienda al menos una réplica de CoreDNS en nodos de la nube y otra en Hybrid Nodes para este diseño de modo mixto. Verifica que haya al menos dos réplicas deseadas, capacidad apta, selectores, tolerancias y endpoints reales. `maxSkew: 1` por sí solo no crea dos dominios ni garantiza un Pod por dominio, y es posible que los nodos de la nube no tengan la etiqueta `eks.amazonaws.com/compute-type`.
 
-En clústeres compatibles con `minDomains`, este fragmento de especificación de Pod usa una etiqueta administrativa explícita de dos dominios. Etiquete solo los nodos DNS previstos y asigne a cada nodo elegible un valor `location` verificado que sea exactamente `aws` o `onprem`. Mantenga la afinidad/tolerancias existentes compatibles, verifique las etiquetas del Pod de CoreDNS y reconcilie los cambios mediante el mecanismo de configuración compatible del complemento.
+En clústeres compatibles con `minDomains`, este fragmento de Pod-spec utiliza una etiqueta administrativa explícita de dos dominios. Etiqueta solo los nodos DNS previstos y asigna a cada nodo apto un valor `location` verificado que sea exactamente `aws` u `onprem`. Mantén la compatibilidad con las reglas de afinidad/tolerancias existentes, verifica las etiquetas de los Pods de CoreDNS y reconcilia los cambios mediante el mecanismo de configuración compatible del complemento.
 
 ```yaml
 # Fragment under CoreDNS Deployment.spec.template.spec.
@@ -354,46 +354,46 @@ topologySpreadConstraints:
       k8s-app: kube-dns
 ```
 
-Con dos dominios elegibles y al menos dos réplicas, la distribución estricta restringe la programación entre ambos. Si un dominio no tiene capacidad, las nuevas réplicas pueden permanecer en estado Pending; es una compensación de disponibilidad, no una conmutación por error garantizada. Pruebe el Service/EndpointSlices de DNS real y la resolución local/remota. En clústeres que contienen Auto Mode, distinga su servicio de sistema DNS local al nodo del Deployment que sigue siendo necesario para los nodos que no son Auto.
+Con dos dominios aptos y al menos dos réplicas, la distribución estricta limita la programación entre ellos. Si un dominio no tiene capacidad, las réplicas nuevas pueden permanecer en estado Pending; es una concesión en materia de disponibilidad, no una conmutación por error garantizada. Prueba el Service/EndpointSlices de DNS reales y la resolución local/remota. En clústeres que contienen Auto Mode, distingue su servicio de DNS del sistema local al nodo del Deployment que sigue siendo necesario para los nodos que no son de Auto Mode.
 
 <span id="per-add-on-nodeaffinity-settings-guide"></span>
 
 ### Guía de ubicación por complemento
 
-| Complemento | Ubicación en este diseño | Comprobación requerida |
+| Complemento | Ubicación en este diseño | Comprobación necesaria |
 | --- | --- | --- |
 | AWS Load Balancer Controller | Nodos de la nube en la receta de modo mixto de AWS | Accesibilidad del webhook, etiquetas positivas, destinos IP de Hybrid enrutables |
-| Agente/operador de CloudWatch | Agente en los nodos de destino compatibles; preferentemente operador en la nube para los webhooks | Estado de IAM/agente; se excluyen las métricas de nivel de nodo de Hybrid |
-| cert-manager | Preferentemente webhook en la nube; es posible una ubicación enrutable en Hybrid | Acceso desde el plano de control y red de Pod remoto |
-| Metrics Server | Ubicación en la nube o endpoint de Pod Hybrid accesible | Rutas del plano de control al Pod y de Metrics Server a kubelet |
-| CoreDNS | Verifique las réplicas en nodos de la nube y Hybrid | Dominios elegibles, capacidad y tráfico DNS real |
-| Cilium/Calico | Hybrid Nodes en el diseño de CNI mixto compatible con AWS | Conservar VPC CNI en los nodos de la nube |
+| Agente/operador de CloudWatch | Agente en los nodos de destino compatibles; preferiblemente, webhooks del operador en la nube | Estado de IAM/agente; se excluyen las métricas de nivel de nodo de Hybrid |
+| cert-manager | Preferiblemente, webhook en la nube; también es posible ubicarlo en Hybrid si es enrutable | Acceso al plano de control y red de Pod remota |
+| Metrics Server | En la nube o en un endpoint de Pod de Hybrid accesible | Rutas del plano de control al Pod y de Metrics Server a kubelet |
+| CoreDNS | Verificar las réplicas en nodos de la nube y Hybrid | Dominios aptos, capacidad y tráfico DNS real |
+| Cilium/Calico | Nodos Hybrid en el diseño de CNI mixto compatible con AWS | Mantener VPC CNI en los nodos de la nube |
 
 ## Comportamiento y preparación ante interrupciones de red
 
-Esta sección describe qué sigue funcionando y qué se detiene cuando Direct Connect o VPN se interrumpe brevemente o la red deja de responder. Hybrid Nodes no están diseñados para entornos DDIL con interrupciones frecuentes y presuponen una conexión fiable con AWS (consulte la [descripción general](./README.md)).
+En esta sección se describe qué sigue funcionando y qué se detiene cuando Direct Connect o VPN se desconecta brevemente o la red deja de responder. Hybrid Nodes no está pensado para entornos DDIL con desconexiones frecuentes y presupone una conexión fiable con AWS (consulta la [descripción general](./README.md)).
 
-### Clúster y cargas de trabajo durante una interrupción
+### Clúster y cargas de trabajo durante una desconexión
 
 | Área | Comportamiento |
 |---|---|
-| Pods en ejecución | Siguen ejecutándose en el nodo. Kubelet no puede renovar su Lease, por lo que la condición Ready del Node pasa a `Unknown` y se añade la taint `node.kubernetes.io/unreachable` (`NoSchedule`, y `NoExecute` cuando se cumplen las condiciones). |
-| Conmutación por error de Pod | El plano de control expulsa los Pods sin una tolerancia después de los 300 segundos predeterminados y se crean Pods de reemplazo en otros nodos. Los Pods de DaemonSet toleran esta taint de forma predeterminada y permanecen en el nodo. |
-| Etiqueta de zona | Si los nodos tienen `topology.kubernetes.io/zone`, Kubernetes cancela las expulsiones de una zona cuando todos los nodos de esa zona están inaccesibles. Los nodos Hybrid no tienen cloud-controller-manager, así que establezca una zona por centro de datos con `--node-labels` de nodeadm. |
-| Cilium | El estado del agente depende del acceso al plano de control, por lo que el agente sigue reiniciándose durante una interrupción y las sesiones de Cilium BGP Control Plane pueden caer (CFP #31702, mejora opcional en Cilium 1.17). El modo L2 de MetalLB utilizado en el ejemplo de AWS permaneció estable durante las interrupciones. |
-| Dependencias de servicios de AWS | Los servicios regionales como las descargas de imágenes de ECR, CloudWatch y Amazon Managed Service for Prometheus, ALB/NLB, S3 y RDS no están disponibles durante la interrupción. |
-| Resolución de problemas local | No se puede acceder al servidor de API; por ello, use `crictl pods`, `crictl ps` y `crictl logs <container>` en el host en vez de `kubectl`. |
+| Pods en ejecución | Siguen ejecutándose en el nodo. Kubelet no puede renovar su Lease, por lo que la condición Ready del Node pasa a ser `Unknown` y se añade el taint `node.kubernetes.io/unreachable` (`NoSchedule` y `NoExecute` cuando se cumplen las condiciones). |
+| Conmutación por error de Pods | Los Pods ordinarios reciben una tolerancia predeterminada de 300 segundos para los taints `not-ready` y `unreachable` de tipo NoExecute. Una vez aplicado el taint NoExecute correspondiente y vencida esa tolerancia, el plano de control marca el Pod para su eliminación; un controlador puede crear un reemplazo en un nodo apto. Un Pod que no tenga una tolerancia coincidente se expulsa sin esperar esos 300 segundos. El contenedor original de un nodo inaccesible puede seguir ejecutándose hasta que kubelet se vuelva a conectar. Por defecto, los Pods de DaemonSet toleran estos taints indefinidamente. |
+| Etiqueta de zona | Una etiqueta de zona por sí sola no evita la expulsión. Si toda una zona queda inaccesible, pero otra zona aún tiene nodos Ready, las expulsiones pueden continuar. Si no hay nodos Ready en ninguna zona, Kubernetes cancela las expulsiones; también influyen otros umbrales de estado de zona y el tamaño del clúster. Consulta los escenarios de la [guía de conmutación por error de Pods de AWS](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html). Los nodos Hybrid no tienen un cloud-controller-manager, así que configura una zona por centro de datos con nodeadm `--node-labels`. |
+| Cilium | El estado del agente está ligado al acceso al plano de control, por lo que el agente sigue reiniciándose durante una desconexión y las sesiones de Cilium BGP Control Plane pueden interrumpirse (CFP #31702, mejora optativa en Cilium 1.17). El modo L2 de MetalLB utilizado en el ejemplo de AWS se mantuvo estable durante las desconexiones. |
+| Dependencias de servicios de AWS | Los servicios regionales, como las descargas de imágenes de ECR, CloudWatch y Amazon Managed Service for Prometheus, ALB/NLB, S3 y RDS, no están disponibles durante la desconexión. |
+| Resolución local de problemas | No se puede acceder al servidor API, así que usa `crictl pods`, `crictl ps` y `crictl logs <container>` en el host en lugar de `kubectl`. |
 
 ### Credenciales y reconexión
 
 | Elemento | Activaciones híbridas de SSM | IAM Roles Anywhere |
 |---|---|---|
-| Credenciales temporales | Fijadas en una hora (no se pueden cambiar). Se rotan automáticamente antes de expirar, sin afectar a los nodos ni a las aplicaciones en condiciones normales de funcionamiento. | Una hora de forma predeterminada, hasta 12 horas con `durationSeconds` del perfil. `MaxSessionDuration` del rol de IAM del nodo debe ser mayor. |
-| Durante la interrupción | La actualización falla porque no se puede acceder al endpoint regional de SSM; las credenciales pueden expirar durante una interrupción prolongada. | No se pueden obtener credenciales nuevas sin AWS. |
-| Después de restablecerse la conexión | Los reintentos usan retroceso exponencial, con un máximo de 30 minutos en el agente de SSM **3.3.808.0 y posteriores**. **Es posible que los nodos no se reconecten hasta 30 minutos después de restablecerse la red**, y los nodos se reconectan en momentos distintos, por lo que los Pods pueden conmutar por error a los nodos que se reconectaron primero. | Kubelet obtiene credenciales bajo demanda mediante `aws_signing_helper credential-process`, por lo que la reconexión suele ocurrir **en cuestión de segundos**. |
-| Recuperación más rápida | Reinicie el agente de SSM para forzar una actualización (comandos más abajo). | No es necesario realizar ninguna acción mientras el certificado sea válido. Configure notificaciones de expiración del certificado. |
+| Credenciales temporales | Fijadas en una hora (no se puede cambiar). Se renuevan automáticamente antes de vencer, sin afectar a los nodos ni a las aplicaciones durante el funcionamiento normal. | Una hora de forma predeterminada, hasta 12 horas con `durationSeconds` del perfil. `MaxSessionDuration` del rol IAM del nodo debe ser mayor. |
+| Durante la desconexión | La renovación falla porque no se puede acceder al endpoint regional de SSM; las credenciales pueden vencer durante una desconexión prolongada. | No se pueden obtener credenciales nuevas sin AWS. |
+| Tras restablecerse la conexión | Los reintentos utilizan retroceso exponencial, con un máximo de 30 minutos en SSM agent **3.3.808.0 y versiones posteriores**. **Es posible que los nodos tarden hasta 30 minutos en volver a conectarse después de restablecerse la red**, y los nodos se reconectan en distintos momentos, por lo que los Pods pueden pasar a nodos que se hayan reconectado antes. | Kubelet obtiene credenciales a petición mediante `aws_signing_helper credential-process`, por lo que la reconexión suele producirse **en cuestión de segundos**. |
+| Recuperación más rápida | Reinicia el SSM agent para forzar una renovación (comandos siguientes). | No es necesario hacer nada mientras el certificado sea válido. Configura notificaciones de vencimiento del certificado. |
 
-Versión, reinicio y registros del agente de SSM:
+Versión, reinicio y registros de SSM agent:
 
 ```bash
 # Version (AL2023, RHEL / Ubuntu)
@@ -408,15 +408,15 @@ systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent    # Ubuntu
 tail -f /var/log/amazon/ssm/amazon-ssm-agent.log
 ```
 
-Durante una interrupción, el registro repite `Retrieve credentials produced error: RequestError: send request failed` y `Sleeping for ... before retrying retrieve credentials`; cuando la actualización se completa correctamente, se registra `Credentials ready`.
+Durante una desconexión, el registro repite `Retrieve credentials produced error: RequestError: send request failed` y `Sleeping for ... before retrying retrieve credentials`; cuando la renovación se realiza correctamente, se registra `Credentials ready`.
 
-### Lista de comprobación de preparación
+### Lista de preparación
 
-- **Conectividad redundante:** Haga que Direct Connect sea redundante o mantenga una VPN Site-to-Site como respaldo.
-- **Detectar interrupciones:** Habilite los registros de Controller Manager del plano de control de EKS y cree un filtro de métricas y una alarma de CloudWatch para el mensaje `Recording status change event message for node` con `status="NodeNotReady"`. Configure alarmas si `BytesIn`/`BytesOut` de TGW o `TunnelDataIn`/`TunnelDataOut` de VGW caen por debajo de lo normal. CloudWatch Network Monitor muestra la pérdida y la latencia.
-- **Versión del agente de SSM:** Mantenga la versión 3.3.808.0 o posterior para que el intervalo de reintento tenga un máximo de 30 minutos.
-- **Etiqueta de zona:** Establezca `topology.kubernetes.io/zone` por centro de datos.
-- **Ajustar la expulsión:** Para aplicaciones que no se pueden mover fácilmente, aumente `tolerationSeconds`. Los valores más largos también retrasan el traslado de Pods desde nodos que realmente han fallado.
+- **Conectividad redundante:** implementa redundancia para Direct Connect o mantén una VPN de Site-to-Site como respaldo.
+- **Detectar desconexiones:** habilita los registros de Controller Manager del plano de control de EKS y crea un filtro de métricas y una alarma de CloudWatch para el mensaje `Recording status change event message for node` con `status="NodeNotReady"`. Activa una alarma cuando `BytesIn`/`BytesOut` de TGW o `TunnelDataIn`/`TunnelDataOut` de VGW caigan por debajo de lo normal. CloudWatch Network Monitor muestra la pérdida y la latencia.
+- **Versión de SSM agent:** mantén la versión 3.3.808.0 o posterior para limitar el intervalo de reintento a 30 minutos.
+- **Etiqueta de zona:** configura un `topology.kubernetes.io/zone` por centro de datos.
+- **Ajustar la expulsión:** para aplicaciones difíciles de trasladar, aumenta `tolerationSeconds`. Los valores más altos también retrasan la retirada de Pods de nodos que realmente han fallado.
 
 ```yaml
 # Fragment under the Deployment's spec.template.spec
@@ -427,19 +427,19 @@ tolerations:
     tolerationSeconds: 1800
 ```
 
-- **Proveedor de credenciales:** Si las interrupciones son frecuentes y es importante reconectarse rápidamente, considere IAM Roles Anywhere con un `durationSeconds` más prolongado. Use un solo proveedor dentro de un clúster.
-- **Ruta de observabilidad secundaria:** Configure el recopilador de ADOT para enviar datos a varios backends, de modo que mantenga la visibilidad cuando los servicios regionales no estén disponibles.
+- **Proveedor de credenciales:** si las desconexiones son frecuentes y es importante reconectarse rápidamente, considera IAM Roles Anywhere con un `durationSeconds` más largo. Usa un único proveedor en cada clúster.
+- **Ruta secundaria de observabilidad:** configura el colector ADOT para enviar datos a varios backends y así mantener la visibilidad cuando los servicios regionales no estén accesibles.
 
 Referencias:
-- [Credenciales del host durante interrupciones de red](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html)
-- [Prácticas recomendadas para mantener la estabilidad durante interrupciones de red](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html)
-- [Conmutación por error de Pods de Kubernetes durante interrupciones de red](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html)
+- [Credenciales del host durante las desconexiones de red](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-host-creds.html)
+- [Prácticas recomendadas de estabilidad durante las desconexiones de red](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-network-disconnection-best-practices.html)
+- [Conmutación por error de Pods de Kubernetes durante las desconexiones de red](https://docs.aws.amazon.com/eks/latest/best-practices/hybrid-nodes-kubernetes-pod-failover.html)
 
 ## Resolución de problemas comunes
 
 ### Diagnóstico de ImagePullBackOff
 
-Lea los eventos del Pod e inspeccione el nombre/tipo del Secret al que se hace referencia sin decodificar ni imprimir las credenciales del registro. El Secret debe estar en el espacio de nombres del Pod. Confirme el nombre de host del registro, el permiso requerido para el repositorio y la expiración de las credenciales con su responsable; los metadatos por sí solos no pueden demostrar que la autenticación funcione.
+Lee los eventos del Pod e inspecciona el nombre/tipo del Secret mencionado sin descodificar ni mostrar las credenciales del registro. El Secret debe estar en el espacio de nombres del Pod. Confirma el nombre de host del registro, los permisos necesarios del repositorio y el vencimiento de las credenciales con el responsable de estas; los metadatos por sí solos no demuestran que la autenticación funcione.
 
 ```bash
 set -euo pipefail
@@ -453,7 +453,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get secret "$PULL_SECRET" \
   -o jsonpath='{.type}{"\n"}'
 ```
 
-Ejecute una comprobación de TLS desde la ruta de red/host real, con la CA de confianza y la verificación del nombre de host habilitadas. No use curl -k ni interprete una respuesta 401 no autenticada del registro como un fallo de TLS. Este ejemplo requiere Bash, OpenSSL y GNU timeout.
+Ejecuta una comprobación de TLS desde la ruta real del host/red, con la CA de confianza y la verificación del nombre de host habilitadas. No uses curl -k ni interpretes una respuesta 401 de un registro sin autenticar como un fallo de TLS. Este ejemplo requiere Bash, OpenSSL y GNU timeout.
 
 ```bash
 set -euo pipefail
@@ -464,17 +464,17 @@ timeout 10s openssl s_client -connect "$HARBOR_HOST:443" \
   -verify_return_error -CAfile "$HARBOR_CA_FILE" </dev/null
 ```
 
-Para probar DNS/red dentro de un Pod, use una imagen de diagnóstico aprobada fijada por resumen criptográfico, un espacio de nombres dedicado y una ubicación explícita en el Hybrid Node afectado. Un Pod de depuración arbitrario sin fijar puede ejecutarse en un nodo de la nube y probar la ruta equivocada. Revise por separado la creación/eliminación del Pod y conserve los resultados con el alcance limitado.
+Para probar DNS/red dentro de un Pod, usa una imagen de diagnóstico aprobada fijada por resumen criptográfico, un espacio de nombres dedicado y una ubicación explícita en el Hybrid Node afectado. Un Pod de depuración cualquiera sin fijar puede ejecutarse en un nodo de la nube y probar la ruta equivocada. Revisa por separado la creación/eliminación del Pod y conserva los resultados acotados.
 
-### Problemas de resolución de DNS
+### Problemas de resolución DNS
 
-Inspeccione el Deployment/Pods, el Service y los EndpointSlices reales de CoreDNS, su ubicación en la nube/en las instalaciones, la configuración DNS y la accesibilidad de red. Pruebe el nombre del registro y kubernetes.default.svc.cluster.local desde el entorno de la carga de trabajo afectada. Los fallos de acceso a la API, al DNS o a los registros son observaciones desconocidas, no comprobaciones satisfactorias.
+Inspecciona el Deployment/Pods de CoreDNS reales, el Service y los EndpointSlices, su ubicación en la nube/local y la configuración DNS y accesibilidad de red. Prueba el nombre del registro y kubernetes.default.svc.cluster.local desde el entorno de la carga de trabajo afectada. Los fallos de acceso a la API, al DNS o a los registros son observaciones desconocidas, no comprobaciones satisfactorias.
 
-No reinicie todos los Pods de CoreDNS como acción de diagnóstico predeterminada. Determine primero qué capa falla y coordine cualquier reinicio con las comprobaciones de redundancia y recuperación. Los clústeres mixtos con Auto Mode pueden tener un comportamiento de DNS local al nodo; determine qué ruta del resolver usa realmente el Pod que falla.
+No reinicies todos los Pods de CoreDNS como medida de diagnóstico predeterminada. Determina primero qué capa falla y coordina cualquier reinicio con las comprobaciones de redundancia y recuperación. Los clústeres mixtos con Auto Mode pueden tener comportamiento de DNS local al nodo; identifica qué ruta de resolución utiliza realmente el Pod que falla.
 
 ### Problemas de conectividad de nodos
 
-Use el nombre real del Node del inventario y el host asociado. Los nombres de Node respaldados por SSM no tienen por qué empezar por hybrid- ni resolverse como nombres de host.
+Usa el nombre real del Node del inventario y el host asociado. Los nombres de Node respaldados por SSM no tienen por qué empezar por hybrid- ni resolverse como nombres de host.
 
 ```bash
 set -euo pipefail
@@ -490,13 +490,13 @@ sudo journalctl -u kubelet -u containerd --since '10 minutes ago' \
   --no-pager -n 200
 ```
 
-Compruebe el proveedor de credenciales y la unidad del agente específica del sistema operativo (incluida la instalación de SSM basada en snap de Ubuntu cuando corresponda). Para diagnosticar la red/autenticación, use el procedimiento verificado `nodeadm debug -c file:///etc/eks/nodeconfig.yaml` con privilegios de root y almacenamiento privado de la salida. Se comunica con AWS y el clúster; no registre las credenciales emitidas ni desactive la verificación de TLS.
+Comprueba el proveedor de credenciales y la unidad del agente específica del SO (incluida la instalación de SSM basada en snap de Ubuntu cuando corresponda). Para diagnosticar la red/autenticación, sigue el procedimiento verificado `nodeadm debug -c file:///etc/eks/nodeconfig.yaml` con privilegios de root y conserva la salida de forma privada. Se conecta a AWS y al clúster; no registres las credenciales emitidas ni desactives la verificación de TLS.
 
-No hay un subcomando `nodeadm reset` en la CLI revisada 1.0.20. NotReady no es motivo para anular el registro o volver a inicializar un host a ciegas. Siga el procedimiento de [recuperación y reconciliación de identidad](./07-node-lifecycle.md) después de determinar la causa del fallo, conservando los montajes/datos y registrando las identidades de nodo/SSM.
+No existe el subcomando `nodeadm reset` en la CLI revisada 1.0.20. NotReady no es motivo para dar de baja y volver a inicializar un host a ciegas. Sigue el procedimiento de [recuperación y reconciliación de identidad](./07-node-lifecycle.md) después de determinar el fallo, conservando los montajes/datos y registrando las identidades del nodo/SSM.
 
 ## Alcance de la validación y referencias
 
-Las comprobaciones locales cubren esquemas de recursos fijados, cuatro expresiones PromQL con muestras sintéticas y once casos de dobles de prueba de comandos de copia de seguridad/red. No se ejecutaron cambios de AWS/Kubernetes, una copia de seguridad/restauración real, una prueba de carga de red, una sesión BGP, una recopilación de métricas de exportador ni un despliegue progresivo de producción. Seleccione combinaciones de EKS/SO/CNI/complementos a partir de la documentación actual de compatibilidad de AWS antes del despliegue.
+Las comprobaciones locales abarcan esquemas de recursos fijados, cuatro expresiones PromQL con muestras sintéticas y once casos con dobles de comandos para copias de seguridad/red. No se ejecutaron cambios en AWS/Kubernetes, copias de seguridad/restauraciones reales, pruebas de carga de red, sesiones BGP, recopilaciones de exportadores ni despliegues en producción. Antes del despliegue, selecciona combinaciones de EKS/SO/CNI/complementos conforme a la documentación de compatibilidad vigente de AWS.
 
 - [Complementos de AWS Hybrid](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html)
 - [Webhooks de AWS Hybrid](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
@@ -510,4 +510,4 @@ Las comprobaciones locales cubren esquemas de recursos fijados, cuatro expresion
 
 ---
 
-< [Anterior: Administración del ciclo de vida de los nodos](./07-node-lifecycle.md) | [Tabla de contenido](./README.md) | [Siguiente: Configuración del sistema operativo en bare metal](./09-bare-metal-os-setup.md) >
+< [Anterior: Gestión del ciclo de vida de los nodos](./07-node-lifecycle.md) | [Tabla de contenido](./README.md) | [Siguiente: Configuración del SO en bare metal](./09-bare-metal-os-setup.md) >

@@ -1,23 +1,23 @@
 # 网络配置
 
-> **支持的版本**：EKS 1.36 示例；AWS 维护的 Cilium 1.18.3-0 参考版本，要求兼容的主机/内核
-> **最后更新**：2026 年 10 月 18 日
+> **支持的版本**：EKS 1.36 示例；AWS 维护的 Cilium 1.18.3-0 参考版本，需要兼容的主机/内核
+> **最后更新**：2026年10月18日
 
-分别验证路由、DNS、TLS、凭证和应用流量。这些示例已使用本地 schema 和测试夹具进行检查，其中包括模拟的 Terraform provider；没有更改任何 AWS 资源、路由器、防火墙或运行中的集群。这些图示是基于 AWS 概念制作的仓库插图，并非 AWS 对此配置的验证。
+分别验证路由、DNS、TLS、凭证和应用流量。这些示例已使用本地 Schema 和测试样例进行检查，其中包括模拟的 Terraform 提供程序；没有更改任何 AWS 资源、路由器、防火墙或运行中的集群。这些图示是基于 AWS 概念绘制的仓库插图，并非 AWS 发布的针对这些配置的验证结果。
 
-![混合节点前提条件和双向路由。](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
+![混合节点先决条件和双向路由。](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
 
 [🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
 
-**安全团队配套文档：**[混合节点网络隔离审查](11-network-separation-security.md)介绍新的控制平面到本地部署环境的连接、端点类型、权限和数据边界，以及审查证据。仅有私有连接并不能证明符合规范。
+**安全团队配套文档：**[混合节点网络隔离审查](11-network-separation-security.md)说明了新增的控制平面到本地网络连接、端点类型、权限和数据边界以及审查证据。仅有私有连接并不能证明符合规范。
 
-## 网络架构概述
+## 网络架构概览
 
-控制平面→混合节点流量和私有 Kubernetes API 流量使用集群 VPC 网络路径。Kubelet 到公有 API 端点的流量则使用其配置的公有路由；“所有流量始终都经过 VPC ENI”的说法过于宽泛。Direct Connect 公有 VIF、私有连接和公有互联网路径是不同的选择。
+控制平面→混合节点流量和私有 Kubernetes API 流量使用集群 VPC 网络路径。Kubelet 到公共 API 端点的流量则使用其配置的公共路由；“所有流量始终经过 VPC ENI”的说法过于笼统。Direct Connect 公共 VIF、私有连接和公共互联网路径是不同的选项。
 
-EKS 控制平面 ENI/IP 可能发生变化。请审查集群的实际归属和获批的控制平面子网范围，不要将共享 VPC 中的所有 `Amazon EKS*` ENI 都视为属于此集群。
+EKS 控制平面 ENI/IP 可能发生变化。请审查实际的集群归属和已批准的控制平面子网范围，而不要将共享 VPC 中每个 `Amazon EKS*` ENI 都视为属于此集群。
 
-在执行只读诊断前，绑定账户和 Kubernetes 上下文：
+在执行只读诊断前，先绑定账户和 Kubernetes 上下文：
 
 ```bash
 set -euo pipefail
@@ -48,55 +48,57 @@ printf 'Private diagnostics: %s\n' "$WORK_DIR"
 
 ## CIDR 范围要求
 
-远程节点/Pod 网络应使用互不重叠的 IPv4 **RFC1918 或 CGNAT** 地址范围，并与 VPC 和 Kubernetes Service CIDR 分开。每种远程网络类型最多支持 15 个 CIDR。目前 EKS 支持通过 API 工作流在现有集群上配置远程网络；这并非只能在创建集群时配置。
+远程节点/Pod 网络应使用互不重叠的 IPv4 **RFC1918 或 CGNAT** 地址段，并与 VPC 和 Kubernetes Service CIDR 分开。每种远程网络最多支持 15 个 CIDR。目前，EKS 支持通过 API 工作流为现有集群配置远程网络；这并非仅适用于创建集群。
 
 | 网络行为 | 含义 |
 |------------------|---------|
-| 可路由的 Pod IP | 获批的路由允许云端/控制平面客户端发起与 Pod IP 的连接 |
-| 经伪装的出站流量 | SNAT 可为由 Pod 发起的连接提供返回路径；这不会自动允许新的入站连接 |
-| 不可路由的 Pod 网络 | 直接的云端→Pod 流量需要其他受支持的路径；传统设计中应使用云托管的 webhook/API 服务 |
+| 可路由的 Pod IP | 已批准的路由允许云端/控制平面客户端向 Pod IP 发起连接 |
+| 出站伪装 | SNAT 可以为 Pod 发起的连接提供返回路径；但它不会自动允许新的入站连接 |
+| 不可路由的 Pod 网络 | 直接的云端→Pod 流量需要其他受支持的路径；常规设计应使用托管在云端的 Webhook/API Service |
 
-不可路由并不意味着 Pod 无法发起任何 AWS API 调用。对于直接的混合/云端 Pod 通信以及由混合环境托管的 webhook，请提供实际的 Pod 路由。网关/代理替代方案有各自单独的要求。
+不可路由并不意味着 Pod 无法发起任何 AWS API 调用。对于直接的混合节点/云端 Pod 通信和托管在混合节点上的 Webhook，请提供实际的 Pod 路由。网关/代理替代方案有各自的要求。
 
 ## 所需防火墙端口
 
-| 流量方向 | 协议 / 端口 |
+| 流量方向 | 协议/端口 |
 |------|-----------------|
 | Node/Pod → Kubernetes API | 到实际集群端点的 TCP443 |
 | 控制平面 ENI → kubelet | TCP10250，并启用 kubelet 身份验证/授权 |
-| 控制平面 → webhook 或聚合 API Pod | 其配置的 TCP 端口，而不是通用的“8443+”范围 |
-| DNS 客户端 ↔ 实际解析器 | UDP/TCP53 及有状态返回流量 |
+| 控制平面 → Webhook 或聚合 API Pod | 其配置的 TCP 端口，而不是笼统的“8443+”范围 |
+| DNS 客户端 ↔ 实际解析器 | UDP/TCP53 和有状态返回流量 |
 | 参与节点之间的 Cilium VXLAN | UDP8472 |
-| Cilium Geneve，仅在为该设计选择且受支持时使用 | UDP6081 |
+| Cilium Geneve，仅在为设计选择且受支持时 | UDP6081 |
 | Cilium 健康检查 | TCP4240 以及所需的 ICMP/健康端点可达性 |
-| BGP 节点↔路由器 | 为配置的主/备 peer 使用 TCP179 |
+| BGP 节点↔路由器 | 为配置的主/备对等体使用 TCP179 |
 | VPN 网关传输 | UDP500/4500 及适用的 IPsec 传输要求 |
-| 应用 / AWS 凭证和镜像仓库服务 | 仅限其实际目的地和端口 |
+| 应用/AWS 凭证和镜像仓库 Service | 仅限其实际目标地址和端口 |
 
-请通过网络所有者应用防火墙变更，并保留连接跟踪和现有规则。仅放行通信所需的 IP 地址、CIDR 和端口。旧的宽泛 `10.0.0.0/8` INPUT 规则、未限定范围的 DNS/VXLAN 放行规则，以及不加甄别地保存整个规则集的做法，都不是可安全复用的防火墙策略。请通过 TCP `10250` 访问 kubelet API，并启用身份验证和授权。不要开放 TCP `10255` 这个旧版只读 kubelet 端口，因为它允许未经身份验证的访问。
+网络管理员应在保留现有规则和连接跟踪的前提下更改防火墙规则。只允许通信所需的 IP 地址、CIDR 和端口。避免使用允许整个 `10.0.0.0/8` 范围的 INPUT 规则，或不限制源地址和目标地址的 DNS/VXLAN 规则。在持久化更改前，应审查要保存哪些规则，不要不加区分地保存整个规则集。
+
+对于 kubelet API，请使用带身份验证和授权的 TCP `10250`。不要开放允许未授权访问的旧版只读 kubelet 端口 TCP `10255`。
 
 ## AWS 端点访问
 
-**EKS 管理 API PrivateLink 端点不是 Kubernetes API server 端点。**
+**EKS 管理 API PrivateLink 端点不是 Kubernetes API Server 端点。**
 
-| `com.amazonaws.<region>.*` 的服务后缀 | 用途 / 需要时机 |
+| `com.amazonaws.<region>.*` 的 Service 后缀 | 用途/所需场景 |
 |------------------------------------------------|-----------------------|
 | `eks` | AWS EKS 管理调用，例如 DescribeCluster |
-| `eks-auth` | 使用 EKS Pod Identity 时 |
-| `ecr.api`、`ecr.dkr` | 私有 ECR API/镜像仓库；镜像层还需要 S3 访问 |
-| `s3` | 私有 S3 访问；本地部署环境无法直接使用 VPC gateway endpoint |
-| `ssm`、适用的 SSM messaging 服务 | SSM 凭证/管理功能 |
-| `rolesanywhere` | 使用该 provider 时获取 IAM Roles Anywhere 凭证 |
-| `sts` | 实际客户端 STS/IRSA/AssumeRole 调用；在本地签署 EKS token 本身并不会产生客户端 STS 网络请求 |
-| `logs`、`monitoring`、其他选定服务 | 仅当所选 agent/workload 会调用这些服务时 |
-| `oidc-eks` | 当前 EKS OIDC discovery/JWKS PrivateLink 服务（如有提供） |
-| `eks-proxy` | AWS 控制台资源视图；不是公有应用 SDK/API |
+| `eks-auth` | 使用 EKS Pod Identity 时所需 |
+| `ecr.api`、`ecr.dkr` | 私有 ECR API/容器镜像仓库；镜像层还需要 S3 访问 |
+| `s3` | 私有 S3 访问；本地网络无法直接使用 VPC 网关端点 |
+| `ssm`、适用的 SSM 消息服务 | SSM 凭证/管理功能 |
+| `rolesanywhere` | 使用该提供程序时所需的 IAM Roles Anywhere 凭证 |
+| `sts` | 实际客户端 STS/IRSA/AssumeRole 调用；在本地签署 EKS 令牌本身并不构成客户端 STS 网络请求 |
+| `logs`、`monitoring`、其他选定的服务 | 仅当所选 Agent/工作负载会调用这些服务时需要 |
+| `oidc-eks` | 当前的 EKS OIDC 发现/JWKS PrivateLink 服务（如有提供） |
+| `eks-proxy` | AWS 控制台资源视图；不是面向公共应用的 SDK/API |
 
-请确认目标区域中是否提供这些服务。私有 ECR 端点不会让**公有 ECR**、CloudFront 或任意软件包仓库变成私有服务。例如，位于公有 ECR 的 AWS Cilium OCI chart 需要经过批准且可访问/已镜像的分发路径。
+请确认目标区域提供相应服务。私有 ECR 端点不会使**公共 ECR**、CloudFront 或任意软件包仓库变为私有。例如，公共 ECR 中的 AWS Cilium OCI Chart 需要经过批准且可访问/镜像后的分发路径。
 
-OIDC discovery/JWKS 是匿名的公钥材料。`oidc-eks` 仅接受其默认的完全访问端点策略；请使用 SG/路由控制可达性，并使用 IAM trust `aud`/`sub` 条件进行角色授权。STS 会在 AWS 内部验证 IRSA token，这与此 VPC endpoint 相互独立。
+OIDC 发现/JWKS 是匿名的公钥材料。`oidc-eks` 仅接受其默认的完全访问端点策略；应使用 SG/路由控制可达性，并使用 IAM 信任中的 `aud`/`sub` 条件进行角色授权。STS 会在 AWS 内部验证 IRSA 令牌，此过程独立于此 VPC 端点。
 
-对于 Roles Anywhere CreateSession 端点策略，principal 必须为 `*`，因为策略评估发生在证书身份验证之前；请按文档限制获批的 trust-anchor 资源和受支持的证书条件。不要将一个通用端点策略复制到这些不同服务上。端点策略用于筛选端点流量；它们不能取代 IAM/role trust，也不会在全局范围内禁用公有服务端点。
+对于 Roles Anywhere CreateSession 端点策略，由于策略评估先于证书身份验证，主体必须为 `*`；应按文档所述限制已批准的信任锚资源和受支持的证书条件。不要将一个通用端点策略复制到这些不同的服务上。端点策略用于筛选端点流量；它不能取代 IAM/角色信任，也不会在全局范围内禁用公共服务端点。
 
 ```bash
 check_account
@@ -108,19 +110,19 @@ aws ec2 describe-vpc-endpoints --region "$AWS_REGION" \
       subnets:.SubnetIds,groups:.Groups,dnsEntries:.DnsEntries}]'
 ```
 
-### S3 私有 DNS 和构件分发
+### S3 私有 DNS 和制品分发
 
-S3 **interface endpoint 支持私有 DNS**。仅限入站 Resolver 的选项会将本地部署环境的查询导向 interface endpoint，同时要求 VPC 内流量使用 S3 gateway endpoint。启用此选项期间，请保留该 gateway。或者，清除此选项，让所有相关 S3 流量都使用 interface endpoint。
+S3 **接口端点支持私有 DNS**。“仅限入站 Resolver”的选项会通过接口端点引导本地网络查询，同时让 VPC 内流量使用必需的 S3 网关端点。启用此选项期间，请保留该网关端点。或者，清除此选项，让所有相关 S3 流量都使用接口端点。
 
-私有 DNS 并非 TLS 重写。将 `hybrid-assets.eks.amazonaws.com` 映射到 S3 endpoint 的 PHZ/CNAME，不会让 S3 获得 CloudFront 主机名的证书或对象/Host 路由行为。不要通过禁用 TLS 验证让此类镜像生效。请使用受支持的构件准备/客户端配置路径、具有自身主机名/证书且获批的镜像，或在经过验证的镜像中预装依赖项。
+私有 DNS 并不是 TLS 重写。通过 PHZ/CNAME 将 `hybrid-assets.eks.amazonaws.com` 映射到 S3 端点，并不会让 S3 获得 CloudFront 主机名的证书或对象/Host 路由行为。不要为了让此类镜像正常工作而禁用 TLS 验证。请使用受支持的制品准备/客户端配置路径、带有自有主机名/证书且经批准的镜像，或使用已在经过验证的映像中预装的依赖项。
 
 ## VPC 私有端点（受限互联网连接） {#vpc-private-endpoints-air-gap-private-connectivity}
 
-此处的“air-gap”指受限的互联网访问并保留所需的 AWS 连接，而非断开连接的集群。
+此处的“气隙”是指限制互联网访问但保留所需 AWS 连接，并非断开连接的集群。
 
-以下完整 Terraform 示例使用现有 VPC、端点子网和 TGW。它不会创建 VPN/DX 专线、TGW attachment、本地部署路由或 EKS 私有 DNS 配置。请验证 VPC DNS support/hostnames 以及实际不同的 AZ；仅有两个不同的子网 ID 并不能证明 AZ 多样性。
+下面的完整 Terraform 示例使用现有 VPC、端点子网和 TGW。它不会创建 VPN/DX 线路、TGW 附加、到本地网络的路由或 EKS 私有 DNS 配置。请验证 VPC DNS 支持/主机名设置以及实际可用区的差异；两个不同的子网 ID 本身并不能证明它们分布在不同可用区。
 
-请与原始基础设施所有者合作，并在规划替换之前导入/接管现有资源。默认端点集用于展示 SSM；请根据所选 provider/workload 进行调整。端点和 Resolver ENI 会产生费用。Provider 账户防护和限定范围的入站规则都是有意设置的；响应流量使用有状态 SG 跟踪。
+请通过原基础设施所有者管理，并在规划替换前导入/接管现有资源。默认端点集合以 SSM 为例；请根据所选提供程序/工作负载进行调整。端点和 Resolver ENI 会产生费用。提供程序的账户防护和范围受限的入站规则都是有意设置的；响应流量使用有状态 SG 跟踪。
 
 ```hcl
 terraform {
@@ -416,11 +418,11 @@ resource "aws_route" "hybrid" {
 }
 ```
 
-S3 gateway 依赖关系是显式的。请将所需的本地部署 DNS/服务范围纳入 `remote_ipv4_cidrs`，而不仅仅是节点/Pod 网络：示例中的 DNS server `192.168.1.10/11` 需要获批的 `192.168.1.0/24` 路由或相应的主机路由。对于 VGW 返回路由，请使用 `gateway_id` 而不是 `transit_gateway_id`；不要将 TGW ID 放入 VGW/gateway 字段，也不要同时配置两个目标。仅有 VPC 路由并不能建立 TGW/VPN/本地部署路由。
+S3 网关依赖关系已明确声明。请将所需的本地 DNS/Service 地址段纳入 `remote_ipv4_cidrs`，而不只是节点/Pod 网络：示例中的 DNS 服务器 `192.168.1.10/11` 需要已批准的 `192.168.1.0/24` 路由或相应的主机路由。对于 VGW 返回路由，请使用 `gateway_id` 而不是 `transit_gateway_id`；不要将 TGW ID 放入 VGW/网关字段，也不要同时配置两个目标。仅有 VPC 路由并不能建立 TGW/VPN/本地网络路由。
 
 ## DNS 配置
 
-本地部署的解析器可以有条件地将选定的 AWS/服务名称以及实际集群端点名称转发到 Route 53 Resolver 入站 IP。请使用实际端点返回的地址。宽泛地转发 `amazonaws.com` 可能会影响无关服务；请谨慎选择区域并避免转发环路。
+本地解析器可以有条件地将选定的 AWS/Service 名称和实际集群端点名称转发到 Route 53 Resolver 入站 IP。请使用实际端点返回的地址。宽泛地转发 `amazonaws.com` 可能会影响无关服务；请谨慎选择域名区域并避免转发环路。
 
 ```text
 // Example service zones only. Replace these Resolver IPs with actual outputs.
@@ -436,11 +438,11 @@ zone "s3.ap-northeast-2.amazonaws.com" {
 };
 ```
 
-此 BIND 片段仅覆盖所示服务区域，不会自动覆盖 Kubernetes API 主机名。请从经过验证的服务清单中添加实际集群端点的 DNS 名称/后缀和其他所需名称。Resolver outbound 规则处理本地部署区域；该区域必须由所选 DNS server 提供权威解析/可访问，而不能再转发回同一环路。
+此 BIND 片段涵盖了所示的 Service 区域，但不会自动涵盖 Kubernetes API 主机名。请添加实际集群端点的 DNS 名称/后缀，以及经核实的 Service 清单中的其他必需名称。Resolver 出站规则负责处理本地域名；该域名必须由所选 DNS 服务器权威解析或可访问，而不能再被转发回同一环路。
 
 ### CoreDNS 自定义域名配置
 
-如果所选设计会从 CoreDNS 直接转发，请将经过审查的 server block 合并到现有 Corefile；不要覆盖整个托管 ConfigMap：
+如果所选设计直接从 CoreDNS 转发，请将经过审查的服务器块合并到现有 Corefile 中；不要覆盖整个托管 ConfigMap：
 
 ```text
 # Fragment to merge through the CoreDNS configuration owner.
@@ -453,9 +455,9 @@ corp.example.internal:53 {
 }
 ```
 
-请保留现有 Kubernetes 区域、健康/就绪状态和 reload 行为。检查实际的解析器文件和 systemd-resolved/stub 布局；将 DNS server 转发回自身可能造成环路。针对某个区域，请选择适当的 VPC 转发路径或显式 CoreDNS 转发，而不要叠加相互矛盾的路由。
+请保留现有 Kubernetes 区域、健康/就绪检查和重新加载行为。检查实际的解析器文件以及 systemd-resolved/存根布局；将 DNS 服务器的查询转发回其自身可能导致环路。对于某个区域，请选择适当的 VPC 转发路径或显式的 CoreDNS 转发，不要叠加相互矛盾的路由。
 
-对于托管 EKS add-on，请获取**已安装版本的**配置 schema，并验证完整的拟议值，同时保留无关的现有设置：
+对于托管的 EKS 插件，请获取**已安装版本**的配置 Schema，并验证完整的拟议值，同时保留其他现有设置：
 
 ```bash
 check_account
@@ -483,13 +485,13 @@ print("Configuration matches the fetched schema; rollout and DNS behavior are no
 PY
 ```
 
-这是本地 schema 检查，并非 rollout。应用配置前，请协调托管 add-on/GitOps 的所有权、自动扩缩和恢复方案。
+这是本地 Schema 检查，不是发布操作。应用配置前，请协调托管插件/GitOps 的管理权、自动扩缩容和恢复方案。
 
-### CoreDNS 放置和本地性
+### CoreDNS 的部署位置和本地性
 
-AWS 建议在混合集群中，云端节点和混合节点上各至少运行一个 CoreDNS 副本。每个位置运行两个副本可以作为弹性选择；四个副本并非通用最低要求，也不构成保证。
+AWS 建议在混合集群中，云端节点和混合节点上各至少运行一个 CoreDNS 副本。每个位置运行两个副本可以作为一种韧性设计选择；四个副本既不是普遍适用的最低要求，也不是保证。
 
-请验证所有预期 DNS 节点上的实际 zone label。混合节点需要由所有者定义 `topology.kubernetes.io/zone` 值，例如 `onprem-dc1`；compute-type label 不会自动成为该 zone 或 taint。请合并放置偏好，不要删除无关的 affinity/toleration：
+请验证所有目标 DNS 节点上的实际可用区标签。混合节点需要由所有者定义的 `topology.kubernetes.io/zone` 值，例如 `onprem-dc1`；计算类型标签并不会自动成为此可用区标签或污点。合并部署位置偏好时，不要删除其他无关的亲和性/容忍度设置：
 
 ```json
 {
@@ -524,9 +526,9 @@ AWS 建议在混合集群中，云端节点和混合节点上各至少运行一�
 }
 ```
 
-软 affinity/spread 是一种偏好，并不保证实现 2+2 分布或成功引导。仅靠放置也无法确保客户端选择本地 DNS 副本。
+软亲和性/分布约束只是偏好，无法保证 2+2 的分布或成功引导。仅靠部署位置也不能确保客户端选择本地 DNS 副本。
 
-AWS 文档中的 Service Traffic Distribution 示例使用 `PreferClose`。使用 Cilium 时，请配置受支持的 `loadBalancer.serviceTopology` 设置，并由所有者滚动受影响的 agent，然后再依赖此功能。请检查实际数据平面/版本和健康的本地端点。
+AWS 文档中的 Service 流量分布示例使用 `PreferClose`。使用 Cilium 时，应配置受支持的 `loadBalancer.serviceTopology` 设置，并由所有者滚动更新受影响的 Agent，然后再依赖此功能。请检查实际数据平面/版本和健康的本地端点。
 
 ```json
 {
@@ -550,23 +552,23 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n kube-system \
        ready:([.status.conditions[]?|select(.type=="Ready")|.status]|first // "NotReported")}]'
 ```
 
-检查实际 Service IP、EndpointSlice zone/hint 和 Pod 就绪状态。`10.100.0.10` 是某个特定 Service CIDR 的示例，并非通用的集群 DNS 地址。本地副本不会让断开连接的 EKS 集群变成完全独立的 DNS/控制平面。
+检查实际的 Service IP、EndpointSlice 可用区/提示信息和 Pod 就绪状态。`10.100.0.10` 是某个特定 Service CIDR 的示例，并非通用的集群 DNS 地址。本地副本不会让断开连接的 EKS 集群变成完全独立的 DNS/控制平面。
 
 ## 流量模式
 
-图示使用说明性地址和简化的处理阶段。请检查实际 Service 数据平面使用的是 kube-proxy iptables、nftables/IPVS，还是 Cilium 的 eBPF 替代方案。
+图示使用示意地址和简化的处理阶段。请检查实际的 Service 数据平面是 kube-proxy iptables、nftables/IPVS，还是 Cilium 的 eBPF 替代实现。
 
 ### 模式 1：Kubelet → EKS 控制平面
 
-Kubelet 会解析配置的 Kubernetes API 端点并与之连接。私有和公有访问使用不同的路由；两者都不应与 EKS 管理 PrivateLink 端点混淆。
+Kubelet 会解析并连接到已配置的 Kubernetes API 端点。私有和公共访问使用不同的路由；两者都不应与 EKS 管理 PrivateLink 端点混淆。
 
-![公有和私有端点配置下的 Kubelet API 访问路径。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-10.png)
+![公共和私有端点配置下的 Kubelet API 访问路径。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-10.png)
 
 [🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-10.html)
 
 ### 模式 2：EKS 控制平面 → Kubelet
 
-控制平面通过 TCP10250 访问所报告且可路由的节点地址。此路径支持日志、exec 和 port-forward，并需要反向路由、防火墙许可和 kubelet 身份验证。
+控制平面通过 TCP10250 访问上报的、可路由的节点地址。此路径支持日志、exec 和 port-forward，并需要反向路由、防火墙许可及 kubelet 身份验证。
 
 ![控制平面通过 TCP10250 连接到可路由的 kubelet 地址。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-11.png)
 
@@ -574,55 +576,55 @@ Kubelet 会解析配置的 Kubernetes API 端点并与之连接。私有和公�
 
 ### 模式 3：Pod → EKS 控制平面
 
-使用 Kubernetes Service IP 的 Pod 需要通过 Service 转换连接到所选 API 端点。如果应用了出站 SNAT，响应会发往节点地址，并由连接跟踪反向转换；如果没有 SNAT，则 Pod 地址需要有返回路由。
+使用 Kubernetes Service IP 的 Pod 需要进行 Service 转换，以便连接到所选 API 端点。如果应用了出站 SNAT，响应会发往节点地址，并由连接跟踪执行反向转换；如果未使用 SNAT，则 Pod 地址必须具有返回路由。
 
-![逻辑上的 Service 转换和可选 SNAT 影响；图示顺序并非通用的 hook 顺序。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-12.png)
+![Service 逻辑转换和可选 SNAT 的影响；图示顺序并非适用于所有情况的 Hook 顺序。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-12.png)
 
 [🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-12.html)
 
-图示中的 SNAT 在 DNAT 之前的编号，并非通用的 hook 顺序。在 iptables 路径中，Service DNAT 通常先于路由和适用的 POSTROUTING SNAT。eBPF 路径有所不同。下结论前，请捕获实际数据包/连接状态。
+图示中 SNAT 先于 DNAT 的编号并非通用 Hook 顺序。在 iptables 路径中，Service DNAT 通常先于路由和适用的 POSTROUTING SNAT。eBPF 路径有所不同。请先捕获实际数据包/连接状态，再得出结论。
 
 ### 模式 4：EKS 控制平面 → Pod（Webhook）
 
-API server 需要能够访问所选 webhook Pod IP/端口。请使用配置的端口；旧版“8443+”图例不是有效的端口范围要求。
+API Server 必须能够访问所选 Webhook Pod IP/端口。请使用已配置的端口；旧图例中的“8443+”并非有效的端口范围要求。
 
-![控制平面到 webhook Pod 的路径；请使用实际配置的 TCP 端口和数据平面。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-13.png)
+![控制平面到 Webhook Pod 的路径；请使用实际配置的 TCP 端口和数据平面。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-13.png)
 
 [🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-13.html)
 
 ### 模式 5：混合节点上的 Pod ↔ Pod
 
-使用受支持的 VXLAN overlay 时，系统会通过**外层节点 IP**访问目标节点。底层网络无需仅仅为了传输封装数据包而配置到内层目标 Pod CIDR 的路由。
+使用受支持的 VXLAN 覆盖网络时，通过**外层节点 IP**访问目标节点。仅为了传送封装后的数据包，底层网络不需要为内层目标 Pod CIDR 配置路由。
 
-![VXLAN Pod 通信。外层转发使用节点 IP；旧版 Pod-CIDR 转发标签需要修正。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-14.png)
+![VXLAN Pod 通信。外层转发使用节点 IP；旧图中的 Pod CIDR 转发标签需要更正。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-14.png)
 
 [🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-14.html)
 
-封装后的图示转发标签使用 `10.85.x.0/24`，应视为旧版简化表示：外层数据包的路由目标是 `10.80.0.x`。同一 L2 网段上的节点可以直接通信，无需经过路由器。
+图示中封装后使用 `10.85.x.0/24` 的转发标签应理解为旧版简化表示：外层数据包会路由到 `10.80.0.x`。同一 L2 网段中的节点可能无需经过路由器即可直接通信。
 
-VXLAN 使用 UDP 封装内层 Ethernet frame。在 IPv4/无额外封装的示例中，50 字节开销解释了为何要将 MTU 从 1500 调整到 1450；额外隧道会改变此计算。Cilium VXLAN 使用 UDP8472；标准 VXLAN 通常使用 4789。Geneve 使用 UDP6081。当前 Cilium 隧道配置区分 VXLAN/Geneve；IP-in-IP 不能作为旧版 `--tunnel` 建议所选 overlay 的可互换默认方案。
+VXLAN 使用 UDP 封装内层以太网帧。在 IPv4/无额外封装的示例中，50 字节的开销解释了为何需要将 MTU 从 1500 调整为 1450；额外隧道会改变此计算。Cilium VXLAN 使用 UDP8472；标准 VXLAN 通常使用 4789。Geneve 使用 UDP6081。当前 Cilium 隧道配置区分 VXLAN/Geneve；IP-in-IP 并非可互换的默认覆盖网络，不应采用旧版 `--tunnel` 建议来选择它。
 
-VNI 字段为 24 位；Cilium 可以在封装元数据中携带安全身份。它并不是加密的租户隔离。请将网络策略和实际身份传播分开考虑。
+VNI 字段为 24 位；Cilium 可以在封装元数据中携带安全身份。这并不是加密的租户隔离。网络策略和实际身份传播应分别处理。
 
-### 模式 6：云端 Pod ↔ 混合 Pod
+### 模式 6：云端 Pod ↔ 混合节点 Pod
 
-直接的 Pod-IP 流量需要在 VPC、WAN 和本地部署网络之间配置相关 Pod 路由。只有当请求实际目标为 Service VIP 时，才需要 Service 转换。
+直接 Pod-IP 流量需要通过 VPC、WAN 和本地网络配置相关 Pod 路由。仅当请求实际以 Service VIP 为目标时，才需要进行 Service 转换。
 
-![云端到混合 Pod 的直接路由；目标为直接 Pod-IP 时不需要 kube-proxy Service 转换。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-15.png)
+![云端到混合节点 Pod 的直接路由；目标为直接 Pod-IP 时不需要 kube-proxy Service 转换。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-15.png)
 
 [🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-15.html)
 
-图中的 kube-proxy/iptables 模块取决于数据平面；直接的 Pod-IP 数据包本身并不需要 kube-proxy DNAT。
+图中的 kube-proxy/iptables 区块取决于数据平面；直接 Pod-IP 数据包本身并不一定需要 kube-proxy DNAT。
 
-### kube-proxy 和 kubelet 详细信息
+### kube-proxy 和 kubelet 详情
 
-在 kube-proxy **iptables 模式**下，常见的 chain 路径为：
+在 kube-proxy 的 **iptables 模式**下，常见的链路为：
 
 ```text
 KUBE-SERVICES → KUBE-SVC-* → KUBE-SEP-* → endpoint DNAT
 ```
 
-当有三个符合条件且权重相同的 endpoint，且没有覆盖优先级更高的 affinity/locality 策略时，条件概率分别为 1/3、对剩余数据包的 1/2、以及其余数据包，最终会产生大致均等的选择结果。这只是示例，并非捕获的输出，也不代表所有数据平面的规则结构：
+如果有三个符合条件且权重相同的端点，并且没有覆盖此行为的亲和性/本地性策略，则条件概率依次为 1/3、剩余数据包的 1/2、以及其余数据包，最终大致实现均匀选择。这只是示意，并非实际捕获的输出，也不代表所有数据平面的规则结构：
 
 ```text
 # KUBE-SERVICES chain (nat table)
@@ -642,36 +644,37 @@ KUBE-SERVICES → KUBE-SVC-* → KUBE-SEP-* → endpoint DNAT
 | 安全的 kubelet 端点 | 用途 |
 |------------------------|---------|
 | `/pods` | Pod 信息 |
-| `/exec/{namespace}/{pod}/{container}` | Container exec 流 |
-| `/containerLogs/{namespace}/{pod}/{container}` | Container 日志；不是先前的 `/logs/...` 路径 |
-| `/metrics`、`/healthz` | 经授权的指标/健康端点 |
+| `/exec/{namespace}/{pod}/{container}` | 容器 exec 流 |
+| `/containerLogs/{namespace}/{pod}/{container}` | 容器日志；不是旧版的 `/logs/...` 路径 |
+| `/metrics`、`/healthz` | 需授权的指标/健康端点 |
 
-请使用受支持的经 API server 中介的诊断方法和适当的授权。节点实际的 `status.addresses` 很重要；不要用主机名或无关对象中的第一个地址代替。
+请使用受支持的、通过 API Server 中介的诊断方式，并进行适当授权。应以节点实际的 `status.addresses` 为准；不要用主机名或无关对象中的第一个地址代替。
 
-## 选择 CNI 设计：仅 Cilium 或与 VPC CNI 混合使用
+## 选择 CNI 设计：仅使用 Cilium，还是与 VPC CNI 混合使用
 
-VPC CNI 与混合节点不兼容，因此 **混合节点始终运行 Cilium 或 Calico**。所以，“仅用 Cilium 还是与 VPC CNI 混合使用？”这个问题实际上是在问**集群是否包含云端节点；如果包含，它们运行哪种 CNI。**
+VPC CNI 与混合节点不兼容。**此比较假设混合节点使用 Cilium，并采用当前 CNI 指南中介绍的 AWS 维护版本**。对于现有的 Calico 安装，请另行确认其当前支持情况和运维责任。因此，“仅使用 Cilium，还是与 VPC CNI 混合使用？”这个问题实际上是在问：**集群中是否有云端节点；如果有，它们运行哪种 CNI？**
 
 | 标准 | ① 仅混合节点的集群（仅 Cilium） | ② 混合模式（云端使用 VPC CNI + 混合节点使用 Cilium） | ③ 云端节点也使用 Cilium |
 |---|---|---|---|
 | AWS 支持 | 受支持（混合节点上使用 Cilium） | 受支持。AWS 推荐的混合模式设计 | 云端不受支持：AWS 不支持在 AWS Cloud 中的节点上运行 Cilium |
-| Webhook 放置 | 在混合节点上运行。控制平面连接到 Pod IP，因此本地 Pod CIDR 必须通过 BGP 或静态路由可路由 | 在云端节点上运行。本地 Pod CIDR 无需可路由 | 取决于云端 Cilium 的 IPAM 和路由；必须自行验证 |
-| 云端到本地 Pod 流量 | 不适用 | 可路由的本地 Pod CIDR 或 [Hybrid Nodes gateway](10-hybrid-nodes-gateway.md) | 自行设计隧道或路由。Hybrid Nodes gateway 要求云端节点（包括 gateway 节点）使用 VPC CNI（或 Auto Mode 内置网络），因此不能使用 |
-| 扩容和 Auto Mode | 没有云端容量就无法实现 | Karpenter 可添加云端节点。Auto Mode 使用内置网络 | Auto Mode 不能替换其 CNI。Karpenter 节点上的 Cilium 也需自行运维 |
-| 策略和可观测性 | 单一 CNI（NetworkPolicy、Cilium 策略、Hubble） | 每个 CNI 都会强制执行标准 Kubernetes NetworkPolicy。Cilium 特定策略和 Hubble 仅在混合节点一侧可用 | 单一 CNI，但云端的事件响应和升级由你或供应商负责 |
+| Webhook 部署位置 | 运行在混合节点上。控制平面连接 Pod IP，因此本地 Pod CIDR 必须通过 BGP 或静态路由实现可路由 | 运行在云端节点上。本地 Pod CIDR 无需可路由 | 取决于云端 Cilium 的 IPAM 和路由；必须自行验证 |
+| 云端到本地 Pod 的流量 | 不适用 | 可路由的本地 Pod CIDR，或[混合节点网关](10-hybrid-nodes-gateway.md) | 自行设计隧道或路由。混合节点网关要求云端节点（包括网关节点）使用 VPC CNI（或 Auto Mode 内置网络），因此无法使用 |
+| 突发扩容和 Auto Mode | 没有云端容量时无法实现 | Karpenter 可以添加云端节点。Auto Mode 使用内置网络 | Auto Mode 无法替换其 CNI。Karpenter 节点上的 Cilium 也需要自行运维 |
+| 策略和可观测性 | 一个 CNI（NetworkPolicy、Cilium 策略、Hubble），并配置策略实施 | 分别为每种 CNI 配置并验证 NetworkPolicy 实施。必须在受支持的 EC2 Linux 节点上启用 VPC CNI 策略实施；仅有 NetworkPolicy 对象并不会启用它。Cilium 专用策略和 Hubble 仅存在于混合节点一侧 | 一个 CNI，并配置策略实施；但云端一侧的事件响应和升级由你或供应商负责 |
 
-选择方法：
+选择方式：
 
-- **有云端节点：②**。这是 AWS 支持范围内的混合设计。在云端运行 webhook，并使用扩容和 Hybrid Nodes gateway。在混合模式下，两侧都至少运行一个 CoreDNS 副本；控制平面或 VPC 需要访问混合 Pod IP 的功能（ALB/NLB IP target、Metrics Server、AMP collection）需要可路由的本地 Pod CIDR（[混合模式 Webhook 运维](08-operations.md#mixed-mode-webhook-operations)）。
-- **仅有本地部署节点：①**。使用单一 CNI 更简单，但 webhook 在混合节点上运行，因此需要[可路由的 Pod CIDR](#routable-pod-cidr-configuration)。
-- **谨慎考虑 ③**。云端节点上的 Cilium 不在 AWS 支持范围内，而且不能使用 Hybrid Nodes gateway 和 Auto Mode。只有在有供应商支持协议且单一 CNI 的优势超过这些限制时才考虑。
+- **存在云端节点：②**。此混合设计在 AWS 支持范围内。在云端运行 Webhook，并使用突发扩容和混合节点网关。在混合模式下，两侧都至少运行一个 CoreDNS 副本；控制平面或 VPC 需要访问混合 Pod IP 的功能（ALB/NLB IP 目标、Metrics Server、AMP 收集）需要可路由的本地 Pod CIDR（[混合模式 Webhook 运维](08-operations.md#mixed-mode-webhook-operations)）。
+- **仅使用本地环境：①**。使用单一 CNI 更简单，但 Webhook 运行在混合节点上，因此需要[可路由的 Pod CIDR](#routable-pod-cidr-configuration)。
+- **谨慎考虑 ③**。云端节点上的 Cilium 不在 AWS 支持范围内，而且无法使用混合节点网关和 Auto Mode。只有在与供应商签订支持协议，且使用单一 CNI 的优势超过这些限制时，才考虑此方案。
 
 参考资料：
 - [为混合节点配置 CNI](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
-- [为混合节点配置 webhook：混合模式集群注意事项](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
-- [开始使用 EKS Hybrid Nodes gateway](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
+- [使用 Kubernetes 网络策略限制 Pod 流量](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+- [为混合节点配置 Webhook：混合模式集群注意事项](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
+- [开始使用 EKS 混合节点网关](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
 
-## 可路由的 Pod CIDR 配置 {#routable-pod-cidr-configuration}
+## 可路由的 Pod CIDR 配置
 
 ![远程 Pod CIDR 和本地路由器示意图。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
 
@@ -683,9 +686,9 @@ VPC CNI 与混合节点不兼容，因此 **混合节点始终运行 Cilium 或 
 
 [🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-1.html)
 
-AWS 专门的 CNI 支持页面列出了 AWS 维护的 Cilium 1.17/1.18 build。此处的参考版本为 1.18.3-0，需使用兼容的内核/OS；不要盲目替换为上游 1.19。AWS 的其他页面仍提及 Calico BGP 及保留的示例。这并不能证明 Calico 项目已弃用；请确认现有部署的支持范围。
+AWS 专用的 CNI 支持页面列出了 AWS 维护的 Cilium 1.17/1.18 版本。此处参考的是与兼容内核/OS 搭配使用的 1.18.3-0；不要不加判断地将它替换成上游 1.19。AWS 其他页面仍会提及 Calico BGP 及保留的示例。这并不能证明 Calico 项目已弃用；请确认现有部署的支持范围。
 
-通过**现有固定版本的 Cilium release**所有者启用 BGP，合并配置值并审查 operator/agent rollout：
+请通过**现有且已固定版本的 Cilium 发行版**的所有者启用 BGP，合并配置值，并审查 Operator/Agent 的滚动更新：
 
 ```yaml
 bgpControlPlane:
@@ -694,9 +697,9 @@ operator:
   rollOutPods: true
 ```
 
-在经过审查的 1.18.3 CRD 中，AWS 风格的 `v2alpha1` API 仍在提供服务（这些 CRD 也提供 `v2`）。使用此示例无需替换 CRD。对于 Cilium 1.19+，请改用 `cilium.io/v2` BGP CRD（`v2alpha1` BGP CRD 已弃用），且旧版 `CiliumBGPPeeringPolicy` 已在 1.19 中移除。
+经审查的 1.18.3 CRD 仍提供 AWS 风格的 `v2alpha1` API（同时也提供 `v2`）。仅仅为了使用此示例，无需替换 CRD。在 Cilium 1.19+ 中，请改用 `cilium.io/v2` BGP CRD（`v2alpha1` BGP CRD 已弃用），而旧版 `CiliumBGPPeeringPolicy` 已在 1.19 中移除。
 
-以下配置选择混合节点，将 peer 的通告 selector 与通告 label 关联起来，并且仅通告其 Pod CIDR：
+以下配置会选择混合节点，将对等体的通告选择器关联到通告标签，并且只通告这些节点的 Pod CIDR：
 
 ```yaml
 apiVersion: cilium.io/v2alpha1
@@ -748,9 +751,9 @@ spec:
   - advertisementType: PodCIDR
 ```
 
-此示例假定所选节点能够按照预期的 peering 拓扑访问路由器 `10.80.1.1`。不同机架/loopback 可能需要不同且互不重叠的 selector，以及经过审查的 multihop 设置。TCP179、ASN、身份验证、路由筛选器、协商计时器和 graceful-restart 过期路由行为都需要网络所有者审查。
+此示例假定所选节点可以按预期的对等拓扑访问路由器 `10.80.1.1`。不同机架/环回地址可能需要不同且不重叠的选择器，以及经过审查的多跳设置。TCP179、ASN、身份验证、路由筛选、协商计时器和优雅重启时陈旧路由的行为都需要网络所有者审查。
 
-仅建立 BGP session 并不能证明预期前缀已通告、被接受或安装到路由器的转发表中。Cilium BGP control plane 通告可达性；它不能替代所有内核/底层网络路由。
+BGP 会话建立本身并不能证明预期前缀已通告、被接受或安装到路由器的转发表中。Cilium BGP 控制平面负责通告可达性；它不能取代所有内核/底层网络路由。
 
 ```bash
 cilium --context "$KUBE_CONTEXT" bgp peers
@@ -762,11 +765,11 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s \
 
 #### ASN 和路由器配置
 
-RFC6996 私有范围为 **64512–65534** 和 **4200000000–4294967294**。之前笼统地规定“仅能使用 16 位范围”是不正确的。不要将所有 1–64511 的值都描述为可自由使用的公有 ASN；公有/保留/文档示例分配另有规定。
+RFC6996 私有范围为 **64512–65534** 和 **4200000000–4294967294**。先前笼统规定“仅限 16 位范围”是错误的。不要把 1–64511 中的所有值都描述为可自由使用的公共 ASN；公共/保留/文档用途分配各有自己的规则。
 
-请使用已经协调一致的网络 ASN。在这些示例中，`localASN=65001` 表示 Cilium 节点，`peerASN=65000` 表示其本地路由器。TGW 的 ASN 属于另一个上游关系：Cilium 不会仅仅因为 TGW 存在就自动与其建立 peer。Site-to-Site VPN BGP 会在已配置的 VPN/customer gateway 路径上终止；TGW Connect 是另一种独立的传输/设计。
+请使用现有且已协调一致的网络 ASN。在这些示例中，`localASN=65001` 代表 Cilium 节点，`peerASN=65000` 代表其本地路由器。TGW 的 ASN 属于另一种上游关系：不会仅仅因为 TGW 存在，Cilium 就自动与它建立对等关系。Site-to-Site VPN BGP 会在配置的 VPN/客户网关路径上终止；TGW Connect 则是另一种独立的传输/设计。
 
-以下供应商配置片段仅为示意性起点，并未在设备上测试。请由路由器所有者根据平台/版本特定的导入/导出前缀筛选器、限制和恢复方案进行合并。不要随意更改运行中路由器的全局 ASN。
+以下厂商配置片段只是示意性起点，并非经过设备测试的配置。请通过路由器所有者，根据平台/版本合并具有平台/版本特性的入站/出站前缀筛选、限制和恢复配置。不要不加区分地更改运行中路由器的全局 ASN。
 
 **Cisco IOS / IOS-XE**
 
@@ -842,17 +845,17 @@ router bgp 65000
  exit-address-family
 ```
 
-RouterOS 7.20+ 会显式定义 BGP instance。FRR 的传统默认设置要求配置 eBGP 策略；如果没有筛选器，已建立的 session 可能显示 `(Policy)` 并且不交换任何路由。FRR 示例仅接受经过审查的 `/25` Pod 地址块，并且不会向 Cilium 导出路由；请根据实际 IPAM 设计调整筛选器和上游路由。
+RouterOS 7.20+ 会显式定义 BGP 实例。FRR 的传统默认行为要求 eBGP 策略；即使会话已建立，如果没有筛选器，也可能显示 `(Policy)` 并且不交换路由。FRR 示例只接受经审查的 `/25` Pod 区块，并且不会向 Cilium 通告任何路由；请根据实际 IPAM 设计和上游路由调整筛选器。
 
 ### 选项 2：静态路由
 
-![Pod 前缀静态路由示意图；应根据观测到的状态推导当前下一跳。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-2.png)
+![Pod 前缀静态路由示意图；应根据观测到的状态确定当前下一跳。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-2.png)
 
 [🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-2.html)
 
-在 Cilium **cluster-pool IPAM** 中，读取所有已分配的 `CiliumNode.spec.ipam.podCIDRs`。分配顺序不保证与节点注册顺序一致。一个 `/16` 从几何上可容纳 512 个 `/25` 地址块，每个 `/25` 有 128 个地址；但这并不保证支持 512 个节点，也不保证每个节点有 128 个可供应用 Pod 使用的 IP。保留地址、节点/CNI 使用情况以及 kubelet/资源限制也会产生影响。
+在 Cilium **cluster-pool IPAM** 中，读取所有已分配的 `CiliumNode.spec.ipam.podCIDRs`。分配顺序不一定遵循节点注册顺序。一个 `/16` 从几何上可划分为 512 个 `/25` 区块，每个 `/25` 有 128 个地址；这并不保证支持 512 个节点，也不保证每个节点有 128 个可供应用 Pod 使用的 IP。保留地址、节点/CNI 使用情况以及 kubelet/资源限制也会产生影响。
 
-这是针对经过审查的新地址池的 Cilium Helm values 片段，而非适用于整个 kubelet 的 `podCIDR` 设置。不要通过更改现有已分配 CIDR 或地址块大小来走捷径迁移：
+这是用于经审查的新地址池的 Cilium Helm values 片段，不是面向整个 kubelet 的 `podCIDR` 设置。不要为了简化迁移而更改现有已分配的 CIDR 或区块大小：
 
 ```yaml
 ipam:
@@ -863,7 +866,7 @@ ipam:
     clusterPoolIPv4MaskSize: 25
 ```
 
-不要将 `.addresses[0]` 用作下一跳：它可能是 Cilium 内部地址。以下脚本会交叉核对 IPv4 InternalIP 与 Kubernetes Node，验证所有 Pod 前缀是否都在获批的远程范围内，拒绝重叠/缺失状态，并生成 **JSON 候选项**，而非可执行 shell 命令：
+不要将 `.addresses[0]` 用作下一跳：它可能是 Cilium 内部地址。以下代码会交叉核对 IPv4 InternalIP 和 Kubernetes Node，验证所有 Pod 前缀是否属于已批准的远程范围，拒绝重叠/缺失的状态，并生成**JSON 候选项**，而不是可执行的 Shell 命令：
 
 ```bash
 kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodes \
@@ -920,9 +923,9 @@ print(json.dumps(rows, indent=2))
 PY
 ```
 
-这是 cluster-pool IPAM 的某个时间点规划，并非对节点身份的原子租约，也不是路由控制器。变更前请重新验证。Calico BlockAffinity 是不同的模型；请检查其状态、借用/地址池行为和实际路由，不要盲目复用此生成器。
+这是基于某一时点为 cluster-pool IPAM 生成的计划，并非对节点身份的原子租约或路由控制器。更改前请重新验证。Calico BlockAffinity 属于另一种模式；请检查其状态、借用/地址池行为和实际路由，不要不加判断地复用此生成器。
 
-所有者审查后，手动路由器语法可能如下：
+经所有者审查后，手动路由器配置可以类似如下：
 
 ```text
 # Illustrative syntax after validating the route plan on the intended router:
@@ -934,21 +937,21 @@ ip route 10.85.0.0 255.255.255.128 10.80.1.10 name hybrid-node-001-pods
 ip route 10.85.0.0/25 10.80.1.10
 ```
 
-请通过实际网络管理器/设备配置持久化变更。`up ip route ...` 行属于 ifupdown 段落，而不是独立的 Bash 脚本，也不适用于所有现代 Linux 网络管理器。静态路由需要漂移/故障跟踪；原先“1–5 个节点”的阈值只是规划经验，并非技术限制。
+请通过实际的网络管理器/设备配置持久化更改。`up ip route ...` 行属于 ifupdown 配置段，而不是独立的 Bash 脚本，也不适用于所有现代 Linux 网络管理器。静态路由需要漂移/故障跟踪；原先的“1–5 个节点”阈值是规划经验值，并非技术限制。
 
 ### 选项 3：ARP 代理
 
-AWS 将代理 ARP 描述为一种可能的 L2 方法。它需要适当的链路内邻居发现行为，以及经过专门配置的 CNI/主机实现；仅启用通用 Cilium 并不能证明此路径已就绪。
+AWS 将代理 ARP 描述为一种可选的 L2 方案。它需要适当的链路上邻居发现行为，以及经过专门配置的 CNI/主机实现；仅启用通用 Cilium 并不能证明此路径已就绪。
 
-![经验证的 L2/链路内设计中的代理 ARP 概念；仍然需要上游路由。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-3.png)
+![经验证的 L2/链路上设计中的代理 ARP 概念；仍需要上游路由。](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-3.png)
 
 [🔍 查看交互式图示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-3.html)
 
-ARP 广播不会通过 TGW/VPN/DX 的三层路由传输。此选项并不会消除 VPC/WAN 返回路由要求。在用其替换 BGP/静态设计之前，请验证实际 L2 行为和故障转移。
+ARP 广播不会穿过 TGW/VPN/DX 三层路由。此选项并不会消除 VPC/WAN 返回路由要求。在替换 BGP/静态路由设计前，请验证实际的 L2 行为和故障转移。
 
 ## 网络策略
 
-策略取决于选择器、方向和负责执行策略的数据平面。Kubernetes NetworkPolicy 的 allow 是累加的：另一个匹配的策略也可能允许流量。Cilium 显式 deny 和 L7 行为需要单独评估。这些示例是应在受控 namespace 中测试的替代方案，而不是要求叠加所有 allow 规则并期待策略更严格。
+策略取决于选择器、方向和实施策略的数据平面。Kubernetes NetworkPolicy 的允许规则是累加的：其他匹配策略也可能放行流量。Cilium 显式拒绝和 L7 行为需要单独评估。以下示例是供受控命名空间测试的替代方案，并非要求叠加所有允许规则并期待行为变得更严格。
 
 ### Kubernetes NetworkPolicy
 
@@ -974,7 +977,7 @@ spec:
       port: 9080
 ```
 
-此策略选择 `reviews` 入站流量，并允许同一 namespace 中匹配的 `productpage` Pod 使用 TCP9080。它不会隔离所有 Pod/方向，也不会覆盖所有其他策略。
+此策略选择 `reviews` 的入站流量，并允许同一命名空间中匹配的 `productpage` Pod 使用 TCP9080 端口。它不会隔离所有 Pod/方向，也不会覆盖其他所有策略。
 
 ### CiliumNetworkPolicy 和 L7
 
@@ -1023,11 +1026,11 @@ spec:
           path: /api/v1/.*
 ```
 
-HTTP 规则是对不受限 L4 allow 的替代方案，并非叠加到其上后便会自动施加限制。请使用实际应用路径。HTTP 检查需要适当的可见性；加密的 mesh/TLS 流量不会自动变得可检查。
+HTTP 规则是对不受限制的 L4 允许规则的替代方案，并不会自动叠加在其上以实现限制。请使用实际的应用路径。HTTP 检查需要适当的可见性；加密的网格/TLS 流量不会自动变得可检查。
 
 ### 基于 DNS 的出站流量
 
-单独的 `external-api-client` 示例允许通过 **Cilium 识别的 CoreDNS Pod**进行 DNS 查询，并通过观测到的 API 地址访问 HTTPS：
+单独的 `external-api-client` 示例允许通过 **Cilium 识别的 CoreDNS Pod** 进行 DNS 查询，并通过 HTTPS 访问已观测到的 API 地址：
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -1059,11 +1062,11 @@ spec:
         protocol: TCP
 ```
 
-请验证实际的解析器/身份布局。NodeLocal DNS、主机 DNS 或非 Cilium 管理的 endpoint 可能需要不同的受支持规则。FQDN IP 观测并非远程 API 身份验证；请考虑 DNS 缓存和共享地址。Cilium 特定的 L7/FQDN 功能也超出了 AWS 列出的默认 Kubernetes NetworkPolicy 支持范围。
+请验证实际的解析器/身份布局。NodeLocal DNS、主机 DNS 或非 Cilium 管理的端点可能需要使用其他受支持的规则。FQDN IP 观测不能替代远程 API 身份验证；请考虑 DNS 缓存和共享地址。Cilium 专用的 L7/FQDN 功能也超出了 AWS 列出的默认 Kubernetes NetworkPolicy 支持范围。
 
 ## Webhook 配置
 
-传统的直接路由设计要求控制平面能够访问 webhook Pod IP。如果没有合适的 Pod 返回路径，请使用放置位置适当的云托管组件。请单独验证其他网关/代理设计。
+常规的直接路由设计要求控制平面能够访问 Webhook Pod IP。如果没有合适的 Pod 返回路径，请使用部署位置适当且托管在云端的组件。请单独验证其他网关/代理设计。
 
 ```yaml
 affinity:
@@ -1077,9 +1080,9 @@ affinity:
           - hybrid
 ```
 
-这是 Pod template affinity 片段，而非完整的 Deployment。`NotIn hybrid` 条件并不能证明存在符合条件且健康的云端容量，也不能证明所有其他调度约束均已满足。
+这是 Pod 模板亲和性片段，不是完整的 Deployment。`NotIn hybrid` 条件并不能证明存在匹配的健康云端容量，也不能证明其他所有调度约束都满足。
 
-AWS Load Balancer Controller、CloudWatch/ADOT operator 和 cert-manager 都有 webhook 放置要求。请区分它们的 operator 与节点采集器。**Metrics Server 是聚合 API 服务，不是 admission webhook**，但仍需要控制平面能够访问 Pod。请测试实际 API 调用和 webhook，而不只是查看 Pod phase。
+AWS Load Balancer Controller、CloudWatch/ADOT Operator 和 cert-manager 都有 Webhook 部署位置要求。请将它们的 Operator 与节点采集器区分开。**Metrics Server 是聚合 API Service，不是准入 Webhook**，但仍需要控制平面到 Pod 的可达性。请测试实际 API 调用和 Webhook，而不只是检查 Pod 状态。
 
 ## 只读连接诊断
 
@@ -1099,7 +1102,7 @@ curl --silent --show-error --connect-timeout 5 --max-time 15 \
 cat "$WORK_DIR/api-timing.json"
 ```
 
-集群 CA 和主机名必须通过验证。HTTP401/403 响应可以证明 TLS 端点可达但缺少授权；这不等于应用健康检查成功。Curl 计时字段是累计阶段，而非纯 RTT 测量。ICMP ping 没有响应并不能证明 EKS API 已宕机。
+必须验证集群 CA 和主机名。HTTP401/403 响应可以证明 TLS 端点可达，但授权缺失；它并不代表应用健康检查成功。Curl 计时字段是累积阶段时间，并非纯 RTT 测量。ICMP ping 没有收到响应，并不能证明 EKS API 已宕机。
 
 ### VPN 状态和指标
 
@@ -1134,19 +1137,19 @@ aws cloudwatch get-metric-statistics --region "$AWS_REGION" \
 jq '{label:.Label,datapoints:(.Datapoints|sort_by(.Timestamp))}' "$WORK_DIR/vpn-metric-result.json"
 ```
 
-`available` 是 VPN 资源状态，并非隧道健康状态。对于 UP/static 或 ESTABLISHED/BGP，TunnelState 为 1；其他状态为 0；聚合值可能是小数。请将无数据与 DOWN 区分开，并验证两条隧道、路由和实际工作负载行为。此查询不会输出 customer gateway 配置/预共享密钥。
+`available` 是 VPN 资源状态，不是隧道健康状态。TunnelState 在 UP/static 或 ESTABLISHED/BGP 时为 1，在其他状态时为 0；聚合值可能是小数。应将缺失数据与 DOWN 状态区分开，并验证两条隧道、路由和实际工作负载行为。此查询不会输出客户网关配置/预共享密钥。
 
-AWS 的一般连接建议是**带宽 100 Mbps，RTT 不超过 200ms**。选择 VPN 或 Direct Connect 时，除线路标称带宽外，还应评估实际往返延迟、丢包、故障转移路径和工作负载响应时间。
+AWS 的一般连接建议为**带宽 100 Mbps，RTT 不超过 200ms**。选择 VPN 或 Direct Connect 时，除线路标称带宽外，还应评估实际往返延迟、数据包丢失、故障转移路径和工作负载响应时间。
 
 ## 参考资料
 
 - [混合网络](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)
 - [EKS PrivateLink：管理、OIDC 和控制台端点](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)
-- [S3 interface endpoint 和私有 DNS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html)
+- [S3 接口端点和私有 DNS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html)
 - [Roles Anywhere 端点策略](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/vpc-interface-endpoints.html)
-- [当前混合 CNI 支持](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
-- [AWS 混合 BGP 流程](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cilium-bgp.html)
-- [混合模式 DNS 和 webhook](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
+- [当前混合 CNI 支持情况](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [AWS 混合 BGP 操作步骤](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cilium-bgp.html)
+- [混合模式 DNS 和 Webhook](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
 - [混合路由概念](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-kubernetes.html)
 - [混合流量流参考](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-traffic-flows.html)
 - [Cilium 1.18.3 路由源文件](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/concepts/routing.rst)
@@ -1155,8 +1158,8 @@ AWS 的一般连接建议是**带宽 100 Mbps，RTT 不超过 200ms**。选择 V
 - [RouterOS BGP 参考](https://help.mikrotik.com/docs/spaces/ROS/pages/328220/BGP)
 - [FRR 10.7.1 BGP 参考源文件](https://github.com/FRRouting/frr/blob/frr-10.7.1/doc/user/bgp.rst)
 - [VPN 指标](https://docs.aws.amazon.com/vpn/latest/s2svpn/monitoring-cloudwatch-vpn.html)
-- [Kubernetes 1.36.5 kubelet server 源文件](https://github.com/kubernetes/kubernetes/blob/v1.36.5/pkg/kubelet/server/server.go)
+- [Kubernetes 1.36.5 kubelet Server 源文件](https://github.com/kubernetes/kubernetes/blob/v1.36.5/pkg/kubelet/server/server.go)
 - [Kubernetes NetworkPolicy 语义](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 
 
-< [上一页：前提条件](01-prerequisites.md) | [目录](./README.md) | [下一页：受限互联网设置](03-airgap-setup.md) >
+< [上一篇：先决条件](01-prerequisites.md) | [目录](./README.md) | [下一篇：受限互联网设置](03-airgap-setup.md) >
