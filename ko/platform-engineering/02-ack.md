@@ -1,6 +1,6 @@
 # AWS Controllers for Kubernetes (ACK)
 
-> **마지막 업데이트**: 2026년 10월 16일
+> **마지막 업데이트**: 2026년 10월 23일
 
 ## 개념과 아키텍처
 
@@ -131,6 +131,17 @@ spec:
 replica 수는 deployment.replicas이며 여러 replica에는 leaderElection.enabled를 함께 검토합니다. replicaCount는 이 chart의 설정이 아닙니다. leader election을 켠 replica 증가는 곧바로 병렬 처리량 증가를 뜻하지 않습니다. reconcile concurrency/resync, API quota·throttling과 자원을 관찰하면서 조정합니다.
 
 Git에 환경별 manifest와 chart 버전을 기록하고 credentials는 저장하지 않습니다. 복구에는 CR뿐 아니라 AWS 데이터·백업·식별자·삭제 정책·관리 소유권이 필요합니다. 다른 region의 CR을 만드는 것만으로 데이터 복제와 복구가 완성되지는 않습니다.
+
+## EKS 관리형 ACK
+
+EKS Capabilities의 ACK는 upstream GA 서비스 컨트롤러를 한 capability로 AWS 소유 인프라에서 실행합니다. 2026년 10월 실측 기준으로 위의 Helm 설치와 다른 점은 다음과 같습니다.
+
+- IAM은 capability role 하나에서 시작하고, 클러스터 범위 `IAMRoleSelector`로 namespace마다 다른 역할을 assume합니다. 같은 분리를 OSS 컨트롤러에서 하려면 `featureGates.IAMRoleSelector=true`와 `enableCARM=false`를 함께 줘야 하며, CARM을 켠 채로 두면 컨트롤러가 시작하지 않습니다.
+- AWS 리소스 태그와 세션 태그가 `eks:` 접두사(`eks:eks-capability-arn` 등)로 붙습니다. OSS의 `services.k8s.aws/` 태그에 걸어 둔 비용 할당·IAM 조건은 이전 시 함께 고칩니다.
+- `FieldExport` CRD가 없고, 컨트롤러 버전과 resync 주기를 고르거나 바꿀 수 없습니다. AWS 쪽 drift는 관리형과 OSS 모두 25분 안에 주기적으로 복구되지 않았습니다.
+- adoption(`adopt-or-create`)과 `deletion-policy: retain` 주석은 관리형에서도 그대로 동작했고(관리형에서 측정), capability를 RETAIN으로 지운 뒤 설치한 OSS 컨트롤러가 기존 CR을 이어받았습니다.
+
+자세한 측정과 선택 기준은 [EKS Capabilities](../eks/13-eks-capabilities.md)를 참고하세요.
 
 ## 문제 해결
 

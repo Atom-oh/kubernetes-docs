@@ -1,6 +1,6 @@
 # Amazon EKS 모니터링 및 로깅
 
-> **마지막 업데이트**: 2026년 10월 16일
+> **마지막 업데이트**: 2026년 10월 23일
 
 효과적인 모니터링 및 로깅은 Amazon EKS 클러스터의 안정성, 가용성 및 성능을 유지하는 데 필수적입니다. 이 문서에서는 EKS 클러스터에서 모니터링 및 로깅을 구현하기 위한 다양한 도구, 기술 및 모범 사례를 다룹니다.
 
@@ -197,6 +197,8 @@ aws eks describe-capability --region "$AWS_REGION" \
 소유자는 해당 ARN·log type으로 PutDeliverySource, 승인한 목적지로 PutDeliveryDestination, 둘을 연결하는 CreateDelivery를 구성합니다. 활성화 전에 목적지 policy·암호화·cross-account 권한·보존을 검토합니다.
 
 CloudWatch Logs 목적지는 Logs Insights로 조회할 수 있습니다. S3 목적지는 선택한 S3·Athena 경로의 객체이며 Firehose는 설정된 target으로 전달합니다. 이들이 자동으로 CloudWatch Logs Insights의 조회 대상이 되지는 않습니다. ACK 기록의 controllerGroup으로 service controller를 구분할 수 있습니다. 실제 전달·query 필드를 확인하고 Vended Logs 비용을 고려합니다.
+
+delivery source를 하나 추가할 때마다 capability가 몇 초 동안 `UPDATING`이 되고, 그동안 다음 변경은 `ConflictException`으로 거부됩니다(2026년 10월 실측 약 6.6~7초). 하나씩 추가하고 `ACTIVE`를 기다립니다. capability 전반은 [EKS Capabilities](./13-eks-capabilities.md)를 참고하세요.
 
 참고: [EKS control plane logging](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [audit policy·query 예제](https://docs.aws.amazon.com/eks/latest/best-practices/auditing-and-logging.html), [capability controller log](https://docs.aws.amazon.com/eks/latest/userguide/capabilities-controller-logs.html).
 

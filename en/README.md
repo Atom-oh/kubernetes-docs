@@ -77,6 +77,7 @@ This training content provides quizzes for each topic along with the learning ma
 10. [EKS Resiliency and High Availability](./eks/10-eks-resiliency.md) | [Quiz](./quizzes/eks/10-eks-resiliency-quiz.md)
 11. [EKS Advanced Debugging](./eks/11-eks-advanced-debugging.md) | [Quiz](./quizzes/eks/11-eks-advanced-debugging-quiz.md)
 12. [Kubernetes Version Features and Roadmap](./eks/12-kubernetes-version-roadmap.md) | [Quiz](./quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
+13. [EKS Capabilities: Managed Argo CD, kro and ACK](./eks/13-eks-capabilities.md) | [Quiz](./quizzes/eks/13-eks-capabilities-quiz.md)
 
 ### EKS Hybrid Nodes
 1. [EKS Hybrid Nodes Introduction](./eks-hybrid-nodes/README.md)

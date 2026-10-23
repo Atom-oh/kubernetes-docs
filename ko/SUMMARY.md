@@ -73,6 +73,7 @@
 * [EKS 복원력과 고가용성](eks/10-eks-resiliency.md)
 * [EKS 고급 디버깅](eks/11-eks-advanced-debugging.md)
 * [Kubernetes 버전별 신규 기능과 로드맵](eks/12-kubernetes-version-roadmap.md)
+* [EKS Capabilities: 관리형 Argo CD, kro, ACK](eks/13-eks-capabilities.md)
 * [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
   * [사전 요구 사항](eks-hybrid-nodes/01-prerequisites.md)
   * [네트워크 구성](eks-hybrid-nodes/02-network-configuration.md)
@@ -524,6 +525,7 @@
   * [EKS 복원력과 고가용성 퀴즈](quizzes/eks/10-eks-resiliency-quiz.md)
   * [EKS 고급 디버깅 퀴즈](quizzes/eks/11-eks-advanced-debugging-quiz.md)
   * [Kubernetes 버전별 신규 기능과 로드맵 퀴즈](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
+  * [EKS Capabilities 퀴즈](quizzes/eks/13-eks-capabilities-quiz.md)
 * EKS Hybrid Nodes
   * [사전 요구 사항 퀴즈](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
   * [네트워크 구성 퀴즈](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)

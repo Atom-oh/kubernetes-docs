@@ -132,6 +132,7 @@ For exercises, check the guide’s versions, prerequisites and validation scope 
 - [Amazon EKS High Availability and Resiliency Quiz](./eks/10-eks-resiliency-quiz.md)
 - [Amazon EKS Advanced Debugging Quiz](./eks/11-eks-advanced-debugging-quiz.md)
 - [Kubernetes Version Features and Roadmap Quiz](./eks/12-kubernetes-version-roadmap-quiz.md)
+- [EKS Capabilities Quiz](./eks/13-eks-capabilities-quiz.md)
 
 ### EKS Auto Mode
 

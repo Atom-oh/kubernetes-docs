@@ -77,6 +77,7 @@
 10. [EKS 복원력과 고가용성](./eks/10-eks-resiliency.md) | [퀴즈](./quizzes/eks/10-eks-resiliency-quiz.md)
 11. [EKS 고급 디버깅](./eks/11-eks-advanced-debugging.md) | [퀴즈](./quizzes/eks/11-eks-advanced-debugging-quiz.md)
 12. [Kubernetes 버전별 신규 기능과 로드맵](./eks/12-kubernetes-version-roadmap.md) | [퀴즈](./quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
+13. [EKS Capabilities: 관리형 Argo CD, kro, ACK](./eks/13-eks-capabilities.md) | [퀴즈](./quizzes/eks/13-eks-capabilities-quiz.md)
 
 ### EKS Hybrid Nodes
 1. [EKS Hybrid Nodes 소개](./eks-hybrid-nodes/README.md)

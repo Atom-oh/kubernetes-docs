@@ -1,6 +1,6 @@
 # Kube Resource Orchestrator (kro)
 
-> **Last Updated**: September 12, 2026 · **Baseline**: kro 0.9.4
+> **Last Updated**: October 23, 2026 · **Baseline**: kro 0.9.4
 
 ## Concepts and Scope
 
@@ -62,7 +62,7 @@ rules:
 
 ## Complete NginxApp Example
 
-The RGD, instance and RBAC files are also in examples/platform/kro. Ingress defaults to disabled. Before enabling it, prepare an approved IngressClass/controller, host DNS and a TLS Secret in the same namespace. The string className=internal alone does not configure an internal load balancer.
+The RGD, instance and RBAC files are also in examples/platform/kro. Ingress defaults to disabled. Before enabling it, prepare an approved IngressClass/controller, host DNS and a TLS Secret in the same namespace. The string className=internal alone does not configure an internal load balancer. This example lets instances set `ingress.className` and `ingress.host` directly, which in a multi-tenant cluster could be used to take over another team's host. In production RGDs, fix the class and derive the host from the instance name and namespace.
 
 The image uses the same nginx-unprivileged tag as the Helm example. A non-root UID, read-only root and /tmp volume are configured, but image execution was not tested. Verify digests, architecture and policies for deployment.
 
@@ -255,6 +255,16 @@ Review names, selectors, ownership, field managers and GitOps controllers so Hel
 Use the same API contract and reviewed image digests across environments, with separate instances for namespaces, replicas, ingress and policies. Fleet tools such as ApplicationSet require kro, RGDs and permissions in each target cluster. kro does not automatically connect to arbitrary remote clusters.
 
 Stateful applications still need database-operator or managed-service backup, restore, failover and migration behavior. Resource reconciliation alone is not data recovery. Bound graph size and permissions, define reusable units and expose only useful status. Do not copy Secret contents into status, labels or logs.
+
+## EKS Managed kro
+
+The kro capability of EKS Capabilities runs the same upstream controller (measured `0.9.4-eks-1`) on AWS-owned infrastructure. October 2026 testing used this chapter's `NginxApp` RGD modified to fix the ingress class and host; the CEL expressions worked unchanged and instance lifecycle timings matched OSS. The differences are permissions and operations.
+
+- The default access entry policy `AmazonEKSKROPolicy` covers only `kro.run` and CRDs. Bind a ClusterRole such as `kro:controller:reviewed-nginxapps` above to a Kubernetes group on the access entry; without it the RGD reports `ControllerReady=False` with `cache sync timeout`, not forbidden. The rules are the same; only the binding mechanism (group instead of aggregation label) differs.
+- AWS chooses the version and you cannot pin it. Controller flags and resource limits cannot be changed either.
+- If a CR with the same name as a child resource exists in the namespace, kro takes it over and overwrites it (OSS behaves the same). Add RGD-specific suffixes to child resource names.
+
+For measurements and selection guidance, see [EKS Capabilities](../eks/13-eks-capabilities.md).
 
 ## Verification and References
 

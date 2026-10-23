@@ -51,6 +51,8 @@
   docs: [eks/08-eks-upgrades.md]
 - keywords: [eks cost optimization]
   docs: [eks/07-eks-cost-optimization.md]
+- keywords: [eks capability, managed argo cd, managed kro, managed ack, 관리형 argo cd]
+  docs: [eks/13-eks-capabilities.md]
 - keywords: [zonal shift, cell-based architecture, rack awareness, valkey glide, az affinity, target group binding, kip-392, kip-881]
   docs: [ops/15-zonal-operations-guide.md]
 
