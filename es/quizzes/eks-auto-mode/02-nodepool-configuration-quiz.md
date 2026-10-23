@@ -1,4 +1,4 @@
-# Cuestionario de configuración de NodePool de EKS Auto Mode
+# Cuestionario sobre la configuración de NodePool de EKS Auto Mode
 
 > **Documento relacionado**: [Configuración de NodePool](../../eks-auto-mode/02-nodepool-configuration.md)
 
@@ -17,7 +17,7 @@
 **Respuesta: B) general-purpose, system**
 
 **Explicación:**
-Cuando están habilitados, `general-purpose` y `system` usan instancias On-Demand C/M/R de la generación 5 o posterior. `general-purpose` usa amd64; `system` admite amd64 y arm64, y tiene la taint `CriticalAddonsOnly`. Use un pool personalizado para Spot. Las funciones locales de DNS y redes de servicio de Auto Mode no son Pods ordinarios que deban programarse en el pool `system`.
+Cuando se habilitan, `general-purpose` y `system` usan instancias C/M/R bajo demanda de la generación 5 o posterior. General-purpose usa amd64; system admite amd64 y arm64, y tiene un taint `CriticalAddonsOnly`. Para Spot, usa un pool personalizado. Las funciones locales de DNS y de redes de servicios de Auto Mode no son Pods ordinarios que deban programarse en el pool system.
 
 ```yaml
 # eksctl configuration fragment
@@ -26,41 +26,41 @@ autoModeConfig:
   nodePools: [general-purpose, system]
 ```
 
-Eliminar un nombre integrado elimina su NodePool y drena/termina los nodos administrados. Si deshabilita ambos, también deberá proporcionar un NodeClass personalizado; no dé por hecho que existe uno llamado `default`.
+Quitar un nombre integrado elimina su NodePool y drena o termina los nodos administrados. Deshabilitar ambos también significa que debes proporcionar un NodeClass personalizado, en lugar de dar por sentado que existe `default`.
 
 </details>
 
 ### 2. ¿Cómo se configura IMDS para los nodos de Auto Mode?
 
 - A) Establecer `metadataOptions.httpTokens: optional` en NodeClass
-- B) AWS aplica IMDSv2 y el límite de saltos 1; NodeClass no puede anular estos ajustes
+- B) AWS exige IMDSv2 y un límite de saltos de 1; NodeClass no puede anular estos ajustes
 - C) Establecer el límite de saltos en 0 para que funcione IMDSv2
-- D) Elegir AL2023 para desactivar la autenticación de IMDS
+- D) Seleccionar AL2023 para deshabilitar la autenticación de IMDS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) AWS aplica IMDSv2 y el límite de saltos 1; NodeClass no puede anular estos ajustes**
+**Respuesta: B) AWS exige IMDSv2 y un límite de saltos de 1; NodeClass no puede anular estos ajustes**
 
 **Explicación:**
-Los valores predeterminados de las instancias administradas requieren IMDSv2 y un límite de saltos de 1, y no se pueden cambiar en Auto Mode. El ejemplo anterior de `metadataOptions` correspondía a otra API. El límite de saltos restringe los Pods que no usan la red del host; no garantiza el aislamiento de todos los Pods, incluidos los que usan la red del host. Use la identidad de carga de trabajo y configure la región de forma explícita, en vez de depender de las credenciales del nodo. Consulte las [restricciones de las instancias administradas](https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html).
+Los valores predeterminados de las instancias administradas requieren IMDSv2 y un límite de saltos de 1, y no se pueden cambiar en Auto Mode. El ejemplo anterior de `metadataOptions` correspondía a una API diferente. El límite de saltos restringe los Pods que no usan la red del host; no garantiza el aislamiento de todos los Pods, incluidos los que usan la red del host. Usa identidad de carga de trabajo y una región y configuración explícitas en lugar de depender de las credenciales del nodo. Consulta [restricciones de las instancias administradas](https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html).
 
 </details>
 
 ### 3. ¿Quién selecciona la imagen del sistema operativo para los nodos de Auto Mode?
 
 - A) El usuario elige Amazon Linux 2 o Ubuntu en amiFamily
-- B) AWS selecciona la variante de Bottlerocket administrada adecuada
+- B) AWS selecciona la variante administrada de Bottlerocket adecuada
 - C) El usuario proporciona cualquier AMI de Windows
-- D) El peso del NodePool selecciona AL2023 en vez de Bottlerocket
+- D) El peso de NodePool selecciona AL2023 en lugar de Bottlerocket
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) AWS selecciona la variante de Bottlerocket administrada adecuada**
+**Respuesta: B) AWS selecciona la variante administrada de Bottlerocket adecuada**
 
 **Explicación:**
-Auto Mode usa variantes de Bottlerocket administradas por AWS. AWS NodeClass no ofrece una opción `amiFamily: AL2023` ni `amiFamily: Bottlerocket`. Use los ajustes de NodeClass documentados para el almacenamiento, las redes, los certificados y la configuración de kernel compatible. Son opciones distintas de seleccionar una AMI arbitraria o usar datos de usuario de shell.
+Auto Mode usa variantes de Bottlerocket administradas por AWS. No ofrece la opción `amiFamily: AL2023` ni `amiFamily: Bottlerocket` en AWS NodeClass. Usa los ajustes documentados de NodeClass para almacenamiento, redes, certificados y la configuración del kernel admitida. Estos son diferentes de la selección arbitraria de AMI o de los datos de usuario de shell.
 
 </details>
 
@@ -77,7 +77,7 @@ Auto Mode usa variantes de Bottlerocket administradas por AWS. AWS NodeClass no 
 **Respuesta: B) eks.amazonaws.com/instance-gpu-manufacturer**
 
 **Explicación:**
-Use la etiqueta de AWS Auto Mode `eks.amazonaws.com/instance-gpu-manufacturer`. Para hardware GPU de NVIDIA, los requisitos pueden incluir:
+Usa la etiqueta de AWS Auto Mode `eks.amazonaws.com/instance-gpu-manufacturer`. Para hardware de GPU de NVIDIA, los requisitos pueden incluir lo siguiente:
 
 ```yaml
 # Requirements fragment inside a complete NodePool
@@ -90,24 +90,24 @@ requirements:
     values: ["nvidia"]
 ```
 
-Seleccionar el hardware no asigna una GPU a un contenedor. El Pod debe solicitar el recurso extendido correspondiente, como `nvidia.com/gpu`, y usar una imagen/runtime compatible. En esta auditoría no se ejecutó ninguna carga de trabajo con GPU.
+Seleccionar el hardware no asigna una GPU a un contenedor. El Pod debe solicitar el recurso extendido correspondiente, como `nvidia.com/gpu`, y usar una imagen o un runtime compatible. En esta auditoría no se ejecutó ninguna carga de trabajo en GPU.
 
 </details>
 
-### 5. ¿Qué condición selecciona generaciones EC2 6 o posteriores?
+### 5. ¿Qué condición selecciona la generación 6 de EC2 o una posterior?
 
 - A) node.kubernetes.io/instance-generation: "6"
-- B) eks.amazonaws.com/instance-generation con Gt y el valor "5"
+- B) eks.amazonaws.com/instance-generation con Gt y valor "5"
 - C) eks.amazonaws.com/generation: "6"
 - D) instance-generation: 6
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) eks.amazonaws.com/instance-generation con Gt y el valor "5"**
+**Respuesta: B) eks.amazonaws.com/instance-generation con Gt y valor "5"**
 
 **Explicación:**
-`Gt` establece un límite inferior numérico estricto, por lo que `Gt ["5"]` selecciona la generación 6 y las posteriores. `In ["6"]` selecciona únicamente la generación 6; no es equivalente. Ninguna de estas condiciones significa que se seleccione solo la generación disponible más reciente.
+`Gt` establece un límite inferior numérico estricto, por lo que `Gt ["5"]` selecciona la generación 6 y las posteriores. `In ["6"]` selecciona exactamente la generación 6; no es equivalente. Ninguna de las dos condiciones significa que se seleccione solo la generación más reciente disponible.
 
 ```yaml
 # Requirements fragment inside a complete NodePool
@@ -122,17 +122,17 @@ requirements:
 ### 6. ¿Cómo se seleccionan subredes privadas para un NodeClass?
 
 - A) Establecer subnetType: private
-- B) Seleccionar ID/etiquetas de subred revisados y verificar sus rutas y ajustes de IP
+- B) Seleccionar IDs o etiquetas de subred revisados y verificar su enrutamiento y configuración de IP
 - C) Establecer privateSubnetsOnly: true
 - D) Establecer networkType: private
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Seleccionar ID/etiquetas de subred revisados y verificar sus rutas y ajustes de IP**
+**Respuesta: B) Seleccionar IDs o etiquetas de subred revisados y verificar su enrutamiento y configuración de IP**
 
 **Explicación:**
-`subnetSelectorTerms` selecciona subredes por ID o por etiquetas. Las etiquetas como `kubernetes.io/role/internal-elb` son convenciones, no pruebas de que la tabla de rutas sea privada. Los términos son alternativas; dentro de un mismo término deben coincidir todas las etiquetas. Revise la selección de VPC/AZ, las rutas y el comportamiento de la IP pública.
+`subnetSelectorTerms` selecciona por ID o por etiquetas. Las etiquetas como `kubernetes.io/role/internal-elb` son una convención, no una prueba de que la tabla de rutas sea privada. Los términos son alternativas; varias etiquetas dentro de un mismo término deben coincidir todas. Revisa la selección de VPC y AZ, las rutas y el comportamiento de las IP públicas.
 
 ```yaml
 # Selection fragment; a complete NodeClass also needs identity and security groups
@@ -144,6 +144,31 @@ advancedNetworking:
   associatePublicIPAddress: false
 ```
 
-Establecer `associatePublicIPAddress: false` evita asignar una IP pública, pero no crea rutas NAT ni endpoints de VPC. Proporcione la configuración completa de identidad y grupos de seguridad del NodeClass, y verifique que esté listo.
+Establecer `associatePublicIPAddress: false` impide la asignación de IP públicas, pero no crea rutas NAT ni puntos de conexión de VPC. Proporciona la configuración completa de identidad y grupos de seguridad de NodeClass, y verifica que esté listo.
+
+</details>
+
+### 7. ¿Qué ocurre cuando cambias ajustes de kubelet, como `maxPods`, en un NodeClass de Auto Mode existente?
+
+- A) EKS aplica parches a kubelet en los nodos en ejecución sin interrupciones
+- B) Los nodos existentes conservan los ajustes anteriores y solo los nodos nuevos usan el cambio
+- C) Los nodos que usan el NodeClass se marcan como desfasados y EKS los reemplaza por nodos que usan los nuevos ajustes
+- D) Debes reiniciar kubelet en cada nodo mediante SSH
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) Los nodos que usan el NodeClass se marcan como desfasados y EKS los reemplaza por nodos que usan los nuevos ajustes**
+
+**Explicación:**
+Los ajustes de kubelet en `spec.advancedCompute.kubelet` se aplican cuando se crea un nodo. Si los editas, los nodos existentes quedan desfasados, por lo que EKS los reemplaza en lugar de cambiar un nodo en ejecución; revisa primero los PDB y los presupuestos de interrupción. `maxPods` es solo un límite máximo: el valor efectivo es el menor entre el valor que configures, las direcciones IP que proporciona el tipo de instancia y el límite de Auto Mode de 110 Pods por nodo.
+
+```yaml
+# NodeClass fragment
+advancedCompute:
+  kubelet:
+    maxPods: 60
+    podPidsLimit: 4096
+```
 
 </details>

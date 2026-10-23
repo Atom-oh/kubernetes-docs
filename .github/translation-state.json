@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sourceCommit": "8709ea7e73418e919a1a64c65ee5cc0b9a90a178",
+  "sourceCommit": "c8d7f5c0e39147429d8035f19d4ca6435ab0b677",
   "sources": {
     "cn/ai-ml/01-ai-ml-workloads.md": "374be8a8f53b6aa50d0e472ed92b4dd1bea536d1",
     "cn/ai-ml/02-vllm-deployment.md": "d97a90922936c7a02729b940ebb41d92df43698d",
@@ -102,7 +102,7 @@
     "cn/database/01-clickhouse-on-eks.md": "3716b2d7746557086ec70c72ae4277bfb7aa955c",
     "cn/database/README.md": "5706be0c51021ccf39426f6299b59d5ed1ab3bf2",
     "cn/eks-auto-mode/01-getting-started.md": "80bcfbb6f7e75708458db88b9f8822f03ef73f30",
-    "cn/eks-auto-mode/02-nodepool-configuration.md": "4cac6c665e396faa0b2cebc71bd269a9786cb224",
+    "cn/eks-auto-mode/02-nodepool-configuration.md": "a5b309c20b22fecb67978a701e41336490a9aa56",
     "cn/eks-auto-mode/03-scaling-behavior.md": "f00cb2243378fd1688a7b60de72ddc17ac9c540c",
     "cn/eks-auto-mode/04-spot-strategies.md": "77bc4e0b359e7b02a9a7ee0ba12770b0630f60fb",
     "cn/eks-auto-mode/05-operations.md": "b47a6b1e7fd16d319bf5d4881fb66fff29d46629",
@@ -797,7 +797,7 @@
     "es/database/01-clickhouse-on-eks.md": "3716b2d7746557086ec70c72ae4277bfb7aa955c",
     "es/database/README.md": "5706be0c51021ccf39426f6299b59d5ed1ab3bf2",
     "es/eks-auto-mode/01-getting-started.md": "80bcfbb6f7e75708458db88b9f8822f03ef73f30",
-    "es/eks-auto-mode/02-nodepool-configuration.md": "4cac6c665e396faa0b2cebc71bd269a9786cb224",
+    "es/eks-auto-mode/02-nodepool-configuration.md": "a5b309c20b22fecb67978a701e41336490a9aa56",
     "es/eks-auto-mode/03-scaling-behavior.md": "f00cb2243378fd1688a7b60de72ddc17ac9c540c",
     "es/eks-auto-mode/04-spot-strategies.md": "77bc4e0b359e7b02a9a7ee0ba12770b0630f60fb",
     "es/eks-auto-mode/05-operations.md": "b47a6b1e7fd16d319bf5d4881fb66fff29d46629",
@@ -1080,7 +1080,7 @@
     "es/quizzes/data-on-eks/spark/05-best-practices-quiz.md": "cefc6f45a48f7e0c82c2c61669111ce3f106c697",
     "es/quizzes/database/01-clickhouse-on-eks-quiz.md": "646ff7ccdbd1533692d3e8204631a5303609a81f",
     "es/quizzes/eks-auto-mode/01-getting-started-quiz.md": "4d97df9389b8a0eba3ea6b0f677dd9d69b47cb6f",
-    "es/quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md": "67d9aa4191c92dd3ac6072cc2116557028a796c8",
+    "es/quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md": "112d6b0274b1a99a39ed871cb0cc59071b1e056f",
     "es/quizzes/eks-auto-mode/03-scaling-behavior-quiz.md": "76cc6c55356f5d64615a3d58912d833899b325ee",
     "es/quizzes/eks-auto-mode/04-spot-strategies-quiz.md": "45b184fb5fe07ef6230635dd126ed7ea0ca13569",
     "es/quizzes/eks-auto-mode/05-operations-quiz.md": "dea6205a072a01b8ebd070fab9005e1592ee9bd2",
@@ -1492,7 +1492,7 @@
     "jp/database/01-clickhouse-on-eks.md": "3716b2d7746557086ec70c72ae4277bfb7aa955c",
     "jp/database/README.md": "5706be0c51021ccf39426f6299b59d5ed1ab3bf2",
     "jp/eks-auto-mode/01-getting-started.md": "80bcfbb6f7e75708458db88b9f8822f03ef73f30",
-    "jp/eks-auto-mode/02-nodepool-configuration.md": "4cac6c665e396faa0b2cebc71bd269a9786cb224",
+    "jp/eks-auto-mode/02-nodepool-configuration.md": "a5b309c20b22fecb67978a701e41336490a9aa56",
     "jp/eks-auto-mode/03-scaling-behavior.md": "f00cb2243378fd1688a7b60de72ddc17ac9c540c",
     "jp/eks-auto-mode/04-spot-strategies.md": "77bc4e0b359e7b02a9a7ee0ba12770b0630f60fb",
     "jp/eks-auto-mode/05-operations.md": "b47a6b1e7fd16d319bf5d4881fb66fff29d46629",
@@ -2089,8 +2089,10 @@
     "jp/training/eks-auto-mode-2h-curriculum.md": "803e8cfa299d52220aa9680c3f6ba5274e015fe7"
   },
   "pending": [
+    "cn/quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md",
     "es/eks-hybrid-nodes/02-network-configuration.md",
     "jp/eks-hybrid-nodes/02-network-configuration.md",
-    "jp/eks-hybrid-nodes/10-hybrid-nodes-gateway.md"
+    "jp/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+    "jp/quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md"
   ]
 }
