@@ -1,6 +1,6 @@
 # AWS Controllers for Kubernetes (ACK)
 
-> **Last Updated**: October 16, 2026
+> **Last Updated**: October 23, 2026
 
 ## Concepts and Architecture
 
@@ -131,6 +131,17 @@ The reviewed runtime defines ack_outbound_api_requests_total and ack_outbound_ap
 Replica configuration is deployment.replicas; review leaderElection.enabled when running several replicas. replicaCount is not this chart's setting. Additional leader-elected replicas do not automatically increase parallel throughput. Tune reconcile concurrency/resync with observed quotas, throttling and resource usage.
 
 Version environment-specific manifests and charts in Git, keeping credentials out. Recovery needs AWS data/backups, identifiers, retention policy and ownership as well as CRs. Creating a CR in another region does not implement data replication or recovery.
+
+## EKS Managed ACK
+
+The ACK capability of EKS Capabilities runs the upstream GA service controllers as one capability on AWS-owned infrastructure. Based on October 2026 testing, it differs from the Helm installation above as follows.
+
+- IAM starts from a single capability role, and a cluster-scoped `IAMRoleSelector` assumes a different role per namespace. The same separation on OSS controllers needs both `featureGates.IAMRoleSelector=true` and `enableCARM=false`; with CARM left on, the controller does not start.
+- AWS resource tags and session tags use the `eks:` prefix (`eks:eks-capability-arn` and others). Update cost allocation and IAM conditions written against the OSS `services.k8s.aws/` tags when migrating.
+- There is no `FieldExport` CRD, and controller versions and the resync interval cannot be chosen or changed. AWS-side drift was not periodically reverted within 25 minutes on either managed or OSS.
+- Adoption (`adopt-or-create`) and `deletion-policy: retain` annotations worked on the managed capability as well (measured on managed), and an OSS controller installed after deleting the capability with RETAIN adopted the existing CRs.
+
+For measurements and selection guidance, see [EKS Capabilities](../eks/13-eks-capabilities.md).
 
 ## Troubleshooting
 

@@ -1,6 +1,6 @@
 # Amazon EKS Monitoring and Logging
 
-> **Last Updated**: October 16, 2026
+> **Last Updated**: October 23, 2026
 
 Effective monitoring and logging are essential for maintaining the reliability, availability, and performance of Amazon EKS clusters. This document covers various tools, techniques, and best practices for implementing monitoring and logging in EKS clusters.
 
@@ -197,6 +197,8 @@ aws eks describe-capability --region "$AWS_REGION" \
 The owner configures PutDeliverySource with that ARN/log type, PutDeliveryDestination with the approved destination, and CreateDelivery to connect them. Review destination policies, encryption, cross-account permissions and retention before enabling delivery.
 
 CloudWatch Logs destinations support Logs Insights queries. S3 destinations are objects for the selected S3/Athena workflow, and Firehose sends records to its configured target; they are not automatically queried through CloudWatch Logs Insights. ACK records include controllerGroup for service-controller filtering. Confirm actual delivery and query fields, and account for Vended Logs charges.
+
+Each added delivery source puts the capability in `UPDATING` for a few seconds, and further changes fail with `ConflictException` meanwhile (about 6.6–7 seconds in October 2026 testing). Add sources one at a time and wait for `ACTIVE`. For capabilities overall, see [EKS Capabilities](./13-eks-capabilities.md).
 
 References: [EKS control plane logging](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [audit policy and query examples](https://docs.aws.amazon.com/eks/latest/best-practices/auditing-and-logging.html), [capability controller logs](https://docs.aws.amazon.com/eks/latest/userguide/capabilities-controller-logs.html).
 

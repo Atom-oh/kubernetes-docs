@@ -132,6 +132,7 @@
 - [Amazon EKS 고가용성 및 복원력 퀴즈](./eks/10-eks-resiliency-quiz.md)
 - [Amazon EKS 고급 디버깅 퀴즈](./eks/11-eks-advanced-debugging-quiz.md)
 - [Kubernetes 버전별 신규 기능과 로드맵 퀴즈](./eks/12-kubernetes-version-roadmap-quiz.md)
+- [EKS Capabilities 퀴즈](./eks/13-eks-capabilities-quiz.md)
 
 ### EKS Auto Mode
 

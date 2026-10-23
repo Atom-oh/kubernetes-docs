@@ -1,6 +1,6 @@
 # Kube Resource Orchestrator (kro)
 
-> **마지막 업데이트**: 2026년 9월 12일 · **기준 버전**: kro 0.9.4
+> **마지막 업데이트**: 2026년 10월 23일 · **기준 버전**: kro 0.9.4
 
 ## 개념과 적용 범위
 
@@ -62,7 +62,7 @@ rules:
 
 ## 완전한 NginxApp 예제
 
-저장소의 examples/platform/kro에 아래 RGD, 인스턴스와 RBAC 파일이 있습니다. ingress는 기본 비활성화입니다. 활성화하려면 승인된 IngressClass/controller, host DNS와 같은 namespace의 TLS Secret을 먼저 준비하세요. className=internal이라는 문자열만으로 내부 load balancer가 구성되지는 않습니다.
+저장소의 examples/platform/kro에 아래 RGD, 인스턴스와 RBAC 파일이 있습니다. ingress는 기본 비활성화입니다. 활성화하려면 승인된 IngressClass/controller, host DNS와 같은 namespace의 TLS Secret을 먼저 준비하세요. className=internal이라는 문자열만으로 내부 load balancer가 구성되지는 않습니다. 이 예제는 인스턴스가 `ingress.className`과 `ingress.host`를 직접 정하므로, 멀티테넌트 cluster에서는 다른 팀의 호스트를 가로채는 데 쓰일 수 있습니다. 운영 RGD에서는 클래스를 고정하고 호스트를 인스턴스 이름과 namespace로 만드세요.
 
 image는 기존 Helm 예제와 같은 nginx-unprivileged tag를 사용합니다. 비특권 UID와 읽기 전용 root, /tmp volume을 구성했지만 실제 image 실행은 검증하지 않았습니다. 운영 시 digest·아키텍처·정책을 확인합니다.
 
@@ -255,6 +255,16 @@ Helm과 kro가 같은 object를 동시에 관리하지 않도록 이름·selecto
 여러 환경에는 동일한 API 계약과 검증된 이미지 digest를 사용하되 namespace, replicas, ingress와 정책은 별도 인스턴스로 관리합니다. ApplicationSet 같은 fleet 도구를 사용하려면 각 cluster에 kro/RGD/권한을 먼저 준비해야 합니다. kro가 임의 원격 cluster에 자동 접속하는 기능은 아닙니다.
 
 DB·stateful app에는 전용 DB Operator 또는 관리형 서비스의 backup, restore, failover, schema migration 기능이 필요합니다. kro의 리소스 조정만으로 데이터 복구가 구현되지는 않습니다. RGD 크기와 권한을 제한하고 재사용 단위를 나누며 필요한 status만 공개하세요. Secret 내용을 status·label·로그로 내보내지 않습니다.
+
+## EKS 관리형 kro
+
+EKS Capabilities의 kro는 같은 upstream 컨트롤러(실측 `0.9.4-eks-1`)를 AWS 소유 인프라에서 실행합니다. 2026년 10월 실측에서는 이 문서의 `NginxApp` RGD를 ingress 클래스와 호스트를 고정하도록 고친 버전으로 시험했고, CEL 식이 그대로 동작했으며 인스턴스 수명주기 시간도 OSS와 같았습니다. 다른 점은 권한과 운영입니다.
+
+- 기본 access entry 정책 `AmazonEKSKROPolicy`는 `kro.run`과 CRD만 다룹니다. 위의 `kro:controller:reviewed-nginxapps` 같은 ClusterRole을 access entry의 Kubernetes 그룹에 바인딩해야 하며, 없으면 forbidden이 아니라 `cache sync timeout`으로 `ControllerReady=False`가 됩니다. aggregation label 대신 그룹 바인딩을 쓴다는 점만 다르고 권한 내용은 같습니다.
+- 버전은 AWS가 정하며 고정할 수 없습니다. 컨트롤러 플래그와 리소스 한도도 바꿀 수 없습니다.
+- 같은 namespace에 하위 리소스와 이름이 같은 CR이 있으면 kro가 이를 가져가 덮어씁니다(OSS도 같음). 하위 리소스 이름에 RGD 고유 접미사를 붙입니다.
+
+자세한 측정과 선택 기준은 [EKS Capabilities](../eks/13-eks-capabilities.md)를 참고하세요.
 
 ## 검증 범위와 참고 자료
 

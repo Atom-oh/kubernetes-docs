@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Review baseline**: Argo CD 3.5.2, Argo Rollouts 1.10.0; Argo CD manifest pins updated to patch 3.5.5 after release-note review (examples not re-run)
-> **Last Updated**: October 19, 2026
+> **Last Updated**: October 23, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -241,6 +241,8 @@ Rollouts is a separate controller and can be used without Argo CD. This review u
 ### EKS Managed Argo CD Capability
 
 EKS Capability for Argo CD is a distinct operating model from a self-managed installation. Its custom configuration applies only to **supported** argocd-cm keys, in the capability-configured namespace and with the label `app.kubernetes.io/part-of: argocd`. Unsupported keys/flags are ignored; do not assume standard Lua libraries or arbitrary execution plugins are available. See the [managed configuration guide](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html).
+
+In October 2026 testing, even the local cluster had to be registered with a cluster Secret using its EKS ARN, and the auto-created access entry could not sync until `AmazonEKSEditPolicy` and `AmazonEKSAdminViewPolicy` were both attached. Default Git polling took 342–697 seconds from commit to Synced; a GitHub webhook brought it to about 7 seconds. Sign-in is IAM Identity Center only, Notifications, CMP and `argocd admin` are unavailable, and AWS chooses the version. For permissions, multi-cluster layouts, version preparedness and the self-managed comparison, see [EKS Capabilities](../../eks/13-eks-capabilities.md).
 
 ## Next Steps
 

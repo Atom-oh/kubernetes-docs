@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **검토 기준**: Argo CD 3.5.2, Argo Rollouts 1.10.0. Argo CD 매니페스트 고정 버전은 릴리스 노트 검토 후 패치 3.5.5로 갱신(예제 재실행 안 함)
-> **마지막 업데이트**: 2026년 10월 19일
+> **마지막 업데이트**: 2026년 10월 23일
 
 ## 목차
 
@@ -235,6 +235,8 @@ Rollouts는 별도 컨트롤러이며 Argo CD 없이도 사용할 수 있습니�
 ### EKS 관리형 Argo CD 기능
 
 EKS Capability for Argo CD는 자체 설치와 다른 운영 경로입니다. 2026-08 발표된 사용자 지정 구성은 **지원 목록에 있는** `argocd-cm` 키에만 적용됩니다. capability에 설정한 namespace와 `app.kubernetes.io/part-of: argocd` 라벨이 필요합니다. 지원되지 않는 키·플래그는 무시되며, Lua 표준 라이브러리나 임의 실행 플러그인을 사용할 수 있다고 가정하지 않습니다. 자세한 범위는 [관리형 구성 가이드](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html)를 확인하세요.
+
+2026년 10월 실측에서는 로컬 클러스터도 EKS ARN으로 cluster Secret을 만들어야 했고, 자동 access entry만으로는 동기화되지 않아 `AmazonEKSEditPolicy`와 `AmazonEKSAdminViewPolicy`를 함께 붙여야 했습니다. 기본 Git 폴링은 commit부터 Synced까지 342~697초였고 GitHub webhook으로 7초대로 줄었습니다. 로그인은 IAM Identity Center만 되며, Notifications·CMP·`argocd admin`은 없고, 버전은 AWS가 정합니다. 권한, 멀티 클러스터, 버전 대비, self-managed 비교는 [EKS Capabilities](../../eks/13-eks-capabilities.md)를 참고하세요.
 
 ## 하위 가이드
 

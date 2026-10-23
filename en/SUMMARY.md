@@ -73,6 +73,7 @@
 * [EKS Resiliency and High Availability](eks/10-eks-resiliency.md)
 * [EKS Advanced Debugging](eks/11-eks-advanced-debugging.md)
 * [Kubernetes Version Features and Roadmap](eks/12-kubernetes-version-roadmap.md)
+* [EKS Capabilities: Managed Argo CD, kro and ACK](eks/13-eks-capabilities.md)
 * [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
   * [Prerequisites](eks-hybrid-nodes/01-prerequisites.md)
   * [Network Configuration](eks-hybrid-nodes/02-network-configuration.md)
@@ -524,6 +525,7 @@
   * [EKS Resiliency and High Availability Quiz](quizzes/eks/10-eks-resiliency-quiz.md)
   * [EKS Advanced Debugging Quiz](quizzes/eks/11-eks-advanced-debugging-quiz.md)
   * [Kubernetes Version Features and Roadmap Quiz](quizzes/eks/12-kubernetes-version-roadmap-quiz.md)
+  * [EKS Capabilities Quiz](quizzes/eks/13-eks-capabilities-quiz.md)
 * EKS Hybrid Nodes
   * [Prerequisites Quiz](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
   * [Network Configuration Quiz](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
