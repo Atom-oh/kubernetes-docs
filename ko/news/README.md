@@ -1,5 +1,5 @@
 # 소식
-> **마지막 업데이트**: 2026년 10월 19일
+> **마지막 업데이트**: 2026년 10월 26일
 
 Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. GitHub Actions는 매주 월요일 09:00 KST에 갱신안을 만들고 품질 검사를 통과하면 PR을 엽니다. 실제 사이트에는 PR 검토·머지와 배포가 완료된 뒤 반영됩니다.
 
@@ -12,6 +12,14 @@ Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. G
 
 ## 갱신 로그
 
+- 2026-W44: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.3/1.30.7/1.29.10 보안 패치 릴리스(ISTIO-SECURITY-2026-008, CVE-2026-111943: 유출된 eMudhra 중간 CA 인증서 신뢰 제거, 1.29.10은 지원 종료 후 예외 릴리스) 반영 ([원문](https://istio.io/latest/news/security/istio-security-2026-008/))
+- 2026-W44: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.4/1.19.10/1.18.16 긴급(out-of-band) 보안 패치 릴리스(CVE-2026-111943, 유출된 eMudhra 중간 CA 인증서를 더 이상 신뢰하지 않는 Go 1.26.10 적용) 반영 ([원문](https://github.com/cilium/cilium/releases/tag/v1.20.4))
+- 2026-W44: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.6/v3.4.12/v3.3.17 버그 수정 패치 릴리스와 유출된 eMudhra CA 인증서 신뢰를 제거하는 보안 수정이 포함된 v3.3.18 반영 ([원문](https://github.com/argoproj/argo-cd/releases/tag/v3.3.18))
+- 2026-W44: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.6.0-rc4 release candidate 공개 반영 ([원문](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc4))
+- 2026-W44: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.15.1 패치와 v1.14.2/v1.14.3/v1.9.3 LTS 패치 릴리스(버그 수정, 전 라인이 유출된 eMudhra 중간 CA 인증서를 신뢰하지 않는 Go 1.26.10으로 이동) 반영 ([원문](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.1))
+- 2026-W44: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — OpenTelemetry Collector에서 AI 에이전트 텔레메트리를 필터링·축소하는 CNCF 블로그 가이드 반영 ([원문](https://www.cncf.io/blog/2026/10/22/filtering-and-reducing-ai-agent-telemetry-with-the-opentelemetry-collector/))
+- 2026-W44: 매칭 문서 없음 — Amazon EMR on EKS의 EMR 요금(vCPU-시간당·GB-시간당) 30% 인하, 기본 EKS 요금은 변동 없음 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/10/emr-eks-reduces-emr-charge-30-percent/))
+- 2026-W44: 매칭 문서 없음 — AI 워크로드가 Kubernetes 오토스케일링을 바꾸는 방식, CNCF 블로그 ([원문](https://www.cncf.io/blog/2026/10/19/how-ai-workloads-are-reshaping-kubernetes-autoscaling/))
 - 2026-W43: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.2/1.30.6/1.29.9 패치 릴리스 공개(ISTIO-SECURITY-2026-007 보안 패치 포함, 문서에는 기존 검토로 이미 반영됨) ([원문](https://istio.io/news/releases/1.31.x/announcing-1.31.2/))
 - 2026-W43: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.3/1.19.9/1.18.15 패치 릴리스(conntrack GC, `nodeSelector` CNP 처리 등 버그 수정) 반영 ([원문](https://github.com/cilium/cilium/releases/tag/v1.20.3))
 - 2026-W43: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.5/v3.4.11/v3.3.16 버그 수정 패치 릴리스 반영 ([원문](https://github.com/argoproj/argo-cd/releases/tag/v3.5.5))

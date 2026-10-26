@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **Review baseline**: Collector Contrib 0.160.0; Operator 0.158.0; language versions below
-> **Last Updated**: October 19, 2026
+> **Last Updated**: October 26, 2026
 
 ## Introduction
 
@@ -1475,6 +1475,10 @@ In an [October 15 CNCF post](https://www.cncf.io/blog/2026/10/15/carbon-as-a-fir
 ### October 2026 Update: Rebuilding Incident Detection on OTel Streams
 
 In the [September 30 CNCF post](https://www.cncf.io/blog/2026/09/30/from-40-seconds-to-under-10-rebuilding-incident-detection-on-opentelemetry-apache-kafka-and-apache-flink-on-kubernetes/), Atlassian describes eighteen months of rebuilding its automated incident-creation platform on OpenTelemetry, Apache Kafka, and Apache Flink on Kubernetes, cutting event-to-metric latency from over 40 seconds to under 10. As the post itself notes, in-scope recall rose from about 60% to 86% but fell back to 64% in a bad month, and precision remains below target. Treat the numbers as that organization's measurements, not an outcome the architecture guarantees; the post is most useful for its trade-off discussion, such as isolating noisy neighbors on shared queues and cost.
+
+### October 2026 Update: Filtering AI Agent Telemetry in the Collector
+
+The [October 22 CNCF post](https://www.cncf.io/blog/2026/10/22/filtering-and-reducing-ai-agent-telemetry-with-the-opentelemetry-collector/) walks through shaping an AI coding agent's OpenTelemetry-native telemetry in the Collector before it reaches a backend. In the author's example, a single small Claude Code task with every content flag enabled produced 181 telemetry records (289 KB of JSON), most of it prompt and file-content payloads no dashboard, alert, or query reads. The suggested approach is to first fix the questions you need answered — counters and short attributes such as run counts, cost, token usage, and tool-call outcomes — and drop the rest in the Collector pipeline. The figures are one author's measurement of one agent and task, not a sizing guide; which fields are safe to drop depends on your own queries and retention requirements.
 
 ## Best Practices
 
