@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **검토 기준**: Argo CD 3.5.2, Argo Rollouts 1.10.0. Argo CD 매니페스트 고정 버전은 릴리스 노트 검토 후 패치 3.5.5로 갱신(예제 재실행 안 함)
-> **마지막 업데이트**: 2026년 10월 23일
+> **마지막 업데이트**: 2026년 10월 26일
 
 ## 목차
 
@@ -221,8 +221,11 @@ spec:
 - 3.5.3: 2026-09-14 공개. 버그 수정(헬스 체크, sync 재시도 상태, UI 등).
 - 3.5.4: 2026-10-06 공개. **보안 패치 릴리스**입니다. Kustomize remote ref와 Kustomize Helm config home을 통한 repo-server 명령 실행, Jsonnet import를 통한 repo-server 파일 읽기, PreDelete/PostDelete 훅의 AppProject 제한 우회(CVE-2026-77459) 등 CRITICAL 4건을 수정했으며, v3.4.10/v3.3.15에 동일 수정이 백포트되었습니다. Kustomize 빌드가 `helmGlobals.configHome`을 더 이상 적용하지 않고 4MiB를 넘는 OCI 매니페스트를 거부하는 동작 변경이 있으므로 [릴리스 노트](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4)를 확인하고 업그레이드하세요.
 - 3.5.5: 2026-10-12 공개. 버그 수정 패치 릴리스(reposerver CMP 실패 후 stale manifest·goroutine 누수, OCI 캐시 동작 등)이며, 같은 날 v3.4.11/v3.3.16이 함께 공개되었습니다. [릴리스 노트](https://github.com/argoproj/argo-cd/releases/tag/v3.5.5)를 확인하세요.
+- 3.5.6: 2026-10-20 공개. 버그 수정 패치 릴리스이며, 같은 시기에 v3.4.12(2026-10-21), v3.3.17(2026-10-20)이 함께 공개되었습니다. [릴리스 노트](https://github.com/argoproj/argo-cd/releases/tag/v3.5.6)를 확인하세요.
+- 3.3.18: 2026-10-22 공개. 3.3 라인에서 유출된 eMudhra CA 인증서를 신뢰하지 않도록 하는 **보안 수정**을 포함합니다(2026년 10월 20일 공개된 중간 CA 유출 사고로, 생태계 전반에서 패치가 이루어졌습니다). [릴리스 노트](https://github.com/argoproj/argo-cd/releases/tag/v3.3.18)를 확인하세요.
 - [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): 2026-09-15 공개된 3.6 라인 첫 release candidate. 프로덕션 기준 버전이 아닙니다.
-- [3.6.0-rc3](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc3): 2026-10-15 공개된 3.6 라인의 최신 release candidate. 마찬가지로 프로덕션 기준 버전이 아닙니다.
+- [3.6.0-rc3](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc3): 2026-10-15 공개된 3.6 라인의 release candidate. 마찬가지로 프로덕션 기준 버전이 아닙니다.
+- [3.6.0-rc4](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc4): 2026-10-22 공개된 3.6 라인의 최신 release candidate. 마찬가지로 프로덕션 기준 버전이 아닙니다.
 
 ### 2026년 10월 업데이트: Argo CD 4.0 비저닝 시작
 

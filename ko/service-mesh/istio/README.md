@@ -1,12 +1,16 @@
 # Istio
 
-> **마지막 업데이트**: 2026년 10월 16일
+> **마지막 업데이트**: 2026년 10월 26일
 
 Amazon EKS에서 Istio Service Mesh를 활용한 실용적인 가이드입니다.
 
+### 2026년 10월 보안 업데이트: 1.31.3·1.30.7·1.29.10
+
+2026년 10월 22일 [ISTIO-SECURITY-2026-008](https://istio.io/latest/news/security/istio-security-2026-008/)(CVE-2026-111943)을 수정한 보안 패치 릴리스 **1.31.3**, **1.30.7**, **1.29.10**이 공개되었습니다. 1.29는 2026년 10월 15일 지원이 종료되어 1.29.10은 예외적(exceptional) 릴리스입니다. 2026년 10월 20일 eMudhra 중간 CA 인증서 8개의 개인 키 유출이 공개되었는데, Envoy·Go·ztunnel은 Certificate Transparency를 강제하지 않으므로 해당 키 보유자는 Istio 이미지에 포함된 공개 CA 번들이 신뢰하는 어떤 도메인의 인증서든 발급할 수 있습니다. 이번 패치는 이미지 CA 번들에서 유출된 중간 CA를 제거하고, 1.30·1.31에서는 istiod·`istioctl`·`pilot-agent`를 유출 키가 포함된 인증서 체인을 거부하는 Go 1.26.10으로 빌드하며, ztunnel의 `rustls-webpki`를 업데이트합니다. `caCertificates` 없이 `tls.mode: SIMPLE`을 쓰는 `DestinationRule`, `RequestAuthentication`의 `jwksUri` 조회처럼 시스템 CA 번들을 신뢰하는 구성이 영향을 받을 수 있으며, Istio 메시 자체의 mTLS 인증서는 영향이 없습니다. 같은 날 Istio 1.32.0-beta.0도 공개되었습니다.
+
 ### 2026년 10월 검토: 지원 릴리스
 
-Istio 1.31.0은 GA이며 [릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/)는 2026년 8월 31일 게시되었습니다. 현재 patch는 10월 15일 공개된 **1.31.2**이며 [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) 보안 수정을 포함합니다([릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.2/)). 9월 21일 공개된 1.31.1은 [릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/)에 따르면 해석되지 않은 `BackendTLSPolicy` CA 참조가 backend의 평문 연결로 fallback하던 동작을 수정했습니다.
+Istio 1.31.0은 GA이며 [릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/)는 2026년 8월 31일 게시되었습니다. 현재 patch는 10월 22일 공개된 **1.31.3**입니다(위의 2026년 10월 보안 업데이트 참고). 10월 15일 공개된 1.31.2는 [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) 보안 수정을 포함합니다([릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.2/)). 9월 21일 공개된 1.31.1은 [릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/)에 따르면 해석되지 않은 `BackendTLSPolicy` CA 참조가 backend의 평문 연결로 fallback하던 동작을 수정했습니다.
 
 이 가이드의 신규 설치 명령은 1.31.2를 사용합니다. Istio 1.31의 공개 Kubernetes 지원 범위는 1.32–1.37이고, EKS 표준 지원은 현재 1.34–1.37입니다. EKS 표준 지원과의 교집합은 1.34–1.37이며, EKS 연장 지원 버전(1.31–1.33) 중 1.32와 1.33도 Istio 1.31 지원 범위에 포함됩니다. 설치 전에 [Istio 지원 매트릭스](https://istio.io/latest/docs/releases/supported-releases/)와 [EKS 버전 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 다시 확인하세요.
 

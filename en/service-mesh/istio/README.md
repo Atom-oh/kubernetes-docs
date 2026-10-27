@@ -1,12 +1,16 @@
 # Istio
 
-> **Last Updated**: October 16, 2026
+> **Last Updated**: October 26, 2026
 
 A practical guide for utilizing Istio Service Mesh on Amazon EKS.
 
+### October 2026 security update: 1.31.3, 1.30.7 and 1.29.10
+
+On October 22, 2026, security patch releases shipped for [ISTIO-SECURITY-2026-008](https://istio.io/latest/news/security/istio-security-2026-008/) (CVE-2026-111943): **1.31.3**, **1.30.7**, and **1.29.10** — the last an exceptional release, as 1.29 reached end of life on October 15, 2026. The private keys of eight eMudhra intermediate CA certificates were disclosed as compromised on October 20, 2026; Envoy, Go, and ztunnel do not enforce Certificate Transparency, so a holder of those keys could issue certificates for any domain trusted via the public CA bundles shipped in Istio images. The patches remove the compromised intermediates from the image CA bundles, build istiod, `istioctl`, and `pilot-agent` with Go 1.26.10 on 1.30/1.31 (which rejects chains containing the compromised keys), and update ztunnel's `rustls-webpki`. Configurations that trust the system CA bundle are potentially affected — for example a `DestinationRule` with `tls.mode: SIMPLE` and no `caCertificates`, or `RequestAuthentication` `jwksUri` fetches; Istio's own mesh mTLS certificates are not affected. Istio 1.32.0-beta.0 was published the same day.
+
 ### October 2026 review: supported releases
 
-Istio 1.31.0 is GA; its [release announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/) was published on August 31, 2026. The current patch is **1.31.2**, published October 15, which includes the [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) security fixes ([release announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.2/)). The previous patch, 1.31.1, was published September 21; its [release announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/) documents a fix that prevents an unresolved `BackendTLSPolicy` CA reference from falling back to plaintext backend connections.
+Istio 1.31.0 is GA; its [release announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/) was published on August 31, 2026. The current patch is **1.31.3**, published October 22 (see the October 2026 security update above). The 1.31.2 patch, published October 15, includes the [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) security fixes ([release announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.2/)). An earlier patch, 1.31.1, was published September 21; its [release announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/) documents a fix that prevents an unresolved `BackendTLSPolicy` CA reference from falling back to plaintext backend connections.
 
 New-install commands in this guide use 1.31.2. Istio 1.31's published Kubernetes support range is 1.32–1.37; EKS standard support currently covers 1.34–1.37. Their standard-support overlap is 1.34–1.37; of the EKS extended-support versions (1.31–1.33), 1.32 and 1.33 are also within Istio 1.31's range. Recheck the [Istio support matrix](https://istio.io/latest/docs/releases/supported-releases/) and [EKS version lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before installation.
 

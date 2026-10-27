@@ -1,7 +1,7 @@
 # Karpenter
 
 > **Supported Versions**: Karpenter 1.14 LTS (examples: 1.14.1); select Kubernetes/EKS versions using the compatibility and provider support tables.
-> **Last Updated**: October 16, 2026
+> **Last Updated**: October 26, 2026
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -362,6 +362,10 @@ AWS’s July 22, 2026 announcement added EFA network-interface and placement-gro
 - Also: an `--aws-feature-gates` flag, default pod topology spread awareness, accounting for instance type volume limits during provisioning, new disruption metrics such as `karpenter_pods_disrupted_total`, and a feature-gated pod deletion cost management controller.
 
 Under the support policy, regular minors are supported only until the next minor, so with v1.15.0 out, v1.14 continues only as an LTS line (through July 2027); the examples in this chapter therefore stay on 1.14 LTS (1.14.1). Kubernetes 1.37 requires Karpenter 1.15.x, so if you need Kubernetes 1.37 or move to 1.15, check the [v1.15 compatibility matrix](https://karpenter.sh/v1.15/upgrading/compatibility/) and upgrade guidance first. See the [v1.15.0 release notes](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0) for details.
+
+### October 2026 Update: v1.15.1 and LTS Patch Releases
+
+Between October 20 and 23, 2026, patch releases shipped across the supported lines: [v1.15.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.1) (first patch on the 1.15 line — fixes include relaxing preferences instead of deferring when all compatible capacity reservations are full, and node-repair enqueue when the label syncs after create), [v1.14.2](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.2) and [v1.14.3](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.3) on the 1.14 LTS line (classifying `SpotMaxPriceTooLow` as an ICE error and treating a reclaiming interruptible capacity reservation as unavailable capacity, among others), and [v1.9.3](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.9.3) on the 1.9 LTS line. All three lines also bump the Go toolchain to 1.26.10, the Go patch release that stops trusting the compromised eMudhra intermediate CA certificates (CVE-2026-111943).
 
 ## Node Classes
 

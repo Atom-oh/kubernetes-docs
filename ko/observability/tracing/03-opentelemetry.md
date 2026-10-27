@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **검토 기준**: Collector Contrib 0.160.0, Operator 0.158.0, 언어별 버전은 아래 참조
-> **마지막 업데이트**: 2026년 10월 19일
+> **마지막 업데이트**: 2026년 10월 26일
 
 ## 소개
 
@@ -1479,6 +1479,10 @@ Fan-out은 backend 사이의 원자적 전달이나 동일한 보존 결과를 �
 ### 2026년 10월 업데이트: OTel 스트림 기반 사고 감지 재구축 사례
 
 [9월 30일 CNCF 글](https://www.cncf.io/blog/2026/09/30/from-40-seconds-to-under-10-rebuilding-incident-detection-on-opentelemetry-apache-kafka-and-apache-flink-on-kubernetes/)에서 Atlassian은 자동 사고 생성 플랫폼을 OpenTelemetry·Apache Kafka·Kubernetes 위의 Apache Flink로 재구축해 이벤트-메트릭 지연을 40초 이상에서 10초 미만으로 줄인 18개월 운영 경험을 공유합니다. 글 자체가 밝히듯 recall이 60%→86%로 상승한 후 64%로 떨어진 달도 있고 precision은 목표에 미달합니다. 수치는 해당 조직의 측정이지 아키텍처 채택만으로 재현되는 결과가 아니며, 공유 큐의 noisy neighbor 분리와 비용 같은 트레이드오프 판단의 참고 사례로 읽습니다.
+
+### 2026년 10월 업데이트: Collector에서 AI 에이전트 텔레메트리 필터링
+
+[10월 22일 CNCF 글](https://www.cncf.io/blog/2026/10/22/filtering-and-reducing-ai-agent-telemetry-with-the-opentelemetry-collector/)은 AI 코딩 에이전트의 OpenTelemetry 네이티브 텔레메트리를 백엔드로 보내기 전에 Collector에서 가공하는 방법을 다룹니다. 글쓴이의 예시에서는 모든 콘텐츠 플래그를 켠 작은 Claude Code 작업 1회가 181개의 텔레메트리 레코드(JSON 289KB)를 만들었고, 대부분은 어떤 대시보드·알림·쿼리도 읽지 않는 프롬프트와 파일 내용 페이로드였습니다. 제안하는 접근은 먼저 답해야 할 질문(실행 횟수·비용·토큰 사용량·도구 호출 결과 같은 카운터와 짧은 속성)을 정한 뒤 나머지를 Collector 파이프라인에서 제거하는 것입니다. 수치는 한 명의 글쓴이가 하나의 에이전트·작업을 측정한 값이지 일반적인 용량 기준이 아니며, 어떤 필드를 제거해도 되는지는 각자의 쿼리와 보존 요구 사항에 따라 다릅니다.
 
 ## Best Practices
 

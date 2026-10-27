@@ -4,6 +4,122 @@
     "ko": {
       "entries": [
         {
+          "id": "5fad87439987f70e",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [
+            "https://istio.io/latest/news/security/istio-security-2026-008/"
+          ],
+          "title": "Istio 1.31.3/1.30.7/1.29.10 보안 패치 릴리스",
+          "summary": "Istio 1.31.3/1.30.7/1.29.10 보안 패치 릴리스(ISTIO-SECURITY-2026-008, CVE-2026-111943: 유출된 eMudhra 중간 CA 인증서 신뢰 제거, 1.29.10은 지원 종료 후 예외 릴리스) 반영",
+          "topic": "mesh",
+          "category": "security"
+        },
+        {
+          "id": "66171f28898fba58",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [
+            "https://github.com/cilium/cilium/releases/tag/v1.20.4"
+          ],
+          "title": "Cilium 1.20.4/1.19.10/1.18.16 긴급",
+          "summary": "Cilium 1.20.4/1.19.10/1.18.16 긴급(out-of-band) 보안 패치 릴리스(CVE-2026-111943, 유출된 eMudhra 중간 CA 인증서를 더 이상 신뢰하지 않는 Go 1.26.10 적용) 반영",
+          "topic": "networking",
+          "category": "security"
+        },
+        {
+          "id": "086962e62b1ac024",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.3.18"
+          ],
+          "title": "Argo CD v3.5.6/v3.4.12/v3.3.17 버그 수정 패치 릴리스와 유출된 eMudhra CA 인증서 신뢰를 제거하는 보안 수정이 포함된 v3.3.18",
+          "summary": "Argo CD v3.5.6/v3.4.12/v3.3.17 버그 수정 패치 릴리스와 유출된 eMudhra CA 인증서 신뢰를 제거하는 보안 수정이 포함된 v3.3.18 반영",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "6e746b50d0cccd90",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc4"
+          ],
+          "title": "Argo CD v3.6.0-rc4 release candidate 공개",
+          "summary": "Argo CD v3.6.0-rc4 release candidate 공개 반영",
+          "topic": "gitops",
+          "category": "preview"
+        },
+        {
+          "id": "d652b315e191d6ce",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [
+            "https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.1"
+          ],
+          "title": "Karpenter v1.15.1 패치와 v1.14.2/v1.14.3/v1.9.3 LTS 패치 릴리스",
+          "summary": "Karpenter v1.15.1 패치와 v1.14.2/v1.14.3/v1.9.3 LTS 패치 릴리스(버그 수정, 전 라인이 유출된 eMudhra 중간 CA 인증서를 신뢰하지 않는 Go 1.26.10으로 이동) 반영",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "f1688fa7467e24c2",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/22/filtering-and-reducing-ai-agent-telemetry-with-the-opentelemetry-collector/"
+          ],
+          "title": "OpenTelemetry Collector에서 AI 에이전트 텔레메트리를 필터링·축소하는 CNCF 블로그 가이드",
+          "summary": "OpenTelemetry Collector에서 AI 에이전트 텔레메트리를 필터링·축소하는 CNCF 블로그 가이드 반영",
+          "topic": "observability",
+          "category": "guide"
+        },
+        {
+          "id": "3a20c6b7bbdb4740",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/10/emr-eks-reduces-emr-charge-30-percent/"
+          ],
+          "title": "Amazon EMR on EKS의 EMR 요금",
+          "summary": "Amazon EMR on EKS의 EMR 요금(vCPU-시간당·GB-시간당) 30% 인하, 기본 EKS 요금은 변동 없음",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "43f3bcaaeee97485",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/19/how-ai-workloads-are-reshaping-kubernetes-autoscaling/"
+          ],
+          "title": "AI 워크로드가 Kubernetes 오토스케일링을 바꾸는 방식, CNCF 블로그",
+          "summary": "AI 워크로드가 Kubernetes 오토스케일링을 바꾸는 방식, CNCF 블로그",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
           "id": "03e87daf9e4169b3",
           "period": "2026-W43",
           "week": "2026-W43",
@@ -1359,10 +1475,126 @@
           "category": "breaking"
         }
       ],
-      "updated": "2026-10-19"
+      "updated": "2026-10-26"
     },
     "en": {
       "entries": [
+        {
+          "id": "5fad87439987f70e",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [
+            "https://istio.io/latest/news/security/istio-security-2026-008/"
+          ],
+          "title": "Istio 1.31.3/1.30.7/1.29.10 security patch releases",
+          "summary": "applied the Istio 1.31.3/1.30.7/1.29.10 security patch releases (ISTIO-SECURITY-2026-008, CVE-2026-111943: distrust of the compromised eMudhra intermediate CA certificates; 1.29.10 is an exceptional post-EOL release)",
+          "topic": "mesh",
+          "category": "security"
+        },
+        {
+          "id": "66171f28898fba58",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [
+            "https://github.com/cilium/cilium/releases/tag/v1.20.4"
+          ],
+          "title": "Cilium 1.20.4/1.19.10/1.18.16 out-of-band security patch releases",
+          "summary": "applied the Cilium 1.20.4/1.19.10/1.18.16 out-of-band security patch releases (CVE-2026-111943; Go 1.26.10 no longer trusts the compromised eMudhra intermediate CA certificates)",
+          "topic": "networking",
+          "category": "security"
+        },
+        {
+          "id": "086962e62b1ac024",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.3.18"
+          ],
+          "title": "Argo CD v3.5.6/v3.4.12/v3.3.17 bug-fix patch releases and v3.3.18, which carries a security fix removing trust in the compromised eMudhra CA certificates",
+          "summary": "applied the Argo CD v3.5.6/v3.4.12/v3.3.17 bug-fix patch releases and v3.3.18, which carries a security fix removing trust in the compromised eMudhra CA certificates",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "6e746b50d0cccd90",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc4"
+          ],
+          "title": "Argo CD v3.6.0-rc4 release candidate",
+          "summary": "applied the Argo CD v3.6.0-rc4 release candidate",
+          "topic": "gitops",
+          "category": "preview"
+        },
+        {
+          "id": "d652b315e191d6ce",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [
+            "https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.1"
+          ],
+          "title": "Karpenter v1.15.1 patch and the v1.14.2/v1.14.3/v1.9.3 LTS patch releases",
+          "summary": "applied the Karpenter v1.15.1 patch and the v1.14.2/v1.14.3/v1.9.3 LTS patch releases (bug fixes; all lines move to Go 1.26.10, which distrusts the compromised eMudhra intermediate CA certificates)",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "f1688fa7467e24c2",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/22/filtering-and-reducing-ai-agent-telemetry-with-the-opentelemetry-collector/"
+          ],
+          "title": "CNCF blog guide on filtering and reducing AI agent telemetry in the OpenTelemetry Collector",
+          "summary": "applied the CNCF blog guide on filtering and reducing AI agent telemetry in the OpenTelemetry Collector",
+          "topic": "observability",
+          "category": "guide"
+        },
+        {
+          "id": "3a20c6b7bbdb4740",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/10/emr-eks-reduces-emr-charge-30-percent/"
+          ],
+          "title": "Amazon EMR on EKS reduces the EMR charge",
+          "summary": "Amazon EMR on EKS reduces the EMR charge (per-vCPU-hour and per-GB-hour) by 30 percent; underlying EKS charges unchanged",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "43f3bcaaeee97485",
+          "period": "2026-W44",
+          "week": "2026-W44",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/19/how-ai-workloads-are-reshaping-kubernetes-autoscaling/"
+          ],
+          "title": "How AI workloads are reshaping Kubernetes autoscaling, CNCF blog",
+          "summary": "How AI workloads are reshaping Kubernetes autoscaling, CNCF blog",
+          "topic": "ai",
+          "category": "guide"
+        },
         {
           "id": "03e87daf9e4169b3",
           "period": "2026-W43",
@@ -2719,7 +2951,7 @@
           "category": "breaking"
         }
       ],
-      "updated": "2026-10-19"
+      "updated": "2026-10-26"
     }
   }
 }

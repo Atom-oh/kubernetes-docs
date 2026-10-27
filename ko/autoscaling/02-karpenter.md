@@ -1,7 +1,7 @@
 # Karpenter
 
 > **지원 버전**: Karpenter 1.14 LTS(예제: 1.14.1); Kubernetes/EKS는 호환성 표와 공급자 지원 범위로 선택하세요.
-> **마지막 업데이트**: 2026년 10월 16일
+> **마지막 업데이트**: 2026년 10월 26일
 
 ## 목차
 - [소개](#소개)
@@ -362,6 +362,10 @@ AWS는 2026년 7월 22일 발표에서 Karpenter/EKS Auto Mode의 EFA 인터페�
 - 기타: `--aws-feature-gates` 플래그, 기본 파드 토폴로지 분산 인식, 프로비저닝 시 인스턴스 타입 볼륨 한도 반영, `karpenter_pods_disrupted_total` 등 중단 관련 메트릭 추가, 기능 게이트 기반 파드 삭제 비용(pod deletion cost) 관리 컨트롤러.
 
 지원 정책상 일반 마이너는 다음 마이너까지만 지원되므로 v1.15.0 공개로 v1.14는 LTS 라인(2027년 7월까지)으로서만 유지되며, 이 장의 예제는 1.14 LTS(1.14.1)를 유지합니다. Kubernetes 1.37에는 Karpenter 1.15.x가 필요하므로 Kubernetes 1.37이 필요하거나 1.15로 올린다면 [v1.15 호환성](https://karpenter.sh/v1.15/upgrading/compatibility/)과 업그레이드 지침을 먼저 확인하세요. 자세한 내용은 [v1.15.0 릴리스 노트](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0)를 참고하세요.
+
+### 2026년 10월 업데이트: v1.15.1 및 LTS 패치 릴리스
+
+2026년 10월 20일~23일에 지원 중인 라인 전반의 패치 릴리스가 공개되었습니다. 1.15 라인 첫 패치인 [v1.15.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.1)(호환 가능한 capacity reservation이 모두 소진됐을 때 보류 대신 선호도를 완화하는 수정, 생성 후 레이블이 동기화된 경우의 node-repair enqueue 수정 등), 1.14 LTS 라인의 [v1.14.2](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.2)와 [v1.14.3](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.3)(`SpotMaxPriceTooLow`를 ICE 오류로 분류, 회수(reclaim) 중인 interruptible capacity reservation을 가용하지 않은 용량으로 처리 등), 1.9 LTS 라인의 [v1.9.3](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.9.3)입니다. 세 라인 모두 유출된 eMudhra 중간 CA 인증서를 더 이상 신뢰하지 않는 Go 패치 릴리스인 Go 1.26.10으로 툴체인을 올렸습니다(CVE-2026-111943).
 
 ## 노드 클래스
 

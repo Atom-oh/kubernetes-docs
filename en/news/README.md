@@ -1,5 +1,5 @@
 # News
-> **Last Updated**: October 19, 2026
+> **Last Updated**: October 26, 2026
 
 This page records documentation changes prompted by Kubernetes, Amazon EKS and CNCF news. GitHub Actions prepares updates each Monday at 09:00 KST and opens a PR after its quality gate passes. Changes reach the site after review, merge and deployment.
 
@@ -12,6 +12,14 @@ Week labels identify log-entry weeks and may differ from source publication date
 
 ## Update Log
 
+- 2026-W44: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied the Istio 1.31.3/1.30.7/1.29.10 security patch releases (ISTIO-SECURITY-2026-008, CVE-2026-111943: distrust of the compromised eMudhra intermediate CA certificates; 1.29.10 is an exceptional post-EOL release) ([source](https://istio.io/latest/news/security/istio-security-2026-008/))
+- 2026-W44: [networking/cilium/README.md](../networking/cilium/README.md) — applied the Cilium 1.20.4/1.19.10/1.18.16 out-of-band security patch releases (CVE-2026-111943; Go 1.26.10 no longer trusts the compromised eMudhra intermediate CA certificates) ([source](https://github.com/cilium/cilium/releases/tag/v1.20.4))
+- 2026-W44: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the Argo CD v3.5.6/v3.4.12/v3.3.17 bug-fix patch releases and v3.3.18, which carries a security fix removing trust in the compromised eMudhra CA certificates ([source](https://github.com/argoproj/argo-cd/releases/tag/v3.3.18))
+- 2026-W44: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the Argo CD v3.6.0-rc4 release candidate ([source](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc4))
+- 2026-W44: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — applied the Karpenter v1.15.1 patch and the v1.14.2/v1.14.3/v1.9.3 LTS patch releases (bug fixes; all lines move to Go 1.26.10, which distrusts the compromised eMudhra intermediate CA certificates) ([source](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.1))
+- 2026-W44: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — applied the CNCF blog guide on filtering and reducing AI agent telemetry in the OpenTelemetry Collector ([source](https://www.cncf.io/blog/2026/10/22/filtering-and-reducing-ai-agent-telemetry-with-the-opentelemetry-collector/))
+- 2026-W44: no matching doc — Amazon EMR on EKS reduces the EMR charge (per-vCPU-hour and per-GB-hour) by 30 percent; underlying EKS charges unchanged ([source](https://aws.amazon.com/about-aws/whats-new/2026/10/emr-eks-reduces-emr-charge-30-percent/))
+- 2026-W44: no matching doc — How AI workloads are reshaping Kubernetes autoscaling, CNCF blog ([source](https://www.cncf.io/blog/2026/10/19/how-ai-workloads-are-reshaping-kubernetes-autoscaling/))
 - 2026-W43: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.2/1.30.6/1.29.9 patch releases published (including the ISTIO-SECURITY-2026-007 security patch; already reflected in the doc by its earlier review) ([source](https://istio.io/news/releases/1.31.x/announcing-1.31.2/))
 - 2026-W43: [networking/cilium/README.md](../networking/cilium/README.md) — applied the Cilium 1.20.3/1.19.9/1.18.15 patch releases (bug fixes including conntrack GC and handling of CNPs with `nodeSelector`) ([source](https://github.com/cilium/cilium/releases/tag/v1.20.3))
 - 2026-W43: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the Argo CD v3.5.5/v3.4.11/v3.3.16 bug-fix patch releases ([source](https://github.com/argoproj/argo-cd/releases/tag/v3.5.5))
