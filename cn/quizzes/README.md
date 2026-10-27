@@ -1,12 +1,12 @@
 # 云原生运维测验
 
-阅读指南后，请使用这些测验检查对概念和执行要求的掌握情况。不同主题的测验形式各异，包括选择题、问答题、练习和进阶问题。展开每个问题即可查看答案。
+阅读指南后，请使用这些测验检查概念和执行要求。题型因主题而异，包括选择题、问答题、练习和进阶问题。展开每道题即可查看答案。
 
-对于练习，请先检查指南中的版本、先决条件和验证范围，再运行命令。
+对于练习，在运行命令前，请先确认指南中的版本、前置条件和验证范围。
 
 ## 完整测验索引
 
-### 简介
+### 入门
 
 - [使用 LLM 阅读：llms.txt 测验](./llm-guide-quiz.md)
 - [指南路线图测验](./roadmap-quiz.md)
@@ -20,16 +20,16 @@
 - [EKS 上的 AI 基础设施测验](./ai-ml/06-ai-infrastructure-quiz.md)
 - [AI/ML 最佳实践测验](./ai-ml/07-ai-ml-best-practices-quiz.md)
 - [EKS 上的 Agentic AI 平台测验](./ai-ml/08-agentic-ai-platform-quiz.md)
-- [LLM Gateway 测验](./ai-ml/08-llm-gateway-quiz.md)
-- [EKS 上的 Kubeflow 架构与安装测验](./ai-ml/kubeflow/01-architecture-installation-quiz.md)
+- [LLM 网关测验](./ai-ml/08-llm-gateway-quiz.md)
+- [EKS 上 Kubeflow 架构与安装测验](./ai-ml/kubeflow/01-architecture-installation-quiz.md)
 - [Kubeflow Pipelines 测验](./ai-ml/kubeflow/02-pipelines-quiz.md)
 - [Kubeflow Notebooks 测验](./ai-ml/kubeflow/03-notebooks-quiz.md)
-- [第 4 部分：Katib（超参数调优和 AutoML）测验](./ai-ml/kubeflow/04-katib-quiz.md)
+- [第 4 部分：Katib（超参数调优与 AutoML）测验](./ai-ml/kubeflow/04-katib-quiz.md)
 - [Kubeflow Trainer 与分布式训练测验](./ai-ml/kubeflow/05-training-operator-quiz.md)
 - [KServe 测验](./ai-ml/kubeflow/06-kserve-quiz.md)
-- [MLflow 跟踪测验](./ai-ml/mlflow/01-tracking-quiz.md)
-- [MLflow 模型注册表测验](./ai-ml/mlflow/02-model-registry-quiz.md)
-- [MLflow EKS 部署测验](./ai-ml/mlflow/03-eks-deployment-quiz.md)
+- [MLflow Tracking 测验](./ai-ml/mlflow/01-tracking-quiz.md)
+- [MLflow Model Registry 测验](./ai-ml/mlflow/02-model-registry-quiz.md)
+- [MLflow 在 EKS 上的部署测验](./ai-ml/mlflow/03-eks-deployment-quiz.md)
 - [Ray 架构测验](./ai-ml/ray/01-architecture-quiz.md)
 - [KubeRay Operator 测验](./ai-ml/ray/02-kuberay-operator-quiz.md)
 - [Ray Train / Tune 测验](./ai-ml/ray/03-ray-train-tune-quiz.md)
@@ -39,7 +39,7 @@
 - [SageMaker AI 与 MLflow 执行测验](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
 - [SageMaker Qwen 事实验证结果测验](./ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 
-### 自动扩缩
+### 自动扩缩容
 
 - [Knative 测验](./autoscaling/03-knative-quiz.md)
 - [KEDA 测验](./autoscaling/05-keda-quiz.md)
@@ -50,12 +50,12 @@
 - [Linux 基础知识测验](./basics/01-linux-basics-quiz.md)
 - [Linux 运维技能测验](./basics/02-linux-advanced-quiz.md)
 - [容器技术测验](./basics/03-container-technology-quiz.md)
-- [Kubernetes 简介测验](./basics/04-kubernetes-introduction-quiz.md)
+- [Kubernetes 入门测验](./basics/04-kubernetes-introduction-quiz.md)
 - [eBPF 基础知识测验](./basics/05-ebpf-fundamentals-quiz.md)
-- [网络基础知识第 1 部分测验：分层模型、链路和路由](./basics/06-network-fundamentals-part1-quiz.md)
-- [网络基础知识第 2 部分测验：传输和 TLS](./basics/06-network-fundamentals-part2-quiz.md)
-- [网络基础知识第 3 部分测验：应用层协议](./basics/06-network-fundamentals-part3-quiz.md)
-- [网络基础知识第 4 部分测验：旅程与云](./basics/06-network-fundamentals-part4-quiz.md)
+- [网络基础知识第 1 部分测验：分层模型、链路与路由](./basics/06-network-fundamentals-part1-quiz.md)
+- [网络基础知识第 2 部分测验：传输与 TLS](./basics/06-network-fundamentals-part2-quiz.md)
+- [网络基础知识第 3 部分测验：应用协议](./basics/06-network-fundamentals-part3-quiz.md)
+- [网络基础知识第 4 部分测验：网络传输过程与云](./basics/06-network-fundamentals-part4-quiz.md)
 
 ### 容器镜像仓库
 
@@ -67,20 +67,20 @@
 ### Kubernetes 核心
 
 - [集群架构测验](./core/01-cluster-architecture-quiz.md)
-- [Pods 和工作负载测验](./core/02-pods-and-workloads-quiz.md)
-- [Services 和网络测验](./core/03-services-networking-quiz.md)
+- [Pods 与工作负载测验](./core/02-pods-and-workloads-quiz.md)
+- [Services 与网络测验](./core/03-services-networking-quiz.md)
 - [存储测验](./core/04-storage-quiz.md)
 - [配置测验](./core/05-configuration-secrets-quiz.md)
 - [安全测验](./core/06-security-quiz.md)
 - [策略测验](./core/07-policies-quiz.md)
-- [调度、抢占和驱逐测验](./core/08-scheduling-preemption-eviction-quiz.md)
+- [调度、抢占与驱逐测验](./core/08-scheduling-preemption-eviction-quiz.md)
 - [集群管理测验](./core/09-cluster-administration-quiz.md)
 - [Kubernetes 中的 Windows 测验](./core/10-windows-in-kubernetes-quiz.md)
 - [扩展 Kubernetes 测验](./core/11-extending-kubernetes-quiz.md)
 
 ### EKS 上的数据
 
-- [现代数据管道剖析测验](./data-on-eks/01-data-pipeline-anatomy-quiz.md)
+- [现代数据流水线剖析测验](./data-on-eks/01-data-pipeline-anatomy-quiz.md)
 - [Airflow 架构测验](./data-on-eks/airflow/01-architecture-quiz.md)
 - [Helm 部署与执行器选择测验](./data-on-eks/airflow/02-helm-deployment-quiz.md)
 - [DAG 模式与 KubernetesPodOperator 测验](./data-on-eks/airflow/03-dag-patterns-quiz.md)
@@ -99,7 +99,7 @@
 - [第 7 部分：监控测验](./data-on-eks/kafka/07-monitoring-quiz.md)
 - [第 8 部分：最佳实践测验](./data-on-eks/kafka/08-best-practices-quiz.md)
 - [第 9 部分：Kafka 基准测试评审测验](./data-on-eks/kafka/09-kafka-benchmark-quiz.md)
-- [Unified Studio 域和项目治理测验](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
+- [Unified Studio 业务域与项目治理测验](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
 - [Kubernetes 上的 Spark 基础知识测验](./data-on-eks/spark/01-spark-fundamentals-quiz.md)
 - [Spark Operator 测验](./data-on-eks/spark/02-spark-operator-quiz.md)
 - [EKS 上的 Amazon EMR 测验](./data-on-eks/spark/03-emr-on-eks-quiz.md)
@@ -108,11 +108,11 @@
 
 ### 数据库
 
-- [EKS 上的 ClickHouse 实测基准测试测验](./database/01-clickhouse-on-eks-quiz.md)
+- [EKS 上 ClickHouse 的实测基准测试测验](./database/01-clickhouse-on-eks-quiz.md)
 
 ### Amazon EKS
 
-- [EKS 简介测验](./eks/01-eks-introduction-quiz.md)
+- [EKS 入门测验](./eks/01-eks-introduction-quiz.md)
 - [EKS 集群创建测验 - 第 1 部分](./eks/02-eks-cluster-creation-part1-quiz.md)
 - [EKS 集群创建测验 - 第 2 部分](./eks/02-eks-cluster-creation-part2-quiz.md)
 - [EKS 集群创建测验 - 第 3 部分](./eks/02-eks-cluster-creation-part3-quiz.md)
@@ -123,7 +123,7 @@
 - [EKS 网络测验 - 第 3 部分](./eks/03-eks-networking-part3-quiz.md)
 - [EKS 存储测验 - 第 1 部分](./eks/04-eks-storage-part1-quiz.md)
 - [EKS 存储测验 - 第 2 部分](./eks/04-eks-storage-part2-quiz.md)
-- [EKS 存储第 3 部分测验](./eks/04-eks-storage-part3-quiz.md)
+- [EKS 存储测验第 3 部分](./eks/04-eks-storage-part3-quiz.md)
 - [Amazon EKS 安全测验](./eks/05-eks-security-quiz.md)
 - [Amazon EKS 监控与日志记录测验](./eks/06-eks-monitoring-logging-quiz.md)
 - [Amazon EKS 成本优化测验](./eks/07-eks-cost-optimization-quiz.md)
@@ -132,12 +132,13 @@
 - [Amazon EKS 高可用性与弹性测验](./eks/10-eks-resiliency-quiz.md)
 - [Amazon EKS 高级调试测验](./eks/11-eks-advanced-debugging-quiz.md)
 - [Kubernetes 版本功能与路线图测验](./eks/12-kubernetes-version-roadmap-quiz.md)
+- [EKS 功能测验](./eks/13-eks-capabilities-quiz.md)
 
 ### EKS Auto Mode
 
 - [EKS Auto Mode 入门测验](./eks-auto-mode/01-getting-started-quiz.md)
 - [EKS Auto Mode NodePool 配置测验](./eks-auto-mode/02-nodepool-configuration-quiz.md)
-- [EKS Auto Mode 扩缩行为测验](./eks-auto-mode/03-scaling-behavior-quiz.md)
+- [EKS Auto Mode 扩缩容行为测验](./eks-auto-mode/03-scaling-behavior-quiz.md)
 - [EKS Auto Mode Spot 策略测验](./eks-auto-mode/04-spot-strategies-quiz.md)
 - [EKS Auto Mode 运维测验](./eks-auto-mode/05-operations-quiz.md)
 - [EKS Auto Mode 成本管理测验](./eks-auto-mode/06-cost-management-quiz.md)
@@ -147,10 +148,10 @@
 
 ### EKS 混合节点
 
-- [EKS 混合节点先决条件测验](./eks-hybrid-nodes/01-prerequisites-quiz.md)
+- [EKS 混合节点前置条件测验](./eks-hybrid-nodes/01-prerequisites-quiz.md)
 - [EKS 混合节点网络配置测验](./eks-hybrid-nodes/02-network-configuration-quiz.md)
 - [EKS 混合节点气隙环境设置测验](./eks-hybrid-nodes/03-airgap-setup-quiz.md)
-- [EKS 混合节点节点引导测验](./eks-hybrid-nodes/04-node-bootstrap-quiz.md)
+- [EKS 混合节点引导测验](./eks-hybrid-nodes/04-node-bootstrap-quiz.md)
 - [EKS 混合节点 GPU 集成测验](./eks-hybrid-nodes/05-gpu-integration-quiz.md)
 - [EKS 混合节点工作负载放置测验](./eks-hybrid-nodes/06-workload-placement-quiz.md)
 - [节点生命周期管理测验](./eks-hybrid-nodes/07-node-lifecycle-quiz.md)
@@ -178,7 +179,7 @@
 
 ### 云治理
 
-- [企业云治理概览测验](./governance/00-governance-overview-quiz.md)
+- [企业云治理概述测验](./governance/00-governance-overview-quiz.md)
 - [Landing Zone、OU 与组织控制测验](./governance/01-landing-zone-and-ou-quiz.md)
 - [账户结构与 IAM 边界测验](./governance/02-account-and-iam-quiz.md)
 - [多账户、多集群 EKS 架构测验](./governance/03-eks-multi-account-multi-cluster-quiz.md)
@@ -188,27 +189,27 @@
 
 ### 网络
 
-- [Kubernetes 网络概览测验](./networking/00-networking-overview-quiz.md)
+- [Kubernetes 网络概述测验](./networking/00-networking-overview-quiz.md)
 - [Amazon VPC CNI 测验](./networking/01-vpc-cni-quiz.md)
 - [VPC Lattice 测验](./networking/02-vpc-lattice-quiz.md)
 - [AWS Load Balancer Controller 测验](./networking/03-aws-lb-controller-quiz.md)
 - [Gateway API 测验](./networking/04-gateway-api-quiz.md)
 - [跨组织 VPC 连接测验](./networking/05-cross-org-vpc-connectivity-quiz.md)
 - [Pod 网络基准测试测验](./networking/06-pod-network-benchmark-quiz.md)
-- [Calico 简介测验](./networking/calico/01-introduction-quiz.md)
+- [Calico 入门测验](./networking/calico/01-introduction-quiz.md)
 - [Calico 架构测验](./networking/calico/02-architecture-quiz.md)
 - [Calico 网络模式测验](./networking/calico/03-networking-modes-quiz.md)
-- [BGP 深入解析测验](./networking/calico/04-bgp-deep-dive-quiz.md)
+- [深入了解 BGP 测验](./networking/calico/04-bgp-deep-dive-quiz.md)
 - [网络策略测验](./networking/calico/05-network-policy-quiz.md)
 - [eBPF 数据平面测验](./networking/calico/06-ebpf-dataplane-quiz.md)
-- [高级主题测验](./networking/calico/07-advanced-topics-quiz.md)
+- [进阶主题测验](./networking/calico/07-advanced-topics-quiz.md)
 - [EKS 集成测验](./networking/calico/08-eks-integration-quiz.md)
 - [运维测验](./networking/calico/09-operations-quiz.md)
 - [Calico 术语表测验](./networking/calico/glossary-quiz.md)
 
 #### Cilium
 
-- [Cilium 简介与基本概念测验](./networking/cilium/01-introduction-quiz.md)
+- [Cilium 入门与基本概念测验](./networking/cilium/01-introduction-quiz.md)
 - [Cilium eBPF 测验](./networking/cilium/02-ebpf-quiz.md)
 - [Cilium 网络验证练习](./networking/cilium/03-networking-quiz.md)
 - [Cilium IPAM 与网络策略测验](./networking/cilium/04-ipam-policy-quiz.md)
@@ -224,20 +225,20 @@
 - [Prometheus Alertmanager 测验](./observability/alerting/01-alertmanager-quiz.md)
 - [CloudWatch Alarms 测验](./observability/alerting/02-cloudwatch-alarms-quiz.md)
 - [Grafana OnCall 测验](./observability/alerting/03-grafana-oncall-quiz.md)
-- [Grafana Dashboard 测验](./observability/grafana/grafana-quiz.md)
+- [Grafana 仪表板测验](./observability/grafana/grafana-quiz.md)
 - [可观测性实验第 1 部分：基础设施设置测验](./observability/labs/01-infrastructure-setup-quiz.md)
 - [可观测性实验第 2 部分：可观测性技术栈测验](./observability/labs/02-observability-stack-quiz.md)
-- [可观测性实验第 3 部分：MSA 部署与金丝雀测验](./observability/labs/03-msa-deployment-quiz.md)
-- [可观测性实验第 4 部分：负载测试与自动扩缩测验](./observability/labs/04-load-testing-scaling-quiz.md)
+- [可观测性实验第 3 部分：MSA 部署与金丝雀发布测验](./observability/labs/03-msa-deployment-quiz.md)
+- [可观测性实验第 4 部分：负载测试与自动扩缩容测验](./observability/labs/04-load-testing-scaling-quiz.md)
 - [可观测性实验第 5 部分：告警与 AIOps 测验](./observability/labs/05-alerting-aiops-quiz.md)
-- [可观测性实验第 6 部分：分布式跟踪分析测验](./observability/labs/06-distributed-tracing-quiz.md)
+- [可观测性实验第 6 部分：分布式追踪分析测验](./observability/labs/06-distributed-tracing-quiz.md)
 - [Grafana Loki 测验](./observability/logging/01-loki-quiz.md)
 - [Amazon OpenSearch Service 测验](./observability/logging/02-opensearch-quiz.md)
 - [CloudWatch Logs 测验](./observability/logging/03-cloudwatch-logs-quiz.md)
 - [用于日志分析的 ClickHouse 测验](./observability/logging/04-clickhouse-quiz.md)
 - [日志收集器比较测验](./observability/logging/05-collectors-quiz.md)
-- [日志记录概览测验](./observability/logging/README-quiz.md)
-- [指标概览测验](./observability/metrics/00-metrics-overview-quiz.md)
+- [日志记录概述测验](./observability/logging/README-quiz.md)
+- [指标概述测验](./observability/metrics/00-metrics-overview-quiz.md)
 - [Prometheus 测验](./observability/metrics/01-prometheus-quiz.md)
 - [VictoriaMetrics 测验](./observability/metrics/02-victoriametrics-quiz.md)
 - [Grafana Mimir 测验](./observability/metrics/03-mimir-quiz.md)
@@ -252,17 +253,17 @@
 
 - [基础设施设置测验](./ops/01-infrastructure-setup-quiz.md)
 - [基础设施进阶测验](./ops/02-infrastructure-advanced-quiz.md)
-- [CI Pipelines 测验](./ops/03-ci-pipelines-quiz.md)
+- [CI 流水线测验](./ops/03-ci-pipelines-quiz.md)
 - [GitOps 多集群测验](./ops/04-gitops-multi-cluster-quiz.md)
 - [GitOps 自动化测验](./ops/05-gitops-automation-quiz.md)
-- [扩缩策略测验](./ops/06-scaling-strategies-quiz.md)
+- [扩缩容策略测验](./ops/06-scaling-strategies-quiz.md)
 - [可观测性告警测验](./ops/07-observability-alerts-quiz.md)
 - [可观测性分析测验](./ops/08-observability-analysis-quiz.md)
 - [可观测性技术栈测验](./ops/09-observability-stack-quiz.md)
 - [资源优化测验](./ops/10-resource-optimization-quiz.md)
 - [EKS 升级运维测验](./ops/11-upgrade-operations-quiz.md)
 - [事件容量规划测验](./ops/12-event-capacity-planning-quiz.md)
-- [FinOps 成本可见性平台测验](./ops/13-finops-cost-platform-quiz.md)
+- [FinOps 成本可视化平台测验](./ops/13-finops-cost-platform-quiz.md)
 - [Tekton Pipelines 测验](./ops/14-tekton-pipelines-quiz.md)
 - [可用区集群运维测验](./ops/15-zonal-operations-guide-quiz.md)
 - [故障排除手册测验](./ops/16-troubleshooting-playbook-quiz.md)
@@ -270,9 +271,9 @@
 
 ### 平台工程
 
-- [平台工程概览测验](./platform-engineering/00-platform-engineering-overview-quiz.md)
+- [平台工程概述测验](./platform-engineering/00-platform-engineering-overview-quiz.md)
 - [Helm 包管理器测验](./platform-engineering/01-helm-quiz.md)
-- [Kubernetes 的 AWS Controllers（ACK）测验](./platform-engineering/02-ack-quiz.md)
+- [AWS Controllers for Kubernetes (ACK) 测验](./platform-engineering/02-ack-quiz.md)
 - [KRO Helm 迁移测验](./platform-engineering/03-kro-quiz.md)
 - [Kubernetes 扩展机制测验](./platform-engineering/04-kubernetes-extensions-quiz.md)
 - [Backstage IDP 测验](./platform-engineering/06-backstage-idp-quiz.md)
@@ -300,15 +301,15 @@
 - [Kubescape 测验](./security/11-kubescape-quiz.md)
 - [SPIFFE/SPIRE 测验](./security/12-spiffe-spire-quiz.md)
 
-### Service Mesh
+### 服务网格
 
 - [Istio 测验](./service-mesh/02-istio-quiz.md)
-- [Cilium Service Mesh 架构测验](./service-mesh/cilium-service-mesh/architecture.md)
-- [Cilium Service Mesh Ingress 与 Gateway 测验](./service-mesh/cilium-service-mesh/ingress-gateway.md)
-- [Cilium Service Mesh 可观测性测验](./service-mesh/cilium-service-mesh/observability.md)
-- [Cilium Service Mesh 安全测验](./service-mesh/cilium-service-mesh/security.md)
-- [Cilium Service Mesh 流量管理测验](./service-mesh/cilium-service-mesh/traffic-management.md)
-- [Istio 高级主题测验](./service-mesh/istio/advanced.md)
+- [Cilium 服务网格架构测验](./service-mesh/cilium-service-mesh/architecture.md)
+- [Cilium 服务网格 Ingress 与 Gateway 测验](./service-mesh/cilium-service-mesh/ingress-gateway.md)
+- [Cilium 服务网格可观测性测验](./service-mesh/cilium-service-mesh/observability.md)
+- [Cilium 服务网格安全测验](./service-mesh/cilium-service-mesh/security.md)
+- [Cilium 服务网格流量管理测验](./service-mesh/cilium-service-mesh/traffic-management.md)
+- [Istio 进阶主题测验](./service-mesh/istio/advanced.md)
 - [基础测验](./service-mesh/istio/basic.md)
 - [Istio 比较测验](./service-mesh/istio/comparison.md)
 - [可观测性测验](./service-mesh/istio/observability.md)
@@ -322,12 +323,12 @@
 - [Linkerd 安全测验](./service-mesh/linkerd/security.md)
 - [Linkerd 流量管理测验](./service-mesh/linkerd/traffic-management.md)
 
-- [App Mesh 与 VPC Lattice 架构测验](./service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
+- [App Mesh 与 VPC Lattice 架构比较测验](./service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
 - [延迟影响分析测验](./service-mesh/vpc-lattice/02-latency-quiz.md)
 - [IAM 身份验证流程测验](./service-mesh/vpc-lattice/03-auth-flow-quiz.md)
-- [基础：链路本地与 SNI 测验](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+- [基础知识：链路本地与 SNI 测验](./service-mesh/vpc-lattice/04-networking-basics-quiz.md)
 - [工作负载身份迁移测验](./service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
-- [约束与决策要点测验](./service-mesh/vpc-lattice/06-constraints-quiz.md)
+- [约束与决策点测验](./service-mesh/vpc-lattice/06-constraints-quiz.md)
 - [内核数据路径测验](./service-mesh/vpc-lattice/07-kernel-datapath-quiz.md)
 
 ### 存储

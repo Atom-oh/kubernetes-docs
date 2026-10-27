@@ -1,23 +1,23 @@
 # Configuración de red
 
-> **Versiones compatibles**: ejemplos de EKS 1.36; referencia de Cilium 1.18.3-0 mantenida por AWS; se requiere host/kernel compatible
+> **Versiones compatibles**: ejemplos de EKS 1.36; referencia de Cilium 1.18.3-0 mantenida por AWS; se requiere un host/kernel compatible
 > **Última actualización**: 18 de octubre de 2026
 
-Valide por separado el enrutamiento, DNS, TLS, las credenciales y el tráfico de aplicaciones. Estos ejemplos se comprobaron con esquemas y fixtures locales, incluido un proveedor de Terraform simulado; no se modificaron recursos de AWS, routers, firewalls ni clusters activos. Los diagramas son ilustraciones del repositorio basadas en conceptos de AWS, no validación publicada por AWS de esta configuración.
+Valide por separado el enrutamiento, DNS, TLS, las credenciales y el tráfico de las aplicaciones. Estos ejemplos se comprobaron con esquemas y datos de prueba locales, incluido un proveedor de Terraform simulado; no se modificaron recursos de AWS, enrutadores, firewalls ni clústeres activos. Los diagramas son ilustraciones del repositorio basadas en conceptos de AWS, no una validación de esta configuración publicada por AWS.
 
-![Prerequisitos híbridos y enrutamiento bidireccional.](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
+![Requisitos previos y enrutamiento bidireccional híbridos.](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
 
-**Documento complementario para el equipo de seguridad:** [Revisión de separación de red de Hybrid Nodes](11-network-separation-security.md) explica las nuevas conexiones del plano de control a las instalaciones locales, los tipos de endpoints, los límites de permisos y datos, y la evidencia de revisión. La conectividad privada por sí sola no establece el cumplimiento normativo.
+**Material complementario para el equipo de seguridad:** [Revisión de la separación de red de nodos híbridos](11-network-separation-security.md) explica las nuevas conexiones desde el plano de control hacia las instalaciones locales, los tipos de endpoints, los límites de permisos y datos, y las evidencias de revisión. La conectividad privada por sí sola no demuestra el cumplimiento.
 
-## Resumen de la arquitectura de red
+## Descripción general de la arquitectura de red
 
-El tráfico del plano de control→nodo híbrido y el tráfico privado de la API de Kubernetes usan la ruta de red de la VPC del cluster. En su lugar, el tráfico de kubelet a un endpoint de API público usa su ruta pública configurada; decir que «todo el tráfico siempre atraviesa las ENI de la VPC» era demasiado amplio. Los VIF públicos de Direct Connect, la conectividad privada y las rutas de internet público son opciones distintas.
+El tráfico del plano de control→nodo híbrido y el tráfico privado de la API de Kubernetes utilizan la ruta de red de la VPC del clúster. En cambio, el tráfico de kubelet hacia un endpoint de API público utiliza la ruta pública configurada; afirmar que «todo el tráfico siempre atraviesa las ENI de la VPC» era demasiado general. Las VIF públicas de Direct Connect, la conectividad privada y las rutas por Internet pública son opciones distintas.
 
-Las ENI/IP del plano de control de EKS pueden cambiar. Revise la propiedad real del cluster y los rangos de subred aprobados para el plano de control en lugar de tratar cada ENI `Amazon EKS*` en una VPC compartida como perteneciente a este cluster.
+Las ENI/IP del plano de control de EKS pueden cambiar. Revise la propiedad real del clúster y los rangos de subred aprobados para el plano de control, en lugar de considerar que todas las ENI `Amazon EKS*` de una VPC compartida pertenecen a este clúster.
 
-Vincule la cuenta y el contexto de Kubernetes antes de los diagnósticos de solo lectura:
+Vincule la cuenta y el contexto de Kubernetes antes de ejecutar diagnósticos de solo lectura:
 
 ```bash
 set -euo pipefail
@@ -48,57 +48,57 @@ printf 'Private diagnostics: %s\n' "$WORK_DIR"
 
 ## Requisitos de rangos CIDR
 
-Use redes remotas de nodos/Pod IPv4 **RFC1918 o CGNAT** sin solapamiento, separadas de los CIDR de VPC y Kubernetes Service. Se admiten hasta 15 CIDR de cada tipo remoto. El EKS actual admite la configuración de red remota en clusters existentes mediante su flujo de trabajo de API; no es solo para la creación.
+Utilice redes IPv4 remotas de nodos/Pod no superpuestas, **RFC1918 o CGNAT**, separadas de los CIDR de la VPC y de los Service de Kubernetes. Se admiten hasta 15 CIDR de cada tipo de red remota. La versión actual de EKS admite configurar redes remotas en clústeres existentes mediante su flujo de trabajo de API; no es una función exclusiva de la creación del clúster.
 
 | Comportamiento de red | Significado |
-|------------------|---------|
-| IP de Pod enrutable | Las rutas aprobadas permiten a clientes de cloud/plano de control iniciar conexiones a IP de Pod |
-| Egreso enmascarado | SNAT puede proporcionar una ruta de retorno para conexiones iniciadas por Pods; no permite automáticamente nuevas conexiones entrantes |
-| Red de Pod no enrutable | El tráfico directo cloud→Pod necesita otra ruta compatible; use webhooks/servicios de API alojados en cloud para el diseño convencional |
+|----------------------|-------------|
+| IP de Pod enrutables | Las rutas aprobadas permiten que los clientes de la nube/plano de control inicien conexiones con las IP de Pod |
+| Salida con enmascaramiento | SNAT puede proporcionar una ruta de retorno para las conexiones iniciadas por los Pod; no permite automáticamente nuevas conexiones entrantes |
+| Red de Pod no enrutable | El tráfico directo de la nube→Pod necesita otra ruta compatible; para el diseño convencional, utilice webhooks/servicios de API alojados en la nube |
 
-No enrutable no significa que un Pod no pueda iniciar ninguna llamada de API de AWS. Para la comunicación directa entre Pods híbridos/cloud y los webhooks alojados en entornos híbridos, proporcione las rutas reales de los Pod. Las alternativas de gateway/proxy tienen requisitos independientes.
+Que la red no sea enrutable no significa que un Pod no pueda iniciar ninguna llamada a la API de AWS. Para la comunicación directa entre Pod híbridos y de la nube, y para los webhooks alojados en entornos híbridos, proporcione las rutas reales de los Pod. Las alternativas con gateway/proxy tienen requisitos distintos.
 
-## Puertos de firewall obligatorios
+## Puertos de firewall necesarios
 
 | Flujo | Protocolo / puerto |
 |------|-----------------|
-| Node/Pod → API de Kubernetes | TCP443 al endpoint real del cluster |
+| Nodo/Pod → API de Kubernetes | TCP443 al endpoint real del clúster |
 | ENI del plano de control → kubelet | TCP10250 con autenticación/autorización de kubelet |
-| Plano de control → webhook o Pod de API agregada | Su puerto TCP configurado, no un rango genérico «8443+» |
-| Clientes DNS ↔ resolvers reales | UDP/TCP53 y tráfico de retorno con estado |
-| Cilium VXLAN entre nodos participantes | UDP8472 |
-| Cilium Geneve, solo si se selecciona y es compatible con el diseño | UDP6081 |
-| Comprobaciones de estado de Cilium | TCP4240 y la accesibilidad ICMP/endpoint de estado requerida |
-| Nodo BGP↔router | TCP179 para los peers activo/pasivo configurados |
-| Transporte de gateway VPN | UDP500/4500 y requisitos aplicables de transporte IPsec |
+| Plano de control → webhook o Pod de API agregada | Su puerto TCP configurado, no un rango genérico de «8443+» |
+| Clientes DNS ↔ resolutores reales | UDP/TCP53 y tráfico de retorno con estado |
+| VXLAN de Cilium entre nodos participantes | UDP8472 |
+| Geneve de Cilium, solo si se seleccionó y es compatible con el diseño | UDP6081 |
+| Comprobaciones de estado de Cilium | TCP4240 y la conectividad ICMP/endpoint de estado necesaria |
+| Nodo BGP↔enrutador | TCP179 para los peers activos/pasivos configurados |
+| Transporte del gateway VPN | UDP500/4500 y los requisitos de transporte IPsec aplicables |
 | Aplicaciones / servicios de credenciales y registro de AWS | Solo sus destinos y puertos reales |
 
-El administrador de red debe modificar las reglas del firewall sin eliminar las reglas existentes ni el seguimiento de conexiones. Permita solo las direcciones IP, los CIDR y los puertos necesarios para la comunicación. Evite reglas INPUT que permitan todo el rango `10.0.0.0/8` o reglas DNS/VXLAN sin restricciones de origen y destino. Antes de guardar los cambios, revise qué reglas debe persistir en lugar de guardar indiscriminadamente todo el conjunto de reglas.
+El administrador de red debe cambiar las reglas del firewall preservando las reglas existentes y el seguimiento de conexiones. Permita solo las direcciones IP, los CIDR y los puertos necesarios para la comunicación. Evite reglas INPUT que permitan todo el rango `10.0.0.0/8` o reglas de DNS/VXLAN sin restricciones de origen y destino. Antes de guardar los cambios de forma persistente, revise qué reglas conservar, en lugar de guardar indiscriminadamente todo el conjunto de reglas.
 
-Use TCP `10250` para la API de kubelet, con autenticación y autorización. No abra TCP `10255`, el antiguo puerto de solo lectura de kubelet que permite acceso sin autenticación.
+Use TCP `10250` para la API de kubelet, con autenticación y autorización. No abra TCP `10255`, el antiguo puerto de kubelet de solo lectura que permite el acceso sin autenticar.
 
 ## Acceso a endpoints de AWS
 
-El **endpoint PrivateLink de la API de administración de EKS no es el endpoint del servidor API de Kubernetes**.
+El **endpoint de PrivateLink de la API de administración de EKS no es el endpoint del servidor de la API de Kubernetes**.
 
 | Sufijo de servicio para `com.amazonaws.<region>.*` | Propósito / cuándo se necesita |
 |------------------------------------------------|-----------------------|
-| `eks` | Llamadas de administración de AWS EKS como DescribeCluster |
-| `eks-auth` | EKS Pod Identity, cuando se usa |
-| `ecr.api`, `ecr.dkr` | API/registro privado de ECR; las capas de imágenes también necesitan acceso a S3 |
-| `s3` | Acceso privado a S3; las instalaciones locales no pueden usar directamente un endpoint de gateway de VPC |
+| `eks` | Llamadas de administración de AWS EKS, como DescribeCluster |
+| `eks-auth` | EKS Pod Identity, cuando se utiliza |
+| `ecr.api`, `ecr.dkr` | API/registro privado de ECR; las capas de imagen también necesitan acceso a S3 |
+| `s3` | Acceso privado a S3; los sistemas locales no pueden usar directamente un endpoint de gateway de VPC |
 | `ssm`, servicios de mensajería SSM aplicables | Funciones de credenciales/administración de SSM |
-| `rolesanywhere` | Credenciales de IAM Roles Anywhere cuando se usa ese proveedor |
-| `sts` | Llamadas reales de cliente STS/IRSA/AssumeRole; firmar localmente un token de EKS no es en sí una solicitud de red STS de cliente |
-| `logs`, `monitoring`, otros servicios seleccionados | Solo si los agentes/workloads elegidos los llaman |
-| `oidc-eks` | Servicio PrivateLink actual de descubrimiento OIDC/JWKS de EKS, donde esté disponible |
-| `eks-proxy` | Vistas de recursos de la consola de AWS; no una API/SDK de aplicación pública |
+| `rolesanywhere` | Credenciales de IAM Roles Anywhere cuando se utiliza ese proveedor |
+| `sts` | Llamadas reales del cliente a STS/IRSA/AssumeRole; firmar localmente un token de EKS no constituye por sí mismo una solicitud de red del cliente a STS |
+| `logs`, `monitoring`, otros servicios seleccionados | Solo si los agentes/cargas de trabajo elegidos los llaman |
+| `oidc-eks` | Servicio PrivateLink actual de descubrimiento/JWKS de OIDC de EKS, cuando está disponible |
+| `eks-proxy` | Vistas de recursos de la consola de AWS; no es una API/SDK público para aplicaciones |
 
-Confirme la disponibilidad del servicio en la Region de destino. Los endpoints privados de ECR no hacen privados a **ECR público**, CloudFront ni repositorios de paquetes arbitrarios. Por ejemplo, el chart OCI de AWS Cilium en ECR público necesita una ruta de distribución aprobada que sea accesible o esté replicada.
+Confirme la disponibilidad de los servicios en la región de destino. Los endpoints privados de ECR no hacen que **ECR público**, CloudFront ni repositorios de paquetes arbitrarios sean privados. Por ejemplo, el Helm Chart de Cilium de AWS en ECR público necesita una ruta de distribución aprobada, accesible o espejada.
 
-El descubrimiento OIDC/JWKS es material de clave pública anónimo. `oidc-eks` solo acepta su política de endpoint predeterminada de acceso completo; use SG/enrutamiento para la accesibilidad y condiciones de confianza `aud`/`sub` de IAM para la autorización de roles. STS valida tokens IRSA dentro de AWS, independientemente de este endpoint de VPC.
+El descubrimiento/JWKS de OIDC consiste en material de clave pública anónimo. `oidc-eks` solo acepta su política de endpoint predeterminada de acceso total; use SG/enrutamiento para la conectividad y condiciones `aud`/`sub` de confianza de IAM para autorizar roles. STS valida los tokens de IRSA dentro de AWS, de manera independiente de este endpoint de VPC.
 
-Para una política de endpoint CreateSession de Roles Anywhere, el principal debe ser `*` porque la evaluación precede a la autenticación por certificado; restrinja el recurso trust-anchor aprobado y las condiciones de certificado compatibles como se documenta. No copie una política de endpoint genérica entre estos servicios diferentes. Las políticas de endpoint filtran el tráfico del endpoint; no sustituyen la confianza de IAM/rol ni deshabilitan globalmente los endpoints de servicio públicos.
+Para una política de endpoint de CreateSession de Roles Anywhere, el principal debe ser `*`, porque la evaluación tiene lugar antes de la autenticación del certificado; restrinja el recurso de trust anchor aprobado y las condiciones compatibles del certificado según la documentación. No copie una política genérica de endpoint para todos estos servicios. Las políticas de endpoint filtran el tráfico del endpoint; no reemplazan la confianza de IAM/rol ni deshabilitan globalmente los endpoints públicos de los servicios.
 
 ```bash
 check_account
@@ -112,17 +112,17 @@ aws ec2 describe-vpc-endpoints --region "$AWS_REGION" \
 
 ### DNS privado de S3 y distribución de artefactos
 
-Los **endpoints de interfaz** de S3 admiten DNS privado. La opción solo de Resolver entrante dirige las consultas de instalaciones locales a través de endpoints de interfaz mientras que el tráfico dentro de la VPC usa un endpoint de gateway de S3 obligatorio. Mantenga ese gateway mientras la opción esté activada. Como alternativa, elimine la opción para usar el endpoint de interfaz para todo el tráfico S3 relevante.
+Los **endpoints de interfaz de S3 admiten DNS privado**. La opción exclusiva para Resolver entrante dirige las consultas locales a través de endpoints de interfaz, mientras que el tráfico dentro de la VPC utiliza un endpoint de gateway de S3 obligatorio. Mantenga ese gateway habilitado mientras la opción esté activa. Como alternativa, desactive la opción para utilizar el endpoint de interfaz para todo el tráfico de S3 pertinente.
 
-El DNS privado no es una reescritura de TLS. Una asignación PHZ/CNAME de `hybrid-assets.eks.amazonaws.com` a un endpoint de S3 no da a S3 el certificado ni el comportamiento de enrutamiento de objeto/Host del nombre de host de CloudFront. No deshabilite la verificación de TLS para hacer funcionar ese mirror. Use una ruta compatible de preparación de artefactos/configuración de cliente, un mirror aprobado con su propio nombre de host/certificado o dependencias preinstaladas en una imagen validada.
+El DNS privado no reescribe TLS. Una asignación de PHZ/CNAME de `hybrid-assets.eks.amazonaws.com` a un endpoint de S3 no proporciona a S3 el certificado del nombre de host de CloudFront ni su comportamiento de enrutamiento de objetos/Host. No deshabilite la verificación de TLS para hacer funcionar un espejo de este tipo. Utilice una ruta compatible de preparación de artefactos/configuración del cliente, un espejo aprobado con su propio nombre de host/certificado o dependencias preinstaladas en una imagen validada.
 
-## Endpoints privados de VPC (conectividad de internet restringida) {#vpc-private-endpoints-air-gap-private-connectivity}
+## Endpoints privados de VPC (conectividad con acceso restringido a Internet) {#vpc-private-endpoints-air-gap-private-connectivity}
 
-Aquí «air-gap» significa acceso restringido a internet con la conectividad AWS requerida, no un cluster desconectado.
+Aquí, «air-gap» significa acceso restringido a Internet con la conectividad necesaria a AWS, no un clúster desconectado.
 
-El siguiente ejemplo completo de Terraform usa una VPC existente, subredes de endpoint y TGW. No crea un circuito VPN/DX, adjuntos de TGW, rutas de instalaciones locales ni configuración de DNS privado de EKS. Verifique la compatibilidad/nombres de DNS de VPC y AZ reales distintas; dos ID de subred diferentes por sí solos no demuestran diversidad de AZ.
+El siguiente ejemplo completo de Terraform usa una VPC, subredes de endpoints y un TGW existentes. No crea un circuito VPN/DX, conexiones de TGW, rutas locales ni configuración de DNS privado de EKS. Verifique que DNS support/hostnames estén habilitados en la VPC y que se trate de AZ reales y distintas; tener dos ID de subred diferentes no demuestra por sí solo que haya diversidad de AZ.
 
-Use el propietario de infraestructura original e importe/adopte los recursos existentes antes de planificar reemplazos. El conjunto de endpoints predeterminado ilustra SSM; cámbielo para el proveedor/workloads elegidos. Los endpoints y las ENI de Resolver generan cargos. La protección de cuenta del proveedor y el ingreso con alcance definido son intencionados; el tráfico de respuesta usa el seguimiento con estado de SG.
+Use al propietario original de la infraestructura e importe/adopte los recursos existentes antes de planificar reemplazos. El conjunto predeterminado de endpoints ilustra SSM; cámbielo según el proveedor/cargas de trabajo elegidos. Los endpoints y las ENI de Resolver tienen cargos. La protección de cuenta del proveedor y la entrada con alcance limitado son intencionales; el tráfico de respuesta utiliza el seguimiento con estado de SG.
 
 ```hcl
 terraform {
@@ -418,11 +418,11 @@ resource "aws_route" "hybrid" {
 }
 ```
 
-La dependencia del gateway de S3 es explícita. Incluya los rangos necesarios de DNS/servicio de instalaciones locales en `remote_ipv4_cidrs`, no solo las redes de nodo/Pod: los servidores DNS de ejemplo `192.168.1.10/11` necesitan una ruta aprobada `192.168.1.0/24` o rutas de host correspondientes. Para una ruta de retorno VGW, use `gateway_id` en vez de `transit_gateway_id`; no coloque un ID de TGW en un campo VGW/gateway ni configure ambos destinos. Las rutas de VPC por sí solas no establecen el enrutamiento TGW/VPN/instalaciones locales.
+La dependencia del gateway de S3 es explícita. Incluya los rangos locales necesarios de DNS/servicios en `remote_ipv4_cidrs`, no solo las redes de nodos/Pod: los servidores DNS de ejemplo `192.168.1.10/11` necesitan una ruta aprobada `192.168.1.0/24` o las rutas de host correspondientes. Para una ruta de retorno de VGW, use `gateway_id` en lugar de `transit_gateway_id`; no ponga un ID de TGW en un campo de VGW/gateway ni configure ambos destinos. Las rutas de la VPC por sí solas no establecen el enrutamiento de TGW/VPN/sistemas locales.
 
-## Configuración DNS
+## Configuración de DNS
 
-Los resolvers de instalaciones locales pueden reenviar condicionalmente nombres de AWS/servicio seleccionados y del endpoint real del cluster a las IP de entrada de Route 53 Resolver. Use las direcciones devueltas para el endpoint real. Un reenvío amplio de `amazonaws.com` puede afectar servicios no relacionados; elija las zonas deliberadamente y evite bucles de reenvío.
+Los resolutores locales pueden reenviar condicionalmente nombres seleccionados de AWS/servicios y nombres reales de endpoints del clúster a las IP de Route 53 Resolver entrante. Use las direcciones devueltas para el endpoint real. Un reenvío amplio de `amazonaws.com` puede afectar a servicios no relacionados; elija cuidadosamente las zonas y evite los bucles de reenvío.
 
 ```text
 // Example service zones only. Replace these Resolver IPs with actual outputs.
@@ -438,11 +438,11 @@ zone "s3.ap-northeast-2.amazonaws.com" {
 };
 ```
 
-Este fragmento de BIND cubre las zonas de servicio mostradas, no automáticamente el nombre de host de la API de Kubernetes. Añada el nombre/sufijo DNS del endpoint real del cluster y otros nombres requeridos del inventario de servicios verificado. Las reglas de salida de Resolver gestionan la zona de instalaciones locales; esa zona debe ser autoritativa/accesible en los servidores DNS seleccionados, no reenviarse de vuelta al mismo bucle.
+Este fragmento de BIND cubre las zonas de servicio mostradas, pero no cubre automáticamente el nombre de host de la API de Kubernetes. Añada el nombre/sufijo DNS real del endpoint del clúster y los demás nombres necesarios del inventario de servicios verificado. Las reglas de salida de Resolver gestionan la zona local; esa zona debe ser autoritativa o accesible en los servidores DNS seleccionados, no reenviarse de vuelta al mismo bucle.
 
-### Configuración de dominio personalizado de CoreDNS
+### Configuración de dominio personalizado en CoreDNS
 
-Si el diseño elegido reenvía directamente desde CoreDNS, combine un bloque de servidor revisado en el Corefile existente; no sobrescriba todo el ConfigMap administrado:
+Si el diseño elegido reenvía directamente desde CoreDNS, combine un bloque de servidor revisado con el Corefile existente; no sobrescriba todo el ConfigMap administrado:
 
 ```text
 # Fragment to merge through the CoreDNS configuration owner.
@@ -455,9 +455,9 @@ corp.example.internal:53 {
 }
 ```
 
-Conserve las zonas Kubernetes existentes, el comportamiento de health/readiness y de recarga. Compruebe el archivo real de resolver y el diseño de systemd-resolved/stub; reenviar un servidor DNS a sí mismo puede formar un bucle. Elija la ruta de reenvío de VPC apropiada o el reenvío explícito de CoreDNS para una zona en vez de superponer rutas contradictorias.
+Conserve las zonas de Kubernetes existentes y el comportamiento de estado, disponibilidad y recarga. Compruebe el archivo de resolutores real y la disposición de systemd-resolved/stub; reenviar a un servidor DNS hacia sí mismo puede generar un bucle. Para una zona, elija la ruta de reenvío de VPC adecuada o el reenvío explícito de CoreDNS, en lugar de combinar rutas contradictorias.
 
-Para el add-on administrado de EKS, obtenga el esquema de configuración de la **versión instalada** y valide todos los valores propuestos, conservando los ajustes existentes no relacionados:
+Para el complemento administrado de EKS, obtenga el esquema de configuración de la **versión instalada** y valide todos los valores propuestos, conservando los demás ajustes existentes:
 
 ```bash
 check_account
@@ -485,13 +485,13 @@ print("Configuration matches the fetched schema; rollout and DNS behavior are no
 PY
 ```
 
-Esta es una comprobación de esquema local, no un despliegue. Coordine la propiedad del add-on administrado/GitOps, el autoescalado y la recuperación antes de aplicar la configuración.
+Esto es una comprobación local del esquema, no un despliegue. Coordine la propiedad del complemento administrado/GitOps, el escalado automático y la recuperación antes de aplicar la configuración.
 
-### Ubicación y localidad de CoreDNS
+### Ubicación y proximidad de CoreDNS
 
-AWS recomienda al menos una réplica de CoreDNS en nodos de cloud y una en nodos híbridos en clusters mixtos. Dos por ubicación pueden ser una opción de resiliencia; cuatro réplicas no son un mínimo universal ni una garantía.
+AWS recomienda al menos una réplica de CoreDNS en nodos de la nube y una en nodos híbridos en clústeres mixtos. Dos por ubicación pueden ser una opción de resiliencia; cuatro réplicas no son un mínimo universal ni una garantía.
 
-Verifique etiquetas de zona reales en todos los nodos DNS previstos. Los nodos híbridos necesitan un valor `topology.kubernetes.io/zone` definido por el propietario, como `onprem-dc1`; una etiqueta de tipo de cómputo no es automáticamente esa zona ni un taint. Combine las preferencias de ubicación sin eliminar affinity/tolerations no relacionadas:
+Verifique las etiquetas de zona reales en todos los nodos DNS previstos. Los nodos híbridos necesitan un valor de `topology.kubernetes.io/zone` definido por el propietario, como `onprem-dc1`; una etiqueta de tipo de cómputo no es automáticamente esa zona ni una taint. Combine las preferencias de ubicación sin eliminar affinity/tolerations no relacionadas:
 
 ```json
 {
@@ -526,9 +526,9 @@ Verifique etiquetas de zona reales en todos los nodos DNS previstos. Los nodos h
 }
 ```
 
-La affinity/dispersión blanda es una preferencia, no una distribución 2+2 garantizada ni un arranque exitoso. La ubicación por sí sola tampoco garantiza que los clientes elijan una réplica DNS local.
+La affinity/distribución flexible es una preferencia, no una distribución 2+2 garantizada ni un arranque satisfactorio. La ubicación por sí sola tampoco garantiza que los clientes elijan una réplica DNS local.
 
-El ejemplo documentado por AWS de Service Traffic Distribution usa `PreferClose`. Con Cilium, configure el ajuste compatible `loadBalancer.serviceTopology` y realice el rollout de los agentes afectados mediante el propietario antes de depender de él. Revise el dataplane/versión reales y los endpoints locales en buen estado.
+El ejemplo documentado por AWS de Service Traffic Distribution utiliza `PreferClose`. Con Cilium, configure el ajuste compatible `loadBalancer.serviceTopology` y haga que el propietario despliegue de nuevo los agentes afectados antes de depender de este comportamiento. Revise el dataplane/la versión reales y los endpoints locales en buen estado.
 
 ```json
 {
@@ -552,79 +552,79 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s -n kube-system \
        ready:([.status.conditions[]?|select(.type=="Ready")|.status]|first // "NotReported")}]'
 ```
 
-Inspeccione las IP de Service reales, las zonas/sugerencias de EndpointSlice y la preparación de los Pods. `10.100.0.10` es un ejemplo para un CIDR de Service concreto, no una dirección DNS de cluster universal. Las réplicas locales no convierten un cluster EKS desconectado en un plano DNS/control totalmente independiente.
+Inspeccione las IP reales de Service, las zonas/sugerencias de EndpointSlice y el estado de los Pod. `10.100.0.10` es un ejemplo para un CIDR de Service específico, no una dirección DNS universal del clúster. Las réplicas locales no convierten un clúster de EKS desconectado en un plano de control/DNS totalmente independiente.
 
 ## Patrones de flujo de tráfico
 
-Los dibujos usan direcciones ilustrativas y etapas de procesamiento simplificadas. Compruebe si su dataplane de Service real es kube-proxy iptables, nftables/IPVS o el reemplazo eBPF de Cilium.
+Los diagramas utilizan direcciones ilustrativas y etapas de procesamiento simplificadas. Compruebe si el dataplane de Service real es kube-proxy iptables, nftables/IPVS o el reemplazo eBPF de Cilium.
 
 ### Patrón 1: Kubelet → plano de control de EKS
 
-El kubelet resuelve y se conecta al endpoint de API de Kubernetes configurado. El acceso privado y público tienen rutas distintas; ninguno debe confundirse con el endpoint PrivateLink de administración de EKS.
+Kubelet resuelve y se conecta al endpoint de API de Kubernetes configurado. El acceso privado y el público tienen rutas distintas; no debe confundirse ninguno con el endpoint de PrivateLink de administración de EKS.
 
-![Rutas de acceso de la API de kubelet para configuraciones de endpoint público y privado.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-10.png)
+![Rutas de acceso de la API de kubelet para configuraciones de endpoints públicos y privados.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-10.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-10.html)
 
 ### Patrón 2: Plano de control de EKS → kubelet
 
-El plano de control alcanza la dirección de nodo enrutable notificada mediante TCP10250. Esta ruta admite logs, exec y port-forward y necesita enrutamiento inverso, permiso de firewall y autenticación de kubelet.
+El plano de control llega a la dirección enrutable del nodo informada mediante TCP10250. Esta ruta admite logs, exec y port-forward, y necesita enrutamiento inverso, permiso de firewall y autenticación de kubelet.
 
-![Conexión del plano de control a la dirección kubelet enrutable mediante TCP10250.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-11.png)
+![Conexión del plano de control a la dirección enrutable de kubelet mediante TCP10250.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-11.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-11.html)
 
 ### Patrón 3: Pod → plano de control de EKS
 
-Un Pod que usa la IP de Kubernetes Service necesita traducción de Service al endpoint de API seleccionado. Si se aplica SNAT de salida, las respuestas se dirigen a la dirección de nodo y el seguimiento de conexiones invierte la traducción; sin SNAT, la dirección del Pod necesita una ruta de retorno.
+Un Pod que utiliza la IP de Service de Kubernetes necesita traducción de Service al endpoint de API seleccionado. Si se aplica SNAT de salida, las respuestas se dirigen a la dirección del nodo y el seguimiento de conexiones revierte la traducción; sin SNAT, la dirección del Pod necesita una ruta de retorno.
 
-![Traducción lógica de Service y efectos SNAT opcionales; el orden mostrado no es una secuencia de hooks universal.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-12.png)
+![Traducción lógica de Service y efectos opcionales de SNAT; el orden ilustrado no es una secuencia universal de hooks.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-12.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-12.html)
 
-La numeración SNAT-antes-de-DNAT del dibujo no es un orden de hooks universal. En una ruta iptables, normalmente el Service DNAT precede al enrutamiento y al SNAT POSTROUTING aplicable. Las rutas eBPF difieren. Capture el estado real de paquete/conexión antes de sacar conclusiones.
+La numeración del diagrama, con SNAT antes que DNAT, no representa un orden universal de hooks. En una ruta de iptables, DNAT de Service suele preceder al enrutamiento y al SNAT aplicable de POSTROUTING. Las rutas eBPF son distintas. Capture el estado real del paquete/conexión antes de sacar conclusiones.
 
-### Patrón 4: Plano de control de EKS → Pod (Webhooks)
+### Patrón 4: Plano de control de EKS → Pod (webhooks)
 
-El servidor API necesita que la IP/puerto del Pod de webhook seleccionado sea accesible. Use el puerto configurado; la antigua leyenda «8443+» no es un requisito válido de rango de puertos.
+El servidor de API necesita poder alcanzar la IP/puerto del Pod de webhook seleccionado. Utilice el puerto configurado; la antigua indicación «8443+» no es un requisito válido de rango de puertos.
 
-![Ruta del plano de control a un Pod de webhook; use su puerto TCP y dataplane configurados reales.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-13.png)
+![Ruta del plano de control a un Pod de webhook; utilice su puerto TCP y dataplane configurados reales.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-13.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-13.html)
 
 ### Patrón 5: Pod ↔ Pod en nodos híbridos
 
-Con la superposición VXLAN compatible, se alcanza al nodo de destino usando **IP de nodo externas**. La red subyacente no necesita una ruta para el CIDR de Pod de destino interno solo para transportar el paquete encapsulado.
+Con el overlay VXLAN compatible, se llega al nodo de destino mediante **IP externas de los nodos**. La red subyacente no necesita una ruta al CIDR interno de destino de los Pod solo para transportar el paquete encapsulado.
 
-![Comunicación VXLAN de Pod. El reenvío externo usa IP de nodo; las etiquetas antiguas de reenvío de Pod-CIDR necesitan corrección.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-14.png)
+![Comunicación entre Pod mediante VXLAN. El reenvío externo utiliza IP de nodo; las antiguas etiquetas de reenvío de CIDR de Pod necesitan corrección.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-14.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-14.html)
 
-Las etiquetas de reenvío del diagrama que usan `10.85.x.0/24` después de la encapsulación deben interpretarse como una simplificación anterior: el paquete externo se enruta a `10.80.0.x`. Los nodos en un segmento L2 pueden comunicarse directamente sin un salto de router.
+Las etiquetas de reenvío del diagrama que utilizan `10.85.x.0/24` después de la encapsulación deben interpretarse como una simplificación antigua: el paquete externo se enruta a `10.80.0.x`. Los nodos del mismo segmento L2 pueden comunicarse directamente, sin pasar por un enrutador.
 
-VXLAN encapsula una trama Ethernet interna mediante UDP. En el ejemplo IPv4/sin encapsulación adicional, 50 bytes de sobrecarga explican un ajuste MTU de 1500→1450; el túnel adicional cambia ese cálculo. Cilium VXLAN usa UDP8472; VXLAN estándar normalmente usa 4789. Geneve usa UDP6081. La configuración actual de túnel de Cilium distingue VXLAN/Geneve; IP-in-IP no es una superposición predeterminada intercambiable seleccionada por el antiguo consejo `--tunnel`.
+VXLAN encapsula una trama Ethernet interna mediante UDP. En el ejemplo IPv4/sin encapsulación adicional, 50 bytes de sobrecarga explican un ajuste de MTU de 1500→1450; los túneles adicionales modifican ese cálculo. VXLAN de Cilium utiliza UDP8472; VXLAN estándar suele usar 4789. Geneve utiliza UDP6081. La configuración actual de túneles de Cilium distingue VXLAN/Geneve; IP-in-IP no es un overlay predeterminado intercambiable que se seleccione con la antigua indicación `--tunnel`.
 
-El campo VNI tiene 24 bits; Cilium puede transportar la identidad de seguridad en los metadatos de encapsulación. No es aislamiento criptográfico de tenants. Mantenga separadas las políticas de red y la propagación real de identidad.
+El campo VNI tiene 24 bits; Cilium puede transportar identidad de seguridad en los metadatos de encapsulación. No es aislamiento criptográfico de tenants. Mantenga separadas las políticas de red y la propagación real de identidad.
 
-### Patrón 6: Pod de cloud ↔ Pod híbrido
+### Patrón 6: Pod de la nube ↔ Pod híbrido
 
-El tráfico directo de IP de Pod necesita las rutas de Pod pertinentes a través de VPC, WAN e instalaciones locales. La traducción de Service se necesita solo cuando la solicitud se dirige realmente a un VIP de Service.
+El tráfico directo a IP de Pod necesita las rutas correspondientes a los Pod a través de la VPC, la WAN y los sistemas locales. La traducción de Service solo se necesita cuando la solicitud realmente tiene como destino una VIP de Service.
 
-![Enrutamiento directo de Pod de cloud a híbrido; la traducción de Service de kube-proxy no se requiere para un destino de IP de Pod directo.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-15.png)
+![Enrutamiento directo de la nube a un Pod híbrido; la traducción de Service de kube-proxy no es necesaria para un destino directo de IP de Pod.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-15.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-15.html)
 
-El bloque kube-proxy/iptables de la imagen depende del dataplane; un paquete de IP de Pod directo no requiere inherentemente kube-proxy DNAT.
+El bloque kube-proxy/iptables de la imagen depende del dataplane; un paquete directo a una IP de Pod no requiere intrínsecamente DNAT de kube-proxy.
 
 ### Detalles de kube-proxy y kubelet
 
-En el modo **iptables** de kube-proxy, una ruta de cadena común es:
+En el **modo iptables** de kube-proxy, una ruta habitual de cadenas es:
 
 ```text
 KUBE-SERVICES → KUBE-SVC-* → KUBE-SEP-* → endpoint DNAT
 ```
 
-Con tres endpoints elegibles de peso igual y sin una política de affinity/localidad que la anule, las probabilidades condicionales de 1/3, después 1/2 de los paquetes restantes y finalmente el resto producen una selección aproximadamente igual. Esto es una ilustración, no una salida capturada ni la estructura de reglas de cada dataplane:
+Con tres endpoints elegibles de igual peso y sin políticas de affinity/localidad que prevalezcan, las probabilidades condicionales de 1/3, luego 1/2 de los paquetes restantes y, después, el resto producen una selección aproximadamente equilibrada. Es una ilustración, no una salida capturada ni la estructura de reglas de todos los dataplane:
 
 ```text
 # KUBE-SERVICES chain (nat table)
@@ -644,50 +644,51 @@ Con tres endpoints elegibles de peso igual y sin una política de affinity/local
 | Endpoint seguro de kubelet | Propósito |
 |------------------------|---------|
 | `/pods` | Información de Pod |
-| `/exec/{namespace}/{pod}/{container}` | Flujo exec de contenedor |
-| `/containerLogs/{namespace}/{pod}/{container}` | Logs de contenedor; no la antigua ruta `/logs/...` |
-| `/metrics`, `/healthz` | Endpoints de métricas/estado autorizados |
+| `/exec/{namespace}/{pod}/{container}` | Flujo de exec del contenedor |
+| `/containerLogs/{namespace}/{pod}/{container}` | Logs del contenedor; no es la ruta anterior `/logs/...` |
+| `/metrics`, `/healthz` | Endpoints autorizados de métricas/estado |
 
-Use diagnósticos compatibles mediados por el servidor API y la autorización apropiada. Importa el `status.addresses` real del nodo; no sustituya un nombre de host ni la primera dirección de un objeto no relacionado.
+Utilice diagnósticos compatibles mediados por el servidor de API y la autorización adecuada. Importa el `status.addresses` real del nodo; no lo sustituya por un nombre de host ni por la primera dirección de un objeto no relacionado.
 
-## Cómo elegir un diseño de CNI: solo Cilium o junto con VPC CNI
+## Cómo elegir un diseño de CNI: solo Cilium o combinado con VPC CNI
 
-VPC CNI no es compatible con nodos híbridos, por lo que **los nodos híbridos siempre ejecutan Cilium (o Calico)**. Por eso, la pregunta «¿solo Cilium o junto con VPC CNI?» en realidad se refiere a **si el clúster tiene nodos en la nube y, en caso afirmativo, qué CNI ejecutan**.
+VPC CNI no es compatible con los nodos híbridos. **Esta comparación presupone Cilium en los nodos híbridos, con la compilación mantenida por AWS que se describe en la guía actual de CNI.** Si ya tiene Calico instalado, confirme por separado la compatibilidad actual y la responsabilidad operativa. Por tanto, la pregunta «¿solo Cilium o combinado con VPC CNI?» se refiere en realidad a **si el clúster tiene nodos de la nube y, de ser así, qué CNI ejecutan**.
 
-| Criterio | ① Clúster solo híbrido (solo Cilium) | ② Modo mixto (VPC CNI en la nube + Cilium en híbrido) | ③ Cilium también en nodos de la nube |
+| Criterio | ① Clúster solo híbrido (solo Cilium) | ② Modo mixto (VPC CNI en la nube + Cilium en el entorno híbrido) | ③ Cilium también en los nodos de la nube |
 |---|---|---|---|
-| Compatibilidad con AWS | Compatible (Cilium en nodos híbridos) | Compatible. Es el diseño de modo mixto recomendado por AWS | El lado de la nube no es compatible: AWS no admite Cilium en ejecución en nodos de AWS Cloud |
-| Ubicación de webhooks | Se ejecutan en nodos híbridos. El plano de control se conecta a las IP de Pod, por lo que el CIDR de Pods local debe ser enrutable mediante BGP o rutas estáticas | Se ejecutan en nodos de la nube. No es necesario enrutar el CIDR de Pods local | Depende de IPAM y del enrutamiento de Cilium en la nube; debe validarlo por su cuenta |
-| Tráfico de la nube a Pods locales | No corresponde | CIDR de Pods locales enrutable o el [gateway de Hybrid Nodes](10-hybrid-nodes-gateway.md) | Diseñe los túneles o el enrutamiento por su cuenta. El gateway de Hybrid Nodes requiere VPC CNI (o la red integrada de Auto Mode) en los nodos de la nube, incluidos los nodos del gateway, por lo que no se puede usar |
-| Ampliación de capacidad y Auto Mode | No es posible sin capacidad en la nube | Karpenter puede añadir nodos de la nube. Auto Mode usa la red integrada | Auto Mode no permite reemplazar su CNI. Cilium en nodos de Karpenter también requiere operación propia |
-| Políticas y observabilidad | Un CNI (NetworkPolicy, políticas de Cilium, Hubble) | Cada CNI aplica NetworkPolicy estándar de Kubernetes. Las políticas específicas de Cilium y Hubble solo están disponibles en el lado híbrido | Un CNI, pero usted o un proveedor se encargan de la respuesta a incidentes y las actualizaciones del lado de la nube |
+| Compatibilidad con AWS | Compatible (Cilium en nodos híbridos) | Compatible. Es el diseño de modo mixto recomendado por AWS | Lado de la nube no compatible: AWS no admite Cilium ejecutándose en nodos de AWS Cloud |
+| Ubicación de webhooks | Se ejecutan en nodos híbridos. El plano de control se conecta a las IP de Pod, por lo que el CIDR de Pod local debe ser enrutable mediante BGP o rutas estáticas | Se ejecutan en nodos de la nube. No hace falta que el CIDR de Pod local sea enrutable | Depende de IPAM y del enrutamiento de Cilium en la nube; debe validarlo por su cuenta |
+| Tráfico de Pod de la nube a sistemas locales | No aplicable | CIDR de Pod local enrutable o [gateway de Hybrid Nodes](10-hybrid-nodes-gateway.md) | Diseñe los túneles o el enrutamiento por su cuenta. El gateway de Hybrid Nodes requiere VPC CNI (o las redes integradas de Auto Mode) en los nodos de la nube, incluidos los nodos de gateway, por lo que no se puede utilizar |
+| Capacidad elástica y Auto Mode | No es posible sin capacidad en la nube | Karpenter puede añadir nodos de la nube. Auto Mode usa redes integradas | Auto Mode no puede sustituir su CNI. Cilium en nodos de Karpenter también es autogestionado |
+| Políticas y observabilidad | Un CNI (NetworkPolicy, políticas de Cilium, Hubble), con la aplicación de políticas configurada | Configure y verifique por separado la aplicación de NetworkPolicy para cada CNI. La aplicación de VPC CNI debe estar habilitada en los nodos EC2 Linux compatibles; un objeto NetworkPolicy por sí solo no la habilita. Las políticas específicas de Cilium y Hubble solo existen en el lado híbrido | Un CNI con aplicación de políticas configurada, pero usted o un proveedor se encargan de la respuesta a incidentes y las actualizaciones del lado de la nube |
 
 Cómo elegir:
 
-- **Hay nodos en la nube: ②.** El diseño mixto cuenta con el soporte de AWS. Ejecute los webhooks en la nube y use la ampliación de capacidad y el gateway de Hybrid Nodes. En modo mixto, ejecute al menos una réplica de CoreDNS en cada lado; las funciones que requieren que el plano de control o la VPC accedan a las IP de Pods híbridos (destinos IP de ALB/NLB, Metrics Server, recopilación de AMP) necesitan que el CIDR de Pods local sea enrutable ([Operaciones de webhooks en modo mixto](08-operations.md#mixed-mode-webhook-operations)).
-- **Solo instalaciones locales: ①.** Es más sencillo con un solo CNI, pero los webhooks se ejecutan en nodos híbridos, por lo que se necesita un [CIDR de Pods enrutable](#routable-pod-cidr-configuration).
-- **Evalúe cuidadosamente ③.** AWS no admite Cilium en nodos de la nube, y no se pueden usar el gateway de Hybrid Nodes ni Auto Mode. Considérelo solo si tiene un acuerdo de soporte con un proveedor y necesita un único CNI a pesar de estas limitaciones.
+- **Hay nodos de la nube: ②.** El diseño mixto está dentro del soporte de AWS. Ejecute los webhooks en la nube y utilice la capacidad elástica y el gateway de Hybrid Nodes. En modo mixto, ejecute al menos una réplica de CoreDNS en cada lado; las funciones en las que el plano de control o la VPC deben acceder a IP de Pod híbridos (destinos IP de ALB/NLB, Metrics Server, recopilación de AMP) necesitan un CIDR de Pod local enrutable ([Operaciones de webhooks en modo mixto](08-operations.md#mixed-mode-webhook-operations)).
+- **Solo hay sistemas locales: ①.** Es más sencillo con un solo CNI, pero los webhooks se ejecutan en nodos híbridos, por lo que se necesita un [CIDR de Pod enrutable](#routable-pod-cidr-configuration).
+- **Considere cuidadosamente la opción ③.** Cilium en nodos de la nube queda fuera del soporte de AWS, y no se pueden usar el gateway de Hybrid Nodes ni Auto Mode. Considérela solo si cuenta con un acuerdo de soporte de proveedor y si la ventaja de un único CNI compensa estas limitaciones.
 
 Referencias:
-- [Configurar CNI para nodos híbridos](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
-- [Configurar webhooks para nodos híbridos: consideraciones para clústeres en modo mixto](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
+- [Configuración de CNI para nodos híbridos](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [Restricción del tráfico de Pod con políticas de red de Kubernetes](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+- [Configuración de webhooks para nodos híbridos: consideraciones para clústeres en modo mixto](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
 - [Introducción al gateway de EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html)
 
-## Configuración de CIDR de Pod enrutable {#routable-pod-cidr-configuration}
+## Configuración de CIDR de Pod enrutable
 
-![CIDR de Pod remotos ilustrativos y el router de instalaciones locales.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
+![CIDR de Pod remotos y enrutador local ilustrativos.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-0.html)
 
-### Opción 1: BGP (recomendado)
+### Opción 1: BGP (recomendada)
 
-![Anuncios ilustrativos de prefijos Pod BGP.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-1.png)
+![Anuncios ilustrativos de prefijos de Pod mediante BGP.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-1.html)
 
-La página de compatibilidad de CNI dedicada de AWS enumera compilaciones de Cilium 1.17/1.18 mantenidas por AWS. La referencia aquí es 1.18.3-0 en un kernel/SO compatible; no la reemplace ciegamente por 1.19 upstream. Otras páginas de AWS aún mencionan Calico BGP y sus ejemplos conservados. Eso no es evidencia de que el proyecto Calico esté obsoleto; confirme el alcance de soporte para una implementación existente.
+La página específica de AWS sobre compatibilidad de CNI enumera compilaciones de Cilium 1.17/1.18 mantenidas por AWS. La referencia aquí es 1.18.3-0 en un kernel/SO compatible; no la sustituya a ciegas por upstream 1.19. Otras páginas de AWS siguen mencionando BGP de Calico y los ejemplos que se conservan. Eso no demuestra que el proyecto Calico esté obsoleto; confirme el alcance del soporte para una implementación existente.
 
-Habilite BGP mediante el propietario de la **release existente y fijada de Cilium**, combinando valores y revisando el rollout de operator/agent:
+Habilite BGP a través del propietario de la **versión existente de Cilium fijada**, combinando valores y revisando el despliegue progresivo del operador/agente:
 
 ```yaml
 bgpControlPlane:
@@ -696,11 +697,9 @@ operator:
   rollOutPods: true
 ```
 
-Las API `v2alpha1` de estilo AWS siguen servidas en los CRD 1.18.3 revisados (que también sirven `v2`). No es necesario reemplazar los CRD solo para usar este ejemplo.
+Las API `v2alpha1` de estilo AWS siguen disponibles en las CRD 1.18.3 revisadas (que también sirven `v2`). No es necesario reemplazar las CRD solo para usar este ejemplo. En Cilium 1.19 y posteriores, use las CRD BGP `cilium.io/v2` en su lugar (las CRD BGP `v2alpha1` están obsoletas), y `CiliumBGPPeeringPolicy`, la API heredada, se eliminó en 1.19.
 
-En Cilium 1.19 y versiones posteriores, usa las CRD de BGP `cilium.io/v2` (las CRD BGP `v2alpha1` están obsoletas); además, el `CiliumBGPPeeringPolicy` heredado se eliminó en 1.19.
-
-Lo siguiente selecciona nodos híbridos, vincula el selector de anuncios del peer a las etiquetas de anuncios y anuncia solo sus CIDR de Pod:
+Lo siguiente selecciona nodos híbridos, vincula el selector de anuncios del peer con las etiquetas de los anuncios y anuncia solo sus CIDR de Pod:
 
 ```yaml
 apiVersion: cilium.io/v2alpha1
@@ -752,9 +751,9 @@ spec:
   - advertisementType: PodCIDR
 ```
 
-El ejemplo supone que los nodos seleccionados pueden alcanzar el router `10.80.1.1` con la topología de peering prevista. Racks/loopbacks diferentes pueden necesitar selectores distintos sin solapamiento y ajustes multihop revisados. TCP179, ASN, autenticación, filtros de ruta, temporizadores negociados y comportamiento de rutas obsoletas de graceful restart necesitan revisión del propietario de red.
+El ejemplo presupone que los nodos seleccionados pueden llegar al enrutador `10.80.1.1` con la topología de peering prevista. Es posible que diferentes racks/loopbacks necesiten selectores distintos y no superpuestos, además de ajustes multihop revisados. El equipo propietario de la red debe revisar TCP179, ASN, autenticación, filtros de rutas, temporizadores negociados y el comportamiento de rutas obsoletas durante el reinicio gradual.
 
-El establecimiento de la sesión BGP por sí solo no prueba que los prefijos previstos se hayan anunciado, aceptado o instalado en la tabla de reenvío del router. El plano de control BGP de Cilium anuncia accesibilidad; no reemplaza todo el enrutamiento de kernel/subyacente.
+Que se establezca la sesión BGP no demuestra por sí solo que los prefijos previstos se hayan anunciado, aceptado o instalado en la tabla de reenvío del enrutador. El plano de control BGP de Cilium anuncia la conectividad; no reemplaza todo el enrutamiento del kernel/la red subyacente.
 
 ```bash
 cilium --context "$KUBE_CONTEXT" bgp peers
@@ -764,13 +763,13 @@ kubectl --context "$KUBE_CONTEXT" --request-timeout=15s \
   jq '[.items[]|{kind,name:.metadata.name,status:.status}]'
 ```
 
-#### Configuración de ASN y router
+#### ASN y configuración del enrutador
 
-Los rangos privados RFC6996 son **64512–65534** y **4200000000–4294967294**. La anterior regla general de «solo el rango de 16 bits» era incorrecta. No describa cada valor 1–64511 como un ASN público libremente utilizable; las asignaciones públicas/reservadas/de documentación tienen sus propias reglas.
+Los rangos privados RFC6996 son **64512–65534** y **4200000000–4294967294**. La antigua regla general de que «solo se puede usar el rango de 16 bits» era incorrecta. No describa todos los valores 1–64511 como ASN públicos que se puedan usar libremente; las asignaciones públicas, reservadas y de documentación tienen reglas propias.
 
-Use ASN de red coordinados existentes. `localASN=65001` representa los nodos Cilium y `peerASN=65000` su router de instalaciones locales en estos ejemplos. El ASN de un TGW es una relación upstream diferente: Cilium no establece automáticamente peering con un TGW solo porque exista. BGP de VPN Site-to-Site termina en la ruta configurada de VPN/customer gateway; TGW Connect es otro transporte/diseño independiente.
+Utilice ASN de red existentes y coordinados. En estos ejemplos, `localASN=65001` representa los nodos de Cilium y `peerASN=65000`, su enrutador local. El ASN de un TGW pertenece a otra relación ascendente: Cilium no establece peering automáticamente con un TGW por el mero hecho de que exista. BGP de Site-to-Site VPN termina en la ruta configurada del gateway de VPN/cliente; TGW Connect es otro transporte/diseño independiente.
 
-Los siguientes fragmentos de proveedor son puntos de partida ilustrativos, no configuraciones probadas en dispositivos. Combínelos mediante el propietario del router con filtros de prefijo de importación/exportación, límites y recuperación específicos de plataforma/versión. No cambie indiscriminadamente el ASN global de un router activo.
+Los siguientes fragmentos de proveedores son puntos de partida ilustrativos, no configuraciones probadas en dispositivos. Combínelos con las políticas de importación/exportación de prefijos específicas de la plataforma/versión, los límites y la recuperación, a través del propietario del enrutador. No cambie indiscriminadamente el ASN global de un enrutador activo.
 
 **Cisco IOS / IOS-XE**
 
@@ -846,17 +845,17 @@ router bgp 65000
  exit-address-family
 ```
 
-RouterOS 7.20+ define explícitamente la instancia BGP. Los valores predeterminados tradicionales de FRR requieren una política eBGP; una sesión establecida sin filtros puede mostrar `(Policy)` y no intercambiar rutas. El ejemplo de FRR acepta solo los bloques Pod `/25` revisados y no exporta rutas a Cilium; adapte los filtros al diseño IPAM real y al enrutamiento upstream.
+RouterOS 7.20+ define explícitamente la instancia BGP. Los valores predeterminados tradicionales de FRR requieren una política eBGP; una sesión establecida sin filtros puede mostrar `(Policy)` y no intercambiar rutas. El ejemplo de FRR solo acepta los bloques `/25` de Pod revisados y no exporta rutas a Cilium; adapte los filtros al diseño real de IPAM y al enrutamiento ascendente.
 
 ### Opción 2: Rutas estáticas
 
-![Rutas estáticas ilustrativas de prefijo Pod; derive los siguientes saltos actuales del estado observado.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-2.png)
+![Rutas estáticas ilustrativas de prefijos de Pod; obtenga los siguientes saltos actuales a partir del estado observado.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-2.html)
 
-En el IPAM **cluster-pool** de Cilium, lea todos los `CiliumNode.spec.ipam.podCIDRs` asignados. No se garantiza que la asignación siga el orden de registro de nodos. Un `/16` contiene geométricamente 512 bloques `/25`, y cada `/25` tiene 128 direcciones; esto no garantiza 512 nodos compatibles ni 128 IP de Pod de aplicación utilizables por nodo. También importan las direcciones reservadas, el uso de nodo/CNI y los límites de kubelet/recursos.
+En **IPAM de cluster-pool** de Cilium, lea todos los valores asignados de `CiliumNode.spec.ipam.podCIDRs`. No se garantiza que la asignación siga el orden de registro de los nodos. Un `/16` contiene geométricamente 512 bloques `/25`, y cada `/25` tiene 128 direcciones; esto no garantiza 512 nodos compatibles ni 128 direcciones IP de Pod utilizables para aplicaciones por nodo. También importan las direcciones reservadas, el uso del nodo/CNI y los límites de kubelet/recursos.
 
-Este es un fragmento de valores Helm de Cilium para un nuevo pool revisado, no un ajuste `podCIDR` global de kubelet. No cambie los CIDR existentes asignados ni el tamaño del bloque como atajo para la migración:
+Este fragmento de valores de Helm de Cilium es para un nuevo pool revisado, no un ajuste global de `podCIDR` de kubelet. No cambie los CIDR asignados existentes ni el tamaño del bloque como atajo para una migración:
 
 ```yaml
 ipam:
@@ -867,7 +866,7 @@ ipam:
     clusterPoolIPv4MaskSize: 25
 ```
 
-No use `.addresses[0]` como siguiente salto: puede ser una dirección interna de Cilium. Lo siguiente cruza InternalIP IPv4 con el Node de Kubernetes, valida todos los prefijos Pod contra rangos remotos aprobados, rechaza solapamiento/estado faltante y produce **candidatos JSON**, no shell ejecutable:
+No use `.addresses[0]` como siguiente salto: puede ser una dirección interna de Cilium. Lo siguiente contrasta la InternalIP IPv4 con el Node de Kubernetes, valida todos los prefijos de Pod con los rangos remotos aprobados, rechaza superposiciones/estados faltantes y genera **candidatos JSON**, no comandos de shell ejecutables:
 
 ```bash
 kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get nodes \
@@ -924,9 +923,9 @@ print(json.dumps(rows, indent=2))
 PY
 ```
 
-Este es un plan puntual para IPAM cluster-pool, no una concesión atómica sobre la identidad del nodo ni un controlador de enrutamiento. Vuelva a validar antes de realizar cambios. Calico BlockAffinity es un modelo diferente; inspeccione su estado, comportamiento de préstamo/pool y rutas reales en vez de reutilizar ciegamente este generador.
+Este es un plan en un momento concreto para IPAM de cluster-pool, no una reserva atómica de la identidad del nodo ni un controlador de enrutamiento. Vuelva a validarlo antes de los cambios. BlockAffinity de Calico es un modelo diferente; inspeccione su estado, el comportamiento de asignación compartida/pools y las rutas reales en lugar de reutilizar este generador a ciegas.
 
-Tras la revisión del propietario, la sintaxis manual de router puede tener este aspecto:
+Después de la revisión del propietario, la sintaxis manual del enrutador podría ser:
 
 ```text
 # Illustrative syntax after validating the route plan on the intended router:
@@ -938,21 +937,21 @@ ip route 10.85.0.0 255.255.255.128 10.80.1.10 name hybrid-node-001-pods
 ip route 10.85.0.0/25 10.80.1.10
 ```
 
-Conserve los cambios mediante el administrador de red/configuración de dispositivo real. Una línea `up ip route ...` pertenece a una estrofa ifupdown, no a un script Bash independiente ni a todos los administradores de red Linux modernos. Las rutas estáticas necesitan seguimiento de desviaciones/fallos; el umbral original de «1–5 nodos» era una heurística de planificación, no un límite técnico.
+Guarde los cambios mediante el administrador de red/la configuración del dispositivo real. Una línea `up ip route ...` pertenece a una sección de ifupdown, no a un script Bash independiente ni a todos los administradores de red modernos de Linux. Las rutas estáticas necesitan seguimiento de desviaciones/fallos; el umbral original de «1–5 nodos» era una heurística de planificación, no un límite técnico.
 
 ### Opción 3: Proxy ARP
 
-AWS describe ARP proxy como un posible enfoque L2. Necesita el comportamiento adecuado de descubrimiento de vecinos on-link y una implementación de CNI/host configurada específicamente; simplemente habilitar Cilium genérico no prueba que esta ruta esté lista.
+AWS describe el proxy ARP como una posible estrategia L2. Necesita el comportamiento adecuado de detección de vecinos en el enlace y una implementación de CNI/host configurada específicamente; habilitar Cilium genérico no demuestra que esta ruta esté lista.
 
-![Concepto de proxy ARP para un diseño L2/on-link verificado; aún se requieren rutas upstream.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-3.png)
+![Concepto de proxy ARP para un diseño L2/en el enlace verificado; siguen siendo necesarias las rutas ascendentes.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-3.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-3.html)
 
-Las difusiones ARP no atraviesan el enrutamiento de capa 3 TGW/VPN/DX. Esta opción no elimina los requisitos de rutas de retorno VPC/WAN. Valide el comportamiento L2 real y la conmutación por error antes de reemplazar un diseño BGP/estático.
+Los broadcasts ARP no atraviesan el enrutamiento de capa 3 de TGW/VPN/DX. Esta opción no elimina los requisitos de rutas de retorno de VPC/WAN. Valide el comportamiento L2 real y la conmutación por error antes de sustituir un diseño BGP/estático.
 
 ## Políticas de red
 
-Las políticas dependen de la selección, dirección y el dataplane que las aplica. Los permisos de Kubernetes NetworkPolicy son aditivos: otra política coincidente puede permitir el tráfico. La denegación explícita y el comportamiento L7 de Cilium necesitan su propia evaluación. Estos ejemplos son alternativas para probar en un namespace controlado, no una instrucción de superponer cada regla allow y esperar un comportamiento más estricto.
+Las políticas dependen de la selección, la dirección y el dataplane que las aplique. Las reglas de permiso de Kubernetes NetworkPolicy son aditivas: otra política coincidente puede permitir el tráfico. El comportamiento de denegación explícita y L7 de Cilium requiere una evaluación propia. Estos ejemplos son alternativas para probar en un espacio de nombres controlado, no instrucciones para superponer todas las reglas de permiso esperando un comportamiento más restrictivo.
 
 ### Kubernetes NetworkPolicy
 
@@ -978,7 +977,7 @@ spec:
       port: 9080
 ```
 
-Esto selecciona el ingreso de `reviews` y permite Pods `productpage` coincidentes en el mismo namespace en TCP9080. No aísla todos los Pod/direcciones ni anula ninguna otra política.
+Esto selecciona el tráfico de entrada a `reviews` y permite el de los Pod `productpage` coincidentes en el mismo espacio de nombres mediante TCP9080. No aísla todos los Pod/direcciones ni prevalece sobre todas las demás políticas.
 
 ### CiliumNetworkPolicy y L7
 
@@ -1027,11 +1026,11 @@ spec:
           path: /api/v1/.*
 ```
 
-La regla HTTP es una alternativa al permiso L4 sin restricciones, no una restricción automática superpuesta sobre ella. Use la ruta de aplicación real. La inspección HTTP requiere la visibilidad adecuada; el tráfico de mesh/TLS cifrado no se puede inspeccionar automáticamente.
+La regla HTTP es una alternativa al permiso L4 sin restricciones, no una restricción que se aplique automáticamente al superponerla. Utilice la ruta real de la aplicación. La inspección HTTP necesita la visibilidad adecuada; el tráfico cifrado de mesh/TLS no se puede inspeccionar automáticamente.
 
-### Egreso basado en DNS
+### Salida basada en DNS
 
-El ejemplo independiente `external-api-client` permite DNS a través de **Pods CoreDNS identificados por Cilium** y HTTPS a las direcciones de API observadas:
+El ejemplo independiente `external-api-client` permite DNS a través de **Pod de CoreDNS identificados por Cilium** y HTTPS a las direcciones de API observadas:
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -1063,11 +1062,11 @@ spec:
         protocol: TCP
 ```
 
-Verifique el diseño real de resolver/identidad. DNS NodeLocal, DNS de host o endpoints no gestionados por Cilium pueden necesitar una regla compatible diferente. La observación de IP FQDN no es autenticación de API remota; tenga en cuenta el almacenamiento en caché DNS y las direcciones compartidas. Las funciones L7/FQDN específicas de Cilium también van más allá del alcance de soporte predeterminado de Kubernetes NetworkPolicy enumerado por AWS.
+Verifique la disposición real de resolutores/identidad. DNS NodeLocal, DNS del host o endpoints que no administra Cilium pueden necesitar otra regla compatible. La observación de IP por FQDN no autentica la API remota; tenga en cuenta la caché DNS y las direcciones compartidas. Las funciones L7/FQDN específicas de Cilium también exceden el ámbito predeterminado de compatibilidad de Kubernetes NetworkPolicy que enumera AWS.
 
 ## Configuración de webhook
 
-El diseño convencional de enrutamiento directo requiere que el plano de control alcance las IP de Pod de webhook. Si no existe una ruta de retorno de Pod adecuada, use componentes alojados en cloud ubicados apropiadamente. Verifique por separado los diseños alternativos de gateway/proxy.
+El diseño convencional de enrutamiento directo requiere que el plano de control pueda acceder a las IP de Pod de webhook. Si no existe una ruta de retorno adecuada para los Pod, utilice componentes alojados en la nube y ubicados como corresponde. Verifique por separado los diseños alternativos con gateway/proxy.
 
 ```yaml
 affinity:
@@ -1081,13 +1080,13 @@ affinity:
           - hybrid
 ```
 
-Este es un fragmento de affinity de plantilla Pod, no un Deployment completo. Una condición `NotIn hybrid` no prueba que exista capacidad de cloud saludable coincidente ni todas las demás restricciones de programación.
+Este es un fragmento de affinity de una plantilla de Pod, no un Deployment completo. Una condición `NotIn hybrid` no demuestra que haya capacidad de nube coincidente y en buen estado ni que se cumplan todas las demás restricciones de planificación.
 
-AWS Load Balancer Controller, los operadores CloudWatch/ADOT y cert-manager tienen requisitos de ubicación de webhook. Distinga sus operadores de los recopiladores de nodos. **Metrics Server es un servicio API agregado, no un webhook de admisión**, pero aún necesita accesibilidad del plano de control al Pod. Pruebe llamadas API y webhooks reales, no solo la fase Pod.
+AWS Load Balancer Controller, los operadores de CloudWatch/ADOT y cert-manager tienen requisitos de ubicación para los webhooks. Distinga sus operadores de los recopiladores de los nodos. **Metrics Server es un servicio de API agregada, no un webhook de admisión**, pero aun así necesita conectividad desde el plano de control hasta el Pod. Pruebe las llamadas reales a la API y los webhooks, no solo la fase de los Pod.
 
 ## Diagnósticos de conectividad de solo lectura
 
-### TLS y temporización de API de Kubernetes
+### TLS y tiempos de la API de Kubernetes
 
 ```bash
 set -euo pipefail
@@ -1103,7 +1102,7 @@ curl --silent --show-error --connect-timeout 5 --max-time 15 \
 cat "$WORK_DIR/api-timing.json"
 ```
 
-La CA y el nombre de host del cluster deben validar. Una respuesta HTTP401/403 puede demostrar un endpoint TLS accesible mientras falta autorización; no es una comprobación de estado de aplicación exitosa. Los campos de temporización de Curl son fases acumulativas, no una medición RTT pura. Un ping ICMP sin respuesta no prueba que la API de EKS esté caída.
+La CA del clúster y el nombre de host deben validarse. Una respuesta HTTP401/403 puede demostrar que se llega a un endpoint TLS, aunque falte autorización; no es una comprobación satisfactoria del estado de la aplicación. Los campos de tiempo de Curl representan fases acumuladas, no una medición pura de RTT. Que no haya respuesta a un ping ICMP no demuestra que la API de EKS esté caída.
 
 ### Estado y métricas de VPN
 
@@ -1138,29 +1137,29 @@ aws cloudwatch get-metric-statistics --region "$AWS_REGION" \
 jq '{label:.Label,datapoints:(.Datapoints|sort_by(.Timestamp))}' "$WORK_DIR/vpn-metric-result.json"
 ```
 
-`available` es un estado de recurso VPN, no el estado del túnel. TunnelState es 1 para UP/static o ESTABLISHED/BGP y 0 para otros estados; los agregados pueden ser fraccionarios. Mantenga los datos ausentes separados de DOWN y verifique ambos túneles, las rutas y el comportamiento real de los workloads. La consulta evita volcar configuraciones de customer gateway/clave precompartida.
+`available` es el estado de un recurso VPN, no el estado del túnel. TunnelState vale 1 cuando está UP/estático o ESTABLISHED/BGP, y 0 para otros estados; los agregados pueden ser fraccionarios. Distinga los datos ausentes de DOWN y verifique ambos túneles, las rutas y el comportamiento real de las cargas de trabajo. La consulta evita mostrar las configuraciones de gateways de cliente/las claves precompartidas.
 
-La recomendación general de conectividad de AWS es un ancho de banda de **100 Mbps y un RTT de 200 ms o menos**. Al elegir VPN o Direct Connect, evalúe la latencia real de ida y vuelta, la pérdida de paquetes, las rutas de conmutación por error y los tiempos de respuesta de las cargas de trabajo, además del ancho de banda nominal del circuito.
+La recomendación general de conectividad de AWS es **100 Mbps de ancho de banda y RTT de 200 ms o menos**. Al elegir VPN o Direct Connect, evalúe la latencia real de ida y vuelta, la pérdida de paquetes, las rutas de conmutación por error y los tiempos de respuesta de las cargas de trabajo, además del ancho de banda nominal del circuito.
 
 ## Referencias
 
 - [Redes híbridas](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)
-- [EKS PrivateLink: endpoints de administración, OIDC y consola](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)
-- [Endpoints de interfaz S3 y DNS privado](https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html)
-- [Políticas de endpoint Roles Anywhere](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/vpc-interface-endpoints.html)
-- [Soporte CNI híbrido actual](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
+- [PrivateLink de EKS: endpoints de administración, OIDC y consola](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)
+- [Endpoints de interfaz de S3 y DNS privado](https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html)
+- [Políticas de endpoints de Roles Anywhere](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/vpc-interface-endpoints.html)
+- [Compatibilidad actual de CNI híbridos](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
 - [Procedimiento BGP híbrido de AWS](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cilium-bgp.html)
-- [DNS y webhooks de modo mixto](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
+- [DNS y webhooks en modo mixto](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html)
 - [Conceptos de enrutamiento híbrido](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-kubernetes.html)
 - [Referencia de flujo de tráfico híbrido](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-concepts-traffic-flows.html)
-- [Fuente de enrutamiento Cilium 1.18.3](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/concepts/routing.rst)
-- [Fuente de política DNS Cilium 1.18.3](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/security/dns.rst)
+- [Código fuente de enrutamiento de Cilium 1.18.3](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/concepts/routing.rst)
+- [Código fuente de políticas DNS de Cilium 1.18.3](https://github.com/cilium/cilium/blob/v1.18.3/Documentation/security/dns.rst)
 - [ASN privados RFC6996](https://www.rfc-editor.org/rfc/rfc6996.html)
-- [Referencia BGP RouterOS](https://help.mikrotik.com/docs/spaces/ROS/pages/328220/BGP)
-- [Fuente de referencia BGP FRR 10.7.1](https://github.com/FRRouting/frr/blob/frr-10.7.1/doc/user/bgp.rst)
-- [Métricas VPN](https://docs.aws.amazon.com/vpn/latest/s2svpn/monitoring-cloudwatch-vpn.html)
+- [Referencia de BGP de RouterOS](https://help.mikrotik.com/docs/spaces/ROS/pages/328220/BGP)
+- [Código fuente de referencia de BGP de FRR 10.7.1](https://github.com/FRRouting/frr/blob/frr-10.7.1/doc/user/bgp.rst)
+- [Métricas de VPN](https://docs.aws.amazon.com/vpn/latest/s2svpn/monitoring-cloudwatch-vpn.html)
 - [Código fuente del servidor kubelet de Kubernetes 1.36.5](https://github.com/kubernetes/kubernetes/blob/v1.36.5/pkg/kubelet/server/server.go)
-- [Semántica Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Semántica de Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 
 
-< [Anterior: Requisitos previos](01-prerequisites.md) | [Tabla de contenido](./README.md) | [Siguiente: Configuración de internet restringido](03-airgap-setup.md) >
+< [Anterior: Requisitos previos](01-prerequisites.md) | [Índice](./README.md) | [Siguiente: Configuración con acceso restringido a Internet](03-airgap-setup.md) >

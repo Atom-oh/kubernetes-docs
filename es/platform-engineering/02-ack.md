@@ -1,22 +1,22 @@
 # AWS Controllers for Kubernetes (ACK)
 
-> **Última actualización**: 16 de octubre de 2026
+> **Última actualización**: 23 de octubre de 2026
 
 ## Conceptos y arquitectura
 
-ACK conecta recursos personalizados de Kubernetes con las API de AWS mediante controllers específicos de cada servicio. Los CRD definen las entradas; los controllers reconcilian el estado deseado con el estado observado de AWS. Crear un CR no significa que el recurso de AWS esté listo. Inspecciona el estado y la preparación propia del servicio.
+ACK conecta los recursos personalizados de Kubernetes con las API de AWS mediante controladores específicos de cada servicio. Las CRD definen las entradas; los controladores reconcilian el estado deseado con el estado observado en AWS. Crear un CR no significa que el recurso de AWS esté listo. Inspeccione el estado y la condición de disponibilidad propia del servicio.
 
-ACK reutiliza las API de Kubernetes, RBAC y las herramientas GitOps, pero la autorización de Kubernetes y AWS IAM siguen siendo independientes. El CR de un usuario normalmente genera acciones bajo los permisos de AWS del controller. Por lo tanto, el permiso para escribir un CR delega la capacidad de solicitar acciones de AWS a través de ese controller.
+ACK reutiliza las API de Kubernetes, RBAC y las herramientas GitOps, pero la autorización de Kubernetes y IAM de AWS siguen siendo independientes. Normalmente, el CR de un usuario provoca acciones que se ejecutan con los permisos de AWS del controlador. Por lo tanto, el permiso para escribir un CR delega la capacidad de solicitar acciones de AWS a través de ese controlador.
 
-ACK no es un sucesor obligatorio de CloudFormation ni Terraform. AWS contiene el recurso real; Kubernetes contiene el spec/status del CR. La gestión de las desviaciones respecto al estado deseado depende de los campos compatibles y de la lógica del controller. Asigna un único propietario de mutación en lugar de permitir que varias herramientas o clusters reconcilien el mismo recurso de AWS.
+ACK no es un sucesor obligatorio de CloudFormation ni de Terraform. AWS mantiene el recurso real; Kubernetes mantiene la spec y el status del CR. La gestión de la divergencia depende de los campos admitidos y de la lógica del controlador. Asigne un único propietario de las modificaciones en lugar de permitir que varias herramientas o clústeres reconcilien el mismo recurso de AWS.
 
-![ACK reconcilia recursos personalizados de Kubernetes mediante las API de AWS](../.gitbook/assets/en-platform-engineering-02-ack-0.png)
+![ACK reconcilia los recursos personalizados de Kubernetes mediante las API de AWS](../.gitbook/assets/en-platform-engineering-02-ack-0.png)
 
 [Diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-02-ack-0.html)
 
-## Versiones y soporte
+## Versiones y compatibilidad
 
-| Controller | Versión |
+| Controlador | Versión |
 | --- | --- |
 | s3 | 1.13.1 |
 | iam | 1.10.1 |
@@ -26,13 +26,13 @@ ACK no es un sucesor obligatorio de CloudFormation ni Terraform. AWS contiene el
 | route53 | 1.7.1 |
 | rds | 1.13.3 |
 
-Estas versiones se verificaron frente a las publicaciones oficiales y los charts OCI. Consulta la lista oficial de servicios para conocer la cobertura completa y el estado Alpha/Beta/GA. GA no implica que estén cubiertas todas las características de las API de AWS ni todos los requisitos operativos. La cadena de API v1alpha1 de un CRD es distinta de la madurez del controller.
+Estas versiones se verificaron con las versiones oficiales y los charts OCI. Consulte la lista oficial de servicios para conocer la cobertura completa y el estado Alpha/Beta/GA. GA no implica que se cubran todas las funciones de la API de AWS ni todos los requisitos operativos. La cadena de API v1alpha1 de una CRD es distinta de la madurez del controlador.
 
-El mínimo histórico de Kubernetes 1.16 no es una referencia operativa actual. Verifica conjuntamente una versión compatible de Kubernetes/EKS, la compatibilidad del controller, la versión de Helm y el proceso de actualización de CRD.
+El mínimo histórico de Kubernetes 1.16 no es una base operativa actual. Verifique en conjunto una versión compatible de Kubernetes/EKS, la compatibilidad del controlador, la versión de Helm y el proceso de actualización de las CRD.
 
 ## Preparación de la instalación e inspección sin conexión
 
-Usa la ruta del chart OCI a continuación, en lugar de la ruta anterior de eks-charts s3-chart. Este comando renderiza manifiestos sin instalarlos en un cluster.
+Use la ruta del chart OCI que aparece a continuación, en lugar de la antigua ruta eks-charts s3-chart. Este comando genera los manifiestos sin instalarlos en un clúster.
 
 ```bash
 helm template ack-s3 \
@@ -46,23 +46,23 @@ helm template ack-s3 \
   --set metrics.service.create=true --set deletionPolicy=retain
 ```
 
-Antes de una instalación/actualización real, prepara el namespace infra y el ServiceAccount del controller y, a continuación, configura IRSA o EKS Pod Identity compatible. Verifica las condiciones de confianza de OIDC de IRSA para el namespace/ServiceAccount, o la compatibilidad y asociación del agente/SDK de Pod Identity. Crear únicamente un rol de IAM no adjunta permisos a un ServiceAccount.
+Antes de una instalación o actualización real, prepare el namespace infra y el ServiceAccount del controlador; luego, configure IRSA o EKS Pod Identity, si es compatible. Verifique las condiciones de confianza OIDC de IRSA para el namespace y el ServiceAccount, o la compatibilidad del agente/SDK de Pod Identity y su asociación. Crear un rol de IAM por sí solo no asigna permisos a un ServiceAccount.
 
-Revisa los permisos de lectura/creación/actualización/eliminación/etiquetado del controller y los permisos PassRole frente a los recursos gestionados. AmazonS3FullAccess o Resource:"*" no son ejemplos de mínimo privilegio. Las políticas de acceso a datos de la subguía no constituyen una política completa para el controller.
+Revise los permisos de lectura, creación, actualización, eliminación y etiquetado del controlador, así como cualquier permiso PassRole, con respecto a los recursos administrados. AmazonS3FullAccess o Resource:"*" no son ejemplos de privilegio mínimo. Las políticas de acceso a datos de la subguía no constituyen una política completa para el controlador.
 
-Un renderizado correcto no valida IAM, las restricciones de la API de AWS, la admisión, la instalación de CRD, la conectividad de endpoints ni la creación de recursos. Instalar controllers y cambiar CRD son cambios operativos independientes.
+Que la generación se complete correctamente no valida IAM, las restricciones de las API de AWS, la admisión, la instalación de las CRD, la conectividad con los endpoints ni la creación de recursos. Instalar controladores y modificar CRD son cambios operativos distintos.
 
-## Aislamiento de namespace y cuenta
+## Aislamiento de namespaces y cuentas
 
-El installScope predeterminado es cluster. El simple hecho de instalar releases en los namespaces dev/prod puede hacer que ambos controllers observen los mismos CR. Este ejemplo establece installScope=namespace y watchNamespace=infra, y deshabilita CARM y las referencias entre namespaces. Usa ámbitos de observación, ServiceAccounts, roles de IAM y RBAC independientes para otros equipos.
+El valor predeterminado de installScope es cluster. Limitarse a instalar versiones en los namespaces dev/prod puede hacer que ambos controladores sigan observando los mismos CR. Este ejemplo establece installScope=namespace y watchNamespace=infra, y desactiva CARM y las referencias entre namespaces. Use ámbitos de observación, ServiceAccounts, roles de IAM y RBAC separados para los demás equipos.
 
-Incluso en modo namespace, el chart actual renderiza un ClusterRole que concede get/list/watch en namespaces para su caché de namespaces. El modo namespace no elimina todos los permisos de cluster. Inspecciona los Roles, ClusterRoles, Bindings y el acceso a Secret/FieldExport renderizados. El permiso para modificar anotaciones de namespaces, asignaciones de roles y destinos de referencias también afecta al aislamiento.
+Incluso en modo namespace, el chart actual genera un ClusterRole que concede permisos get/list/watch sobre los namespaces para la caché de namespaces. El modo namespace no elimina todos los permisos del clúster. Inspeccione los Roles, ClusterRoles, Bindings y el acceso a Secret/FieldExport generados. El permiso para modificar anotaciones de namespaces, asignaciones de roles y destinos de referencias también afecta al aislamiento.
 
-CARM permite la gestión entre cuentas y requiere confianza en el rol de destino, permisos AssumeRole y configuración del controller. No garantiza una mutación concurrente segura por varios clusters. Separa las referencias de solo lectura de la propiedad de mutación.
+CARM es una función de administración entre cuentas que requiere confianza en el rol de destino, permisos AssumeRole y configuración del controlador. No garantiza que varios clústeres puedan realizar modificaciones simultáneas de forma segura. Separe las referencias de solo lectura de la propiedad de las modificaciones.
 
 ## Creación, referencias y estado
 
-Los esquemas de los servicios difieren. La política de S3 pertenece a Bucket.spec.policy; no existe un CRD BucketPolicy separado. Las políticas gestionadas de IAM se adjuntan mediante Role.policies/policyRefs. Las subguías muestran los atributos queueName/string de SQS y los campos dedicados Topic/Subscription de SNS.
+Los esquemas de los servicios varían. La política de S3 pertenece a Bucket.spec.policy; no hay una CRD BucketPolicy independiente. Las políticas administradas de IAM se asocian mediante Role.policies/policyRefs. Las subguías muestran queueName y atributos de tipo string para SQS, así como los campos específicos de Topic/Subscription para SNS.
 
 - [S3 / IAM](ack/01-s3-iam.md)
 - [SQS / SNS](ack/02-sqs-sns.md)
@@ -78,13 +78,13 @@ kubectl get events -n infra \
   --field-selector involvedObject.name=app-data
 ```
 
-ACK.ResourceSynced=True indica la sincronización del controller; no es una comprobación de conexión a la base de datos ni de preparación de la aplicación. Inspecciona otras condiciones, como ACK.Terminal/ACK.Recoverable, y el estado del servicio. Cuando se proporciona para el recurso, su ARN se encuentra en status.ackResourceMetadata.arn; los ARN de NLB y TargetGroup también usan esta ruta.
+ACK.ResourceSynced=True describe la sincronización del controlador; no es una comprobación de conexión a la base de datos ni de disponibilidad de la aplicación. Inspeccione otras condiciones, como ACK.Terminal/ACK.Recoverable, y el estado del servicio. Cuando se proporciona para el recurso, su ARN se encuentra en status.ackResourceMetadata.arn; las ARN de NLB y TargetGroup también usan esta ruta.
 
-Los campos Ref compatibles pueden conectar recursos en el mismo namespace. Aplicar varios documentos YAML no es una transacción para todo AWS. Verifica la preparación del recurso referenciado y los identificadores externos/ARN.
+Los campos Ref admitidos pueden conectar recursos del mismo namespace. Aplicar varios documentos YAML no constituye una transacción que abarque AWS. Verifique que los recursos referenciados estén listos y compruebe los identificadores/ARN externos.
 
 ## Adopción y retención
 
-Usa las anotaciones ResourceAdoption a continuación. El chart de S3 actual habilita esta feature gate. Revisa los identificadores, la cuenta y la región, y planifica la transferencia de propiedad desde otras herramientas antes de la adopción.
+Use las anotaciones de ResourceAdoption que se muestran a continuación. El chart actual de S3 habilita esta feature gate. Revise los identificadores, la cuenta y la región, y planifique la transferencia de propiedad desde otras herramientas antes de adoptar.
 
 ```yaml
 apiVersion: s3.services.k8s.aws/v1alpha1
@@ -100,13 +100,13 @@ spec:
   name: REPLACE_WITH_EXISTING_BUCKET
 ```
 
-El runtime acepta adopt y adopt-or-create. adopt incorpora el estado existente a spec/status; adopt-or-create puede crear un recurso que no existe. La reconciliación normal posterior puede modificar un recurso adoptado, por lo que la adopción no es simplemente acceso de lectura. El comportamiento de solo lectura es una característica independiente, con su propio gate y ciclo de vida. La anotación anterior resource-imported:"true" no configura la adopción. La documentación oficial también identifica AdoptedResource como el enfoque más antiguo.
+El entorno de ejecución acepta adopt y adopt-or-create. adopt lee el estado existente y lo incorpora a spec/status; adopt-or-create puede crear un recurso que no exista. La reconciliación normal posterior puede modificar un recurso adoptado, por lo que la adopción no es simplemente acceso de lectura. El comportamiento de solo lectura es una función independiente, con su propia feature gate y ciclo de vida. La antigua anotación resource-imported:"true" no configura la adopción. La documentación oficial también identifica AdoptedResource como el enfoque anterior.
 
-El valor de retención es **retain**. El runtime actual no acepta orphan. La precedencia es: services.k8s.aws/deletion-policy del CR individual, la deletion-policy específica del servicio configurada en el namespace y, luego, el valor predeterminado del controller. Conservar los recursos de AWS deja responsabilidades continuas de costo, propiedad y copias de seguridad.
+El valor de retención es **retain**. El entorno de ejecución actual no acepta orphan. El orden de precedencia es services.k8s.aws/deletion-policy del CR individual, luego la deletion-policy específica del servicio del namespace y, por último, el valor predeterminado del controlador. Retener recursos de AWS deja responsabilidades continuas de costos, propiedad y copias de seguridad.
 
 ## Observabilidad, escalado y recuperación
 
-Habilita metrics.service.create y haz coincidir el namespace de destino y el nombre del puerto a continuación. Los CRD de Prometheus Operator y los selectores ServiceMonitor de Prometheus son requisitos previos independientes.
+Habilite metrics.service.create y haga coincidir el namespace de destino y el nombre del puerto que se muestran a continuación. Las CRD del Prometheus Operator y los selectores del Prometheus ServiceMonitor son requisitos previos independientes.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -126,26 +126,37 @@ spec:
       interval: 30s
 ```
 
-El runtime revisado define ack_outbound_api_requests_total y ack_outbound_api_requests_error_total. No inventes nombres de métricas de éxito/error de reconciliación ni de latencia de API. Verifica los nombres, las etiquetas y las versiones de las métricas de controller-runtime en el endpoint real. La auditoría de CloudTrail depende del soporte de registro del servicio/API y de los eventos configurados.
+El entorno de ejecución revisado define ack_outbound_api_requests_total y ack_outbound_api_requests_error_total. No invente nombres de métricas para el éxito o el fallo de la reconciliación ni para la latencia de la API. Verifique los nombres de las métricas de controller-runtime, sus etiquetas y sus versiones en el endpoint real. La auditoría de CloudTrail depende de la compatibilidad del servicio con el registro de API y de los eventos configurados.
 
-La configuración de réplicas es deployment.replicas; revisa leaderElection.enabled al ejecutar varias réplicas. replicaCount no es la configuración de este chart. Las réplicas adicionales con elección de líder no aumentan automáticamente el rendimiento paralelo. Ajusta la concurrencia de reconciliación y resincronización según las cuotas, la limitación y el uso de recursos observados.
+La configuración de réplicas es deployment.replicas; revise leaderElection.enabled cuando ejecute varias réplicas. replicaCount no es una configuración de este chart. Las réplicas adicionales con elección de líder no aumentan automáticamente el rendimiento en paralelo. Ajuste la concurrencia de reconciliación y la resincronización según las cuotas, el throttling y el uso de recursos observados.
 
-Versiona los manifiestos y charts específicos del entorno en Git, sin incluir credenciales. La recuperación requiere los datos y las copias de seguridad de AWS, los identificadores, la política de retención y la asignación de responsabilidades, además de los CR. Crear un CR en otra región no implementa la replicación de datos ni la recuperación.
+Versione en Git los manifiestos y charts específicos de cada entorno, sin incluir credenciales. La recuperación requiere datos y copias de seguridad de AWS, identificadores, política de retención y propiedad, además de los CR. Crear un CR en otra región no implementa la replicación ni la recuperación de datos.
 
-## Resolución de problemas
+## ACK administrado por EKS
 
-Ante fallos al crear recursos, inspecciona las condiciones y los eventos, la imagen y los logs del controller, la cuenta y la región, la confianza y las políticas de IAM, las referencias y las restricciones del servicio. Distingue los errores de RBAC de Kubernetes de los de AWS IAM. Para los recursos Terminating, identifica la eliminación de AWS, la dependencia o la condición de retención que el finalizer está esperando.
+La capacidad ACK de EKS Capabilities ejecuta los controladores de servicios GA de upstream como una sola capacidad en una infraestructura propiedad de AWS. Según las pruebas de octubre de 2026, presenta las siguientes diferencias con respecto a la instalación con Helm anterior.
 
-No elimines finalizers de forma rutinaria. Hacerlo puede dejar recursos de AWS sin seguimiento. Resuelve primero la causa; usa un procedimiento de recuperación de último recurso solo después de revisar el estado real del recurso, las copias de seguridad y la propiedad posterior.
+- IAM parte de un único rol de capacidad, y un `IAMRoleSelector` con ámbito de clúster asume un rol distinto para cada namespace. Para lograr la misma separación con los controladores OSS se necesitan tanto `featureGates.IAMRoleSelector=true` como `enableCARM=false`; si se deja CARM activado, el controlador no se inicia.
+- Las etiquetas de recursos de AWS y las etiquetas de sesión usan el prefijo `eks:` (`eks:eks-capability-arn` y otras). Al migrar, actualice las condiciones de asignación de costos y de IAM definidas para las etiquetas OSS `services.k8s.aws/`.
+- No hay CRD `FieldExport`, y no se pueden elegir ni cambiar las versiones de los controladores ni el intervalo de resincronización. La divergencia del lado de AWS no se revirtió periódicamente en un plazo de 25 minutos ni en el entorno administrado ni en OSS.
+- Las anotaciones de adopción (`adopt-or-create`) y `deletion-policy: retain` también funcionaron en la capacidad administrada (medido en el entorno administrado); asimismo, un controlador OSS instalado después de eliminar la capacidad con RETAIN adoptó los CR existentes.
+
+Para ver mediciones y recomendaciones de selección, consulte [EKS Capabilities](../eks/13-eks-capabilities.md).
+
+## Solución de problemas
+
+Si falla la creación, inspeccione las condiciones y los eventos, la imagen y los registros del controlador, la cuenta/región, la confianza y las políticas de IAM, las referencias y las restricciones del servicio. Distinga los errores de RBAC de Kubernetes de los errores de IAM de AWS. En los recursos en estado Terminating, identifique qué condición de eliminación, dependencia o retención de AWS está esperando el finalizer.
+
+No elimine los finalizers como práctica habitual. Esto puede dejar recursos de AWS sin seguimiento. Primero resuelva la causa; recurra a un procedimiento de recuperación de último recurso solo después de revisar el estado real de los recursos, las copias de seguridad y la propiedad posterior.
 
 ## Verificación y referencias
 
-Se leyeron los ocho archivos de guía originales y los dos cuestionarios en coreano e inglés, incluidos 56 bloques de código únicos. Se renderizaron siete charts OCI oficiales y se verificaron 18 ejemplos de recursos frente a CRD versionados, rechazando los campos spec desconocidos. No se probaron la creación de recursos de AWS, la ejecución de controllers, la admisión/CEL, la entrega de mensajes ni la conectividad de bases de datos.
+Se leyeron los ocho archivos originales de la guía y los dos cuestionarios en coreano/inglés, incluidos 56 bloques de código únicos. Se generaron siete charts OCI oficiales y se verificaron 18 ejemplos de recursos con las CRD versionadas y el rechazo de campos desconocidos en spec. No se probaron la creación de recursos de AWS, la ejecución de controladores, la admisión/CEL, la entrega de mensajes ni la conectividad con bases de datos.
 
-- [Servicios ACK](https://aws-controllers-k8s.github.io/community/docs/community/services/)
+- [Servicios de ACK](https://aws-controllers-k8s.github.io/community/docs/community/services/)
 - [Adopción de recursos](https://aws-controllers-k8s.github.io/community/docs/user-docs/features/#resourceadoption)
 - [Retención](https://aws-controllers-k8s.github.io/community/docs/user-docs/deletion-policy/)
 - [Chart de S3 1.13.1](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.13.1/helm)
 - [Runtime 0.66.0](https://github.com/aws-controllers-k8s/runtime/tree/v0.66.0)
 
-[Cuestionario ACK](../quizzes/platform-engineering/02-ack-quiz.md)
+[Cuestionario de ACK](../quizzes/platform-engineering/02-ack-quiz.md)
