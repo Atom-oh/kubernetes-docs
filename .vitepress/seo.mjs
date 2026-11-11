@@ -132,6 +132,7 @@ export function extractDescription(markdown) {
       !trimmed.startsWith('>') && // blockquotes (doc header metadata)
       !trimmed.startsWith('|') && // tables
       !/^([-*+]|\d+\.)\s/.test(trimmed) && // list items
+      !/^[A-H][.)]\s/.test(trimmed) && // quiz answer options (A. / B)) - never a page summary
       !/^!\[[^\]]*\]\([^)]*\)$/.test(trimmed) && // standalone images
       !trimmed.startsWith('<') && // HTML blocks (details/summary toggles etc.)
       !/^(-{3,}|_{3,}|\*{3,})$/.test(trimmed) // horizontal rules
