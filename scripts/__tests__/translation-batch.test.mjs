@@ -648,6 +648,9 @@ test('publishing rejects a translation branch edited since the prepared snapshot
   f.write('cn/topic/page.md', translated.replace('Translated', 'Other writer'))
   const other = f.commit()
   f.git('push', '-q', '--force', gh.remote, `HEAD:refs/heads/${batchBranch}`)
+  // Git >= 2.56 updates origin's remote-tracking ref when the push URL equals
+  // origin's URL; pin it back to the snapshot so the checkout stays stale.
+  f.git('update-ref', `refs/remotes/origin/${batchBranch}`, snapshot)
   f.git('checkout', '-q', '--detach', 'origin/main')
   prepareBatch(f.root, { refs: [snapshot] })
   assert.throws(() => publishBatch(f.root), /branch changed/)

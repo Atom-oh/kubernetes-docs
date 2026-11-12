@@ -110,6 +110,12 @@ export class EdgeStack extends cdk.Stack {
 function handler(event) {
   var request = event.request;
   var uri = request.uri;
+  // docs.atomai.click/robots.txt: crawlers only read robots.txt at the host root,
+  // but the site lives under /${SITE_PREFIX}/. Serve the built one from there.
+  if (uri === '/robots.txt') {
+    request.uri = '/${SITE_PREFIX}/robots.txt';
+    return request;
+  }
   if (uri === '/' || uri === '/${SITE_PREFIX}') {
     return { statusCode: 301, statusDescription: 'Moved Permanently', headers: { location: { value: '/${SITE_PREFIX}/' } } };
   }
