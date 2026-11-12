@@ -1,29 +1,29 @@
 # Kube Resource Orchestrator (kro)
 
-> **Última actualización**: 12 de septiembre de 2026 · **Referencia**: kro 0.9.4
+> **Última actualización**: 23 de octubre de 2026 · **Versión de referencia**: kro 0.9.4
 
 ## Conceptos y alcance
 
-El nombre oficial es Kube Resource Orchestrator, un subproyecto de Kubernetes SIG Cloud Provider. Una ResourceGraphDefinition (RGD) define esquemas de entrada, relaciones y estado entre recursos de Kubernetes. Tras la validación y compilación, kro reconcilia dinámicamente instancias del CRD generado.
+El nombre oficial es Kube Resource Orchestrator, un subproyecto de Kubernetes SIG Cloud Provider. Una ResourceGraphDefinition (RGD) define esquemas de entrada, relaciones y estados entre recursos de Kubernetes. Tras la validación y compilación, kro reconcilia dinámicamente instancias de la CRD generada.
 
-Una RGD define una API y un grafo de recursos; no es una instancia de aplicación. El spec de la instancia proporciona entradas y las plantillas de spec.resources crean objetos como Deployments y Services. Los CRDs existentes, como los recursos ACK, pueden participar, pero kro no proporciona sus controllers ni permisos de AWS IAM.
+Una RGD define una API y un grafo de recursos; no es una instancia de una aplicación. El spec de la instancia proporciona las entradas y las plantillas de `spec.resources` crean objetos como Deployments y Services. Pueden participar CRDs existentes, como los recursos de ACK, pero kro no proporciona sus controladores ni los permisos de AWS IAM correspondientes.
 
-Las expresiones `${...}` dentro de YAML usan CEL. Los ejemplos anteriores de .parent, .children, childResources, resourceKind, statusMappings y Go-template no pertenecen a esta API. No cree de forma independiente el mismo CRD de aplicación ni compita con la RGD por la propiedad.
+Las expresiones `${...}` dentro del YAML usan CEL. Los ejemplos anteriores que usan .parent, .children, childResources, resourceKind, statusMappings y plantillas de Go no forman parte de esta API. No crees por separado la misma CRD de aplicación ni compitas con la RGD por su propiedad.
 
-## Comparación con Helm, Kustomize y Operators
+## Comparación con Helm, Kustomize y los Operators
 
-| Herramienta | Función y límite principales |
+| Herramienta | Función principal y límites |
 | --- | --- |
-| Helm | Renderiza charts de Go-template y administra el historial de releases. Las dependencias de charts v2 se declaran en Chart.yaml. |
-| Kustomize | Transforma manifiestos mediante bases y patches; no es un controller de tiempo de ejecución. |
-| Custom operator | Puede implementar en código recuperación, migraciones y backups específicos del dominio. |
-| kro | Infiere un grafo de recursos a partir de referencias CEL y reconcilia instancias; no genera algoritmos de recuperación de bases de datos. |
+| Helm | Renderiza charts con plantillas de Go y administra el historial de las versiones instaladas. Las dependencias de charts de v2 se declaran en Chart.yaml. |
+| Kustomize | Transforma manifiestos mediante bases y parches; no es un controlador de ejecución. |
+| Operator personalizado | Puede implementar en código recuperaciones, migraciones y copias de seguridad específicas del dominio. |
+| kro | Deduce un grafo de recursos a partir de referencias de CEL y reconcilia instancias; no genera algoritmos de recuperación de bases de datos. |
 
-Un chart de Helm puede instalar kro mientras GitOps administra RGDs e instancias. Estas herramientas pueden trabajar juntas. Migrar de Helm a kro no mejora automáticamente la seguridad, la recuperación ni las operaciones. Los controllers de Kubernetes Deployment también siguen administrando los Deployments creados originalmente por Helm.
+Un chart de Helm puede instalar kro mientras GitOps administra las RGD y sus instancias. Estas herramientas pueden trabajar juntas. Pasar de Helm a kro no mejora automáticamente la seguridad, la recuperación ni las operaciones. Los controladores de Deployment de Kubernetes también siguen administrando los Deployments creados originalmente por Helm.
 
 ## Instalación y permisos
 
-El repositorio oficial es kubernetes-sigs/kro; las rutas antiguas de kro-run podrían redirigir. Esta es una **inspección sin conexión** de un chart OCI fijado. No use las antiguas URL de descarga de kro-project ni una instalación de CLI inventada. Esta release no distribuye un binario de CLI independiente; use kubectl y Helm.
+El repositorio oficial es kubernetes-sigs/kro; las rutas antiguas de kro-run pueden redirigir a otras. Esto es una **inspección sin conexión** de un chart OCI fijado a una versión. No uses las antiguas URL de descarga de kro-project ni inventes comandos de instalación de la CLI. Esta versión no distribuye un binario de CLI independiente; usa kubectl y Helm.
 
 ```bash
 helm template kro oci://registry.k8s.io/kro/charts/kro \
@@ -31,9 +31,9 @@ helm template kro oci://registry.k8s.io/kro/charts/kro \
   --set rbac.mode=aggregation --include-crds
 ```
 
-Antes de la instalación, verifique una versión de Kubernetes compatible, las políticas de admisión, los namespaces y los CRDs/controllers existentes. La anterior lista 1.31–1.33 no se presenta como compatibilidad actual. Helm upgrade no actualiza automáticamente crds/; revise la release 0.9.4 y los cambios de CRD mediante un proceso independiente.
+Antes de la instalación, verifica que la versión de Kubernetes sea compatible, así como las políticas de admisión, los namespaces y las CRD o los controladores existentes. La lista anterior de las versiones 1.31–1.33 no se presenta como una descripción de la compatibilidad actual. Helm upgrade no actualiza automáticamente crds/; revisa la versión 0.9.4 y los cambios en las CRD mediante un proceso independiente.
 
-El valor predeterminado rbac.mode=unrestricted concede acceso amplio al clúster. El ejemplo renderiza el modo aggregation, que aún incluye permisos básicos para CRDs, RGDs, GraphRevisions y ConfigMaps. Añada permisos para la API de aplicación generada y los recursos secundarios. Este ClusterRole permite los tipos de recursos del ejemplo y puede conceder acceso en todo el clúster. Los administradores de plataforma de confianza deben controlar las RGDs y las etiquetas de agregación.
+El valor predeterminado `rbac.mode=unrestricted` concede acceso amplio al clúster. El ejemplo renderiza el modo de agregación, que aun así incluye permisos básicos para CRD, RGD, GraphRevisions y ConfigMaps. Añade permisos para la API de la aplicación generada y los recursos secundarios. Este ClusterRole permite los tipos de recursos del ejemplo y puede conceder acceso a todo el clúster. Los administradores de plataforma de confianza deben controlar las RGD y las etiquetas de agregación.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -62,9 +62,9 @@ rules:
 
 ## Ejemplo completo de NginxApp
 
-Los archivos RGD, de instancia y RBAC también están en examples/platform/kro. Ingress está deshabilitado de forma predeterminada. Antes de habilitarlo, prepare un IngressClass/controller aprobado, el DNS del host y un TLS Secret en el mismo namespace. La cadena className=internal por sí sola no configura un balanceador de carga interno.
+Los archivos de la RGD, la instancia y RBAC también están en examples/platform/kro. Ingress está deshabilitado de forma predeterminada. Antes de habilitarlo, prepara una IngressClass/controlador aprobado, el DNS del host y un Secret de TLS en el mismo namespace. La cadena `className=internal` por sí sola no configura un balanceador de carga interno. Este ejemplo permite que las instancias establezcan directamente `ingress.className` y `ingress.host`, lo que en un clúster multiinquilino podría utilizarse para apropiarse del host de otro equipo. En las RGD de producción, fija la clase y deriva el host del nombre y el namespace de la instancia.
 
-La imagen utiliza la misma etiqueta nginx-unprivileged que el ejemplo de Helm. Se configuran un UID no root, una raíz de solo lectura y un volumen /tmp, pero la ejecución de la imagen no se probó. Verifique los digests, la arquitectura y las políticas para el despliegue.
+La imagen usa la misma etiqueta de nginx-unprivileged que el ejemplo de Helm. Se configuran un UID sin privilegios de root, un sistema de archivos raíz de solo lectura y un volumen /tmp, pero no se probó la ejecución de la imagen. Verifica los digests, la arquitectura y las políticas antes del despliegue.
 
 ### ResourceGraphDefinition
 
@@ -214,15 +214,15 @@ spec:
     tlsSecret: app-tls
 ```
 
-SimpleSchema en schema.spec describe los tipos, los valores predeterminados y los límites; kro lo convierte en el esquema OpenAPI del CRD generado. CEL schema.metadata/spec se refiere a la instancia, mientras que deployment/service se refiere a IDs de recursos. Defina el estado proyectado bajo schema.status.
+SimpleSchema en `schema.spec` describe los tipos, los valores predeterminados y los límites; kro lo convierte en el esquema OpenAPI de la CRD generada. `schema.metadata/spec` en CEL hace referencia a la instancia, mientras que `deployment/service` hace referencia a los ID de los recursos. Define el estado proyectado bajo `schema.status`.
 
-El readyWhen de este ejemplo comprueba los propios availableReplicas y observedGeneration del Deployment. Sin condiciones de preparación, la existencia y las referencias resolubles pueden bastar para avanzar. readyWhen debe devolver valores Boolean y referirse únicamente a su propio ID de recurso. Los SLO de la aplicación y las comprobaciones de bases de datos permanecen separados.
+La condición `readyWhen` de este ejemplo comprueba los campos `availableReplicas` y `observedGeneration` del propio Deployment. Sin condiciones de preparación, la existencia y las referencias resolubles pueden bastar para avanzar. `readyWhen` debe devolver valores booleanos y hacer referencia únicamente al ID de su propio recurso. Los SLO de la aplicación y las comprobaciones de la base de datos se gestionan por separado.
 
-El Service hace referencia al selector del Deployment y el Ingress al nombre del Service, lo que crea dependencias. Los recursos independientes pueden compartir una wave; se rechazan los ciclos. includeWhen controla la inclusión condicional y puede añadir o eliminar recursos cuando cambian las condiciones. Un externalRef a un recurso existente es diferente de asumir la propiedad para crearlo o eliminarlo.
+El Service hace referencia al selector del Deployment y el Ingress al nombre del Service, lo que crea dependencias. Los recursos independientes pueden estar en la misma etapa; los ciclos se rechazan. `includeWhen` controla la inclusión condicional y puede añadir o eliminar recursos cuando cambian las condiciones. Un `externalRef` a un recurso existente no es lo mismo que asumir su propiedad para crearlo o eliminarlo.
 
 ### Orden de aplicación e inspección
 
-En un clúster aprobado, aplique el RBAC revisado y la RGD, verifique que la RGD esté Active y que el CRD generado nginxapps.platform.example.com esté Established, y después aplique la instancia. Un kubectl apply exitoso no prueba la compilación del grafo ni la preparación de la aplicación.
+En un clúster aprobado, aplica el RBAC revisado y la RGD, verifica que la RGD esté Active y que la CRD generada `nginxapps.platform.example.com` esté Established, y luego aplica la instancia. Que `kubectl apply` finalice correctamente no demuestra que el grafo se haya compilado ni que la aplicación esté lista.
 
 ```bash
 kubectl get rgd reviewed-nginxapps -o yaml
@@ -236,37 +236,47 @@ kubectl get deployments,services,ingresses -n example \
 
 ## GraphRevisions y cambios
 
-La versión 0.9.4 registra y compila GraphRevisions inmutables cuando cambian los specs de RGD. Una revisión reciente fallida no vuelve automáticamente a la anterior; el progreso de la instancia puede detenerse. Inspeccione GraphAccepted, GraphVerified, GraphRevisionsResolved y los mensajes de error, y después aplique un spec válido.
+La versión 0.9.4 registra y compila GraphRevisions inmutables cuando cambian los specs de las RGD. Si la revisión más reciente falla, no se vuelve automáticamente a la anterior; el avance de las instancias puede detenerse. Inspecciona GraphAccepted, GraphVerified, GraphRevisionsResolved y los mensajes de error; luego aplica un spec válido.
 
-GraphRevision es una API internal.kro.run. Úsela para inspección y diagnóstico sin asumir contratos estables de herramientas externas. Revertir un spec de Git sigue requiriendo validación en una nueva revisión y no revierte transaccionalmente los datos de la base de datos ni los efectos externos.
+GraphRevision es una API internal.kro.run. Úsala para inspeccionar y diagnosticar, sin dar por sentados contratos estables de herramientas externas. Revertir un spec de Git sigue requiriendo su validación en una revisión nueva y no revierte transaccionalmente los datos de la base de datos ni los efectos externos.
 
-Group, kind, apiVersion y scope son inmutables dentro de una RGD. Distinga la evolución de esquema compatible de la migración a una nueva API y revise las instancias existentes y los datos almacenados. No suponga que los webhooks de conversión se generan automáticamente.
+Group, kind, apiVersion y scope son inmutables dentro de una RGD. Distingue la evolución compatible del esquema de la migración a una API nueva, y revisa las instancias existentes y los datos almacenados. No des por sentado que se generan automáticamente webhooks de conversión.
 
 ## Eliminación y propiedad
 
-Cuando se elimina una instancia, kro usa el inventario ApplySet y waves de eliminación para eliminar primero los dependientes, y conserva su finalizer hasta que desaparecen los recursos administrados. Los finalizers secundarios pueden bloquear las waves posteriores. Las referencias externas son de solo lectura y kro nunca las elimina.
+Cuando se elimina una instancia, kro utiliza el inventario de ApplySet y etapas de eliminación para quitar primero los recursos dependientes; conserva su finalizer hasta que desaparezcan los recursos administrados. Los finalizers de los recursos secundarios pueden bloquear las etapas siguientes. Las referencias externas son de solo lectura y kro nunca las elimina.
 
-Es inexacto afirmar que todos los secundarios se recolectan inmediatamente mediante garbage collection. Inspeccione ResourcesReady=Unknown/UnderDeletion, el inventario y los finalizers secundarios. Planifique la limpieza y retención de instancias, RGDs, CRDs y datos antes de eliminar controllers. La eliminación del CRD también afecta los datos de instancia.
+No es correcto afirmar que todos los recursos secundarios se recolectan inmediatamente como basura. Inspecciona `ResourcesReady=Unknown/UnderDeletion`, el inventario y los finalizers de los recursos secundarios. Planifica la limpieza y la retención de las instancias, las RGD, las CRD y los datos antes de quitar controladores. Eliminar una CRD también afecta a los datos de sus instancias.
 
 ## Migración y operaciones
 
-Revise los nombres, selectores, propiedad, field managers y controllers de GitOps para que Helm y kro no compitan por un objeto. Elija un grafo validado con nombre nuevo y cambio de tráfico, o un proceso revisado de transferencia de propiedad. No migre desinstalando de manera informal una release que posee StatefulSets, PVCs o bases de datos.
+Revisa los nombres, los selectores, la propiedad, los administradores de campos y los controladores de GitOps para evitar que Helm y kro compitan por un objeto. Elige entre un grafo nuevo con nombre validado y cambio de tráfico, o un proceso revisado de transferencia de propiedad. No migres desinstalando a la ligera una versión instalada que sea propietaria de StatefulSets, PVC o bases de datos.
 
-Use el mismo contrato de API y los digests de imagen revisados en todos los entornos, con instancias separadas para namespaces, réplicas, ingress y políticas. Las herramientas de flota como ApplicationSet requieren kro, RGDs y permisos en cada clúster de destino. kro no se conecta automáticamente a clústeres remotos arbitrarios.
+Usa el mismo contrato de API y los mismos digests de imagen revisados en todos los entornos, con instancias independientes para los namespaces, las réplicas, Ingress y las políticas. Las herramientas de gestión de flotas, como ApplicationSet, requieren kro, RGD y permisos en cada clúster de destino. kro no se conecta automáticamente a clústeres remotos arbitrarios.
 
-Las aplicaciones con estado aún necesitan comportamiento de backup, restauración, failover y migración de un database-operator o un servicio administrado. La reconciliación de recursos por sí sola no es recuperación de datos. Limite el tamaño y los permisos del grafo, defina unidades reutilizables y exponga solo estado útil. No copie el contenido de Secret en estado, etiquetas ni logs.
+Las aplicaciones con estado siguen necesitando las funciones de copia de seguridad, restauración, conmutación por error y migración de un Operator de bases de datos o de un servicio administrado. La reconciliación de recursos por sí sola no recupera los datos. Limita el tamaño del grafo y los permisos, define unidades reutilizables y expón únicamente estados útiles. No copies el contenido de los Secret en el estado, las etiquetas ni los registros.
+
+## kro administrado por EKS
+
+La capacidad kro de EKS Capabilities ejecuta el mismo controlador de upstream (versión medida: `0.9.4-eks-1`) en infraestructura propiedad de AWS. En las pruebas de octubre de 2026 se usó la RGD `NginxApp` de este capítulo, modificada para fijar la clase y el host de Ingress; las expresiones CEL funcionaron sin cambios y los tiempos del ciclo de vida de la instancia coincidieron con los de OSS. Las diferencias están en los permisos y las operaciones.
+
+- La política de acceso predeterminada de la access entry, `AmazonEKSKROPolicy`, cubre solo `kro.run` y las CRD. Asocia un ClusterRole como `kro:controller:reviewed-nginxapps`, mostrado arriba, a un grupo de Kubernetes en la access entry; sin él, la RGD informa `ControllerReady=False` con `cache sync timeout`, no `forbidden`. Las reglas son las mismas; solo cambia el mecanismo de asociación (grupo en lugar de etiqueta de agregación).
+- AWS elige la versión y no puedes fijarla. Tampoco se pueden cambiar los flags del controlador ni los límites de recursos.
+- Si en el namespace existe una CR con el mismo nombre que un recurso secundario, kro se apropia de ella y la sobrescribe (OSS se comporta igual). Añade sufijos específicos de la RGD a los nombres de los recursos secundarios.
+
+Para consultar mediciones y orientación sobre la selección, consulta [EKS Capabilities](../eks/13-eks-capabilities.md).
 
 ## Verificación y referencias
 
-Se revisaron tanto las guías originales de 504 líneas como los cuestionarios de 423 líneas, incluidos 16 bloques de código únicos y 20 temas de preguntas por idioma. El chart oficial de kro 0.9.4 se renderizó en modo aggregation y se comprobó la estructura de RGD. Su dependencia cel-go 0.31.0 compiló y evaluó las 14 expresiones publicadas únicas. Cuatro casos sintéticos cubrieron Ingress activado/desactivado, réplicas insuficientes y observedGeneration obsoleto.
+Se revisaron ambas guías originales de 504 líneas y los cuestionarios de 423 líneas, incluidos 16 bloques de código únicos y 20 temas de preguntas por idioma. Se renderizó el chart oficial de kro 0.9.4 en modo de agregación y se comprobó la estructura de la RGD. Su dependencia cel-go 0.31.0 compiló y evaluó las 14 expresiones publicadas únicas. Se probaron cuatro casos sintéticos: Ingress habilitado y deshabilitado, réplicas insuficientes y `observedGeneration` obsoleto.
 
-Estas son comprobaciones CEL con entradas sintéticas dinámicas, no validación mediante el compilador completo de grafos de kro, el descubrimiento de API de Kubernetes, la admisión del CRD generado ni un controller en ejecución. No se ejecutaron Containers, Ingress/TLS, bases de datos ni recursos de clúster.
+Estas son comprobaciones de CEL con entradas sintéticas dinámicas, no una validación con el compilador completo de grafos de kro, la detección de la API de Kubernetes, la admisión de la CRD generada ni un controlador en ejecución. No se ejecutaron contenedores, Ingress/TLS, bases de datos ni recursos del clúster.
 
 - [kro 0.9.4](https://github.com/kubernetes-sigs/kro/releases/tag/v0.9.4)
-- [API versionada y código fuente](https://github.com/kubernetes-sigs/kro/tree/v0.9.4)
+- [API y código fuente por versión](https://github.com/kubernetes-sigs/kro/tree/v0.9.4)
 - [Esquema de RGD](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/concepts/rgd/01-schema.md)
 - [Control de acceso](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/01-access-control.md)
-- [Revisiones de grafo](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/05-graph-revisions.md)
+- [Revisiones del grafo](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/05-graph-revisions.md)
 - [Eliminación de instancias](https://github.com/kubernetes-sigs/kro/blob/v0.9.4/website/docs/docs/advanced/06-instance-deletion.md)
 
-[kro quiz](../quizzes/platform-engineering/03-kro-quiz.md)
+[Cuestionario de kro](../quizzes/platform-engineering/03-kro-quiz.md)
