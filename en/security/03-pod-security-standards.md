@@ -1,7 +1,7 @@
 # Pod Security Standards (PSS)
 
 > **Validation Baseline**: Kubernetes PSA library `k8s.io/pod-security-admission` v0.36.2; example PSS policy v1.35
-> **Last Updated**: October 12, 2026
+> **Last Updated**: November 16, 2026
 
 Pod Security Standards (PSS) is a standardized policy framework for Pod security in Kubernetes. This document covers PSS concepts, configuration methods, and implementation in EKS environments.
 
@@ -234,6 +234,10 @@ spec:
 
 
 The controls apply to applicable regular, init, and ephemeral containers. A Pod-level non-root/seccomp value can be inherited; a conflicting container override is not compliant. Policy v1.34+ also forbids a nonempty `host` in HTTP/TCP probes and lifecycle hooks. In v1.35, `hostUsers: false` relaxes the non-root checks; Baseline also relaxes `procMount`, but Restricted still prohibits `Unmasked`. This requires actual user-namespace support, not merely a label. Windows-specific relaxations for privilege escalation, seccomp, and Linux capabilities are separate from this Linux example.
+
+#### November 2026 Update: AWS Batch on EKS security context support
+
+On November 13, 2026, AWS announced that AWS Batch supports additional Kubernetes security context settings in Amazon EKS job definitions, including Linux capabilities, seccomp profiles, and pod-level settings. As a result, AWS Batch jobs can now run with only the privileges they need on EKS clusters that enforce the Pod Security Standards **restricted** profile. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/11/aws-batch-eks-security-context/) for details.
 
 ### Security Level Comparison Chart
 

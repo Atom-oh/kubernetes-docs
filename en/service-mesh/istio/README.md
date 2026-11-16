@@ -1,8 +1,12 @@
 # Istio
 
-> **Last Updated**: October 26, 2026
+> **Last Updated**: November 16, 2026
 
 A practical guide for utilizing Istio Service Mesh on Amazon EKS.
+
+### November 2026 update: Istio 1.32.0 released
+
+**Istio 1.32.0** went GA on November 9, 2026 ([release notes](https://istio.io/latest/news/releases/1.32.x/announcing-1.32/), [GitHub release](https://github.com/istio/istio/releases/tag/1.32.0)), following 1.32.0-beta.0 on October 22 and rc.0 through rc.2 between October 28 and November 6. The same week (November 6), patch releases [1.31.4](https://istio.io/news/releases/1.31.x/announcing-1.31.4/) and 1.30.8 shipped for the supported branches. When a new minor goes GA, Istio's support policy moves older branches closer to end of life, so check the [support matrix](https://istio.io/latest/docs/releases/supported-releases/) for 1.32's Kubernetes support range and each branch's status before installing or upgrading. The new-install commands and examples in this guide still target 1.31.
 
 ### October 2026 security update: 1.31.3, 1.30.7 and 1.29.10
 

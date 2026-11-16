@@ -1,8 +1,12 @@
 # Istio
 
-> **마지막 업데이트**: 2026년 10월 26일
+> **마지막 업데이트**: 2026년 11월 16일
 
 Amazon EKS에서 Istio Service Mesh를 활용한 실용적인 가이드입니다.
+
+### 2026년 11월 업데이트: Istio 1.32.0 정식 릴리스
+
+2026년 11월 9일 **Istio 1.32.0**이 정식(GA) 릴리스되었습니다([릴리스 노트](https://istio.io/latest/news/releases/1.32.x/announcing-1.32/), [GitHub 릴리스](https://github.com/istio/istio/releases/tag/1.32.0)). 10월 22일 1.32.0-beta.0, 10월 28일~11월 6일 rc.0~rc.2를 거쳐 공개되었습니다. 같은 주(11월 6일)에는 지원 브랜치의 패치 릴리스 [1.31.4](https://istio.io/news/releases/1.31.x/announcing-1.31.4/)와 1.30.8도 공개되었습니다. 새 마이너가 GA되면 Istio 지원 정책에 따라 구형 브랜치의 지원 종료 일정이 앞당겨지므로, 설치·업그레이드 전에 [지원 매트릭스](https://istio.io/latest/docs/releases/supported-releases/)에서 1.32의 Kubernetes 지원 범위와 각 브랜치의 지원 상태를 확인하세요. 이 가이드의 신규 설치 명령과 예제는 아직 1.31 기준입니다.
 
 ### 2026년 10월 보안 업데이트: 1.31.3·1.30.7·1.29.10
 

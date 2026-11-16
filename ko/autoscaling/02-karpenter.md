@@ -1,7 +1,7 @@
 # Karpenter
 
 > **지원 버전**: Karpenter 1.14 LTS(예제: 1.14.1); Kubernetes/EKS는 호환성 표와 공급자 지원 범위로 선택하세요.
-> **마지막 업데이트**: 2026년 10월 26일
+> **마지막 업데이트**: 2026년 11월 16일
 
 ## 목차
 - [소개](#소개)
@@ -366,6 +366,14 @@ AWS는 2026년 7월 22일 발표에서 Karpenter/EKS Auto Mode의 EFA 인터페�
 ### 2026년 10월 업데이트: v1.15.1 및 LTS 패치 릴리스
 
 2026년 10월 20일~23일에 지원 중인 라인 전반의 패치 릴리스가 공개되었습니다. 1.15 라인 첫 패치인 [v1.15.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.1)(호환 가능한 capacity reservation이 모두 소진됐을 때 보류 대신 선호도를 완화하는 수정, 생성 후 레이블이 동기화된 경우의 node-repair enqueue 수정 등), 1.14 LTS 라인의 [v1.14.2](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.2)와 [v1.14.3](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.3)(`SpotMaxPriceTooLow`를 ICE 오류로 분류, 회수(reclaim) 중인 interruptible capacity reservation을 가용하지 않은 용량으로 처리 등), 1.9 LTS 라인의 [v1.9.3](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.9.3)입니다. 세 라인 모두 유출된 eMudhra 중간 CA 인증서를 더 이상 신뢰하지 않는 Go 패치 릴리스인 Go 1.26.10으로 툴체인을 올렸습니다(CVE-2026-111943).
+
+### 2026년 11월 업데이트: EKS Auto Mode·Karpenter DRA 지원 발표
+
+2026년 11월 9일 AWS가 EKS Auto Mode와 Karpenter에서 NVIDIA GPU와 Elastic Fabric Adapter(EFA) 네트워크 디바이스에 대한 Kubernetes Dynamic Resource Allocation(DRA) 지원을 발표했습니다. 워크로드가 필요한 디바이스 속성을 DRA로 선언하고 GPU 디바이스를 Pod 간에 공유할 수 있습니다. Karpenter는 모든 Kubernetes 버전에서, EKS Auto Mode는 Kubernetes 1.36 이상에서 지원하며 AWS GovCloud(US)·중국 리전은 제외됩니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-karpenter-dra/)를 참고하세요.
+
+### 2026년 11월 업데이트: v1.15.2 패치 릴리스
+
+2026년 11월 12일 공개된 [v1.15.2](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.2)는 DRA 인스턴스 타입 메타데이터만 갱신하는 패치입니다. alpha 기능 게이트 `settings.awsFeatureGates.draNVIDIAGPU`·`settings.awsFeatureGates.draEFA`(또는 `settings.enableDRA`)를 켜지 않았다면 동작 변화가 없습니다. `g7`·`g7e`의 NVIDIA GPU DRA 메타데이터와 기존 GPU 인스턴스의 GPU 메모리 속성이 추가·갱신되었고, fractional-GPU인 `g6f`·`gr6f`는 NVIDIA DRA 메타데이터에서 제외되어 `gpu.nvidia.com` 클레임에 선택되지 않습니다. EFA DRA 메타데이터는 29개에서 302개 인스턴스 타입으로 확대되었으며, 새로 추가된 항목은 `dra.net/pciDevice`·`dra.net/pciVendor`·`dra.net/rdma`만 설정합니다. 소스 빌드에는 Go 1.26.11 이상이 필요합니다.
 
 ## 노드 클래스
 

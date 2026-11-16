@@ -1,9 +1,17 @@
 # EKS Auto Mode 운영 가이드
 
 > **지원 버전**: EKS Auto Mode GA; 예제 기준 EKS 1.36
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 11월 16일
 
 Amazon EKS Auto Mode는 워크로드 요구 사항에 맞게 노드를 프로비저닝하고 최적화하여 Kubernetes 노드 관리를 자동화합니다. 이 가이드는 Auto Mode의 개념, 설정과 운영을 다룹니다. AWS가 Auto Mode 인프라를 관리하더라도 애플리케이션 가용성, resource requests, 보안, 모니터링과 클러스터/VPC 구성은 사용자가 책임집니다. 프로덕션에 적용하기 전에 예제를 해당 환경에서 검증하세요.
+
+### 2026년 11월 업데이트: Pod용 보안 그룹(Security Groups for Pods) 지원
+
+2026년 11월 11일부터 EKS Auto Mode가 Pod용 보안 그룹을 지원합니다. 개별 Pod에 전용 EC2 보안 그룹 규칙을 적용할 수 있어, 같은 노드에서 실행되는 워크로드마다 서로 다른 보안 그룹을 부여할 수 있습니다. 애플리케이션별로 노드 풀을 분리하지 않고도 Pod 수준의 네트워크 분리가 가능합니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-security-groups-for-pods/)를 참고하세요.
+
+### 2026년 11월 업데이트: Dynamic Resource Allocation(DRA) 지원
+
+2026년 11월 9일, EKS Auto Mode와 Karpenter에서 NVIDIA GPU 및 Elastic Fabric Adapter(EFA) 네트워크 디바이스에 대한 Kubernetes Dynamic Resource Allocation(DRA) 지원이 발표되었습니다. 워크로드가 필요로 하는 디바이스 속성을 DRA로 선언하고 GPU 디바이스를 Pod 간에 공유할 수 있습니다. Karpenter는 모든 Kubernetes 버전에서, EKS Auto Mode는 Kubernetes 1.36 이상에서 DRA를 지원하며, AWS GovCloud(US)·중국 리전을 제외한 모든 리전에서 사용할 수 있습니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-karpenter-dra/)를 참고하세요.
 
 ### 2026년 10월 업데이트: EKS 1.37 기본값
 

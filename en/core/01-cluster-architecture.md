@@ -1,7 +1,7 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: October 16, 2026
+> **Last Updated**: November 16, 2026
 
 The version header refers to upstream Kubernetes. The project maintains release branches for the three most recent minor releases (1.35–1.37). Upstream 1.34 is in maintenance mode and still receives patch releases until its end of life on **October 27, 2026**, separately from its AWS support end date on EKS.
 
@@ -190,6 +190,10 @@ On July 8, 2026, SIG etcd released etcd v3.7.0. Highlights:
 - Ships with updated core dependencies bbolt v1.5.0 and raft v3.7.0
 
 See the [official announcement](https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/) and the [etcd v3.7 changelog](https://github.com/etcd-io/etcd/blob/main/CHANGELOG/CHANGELOG-3.7.md) for details.
+
+#### November 2026 Update: 24 GB etcd on Amazon EKS Provisioned Control Plane
+
+On managed services, etcd capacity also depends on the offering tier. On November 11, 2026, AWS announced that the 4XL and 8XL tiers of Amazon EKS Provisioned Control Plane now provide a **24 GB etcd database**, up from 16 GB. When the etcd database fills up, you can no longer add or change objects in the cluster, so the extra headroom helps workloads that create and update many objects — such as large-scale AI/ML training and inference, batch processing, and CI/CD pipelines. The larger database applies when you choose the 4XL or 8XL tier on EKS 1.34 or later; existing clusters on those tiers get it automatically with no action required, and it is available in all commercial AWS Regions where Provisioned Control Plane is offered. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-provisioned-control-plane-larger-etcd-database/) for details.
 
 ### kube-scheduler
 

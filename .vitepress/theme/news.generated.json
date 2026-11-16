@@ -4,6 +4,136 @@
     "ko": {
       "entries": [
         {
+          "id": "8579b3b80563b5d4",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [
+            "https://istio.io/latest/news/releases/1.32.x/announcing-1.32/"
+          ],
+          "title": "Istio 1.32.0 정식",
+          "summary": "Istio 1.32.0 정식(GA) 릴리스 반영(같은 주 1.31.4/1.30.8 패치 릴리스 포함)",
+          "topic": "mesh",
+          "category": "release"
+        },
+        {
+          "id": "0cd6bd39427a4d27",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "autoscaling/02-karpenter.md",
+            "eks-auto-mode/README.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-karpenter-dra/"
+          ],
+          "title": "EKS Auto Mode·Karpenter의 NVIDIA GPU·EFA용 Dynamic Resource Allocation",
+          "summary": "EKS Auto Mode·Karpenter의 NVIDIA GPU·EFA용 Dynamic Resource Allocation(DRA) 지원 발표(Karpenter는 전 Kubernetes 버전, Auto Mode는 1.36 이상) 반영",
+          "topic": "autoscaling",
+          "category": "feature"
+        },
+        {
+          "id": "a438d83dac3fb25c",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "eks-auto-mode/README.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-security-groups-for-pods/"
+          ],
+          "title": "EKS Auto Mode의 Pod용 보안 그룹",
+          "summary": "EKS Auto Mode의 Pod용 보안 그룹(security groups for Pods) 지원 발표(노드 풀 분리 없이 Pod 단위 네트워크 분리) 반영",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "ac73241daf47f5a4",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-provisioned-control-plane-larger-etcd-database/"
+          ],
+          "title": "Amazon EKS Provisioned Control Plane 4XL·8XL 티어의 etcd 데이터베이스 24 GB 확대",
+          "summary": "Amazon EKS Provisioned Control Plane 4XL·8XL 티어의 etcd 데이터베이스 24 GB 확대(기존 16 GB, EKS 1.34 이상, 기존 클러스터 자동 적용) 반영",
+          "topic": "kubernetes",
+          "category": "feature"
+        },
+        {
+          "id": "e6fdcf25996af81f",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [
+            "https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.2"
+          ],
+          "title": "Karpenter v1.15.2 패치 릴리스",
+          "summary": "Karpenter v1.15.2 패치 릴리스(DRA 인스턴스 타입 메타데이터만 갱신: g7·g7e NVIDIA GPU 메타데이터 추가, EFA 메타데이터 29→302개 타입 확대, Go 1.26.11) 반영",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "31b8fdee2ba25e26",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/nitro-sandboxes-eks-ecs-ec2/"
+          ],
+          "title": "AWS Nitro Sandboxes 출시: Nitro 하이퍼바이저가 관리하는 경량 VM으로 Amazon EKS Pod·ECS Task·VM",
+          "summary": "AWS Nitro Sandboxes 출시: Nitro 하이퍼바이저가 관리하는 경량 VM으로 Amazon EKS Pod·ECS Task·VM(내부에서 실행되는 AI 에이전트 포함)을 하드웨어 수준에서 격리",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "a99cf227caa31104",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "security/03-pod-security-standards.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/aws-batch-eks-security-context/"
+          ],
+          "title": "AWS Batch on Amazon EKS의 Linux capabilities·seccomp 프로파일·Pod 수준 설정 등 Kubernetes security context 지원 추가",
+          "summary": "AWS Batch on Amazon EKS의 Linux capabilities·seccomp 프로파일·Pod 수준 설정 등 Kubernetes security context 지원 추가(Pod Security Standards restricted 프로파일을 강제하는 클러스터에서 실행 가능) 반영",
+          "topic": "security",
+          "category": "feature"
+        },
+        {
+          "id": "65918faa764039e5",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/11/10/cloudnativepg-becomes-a-cncf-incubating-project/"
+          ],
+          "title": "PostgreSQL 오퍼레이터 CloudNativePG, CNCF 인큐베이팅 프로젝트 승격",
+          "summary": "PostgreSQL 오퍼레이터 CloudNativePG, CNCF 인큐베이팅 프로젝트 승격",
+          "topic": "ecosystem",
+          "category": "community"
+        },
+        {
+          "id": "af395bca0f5213dd",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/11/10/donating-kuberay-to-cncf/"
+          ],
+          "title": "Ray 워크로드용 Kubernetes 오퍼레이터 KubeRay, CNCF 기부 발표",
+          "summary": "Ray 워크로드용 Kubernetes 오퍼레이터 KubeRay, CNCF 기부 발표",
+          "topic": "kubernetes",
+          "category": "feature"
+        },
+        {
           "id": "5fad87439987f70e",
           "period": "2026-W44",
           "week": "2026-W44",
@@ -1475,10 +1605,140 @@
           "category": "breaking"
         }
       ],
-      "updated": "2026-10-26"
+      "updated": "2026-11-16"
     },
     "en": {
       "entries": [
+        {
+          "id": "8579b3b80563b5d4",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [
+            "https://istio.io/latest/news/releases/1.32.x/announcing-1.32/"
+          ],
+          "title": "Istio 1.32.0 GA release",
+          "summary": "applied the Istio 1.32.0 GA release (including the same week's 1.31.4/1.30.8 patch releases)",
+          "topic": "mesh",
+          "category": "release"
+        },
+        {
+          "id": "0cd6bd39427a4d27",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "autoscaling/02-karpenter.md",
+            "eks-auto-mode/README.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-karpenter-dra/"
+          ],
+          "title": "announcement of Dynamic Resource Allocation",
+          "summary": "applied the announcement of Dynamic Resource Allocation (DRA) support for NVIDIA GPUs and EFA with EKS Auto Mode and Karpenter (all Kubernetes versions on Karpenter; 1.36+ on Auto Mode)",
+          "topic": "autoscaling",
+          "category": "feature"
+        },
+        {
+          "id": "a438d83dac3fb25c",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "eks-auto-mode/README.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-security-groups-for-pods/"
+          ],
+          "title": "announcement of security groups for Pods support in EKS Auto Mode",
+          "summary": "applied the announcement of security groups for Pods support in EKS Auto Mode (per-Pod network segmentation without separate node pools)",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "ac73241daf47f5a4",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-provisioned-control-plane-larger-etcd-database/"
+          ],
+          "title": "larger 24 GB etcd database",
+          "summary": "applied the larger 24 GB etcd database (up from 16 GB) on the Amazon EKS Provisioned Control Plane 4XL/8XL tiers (EKS 1.34+, existing clusters upgraded automatically)",
+          "topic": "kubernetes",
+          "category": "feature"
+        },
+        {
+          "id": "e6fdcf25996af81f",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [
+            "https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.2"
+          ],
+          "title": "Karpenter v1.15.2 patch release",
+          "summary": "applied the Karpenter v1.15.2 patch release (DRA instance-type metadata only: adds g7/g7e NVIDIA GPU metadata, expands EFA metadata from 29 to 302 instance types, Go 1.26.11)",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "31b8fdee2ba25e26",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/nitro-sandboxes-eks-ecs-ec2/"
+          ],
+          "title": "AWS Nitro Sandboxes launched: lightweight VMs managed by the Nitro Hypervisor that hardware-isolate Amazon EKS pods, ECS tasks and VMs, including AI agents running inside them",
+          "summary": "AWS Nitro Sandboxes launched: lightweight VMs managed by the Nitro Hypervisor that hardware-isolate Amazon EKS pods, ECS tasks and VMs, including AI agents running inside them",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "a99cf227caa31104",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [
+            "security/03-pod-security-standards.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/aws-batch-eks-security-context/"
+          ],
+          "title": "AWS Batch on Amazon EKS adding Kubernetes security context support including Linux capabilities, seccomp profiles and pod-level settings",
+          "summary": "applied AWS Batch on Amazon EKS adding Kubernetes security context support including Linux capabilities, seccomp profiles and pod-level settings (jobs can run on clusters enforcing the Pod Security Standards restricted profile)",
+          "topic": "security",
+          "category": "feature"
+        },
+        {
+          "id": "65918faa764039e5",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/11/10/cloudnativepg-becomes-a-cncf-incubating-project/"
+          ],
+          "title": "CloudNativePG, the PostgreSQL operator, becomes a CNCF incubating project",
+          "summary": "CloudNativePG, the PostgreSQL operator, becomes a CNCF incubating project",
+          "topic": "ecosystem",
+          "category": "community"
+        },
+        {
+          "id": "af395bca0f5213dd",
+          "period": "2026-W47",
+          "week": "2026-W47",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/11/10/donating-kuberay-to-cncf/"
+          ],
+          "title": "KubeRay, the Kubernetes operator for Ray workloads, announced as donated to the CNCF",
+          "summary": "KubeRay, the Kubernetes operator for Ray workloads, announced as donated to the CNCF",
+          "topic": "kubernetes",
+          "category": "feature"
+        },
         {
           "id": "5fad87439987f70e",
           "period": "2026-W44",
@@ -2951,7 +3211,7 @@
           "category": "breaking"
         }
       ],
-      "updated": "2026-10-26"
+      "updated": "2026-11-16"
     }
   }
 }
