@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 0 * * 1' # Monday 09:00 KST
   workflow_dispatch:
+    inputs:
+      week:
+        description: 'Backfill a missed logging week (YYYY-Www, e.g. 2026-W46). Leave empty for the normal last-7-days run.'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -40,10 +45,41 @@ jobs:
           fi
           claude --version
 
+      # A logging week W means "what the Monday 09:00 KST run of W collected":
+      # the 7 days before that Monday. A backfill of W therefore covers
+      # [Monday(W) - 7d, Monday(W) - 1d], the window the missed run should
+      # have covered, so consecutive weeks join without gaps or overlap.
       - name: Compute ISO week and skip if this week's PR already exists
         id: week
+        env:
+          BACKFILL_WEEK: ${{ github.event_name == 'workflow_dispatch' && inputs.week || '' }}
         run: |
-          week=$(TZ=Asia/Seoul date +%G-W%V)
+          current=$(TZ=Asia/Seoul date +%G-W%V)
+          if [ -n "$BACKFILL_WEEK" ]; then
+            if ! [[ "$BACKFILL_WEEK" =~ ^[0-9]{4}-W[0-9]{2}$ ]]; then
+              echo "::error::week input must be YYYY-Www, got '$BACKFILL_WEEK'"
+              exit 1
+            fi
+            if [[ "$BACKFILL_WEEK" > "$current" ]]; then
+              echo "::error::cannot backfill future week $BACKFILL_WEEK (current week is $current)"
+              exit 1
+            fi
+            window=$(python3 -c 'import datetime as d, sys
+          y, w = sys.argv[1].split("-W")
+          m = d.date.fromisocalendar(int(y), int(w), 1)
+          print(m - d.timedelta(7), m - d.timedelta(1))' "$BACKFILL_WEEK") || {
+              echo "::error::invalid ISO week $BACKFILL_WEEK"
+              exit 1
+            }
+            week=$BACKFILL_WEEK
+            echo "backfill=true" >> "$GITHUB_OUTPUT"
+            echo "window_start=${window% *}" >> "$GITHUB_OUTPUT"
+            echo "window_end=${window#* }" >> "$GITHUB_OUTPUT"
+            echo "Backfilling $week: ${window% *} .. ${window#* }"
+          else
+            week=$current
+            echo "backfill=false" >> "$GITHUB_OUTPUT"
+          fi
           echo "week=$week" >> "$GITHUB_OUTPUT"
           if git ls-remote --exit-code --heads origin "docs/news-$week" >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
@@ -88,6 +124,7 @@ jobs:
         continue-on-error: true
         env:
           WEB_SEARCH_GATEWAY_URL: ${{ vars.WEB_SEARCH_GATEWAY_URL }}
+          SEARCH_WINDOW: ${{ steps.week.outputs.backfill == 'true' && format('{0} to {1}', steps.week.outputs.window_start, steps.week.outputs.window_end) || '' }}
         run: |
           python3 -c "import boto3" 2>/dev/null || {
             sudo apt-get update -qq
@@ -99,8 +136,28 @@ jobs:
         if: steps.week.outputs.exists == 'false'
         env:
           WEEK: ${{ steps.week.outputs.week }}
+          BACKFILL: ${{ steps.week.outputs.backfill }}
+          WINDOW_START: ${{ steps.week.outputs.window_start }}
+          WINDOW_END: ${{ steps.week.outputs.window_end }}
         run: |
           TODAY=$(TZ=Asia/Seoul date +%F)
+          if [ "$BACKFILL" = "true" ]; then
+            WINDOW="published between $WINDOW_START and $WINDOW_END (inclusive, Asia/Seoul)"
+            BACKFILL_NOTE="BACKFILL RUN: the scheduled run for $WEEK failed, so you are
+          filling the window $WINDOW_START..$WINDOW_END after the fact. The feeds may
+          not reach back that far; verify candidates directly against official
+          release/announcement pages with curl (for GitHub projects, e.g.
+          https://api.github.com/repos/<owner>/<repo>/releases?per_page=50).
+          Insert this week's log lines in week order -- below every line for a
+          newer week and above every line for an older week -- not at the top.
+          Before logging, grep both news pages: skip any announcement whose
+          source URL is already logged under another week. When editing a doc,
+          never downgrade or overwrite newer information a later week already
+          added (e.g. a newer patch version); add only what is still missing."
+          else
+            WINDOW="from the last 7 days"
+            BACKFILL_NOTE=""
+          fi
           cat <<PROMPT_EOF > /tmp/prompt.txt
           You maintain a bilingual (Korean + English) Kubernetes/Amazon EKS training
           site. Read CLAUDE.md for repo conventions first, then read
@@ -121,8 +178,10 @@ jobs:
 
           Today is $TODAY in Asia/Seoul. The logging week is $WEEK.
 
+          $BACKFILL_NOTE
+
           1. From all feed items and web search results, keep only those clearly
-             about events from the last 7 days, verify their publication dates and
+             about events $WINDOW, verify their publication dates and
              official source URLs, then select the 5-10 most relevant to
              this site's topics. Skip items with no clear relevance to Kubernetes/EKS/
              CNCF ecosystem content. Select fewer if there are fewer verified items;
@@ -146,7 +205,8 @@ jobs:
              - No match -> this item is changelog-only, do not edit any doc for it.
           3. Prepend ONE single-line bullet per selected announcement immediately
              after "## 갱신 로그" / "## Update Log" in ko/news/README.md and
-             en/news/README.md. These sections are inside a details element.
+             en/news/README.md (on a BACKFILL RUN, place them by week order as
+             described above instead). These sections are inside a details element.
              If multiple docs were touched for one announcement, put ALL their
              Markdown links on that one line, separated by " · ". Always include
              the verified source URL, including for announcements with matched docs.
@@ -196,7 +256,19 @@ jobs:
       - name: Quality gate on the diff
         if: steps.week.outputs.exists == 'false'
         id: gate
+        env:
+          BACKFILL: ${{ steps.week.outputs.backfill }}
+          WEEK: ${{ steps.week.outputs.week }}
+          WINDOW_START: ${{ steps.week.outputs.window_start }}
+          WINDOW_END: ${{ steps.week.outputs.window_end }}
         run: |
+          BACKFILL_CONTEXT=""
+          if [ "$BACKFILL" = "true" ]; then
+            BACKFILL_CONTEXT="This is an intentional backfill of the missed $WEEK run: its new
+          log lines sit below newer weeks' lines, cover announcements from
+          $WINDOW_START to $WINDOW_END, and doc header dates show today. Do not
+          penalize that placement, age or date; do penalize sources outside that window."
+          fi
           if ! git status --porcelain -- ko en | grep -q .; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
@@ -215,6 +287,7 @@ jobs:
           paths/source URLs, and verified source links for every new record.
           Historical records without source links are preserved intentionally;
           do not judge them as newly introduced or current announcements.
+          $BACKFILL_CONTEXT
 
           Output EXACTLY two lines, nothing else:
           SCORE: <0-100>
@@ -245,23 +318,33 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           WEEK: ${{ steps.week.outputs.week }}
+          BACKFILL: ${{ steps.week.outputs.backfill }}
+          WINDOW_START: ${{ steps.week.outputs.window_start }}
+          WINDOW_END: ${{ steps.week.outputs.window_end }}
         run: |
+          if [ "$BACKFILL" = "true" ]; then
+            title="docs: weekly news-driven update ($WEEK, backfill)"
+            scope="$WEEK (backfill of the missed run, announcements from $WINDOW_START to $WINDOW_END)"
+          else
+            title="docs: weekly news-driven update ($WEEK)"
+            scope="$WEEK"
+          fi
           git checkout -b "docs/news-$WEEK"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ko en .vitepress/theme/news.generated.json
-          git commit -m "docs: weekly news-driven update ($WEEK)"
+          git commit -m "$title"
           git push origin "docs/news-$WEEK"
           gh label create automated-news --color 0E8A16 --description "Automated weekly news-driven doc update" --force
           cat > /tmp/news-pr-body.txt <<PR_EOF
-          Updates existing Korean and English guides from verified Kubernetes/EKS/CNCF announcements for $WEEK.
+          Updates existing Korean and English guides from verified Kubernetes/EKS/CNCF announcements for $scope.
 
           Adds one bilingual log record per announcement, groups all related documents, and regenerates the news dashboard data for the heatmap, filters, and cards.
 
           Validation: documentation checks passed; automated content review scored ${{ steps.gate.outputs.score }}/100. Please review before merging.
           PR_EOF
           gh pr create \
-            --title "docs: weekly news-driven update ($WEEK)" \
+            --title "$title" \
             --body-file /tmp/news-pr-body.txt \
             --label automated-news \
             --base main \

@@ -26,6 +26,9 @@ TOOL_NAME = "ttobak-web-search-tool___WebSearch"
 TIMEOUT_SECONDS = 15
 MAX_RESULTS_PER_QUERY = 4
 OUTPUT_PATH = "feeds/web-search.json"
+# Backfill runs set this to the missed window (e.g. "2026-11-02 to
+# 2026-11-08") so "this week" queries target that period instead of today.
+SEARCH_WINDOW = os.environ.get("SEARCH_WINDOW", "").strip()
 
 # One query per major project this site covers, plus a couple of
 # general/catch-all queries. Add a project here as new content sections are
@@ -129,6 +132,13 @@ def _search(query):
         return []
 
 
+def windowed_queries(queries, window):
+    """Point each query at the backfill window; unchanged when window is empty."""
+    if not window:
+        return list(queries)
+    return [q.replace("this week", window) if "this week" in q else f"{q} {window}" for q in queries]
+
+
 def main():
     os.makedirs("feeds", exist_ok=True)
     if not GATEWAY_URL:
@@ -137,14 +147,15 @@ def main():
             json.dump({"queries": [], "results": []}, f)
         return
 
+    queries = windowed_queries(QUERIES, SEARCH_WINDOW)
     all_results = []
-    for query in QUERIES:
+    for query in queries:
         all_results.append({"query": query, "results": _search(query)})
 
     with open(OUTPUT_PATH, "w") as f:
-        json.dump({"queries": QUERIES, "results": all_results}, f, ensure_ascii=False, indent=2)
+        json.dump({"queries": queries, "results": all_results}, f, ensure_ascii=False, indent=2)
     total = sum(len(r["results"]) for r in all_results)
-    print(f"wrote {total} web search results across {len(QUERIES)} queries to {OUTPUT_PATH}")
+    print(f"wrote {total} web search results across {len(queries)} queries to {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":
