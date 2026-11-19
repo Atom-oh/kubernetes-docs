@@ -117,7 +117,9 @@ LAG는 **용량**을 늘리지만 같은 장비·같은 로케이션에서 끝�
 6. Transit Gateway Connect 전파 경로
 7. private Direct Connect 위 Site-to-Site VPN 전파 경로
 8. Site-to-Site VPN 전파 경로
-9. VPN Concentrator, Client VPN, peering(Cloud WAN) 전파 경로
+9. Site-to-Site VPN Concentrator 전파 경로
+10. Client VPN 전파 경로
+11. Transit Gateway peering(Cloud WAN) 전파 경로
 
 같은 CIDR이 **같은 유형**의 attachment에서 오면 그때 BGP 속성을 비교합니다. AS_PATH가 짧은 경로, MED가 낮은 경로, 지원하는 경우 iBGP보다 eBGP 경로 순입니다. MED 없이 광고된 경로에는 DX attachment에서 0, VPN·Connect attachment에서 100이 기본값으로 붙습니다. ECMP는 서로 다른 attachment 유형 사이에서는 지원하지 않으며(예: VPN과 VPC), 그때는 위 평가 순서로 한 경로가 고릅니다.
 
@@ -129,7 +131,7 @@ LAG는 **용량**을 늘리지만 같은 장비·같은 로케이션에서 끝�
 
 이 절은 **방향별로** 읽습니다. 온프레미스에서 AWS로 가는 경로는 **고객 라우터의 정책**이 고르고, AWS에서 온프레미스로 가는 경로는 **AWS의 평가 순서**가 고릅니다. 한쪽만 바꾸면 비대칭 경로가 생기고, 상태 기반 방화벽이 응답을 버릴 수 있습니다.
 
-![하이브리드 장애 조치 애니메이션. ① 온프레미스 라우터(AS 65010, 10.10.0.0/16)는 VPC 10.20.0.0/16으로 가는 BGP 경로를 DX와 VPN 두 개 배우고, LOCAL_PREF 200인 DX 경로를 골라 목적지 10.20.1.10인 패킷을 보낸다. ② 패킷은 DX 로케이션에서 802.1Q VLAN 101의 transit VIF를 타고 Transit Gateway에 도착하고, VLAN 태그가 제거된 뒤 TGW 라우트 테이블에 따라 VPC attachment로 전달된다. DX 게이트웨이는 BGP 경로만 반사하며 데이터 경로에 있지 않다. ③ DX 링크가 끊긴다. BFD가 300 ms 간격으로 3번 응답을 받지 못하면 BGP 세션이 내려가고 DX 경로가 양쪽에서 철회되며, 온프레미스 라우터의 최적 경로는 LOCAL_PREF 100인 VPN 터널로 바뀐다. ④ 다음 패킷은 VPN 경로를 탄다. IPsec이 ESP와 바깥 IP 헤더(출발지 203.0.113.10, 목적지 198.51.100.10)를 붙여 인터넷을 지난다. ⑤ Transit Gateway의 VPN attachment에서 ESP가 제거되고 목적지 10.20.1.10인 원래 패킷이 VPC로 전달된다. 돌아오는 트래픽도 DX 경로가 사라졌으므로 VPN 전파 경로를 쓴다.](../../.gitbook/assets/ko-networking-expert-07-wan-hybrid-connectivity-anim-0.svg)
+![하이브리드 장애 조치 애니메이션. ① 온프레미스 라우터(AS 65010, 10.10.0.0/16)는 VPC 10.20.0.0/16으로 가는 BGP 경로를 DX와 VPN 두 개 배우고, LOCAL_PREF 200인 DX 경로를 골라 목적지 10.20.1.10인 패킷을 DX 연결의 802.1Q VLAN 101(transit VIF)로 보낸다. ② 패킷은 DX 로케이션을 지나 목적지가 그대로인 채 Transit Gateway에 도착하고, TGW 라우트 테이블에 따라 VPC attachment로 전달된다. DX 게이트웨이는 BGP 경로만 반사하며 데이터 경로에 있지 않다. ③ DX 링크가 끊긴다. BFD가 300 ms 간격으로 3번 응답을 받지 못하면 BGP 세션이 내려가고 DX 경로가 양쪽에서 철회되며, 온프레미스 라우터의 최적 경로는 LOCAL_PREF 100인 VPN 터널로 바뀐다. ④ 다음 패킷은 VPN 경로를 탄다. IPsec이 ESP와 바깥 IP 헤더(출발지 203.0.113.10, 목적지 198.51.100.10)를 붙여 인터넷을 지난다. ⑤ Transit Gateway의 VPN attachment에서 ESP가 제거되고 목적지 10.20.1.10인 원래 패킷이 VPC로 전달된다. 돌아오는 트래픽도 DX 경로가 사라졌으므로 VPN 전파 경로를 쓴다.](../../.gitbook/assets/ko-networking-expert-07-wan-hybrid-connectivity-anim-0.svg)
 
 ### AWS에서 온프레미스로: AWS가 고르는 경로
 

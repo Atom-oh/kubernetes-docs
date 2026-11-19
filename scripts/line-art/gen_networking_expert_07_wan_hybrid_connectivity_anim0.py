@@ -89,9 +89,6 @@ T = {
     "p2_on": 8.0, "p2_go": 8.9, "p2_tgw": 10.7, "p2_tgw_go": 11.4, "p2_vpc": 12.2,
     "hold": 12.8,
 }
-# packet 2 reaches the middle of the cloud segment at this time (linear motion)
-T["p2_cloud"] = round(T["p2_go"] + (T["p2_tgw"] - T["p2_go"]) * ((P2_F[1] + P2_F[2]) / 2) / P2_F[3], 2)
-T["p2_climb"] = 10.3  # packet is about halfway up the last VPN cable (x ~ 550)
 ESP_TAG = "+ESP · outer IP header\n203.0.113.10 → 198.51.100.10"
 kt = lambda s: f"{s / DUR:.4f}"
 ANIMS = []  # every keyTimes/values pair, validated before writing
@@ -138,8 +135,9 @@ COPY = {
     "ko": {
         "title": "하이브리드 장애 조치: DX가 끊기면 패킷이 VPN으로 우회한다",
         "desc": ("온프레미스 라우터(AS 65010, 10.10.0.0/16)는 VPC 10.20.0.0/16으로 가는 BGP 경로를 두 개 배운다. "
-                 "LOCAL_PREF 200인 Direct Connect 경로를 골라 첫 패킷을 보낸다. 패킷은 DX 로케이션에서 transit VIF "
-                 "(VLAN 101)로 Transit Gateway에 도착하고, TGW 라우트 테이블에 따라 VPC attachment로 전달된다. "
+                 "LOCAL_PREF 200인 Direct Connect 경로를 골라 첫 패킷을 DX 연결의 802.1Q VLAN 101(transit VIF)로 보낸다. "
+                 "패킷은 DX 로케이션을 지나 목적지가 그대로인 채 Transit Gateway에 도착하고, TGW 라우트 테이블에 따라 "
+                 "VPC attachment로 전달된다. "
                  "DX 게이트웨이는 BGP 경로만 반사하며 데이터 경로에 있지 않다. 이어서 DX 링크가 끊긴다. BFD가 "
                  "300 ms 간격으로 3번 응답을 받지 못하면 BGP 세션이 내려가고 DX 경로가 양쪽에서 철회된다. "
                  "다음 패킷은 LOCAL_PREF 100인 VPN 경로를 탄다. IPsec이 ESP와 바깥 IP 헤더 203.0.113.10 → "
@@ -158,8 +156,8 @@ COPY = {
         "note2": ["× DX: 철회됨 (BGP 세션 다운)", "▶ VPN 터널 · LOCAL_PREF 100"],
         "note_static": ["DX · LOCAL_PREF 200: 주 경로", "VPN · LOCAL_PREF 100: 백업"],
         "steps": [
-            "① 온프레미스 라우터: 10.20.0.0/16 경로 두 개 중 LOCAL_PREF 200인 DX 경로로 보낸다",
-            "② DX 로케이션 → transit VIF → TGW → VPC attachment (DX 게이트웨이는 경로만 반사)",
+            "① 온프레미스 라우터: LOCAL_PREF 200인 DX 경로를 골라 802.1Q VLAN 101(transit VIF)로 보낸다",
+            "② DX 로케이션 → TGW → VPC attachment, 목적지는 그대로 (DX 게이트웨이는 경로만 반사)",
             "③ DX 링크 단절: BFD가 300 ms × 3 동안 응답을 못 받아 BGP 세션이 내려가고 경로가 철회된다",
             "④ 다음 패킷은 VPN 경로: IPsec이 ESP와 바깥 IP 203.0.113.10 → 198.51.100.10을 붙인다",
             "⑤ TGW가 VPN attachment에서 복호화된 패킷을 VPC로 전달, 돌아오는 경로도 VPN으로 바뀐다",
@@ -169,9 +167,9 @@ COPY = {
     "en": {
         "title": "Hybrid failover: a packet reroutes from Direct Connect to the VPN",
         "desc": ("The on-premises router (AS 65010, 10.10.0.0/16) learns two BGP paths to VPC 10.20.0.0/16. It sends "
-                 "the first packet over the Direct Connect path, which carries LOCAL_PREF 200. At the DX location the "
-                 "packet rides a transit VIF (VLAN 101) to the Transit Gateway, whose route table forwards it to the "
-                 "VPC attachment. The DX gateway only reflects BGP routes and is not in the data path. Then the DX link "
+                 "the first packet over the Direct Connect path, which carries LOCAL_PREF 200, on the DX connection's "
+                 "802.1Q VLAN 101 (transit VIF). Past the DX location the packet reaches the Transit Gateway with its "
+                 "destination unchanged, and the TGW route table forwards it to the VPC attachment. The DX gateway only reflects BGP routes and is not in the data path. Then the DX link "
                  "is cut. When BFD misses three replies at 300 ms intervals, the BGP session goes down and the DX "
                  "routes are withdrawn on both sides. The next packet takes the VPN path with LOCAL_PREF 100: IPsec "
                  "adds ESP and an outer IP header 203.0.113.10 → 198.51.100.10, crosses the internet, is decrypted on "
@@ -190,8 +188,8 @@ COPY = {
         "note2": ["× DX: withdrawn (BGP session down)", "▶ VPN tunnel · LOCAL_PREF 100"],
         "note_static": ["DX · LOCAL_PREF 200: primary", "VPN · LOCAL_PREF 100: backup"],
         "steps": [
-            "① On-prem router: of two paths to 10.20.0.0/16, the DX path wins with LOCAL_PREF 200",
-            "② DX location → transit VIF → TGW → VPC attachment (the DX gateway only reflects routes)",
+            "① On-prem router: the DX path wins with LOCAL_PREF 200; it sends on 802.1Q VLAN 101 (transit VIF)",
+            "② DX location → TGW → VPC attachment, destination unchanged (the DX gateway only reflects routes)",
             "③ DX link cut: BFD misses 3 × 300 ms, the BGP session drops and the DX routes are withdrawn",
             "④ Next packet takes the VPN path: IPsec adds ESP and outer IP 203.0.113.10 → 198.51.100.10",
             "⑤ TGW decrypts on the VPN attachment and forwards to the VPC; return traffic moves to the VPN too",
@@ -340,19 +338,18 @@ def build(lang):
     m.append(packet(P1_D, [(0, 0), (T["p1_go"], 0), (T["p1_dxl"], f1[1]), (T["p1_dxl_go"], f1[2]),
                            (T["p1_tgw"], f1[3]), (T["p1_tgw_go"], f1[4]), (T["p1_vpc"], 1), (DUR, 1)],
                     T["p1_on"], T["p1_off"], [
-        ("dst 10.20.1.10 · via DX", T["p1_on"], T["p1_dxl"] + 0.2, "acc", 0, -38, "middle"),
-        ("802.1Q VLAN 101 · transit VIF", T["p1_dxl"] + 0.4, T["p1_tgw"] + 0.2, "bl", 0, -48, "middle"),
-        ("VLAN removed · dst 10.20.1.10", T["p1_tgw"] + 0.4, T["p1_off"], "acc", 0, -38, "middle"),
+        ("802.1Q VLAN 101 · dst 10.20.1.10", T["p1_on"], T["p1_dxl"] + 0.2, "bl", 0, -38, "middle"),
+        ("dst 10.20.1.10 (unchanged)", T["p1_dxl"] + 0.4, T["p1_tgw"] + 0.2, "acc", 0, -48, "middle"),
+        ("→ VPC attachment · dst 10.20.1.10", T["p1_tgw"] + 0.4, T["p1_off"], "acc", 0, -38, "middle"),
     ]))
     f2 = P2_F
     m.append(packet(P2_D, [(0, 0), (T["p2_go"], 0), (T["p2_tgw"], f2[3]), (T["p2_tgw_go"], f2[4]),
                            (T["p2_vpc"], 1), (DUR, 1)],
                     T["p2_on"], T["hold"], [
-        # right of the packet while it leaves the router and crosses the internet ...
-        (ESP_TAG, T["p2_on"], T["p2_cloud"] - 0.2, "bl", 22, 0, "start"),
-        # ... then below it for the first half of the climb, clear of the cloud and the note box
-        (ESP_TAG, T["p2_cloud"] + 0.3, T["p2_climb"], "bl", 0, 30, "middle"),
-        ("ESP removed · dst 10.20.1.10", T["p2_tgw"] + 0.2, T["hold"], "acc", 0, -62, "middle"),
+        # shown while the router encapsulates; hidden before the tag would reach the
+        # DX location labels and the cloud (caption 4 carries the same values)
+        (ESP_TAG, T["p2_on"], T["p2_go"] - 0.15, "bl", 22, 0, "start"),
+        ("ESP removed · dst 10.20.1.10", T["p2_tgw"] + 0.2, T["hold"], "acc", 20, -60, "middle"),
     ]))
     # captions
     cy0 = 372

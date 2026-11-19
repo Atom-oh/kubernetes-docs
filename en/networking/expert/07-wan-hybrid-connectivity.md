@@ -117,7 +117,9 @@ A LAG adds **capacity**, but it ends on the same device at the same location and
 6. Transit Gateway Connect-propagated routes
 7. Site-to-Site VPN over private Direct Connect-propagated routes
 8. Site-to-Site VPN-propagated routes
-9. VPN Concentrator, Client VPN and peering (Cloud WAN)-propagated routes
+9. Site-to-Site VPN Concentrator-propagated routes
+10. Client VPN-propagated routes
+11. Transit Gateway peering (Cloud WAN)-propagated routes
 
 Only for the same CIDR from the **same attachment type** are BGP attributes compared: shorter AS_PATH, then lower MED, then eBGP over iBGP where supported. Routes advertised without MED get a default of 0 on Direct Connect attachments and 100 on VPN and Connect attachments. ECMP is not supported between different attachment types (for example, VPN and VPC); the evaluation order above picks one route instead.
 
@@ -129,7 +131,7 @@ Only for the same CIDR from the **same attachment type** are BGP attributes comp
 
 Read this section **per direction**. The on-premises-to-AWS path is chosen by **your router's policy**; the AWS-to-on-premises path is chosen by **AWS's evaluation order**. Change only one side and the paths go asymmetric, and a stateful firewall may drop the replies.
 
-![Hybrid failover animation. ① The on-premises router (AS 65010, 10.10.0.0/16) learns two BGP paths to VPC 10.20.0.0/16, over DX and over VPN, picks the DX path with LOCAL_PREF 200, and sends a packet to 10.20.1.10. ② At the DX location the packet rides the transit VIF on 802.1Q VLAN 101 to the Transit Gateway; the VLAN tag is removed and the TGW route table forwards it to the VPC attachment. The DX gateway only reflects BGP routes and is not in the data path. ③ The DX link is cut. When BFD misses three replies at 300 ms intervals, the BGP session goes down, the DX routes are withdrawn on both sides, and the on-premises best path changes to the VPN tunnel with LOCAL_PREF 100. ④ The next packet takes the VPN path: IPsec adds ESP and an outer IP header (source 203.0.113.10, destination 198.51.100.10) and the packet crosses the internet. ⑤ On the Transit Gateway's VPN attachment the ESP is removed and the original packet to 10.20.1.10 is forwarded to the VPC. Return traffic also uses the VPN-propagated route because the DX route is gone.](../../.gitbook/assets/en-networking-expert-07-wan-hybrid-connectivity-anim-0.svg)
+![Hybrid failover animation. ① The on-premises router (AS 65010, 10.10.0.0/16) learns two BGP paths to VPC 10.20.0.0/16, over DX and over VPN, picks the DX path with LOCAL_PREF 200, and sends a packet to 10.20.1.10 on the DX connection's 802.1Q VLAN 101 (transit VIF). ② Past the DX location the packet reaches the Transit Gateway with its destination unchanged, and the TGW route table forwards it to the VPC attachment. The DX gateway only reflects BGP routes and is not in the data path. ③ The DX link is cut. When BFD misses three replies at 300 ms intervals, the BGP session goes down, the DX routes are withdrawn on both sides, and the on-premises best path changes to the VPN tunnel with LOCAL_PREF 100. ④ The next packet takes the VPN path: IPsec adds ESP and an outer IP header (source 203.0.113.10, destination 198.51.100.10) and the packet crosses the internet. ⑤ On the Transit Gateway's VPN attachment the ESP is removed and the original packet to 10.20.1.10 is forwarded to the VPC. Return traffic also uses the VPN-propagated route because the DX route is gone.](../../.gitbook/assets/en-networking-expert-07-wan-hybrid-connectivity-anim-0.svg)
 
 ### AWS to on-premises: the path AWS picks
 
