@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-labelledby="t d" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', 'Segoe UI', sans-serif">
+<title id="t">VLAN 간 라우팅: 프레임 하나가 스위치와 라우터를 지나는 길</title><desc id="d">VLAN 10의 PC-A가 VLAN 20의 PC-B로 IP 패킷을 보낸다. PC-A는 목적지가 다른 서브넷이므로 게이트웨이 MAC으로 프레임을 만든다. 스위치는 출발 MAC을 포트에 학습하고 트렁크로 내보내며 802.1Q 태그 VLAN 10을 붙인다. 라우터는 라우팅 테이블로 10.0.20.0/24 하위 인터페이스를 고르고 TTL을 64에서 63으로 줄인 뒤 L2 헤더를 새로 쓴다. 프레임은 VLAN 20 태그로 트렁크를 내려오고, 스위치는 태그를 떼어 VLAN 20 액세스 포트의 PC-B에 전달한다.</desc>
+<style>
+  svg{--paper:#f7f1e3;--ink:#2b2724;--soft:#8a8177;--accent:#d9480f;--blue:#1864ab;--wash:#efe5cf}
+  @media (prefers-color-scheme:dark){svg{--paper:#1e2240;--ink:#ece6d6;--soft:#9aa0bd;--accent:#ff8b5e;--blue:#8cc8ff;--wash:#272c52}}
+  .paper{fill:var(--paper)} .wash{fill:var(--wash)}
+  .ink{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:var(--ink);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+  .cable{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-linecap:round}
+  .trunk{fill:none;stroke:var(--blue);stroke-width:1.5;stroke-linecap:round}
+  .fillink{fill:var(--ink)} .t{fill:var(--ink);font-size:15px} .s{fill:var(--soft);font-size:12.5px}
+  .h{fill:var(--ink);font-size:17px;font-weight:600} .acc{fill:var(--accent)} .bl{fill:var(--blue)}
+  .pk{fill:var(--paper);stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+  .pkl{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .tag{font-size:12px;font-weight:700} .cap{font-size:15px;fill:var(--ink)}
+  .static{display:none}
+  @media (prefers-reduced-motion:reduce){.motion{display:none}.static{display:inline}}
+</style>
+<defs><filter id="pen" filterUnits="userSpaceOnUse" x="0" y="0" width="960" height="500">
+  <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="7"/>
+  <feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs>
+<rect class="paper" width="960" height="500"/>
+<text class="h" x="32" y="40">VLAN 간 라우팅: 프레임 하나가 스위치와 라우터를 지나는 길</text>
+<g filter="url(#pen)">
+<path class="cable" d="M186 259.5 C262 233.5 360 297.5 418 289.5"/>
+<path class="cable" d="M186 264.5 C262 238.5 360 302.5 418 294.5"/>
+<path class="cable" d="M542 289.5 C606 297.5 704 233.5 774 259.5"/>
+<path class="cable" d="M542 294.5 C606 302.5 704 238.5 774 264.5"/>
+<path class="trunk" d="M477 262 C465 214 491 176 477 136"/>
+<path class="trunk" d="M483 262 C471 214 497 176 483 136"/>
+<path class="ink" d="M86 222 q2 -3 6 -3 l76 1 q5 0 5 5 l-1 50 l-88 1 z"/>
+<path class="thin" d="M94 231 l70 1 l-1 34 l-69 0 z"/>
+<path class="ink" d="M76 275 l108 0 q4 0 2 4 l-6 7 l-100 0 l-6 -7 q-2 -4 2 -4"/>
+<path class="ink" d="M786 222 q2 -3 6 -3 l76 1 q5 0 5 5 l-1 50 l-88 1 z"/>
+<path class="thin" d="M794 231 l70 1 l-1 34 l-69 0 z"/>
+<path class="ink" d="M776 275 l108 0 q4 0 2 4 l-6 7 l-100 0 l-6 -7 q-2 -4 2 -4"/>
+<path class="ink" d="M418 266 q0 -4 5 -4 l114 1 q6 0 6 5 l0 44 q0 5 -6 5 l-114 -1 q-5 0 -5 -5 z"/>
+<path class="thin" d="M432 296 l8 0 l0 7 l-8 0 z"/>
+<path class="thin" d="M445 296 l8 0 l0 7 l-8 0 z"/>
+<path class="thin" d="M458 296 l8 0 l0 7 l-8 0 z"/>
+<path class="thin" d="M471 296 l8 0 l0 7 l-8 0 z"/>
+<path class="thin" d="M484 296 l8 0 l0 7 l-8 0 z"/>
+<path class="thin" d="M497 296 l8 0 l0 7 l-8 0 z"/>
+<path class="thin" d="M510 296 l8 0 l0 7 l-8 0 z"/>
+<path class="thin" d="M523 296 l8 0 l0 7 l-8 0 z"/>
+<circle class="fillink" cx="520" cy="280" r="2.2"/><circle class="fillink" cx="528" cy="280" r="2.2"/>
+<path class="ink" d="M428 90 q0 -16 52 -16 q52 0 52 16 l0 22 q0 16 -52 16 q-52 0 -52 -16 z"/>
+<path class="thin" d="M428 90 q0 16 52 16 q52 0 52 -16"/>
+<path class="thin" d="M458 84 L474 92"/>
+<path class="thin" d="M502 96 L486 88"/>
+<path class="thin" d="M474 84 L458 92"/>
+<path class="thin" d="M486 96 L502 88"/>
+</g>
+<text class="t" x="130" y="310" text-anchor="middle" font-weight="600">PC-A</text>
+<text class="s" x="130" y="328" text-anchor="middle">VLAN 10 · 10.0.10.5</text>
+<text class="t" x="830" y="310" text-anchor="middle" font-weight="600">PC-B</text>
+<text class="s" x="830" y="328" text-anchor="middle">VLAN 20 · 10.0.20.7</text>
+<text class="t" x="480" y="342" text-anchor="middle" font-weight="600">L2 액세스 스위치</text>
+<text class="t" x="546" y="108" font-weight="600">라우터 (하위 인터페이스 .10 / .20)</text>
+<text class="s bl" x="454" y="220" text-anchor="end">802.1Q 트렁크</text>
+<text class="s" x="276" y="230">액세스 포트 · VLAN 10</text>
+<text class="s" x="684" y="228" text-anchor="end">액세스 포트 · VLAN 20</text>
+<g class="motion">
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1964;0.2143;0.3857;0.4036;1.0000" values="0;0;1;1;0.0;0"/><path class="thin" filter="url(#pen)" d="M556 142 l250 0 l0 42 l-250 0 z"/><text class="s acc" x="566" y="159" font-weight="700">MAC 테이블</text><text class="t" x="566" y="177" font-size="13.5">PC-A MAC → 포트 1 · VLAN 10</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.3821;0.4000;0.5714;0.5893;1.0000" values="0;0;1;1;0.0;0"/><path class="thin" filter="url(#pen)" d="M150 150 l250 0 l0 42 l-250 0 z"/><text class="s acc" x="160" y="167" font-weight="700">라우팅 테이블</text><text class="t" x="160" y="185" font-size="13.5">10.0.20.0/24 → .20 인터페이스</text></g>
+<g>
+<animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0107;0.0286;0.9143;0.9321;1.0000" values="0;0;1;1;0;0"/>
+<animateMotion dur="14.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.3527;0.3527;0.4993;0.4993;0.6460;1.0000;1.0000" keyTimes="0.0000;0.0571;0.2143;0.3000;0.4000;0.5429;0.6429;0.8000;1.0000" path="M186 262 C262 236 360 300 418 292 L480 262 L480 262 C468 214 494 176 480 136 C494 176 468 214 480 262 L490 262 L542 292 C606 300 704 236 774 262"/>
+<path class="pk" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="pkl" d="M-17 -11 l17 12 l17 -12"/>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0143;0.0286;0.2143;0.2286;1.0000" values="0;0;1;1;0;0"/><text class="tag acc" x="22" y="-14">dst MAC=GW · TTL 64</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.2214;0.2357;0.4214;0.4357;1.0000" values="0;0;1;1;0;0"/><text class="tag bl" x="22" y="-14">VLAN 10 · TTL 64</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4429;0.4571;0.5429;0.5571;1.0000" values="0;0;1;1;0;0"/><text class="tag acc" x="22" y="-14">TTL 63 · dst MAC=PC-B</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5286;0.5429;0.6429;0.6571;1.0000" values="0;0;1;1;0;0"/><text class="tag bl" x="22" y="-14">VLAN 20 · TTL 63</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6429;0.6571;0.9143;0.9286;1.0000" values="0;0;1;1;0;0"/><text class="tag acc" x="22" y="-14">untagged · TTL 63</text></g>
+</g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" keyTimes="0;0.0429;0.0571;0.2143;0.2357;0.9143;0.9429;1" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="384">① PC-A: 목적지가 다른 서브넷 → 게이트웨이 10.0.10.1의 MAC으로 프레임을 만든다</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" keyTimes="0;0.2000;0.2143;0.3429;0.3643;0.9143;0.9429;1" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="406">② 스위치: 출발 MAC을 포트 1에 학습하고, 트렁크로 내보내며 802.1Q 태그 VLAN 10을 붙인다</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" keyTimes="0;0.3286;0.3429;0.5429;0.5643;0.9143;0.9429;1" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="428">③ 라우터: 경로를 찾아 .20 인터페이스 선택 · TTL 64→63 · L2 헤더를 새로 쓴다 (IP 주소는 그대로)</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" keyTimes="0;0.5286;0.5429;0.6429;0.6643;0.9143;0.9429;1" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="450">④ 트렁크: 같은 케이블을 이번엔 VLAN 20 태그로 내려온다</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" keyTimes="0;0.6286;0.6429;0.8286;0.8500;0.9143;0.9429;1" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="472">⑤ 스위치: 태그를 떼고 VLAN 20 액세스 포트로 전달 → PC-B 수신</text></g>
+<text class="s" x="928" y="486" text-anchor="end">패킷 위 꼬리표: 지금 바뀐 헤더 값</text>
+</g>
+<g class="static">
+<text class="cap" x="40" y="384">① PC-A: 목적지가 다른 서브넷 → 게이트웨이 10.0.10.1의 MAC으로 프레임을 만든다</text>
+<text class="cap" x="40" y="406">② 스위치: 출발 MAC을 포트 1에 학습하고, 트렁크로 내보내며 802.1Q 태그 VLAN 10을 붙인다</text>
+<text class="cap" x="40" y="428">③ 라우터: 경로를 찾아 .20 인터페이스 선택 · TTL 64→63 · L2 헤더를 새로 쓴다 (IP 주소는 그대로)</text>
+<text class="cap" x="40" y="450">④ 트렁크: 같은 케이블을 이번엔 VLAN 20 태그로 내려온다</text>
+<text class="cap" x="40" y="472">⑤ 스위치: 태그를 떼고 VLAN 20 액세스 포트로 전달 → PC-B 수신</text>
+<text class="tag acc" x="292" y="262" font-size="16">①</text>
+<text class="tag acc" x="454" y="246" font-size="16">②</text>
+<text class="tag acc" x="410" y="108" font-size="16">③</text>
+<text class="tag acc" x="504" y="222" font-size="16">④</text>
+<text class="tag acc" x="710" y="276" font-size="16">⑤</text>
+</g>
+</svg>
