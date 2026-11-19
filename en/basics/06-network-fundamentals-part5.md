@@ -141,7 +141,7 @@ Redundant links and devices raise availability, but they create loops at L2 and 
 
 **How it works:** STP sees the LAG as one link, so the bundled links are not blocked. Frames are assigned to one member link by hashing values such as addresses and ports, so **one flow always uses the same link**. Cisco documents bundling up to eight compatible ports.
 
-**In practice:** bundling four 10 Gbps links does not let **one** TCP connection exceed 10 Gbps; the aggregate is only usable with many flows. Answering "a single backup job is slow" by adding LAG members may not help. AWS Direct Connect LAGs also use LACP to bundle connections at the same endpoint (multi-chassis LAG is not supported); details come in expert workbook 07 (WAN and hybrid connectivity).
+**In practice:** bundling four 10 Gbps links does not let **one** TCP connection exceed 10 Gbps; the aggregate is only usable with many flows. Answering "a single backup job is slow" by adding LAG members may not help. AWS Direct Connect LAGs also use LACP to bundle connections at the same endpoint (multi-chassis LAG is not supported); details come in [expert workbook 07: WAN and Hybrid Connectivity](../networking/expert/07-wan-hybrid-connectivity.md#dx-lag).
 
 ### FHRP: VRRP and HSRP
 
@@ -270,7 +270,7 @@ On the way back, the NAT looks at the **destination (public IP:port)**. If no ro
 
 - In **MPLS L3VPN** (RFC 4364), the carrier's PE routers keep routing tables called VRFs alongside the default forwarding table and bind each customer attachment circuit to a VRF. Customer routes carried in BGP get an 8-byte Route Distinguisher prefix that turns them into VPN-IPv4 addresses, so two customers using the same private range do not mix. CE and PE exchange routes with static routing, RIP, OSPF or BGP.
 - **SD-WAN** is a service model, not a circuit type. MEF 70.2 defines the SD-WAN service separately from the Underlay Connectivity Services beneath it (internet access, MPLS and so on), defines the tunnels between sites as Tunnel Virtual Connections (TVCs), and defines the per-application-flow path rules as Policy.
-- The WAN entry points into the cloud are AWS Site-to-Site VPN and Direct Connect (see the cloud mapping in [Part 4](./06-network-fundamentals-part4.md)). Redundancy design, BGP path selection, tunnel MTU and cost comparison are covered in expert workbook 07 (WAN and hybrid connectivity).
+- The WAN entry points into the cloud are AWS Site-to-Site VPN and Direct Connect (see the cloud mapping in [Part 4](./06-network-fundamentals-part4.md)). Redundancy design, BGP path selection, tunnel MTU and cost comparison are covered in [expert workbook 07: WAN and Hybrid Connectivity](../networking/expert/07-wan-hybrid-connectivity.md).
 
 **In practice:** when choosing a WAN, record more than bandwidth: latency and jitter, how failover works, and whether circuits arrive from different carriers over different paths (physical diversity). Two circuits sharing one conduit fail together with a single backhoe.
 

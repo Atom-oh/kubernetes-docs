@@ -141,7 +141,7 @@ VLAN의 정의와 "VLAN 간 통신에는 L3 장비가 필요하다"는 원칙은
 
 **동작:** STP는 LAG를 링크 하나로 보므로 묶인 링크가 차단되지 않습니다. 프레임은 주소·포트 같은 값을 해시해 멤버 링크 하나에 배정하므로 **같은 흐름은 항상 같은 링크**로 갑니다. Cisco 문서는 호환되는 포트를 최대 8개까지 묶는다고 설명합니다.
 
-**실무 포인트:** 10Gbps 링크 4개를 묶어도 TCP 연결 **하나**는 10Gbps를 넘지 못합니다. 합계 대역폭은 흐름이 많을 때만 쓸 수 있습니다. 백업 한 건이 느리다는 문의에 LAG 증설로 대응하면 효과가 없을 수 있습니다. AWS Direct Connect의 LAG도 LACP로 같은 엔드포인트의 연결 여러 개를 묶으며(멀티섀시 LAG는 미지원), 상세는 전문가 과정 07(WAN과 하이브리드 연결)에서 다룹니다.
+**실무 포인트:** 10Gbps 링크 4개를 묶어도 TCP 연결 **하나**는 10Gbps를 넘지 못합니다. 합계 대역폭은 흐름이 많을 때만 쓸 수 있습니다. 백업 한 건이 느리다는 문의에 LAG 증설로 대응하면 효과가 없을 수 있습니다. AWS Direct Connect의 LAG도 LACP로 같은 엔드포인트의 연결 여러 개를 묶으며(멀티섀시 LAG는 미지원), 상세는 [전문가 과정 07: WAN과 하이브리드 연결](../networking/expert/07-wan-hybrid-connectivity.md#dx-lag)에서 다룹니다.
 
 ### FHRP: VRRP와 HSRP
 
@@ -270,7 +270,7 @@ RFC 3022는 Basic NAT와 NAPT를 "전통적 NAT"로 정의합니다. 세션은 �
 
 - **MPLS L3VPN**(RFC 4364)에서 통신사 PE 라우터는 기본 포워딩 테이블과 별도로 VRF라는 라우팅 테이블을 두고, 고객 사이트가 연결된 회선을 VRF에 묶습니다. BGP로 나르는 고객 경로 앞에는 8바이트 Route Distinguisher를 붙여 VPN-IPv4 주소로 만들므로, 서로 다른 고객이 같은 사설 대역을 써도 경로가 섞이지 않습니다. CE와 PE는 정적 경로, RIP, OSPF, BGP 중 하나로 경로를 교환합니다.
 - **SD-WAN**은 하나의 회선 종류가 아니라 서비스 모델입니다. MEF 70.2는 SD-WAN 서비스를 그 아래의 Underlay Connectivity Service(인터넷 접속, MPLS 등)와 구분해 정의하고, 사이트 사이를 잇는 터널을 Tunnel Virtual Connection(TVC)으로, 애플리케이션 흐름마다 적용할 경로 규칙을 정책(Policy)으로 정의합니다.
-- 클라우드로 가는 WAN 진입점은 AWS Site-to-Site VPN과 Direct Connect입니다([Part 4의 클라우드 매핑](./06-network-fundamentals-part4.md) 참고). 이중화 설계, BGP 경로 선택, 터널 MTU, 비용 비교는 전문가 과정 07(WAN과 하이브리드 연결)에서 다룹니다.
+- 클라우드로 가는 WAN 진입점은 AWS Site-to-Site VPN과 Direct Connect입니다([Part 4의 클라우드 매핑](./06-network-fundamentals-part4.md) 참고). 이중화 설계, BGP 경로 선택, 터널 MTU, 비용 비교는 [전문가 과정 07: WAN과 하이브리드 연결](../networking/expert/07-wan-hybrid-connectivity.md)에서 다룹니다.
 
 **실무 포인트:** WAN을 고를 때는 대역만 보지 말고 지연·지터, 장애 시 전환 방식, 회선이 다른 통신사·다른 경로로 들어오는지(물리적 다양성)를 함께 기록하세요. 같은 관로를 지나는 두 회선은 굴착 사고 한 번에 같이 끊깁니다.
 
