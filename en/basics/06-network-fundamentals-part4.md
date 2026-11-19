@@ -96,6 +96,7 @@ When investigating a failure, use each layer’s actual guarantees and observabl
 
 Connect these protocol fundamentals to Linux observations first, then follow the [networking learning path](../networking/README.md#learning-path) through containers and Services to CNI implementations:
 
+- [Part 5: Network Devices, LAN and WAN Basics](./06-network-fundamentals-part5.md): per-device forwarding decisions, VLAN/STP/FHRP, NAT and CGNAT, WAN types | [Quiz](../quizzes/basics/06-network-fundamentals-part5-quiz.md)
 - [Kernel Networking Stack](../kernel/02-network-stack.md): socket/VFS entry paths, buffers, and packet processing
 - [Linux Network Diagnostics Practice](../networking/07-linux-network-diagnostics.md): interpret observations and test hypotheses | [Quiz](../quizzes/networking/07-linux-network-diagnostics-quiz.md)
 - [eBPF Fundamentals](./05-ebpf-fundamentals.md): how packets are processed in the kernel

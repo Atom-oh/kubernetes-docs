@@ -96,6 +96,7 @@ TCP는 복구·순서 유지 비용으로 신뢰성 있는 순차 전달을 제�
 
 먼저 프로토콜 기초를 Linux 관측에 연결한 뒤, [네트워킹 학습 경로](../networking/README.md#learning-path)를 따라 컨테이너·Service에서 CNI 구현으로 나아갑니다.
 
+- [Part 5: 네트워크 장비, LAN과 WAN 기초](./06-network-fundamentals-part5.md): 장비별 포워딩 결정, VLAN·STP·FHRP, NAT·CGNAT, WAN 유형 | [퀴즈](../quizzes/basics/06-network-fundamentals-part5-quiz.md)
 - [커널 네트워킹 스택](../kernel/02-network-stack.md): 소켓/VFS 진입 경로, 버퍼, 패킷 처리
 - [Linux 네트워크 진단 실습](../networking/07-linux-network-diagnostics.md): 관측값 해석과 가설 확인 | [퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md)
 - [eBPF 기초](./05-ebpf-fundamentals.md): 커널에서 패킷을 처리하는 방식
