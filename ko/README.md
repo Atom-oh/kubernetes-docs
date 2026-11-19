@@ -303,6 +303,7 @@
 14. [WAF·엣지·API 보안과 origin 보호](./security/14-waf-edge-api-security.md) | [퀴즈](./quizzes/security/14-waf-edge-api-security-quiz.md)
 15. [Palo Alto·Fortinet NGFW](./security/15-ngfw-paloalto-fortinet.md) | [퀴즈](./quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
 16. [GWLB·GENEVE 검사 경로와 장애 검증](./security/16-gwlb-geneve-inspection.md) | [퀴즈](./quizzes/security/16-gwlb-geneve-inspection-quiz.md)
+17. [노드 Role에서 IRSA·Pod Identity로 마이그레이션](./security/17-eks-pod-iam-migration.md) | [퀴즈](./quizzes/security/17-eks-pod-iam-migration-quiz.md)
 
 ### GitOps
 1. [GitOps 개요](./gitops/README.md)

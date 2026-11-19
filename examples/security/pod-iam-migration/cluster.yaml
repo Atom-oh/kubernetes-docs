@@ -1,0 +1,21 @@
+# Optional: a throwaway cluster for the demo (eksctl create cluster -f cluster.yaml).
+# Hop limit 2 is set on purpose so the "legacy" baseline reproduces the
+# node-role leak. Step 05 shows how to close it.
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: pod-iam-demo
+  region: ap-northeast-2
+  version: "1.34"
+iam:
+  withOIDC: false          # step 02 creates the OIDC provider explicitly
+managedNodeGroups:
+  - name: ng-default
+    instanceType: m7g.large
+    amiFamily: AmazonLinux2023
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 3
+    disableIMDSv1: true    # IMDSv2 only
+    # eksctl sets hop limit 2 by default for managed node groups; the demo
+    # depends on that to show pods reaching IMDS.

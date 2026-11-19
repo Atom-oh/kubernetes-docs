@@ -339,6 +339,7 @@
 * [WAF·엣지·API 보안과 origin 보호](security/14-waf-edge-api-security.md)
 * [Palo Alto·Fortinet NGFW](security/15-ngfw-paloalto-fortinet.md)
 * [GWLB·GENEVE 검사 경로와 장애 검증](security/16-gwlb-geneve-inspection.md)
+* [노드 Role에서 IRSA·Pod Identity로 마이그레이션](security/17-eks-pod-iam-migration.md)
 
 ## GitOps
 
@@ -709,6 +710,7 @@
   * [WAF·origin 보호 퀴즈](quizzes/security/14-waf-edge-api-security-quiz.md)
   * [Palo Alto·Fortinet NGFW 퀴즈](quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
   * [GWLB·GENEVE 퀴즈](quizzes/security/16-gwlb-geneve-inspection-quiz.md)
+  * [노드 Role → IRSA·Pod Identity 퀴즈](quizzes/security/17-eks-pod-iam-migration-quiz.md)
 * Container Registry
   * [Docker Hub 퀴즈](quizzes/container-registry/01-docker-hub-quiz.md)
   * [Amazon ECR 퀴즈](quizzes/container-registry/02-amazon-ecr-quiz.md)

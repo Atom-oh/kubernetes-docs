@@ -47,6 +47,8 @@
   docs: [networking/06-pod-network-benchmark.md]
 - keywords: [eks security]
   docs: [eks/05-eks-security.md]
+- keywords: [eks pod identity, pod identity agent, irsa, iam roles for service accounts, pod identity association]
+  docs: [security/17-eks-pod-iam-migration.md]
 - keywords: [eks upgrade, kubernetes version support policy]
   docs: [eks/08-eks-upgrades.md]
 - keywords: [eks cost optimization]

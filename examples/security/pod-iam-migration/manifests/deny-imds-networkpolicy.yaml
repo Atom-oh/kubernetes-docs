@@ -1,0 +1,16 @@
+# Alternative/extra IMDS block per namespace. Needs a CNI that enforces
+# NetworkPolicy (VPC CNI with network policy enabled, Cilium, Calico).
+# hostNetwork pods are NOT covered - keep hop limit 1 as the node-level control.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-imds
+spec:
+  podSelector: {}
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.169.254/32

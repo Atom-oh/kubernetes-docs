@@ -303,6 +303,7 @@ This training content provides quizzes for each topic along with the learning ma
 14. [WAF, Edge, API and Origin Protection](./security/14-waf-edge-api-security.md) | [Quiz](./quizzes/security/14-waf-edge-api-security-quiz.md)
 15. [Palo Alto and Fortinet NGFW](./security/15-ngfw-paloalto-fortinet.md) | [Quiz](./quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
 16. [GWLB and GENEVE Paths and Failure Validation](./security/16-gwlb-geneve-inspection.md) | [Quiz](./quizzes/security/16-gwlb-geneve-inspection-quiz.md)
+17. [Migrating from Node Role to IRSA and Pod Identity](./security/17-eks-pod-iam-migration.md) | [Quiz](./quizzes/security/17-eks-pod-iam-migration-quiz.md)
 
 ### GitOps
 1. [GitOps Overview](./gitops/README.md)
