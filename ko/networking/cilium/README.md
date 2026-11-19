@@ -4,7 +4,7 @@
 
 Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 **Cilium/Helm 차트 1.20.3**, Cilium CLI **0.20.1**, Hubble CLI **1.20.2**입니다. Cilium 1.20 호환성 문서의 Kubernetes 테스트 범위는 **1.33–1.36**이며 업스트림 1.37 출시만으로 자동 확대되지 않습니다. 호스트는 AMD64/AArch64 Linux, 커널 **5.10 이상** 또는 문서화된 배포판 동등 조건(예: RHEL 8.10의 backport된 4.18)을 충족해야 합니다. 개별 기능에는 추가 조건이 있습니다.
 
-> **마지막 업데이트**: 2026년 10월 26일
+> **마지막 업데이트**: 2026년 11월 19일
 
 ### 릴리스 이력
 
@@ -23,10 +23,11 @@ Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 
 | 2026-09-09 | [1.21.0-pre.2](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.2) | Pre-release. changelog가 pre.0~pre.2를 포함하며 **1.21.0-pre.1은 게시되지 않았음** |
 | 2026-09-16 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | ENI IPAM prefix delegation(할당·해제)·보조 VPC CIDR, ClusterMesh, 정책 변경 직후 Pod의 정책 revision, LocalRedirectPolicy 회귀, v1.15 이하에서 생성된 클러스터 업그레이드(`CiliumNodeConfig v2alpha1` CRD 버전) 등 버그 수정 |
 | 2026-09-16 | [1.19.8](https://github.com/cilium/cilium/releases/tag/v1.19.8), [1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14) | 이전 지원 라인의 패치 릴리스 |
-| 2026-10-02 | [1.21.0-pre.3](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3) | 최신 1.21 pre-release. **1.21은 pre-release만 있으며 GA 전**이므로 이 가이드의 1.21 항목은 변경될 수 있음 |
+| 2026-10-02 | [1.21.0-pre.3](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3) | 1.21 pre-release |
 | 2026-10-15 | [1.20.3](https://github.com/cilium/cilium/releases/tag/v1.20.3) | Gateway API 의존성 v1.6.3, conntrack GC, `nodeSelector`가 있는 CNP 처리 등 수정, 이 가이드의 현재 검토 기준 |
 | 2026-10-15 | [1.19.9](https://github.com/cilium/cilium/releases/tag/v1.19.9), [1.18.15](https://github.com/cilium/cilium/releases/tag/v1.18.15) | 이전 지원 라인의 패치 릴리스 |
 | 2026-10-23 | [1.20.4](https://github.com/cilium/cilium/releases/tag/v1.20.4), [1.19.10](https://github.com/cilium/cilium/releases/tag/v1.19.10), [1.18.16](https://github.com/cilium/cilium/releases/tag/v1.18.16) | CVE-2026-111943 대응 긴급(out-of-band) 보안 패치 릴리스. 유출된 eMudhra 중간 CA 인증서를 더 이상 신뢰하지 않도록 Go를 1.26.10으로 업그레이드하고 의존성 패치 버전 갱신과 백포트 수정 포함 |
+| 2026-11-02 | [1.21.0-pre.4](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.4) | 최신 1.21 pre-release. 인터페이스 기반 BGP unnumbered 피어링, BPF masquerading 기본 활성화, Gateway API 프런트엔드 클라이언트 인증서 검증(mTLS)·리스너 TLS 버전 옵션, agent/operator의 multi-pool Resource IPAM, Gateway API Inference Extension 지원. **1.21은 pre-release만 있으며(GA는 2027년 초 목표)** 이 가이드의 1.21 항목은 변경될 수 있음 |
 
 2026년 9월 14일 CNCF 블로그에 [Cilium 1.20 기능 정리 글](https://www.cncf.io/blog/2026/09/14/cilium-1-20-gateway-api-externalauth-tcproute-udproute-eni-ipam-for-ipv6-and-more/)(Gateway API ExternalAuth, TCPRoute/UDPRoute, IPv6 ENI IPAM 등)이 게시되었습니다. 내용은 아래 1.20.0 발표 요약과 같은 범위입니다.
 

@@ -1,7 +1,7 @@
 # Amazon EKS Capabilities: Managed Argo CD, kro and ACK
 
 > **Supported Versions**: EKS 1.36–1.37, Argo CD `3.4.6-eks-2` and `3.4.7-eks-1`, kro `0.9.4-eks-1`, ACK `46.186.1-eks-1`, AWS CLI 2.38.3
-> **Last Updated**: October 23, 2026
+> **Last Updated**: November 19, 2026
 
 EKS Capabilities run Argo CD, kro (Kube Resource Orchestrator) and ACK (AWS Controllers for Kubernetes) as AWS-operated controllers outside your cluster. The feature became generally available on November 30, 2025. Controller log delivery (Vended Logs) followed in June 2026, and custom `argocd-cm` configuration for Argo CD in August 2026.
 
@@ -130,7 +130,11 @@ Create the `argocd-cm` ConfigMap in the capability namespace with the label `app
 
 Argo CD 3.x does not store resource health in the Application status by default, so an empty `.status.resources[].health` from `kubectl get application -o json` is normal. Check health with `argocd app get` or the UI.
 
-Per the docs, Config Management Plugins (CMP), the Notifications controller, custom SSO, UI extensions and `argocd admin`, among others, are not supported. If you send deployment notifications with Notifications or generate manifests through a CMP, you cannot move to the managed capability as is.
+Per the docs, Config Management Plugins (CMP), custom SSO, UI extensions and `argocd admin`, among others, are not supported. If you generate manifests through a CMP, you cannot move to the managed capability as is. The Notifications controller, unsupported at the time of the October 2026 measurements above, was added in November 2026 (see below).
+
+### November 2026 Update: Argo CD Notifications supported
+
+Per the [November 3, 2026 announcement](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-argo-cd-notifications/), the EKS Capability for Argo CD now supports Argo CD Notifications: you define triggers and message templates in the cluster and subscribe individual Applications with an annotation, the same way as in upstream Argo CD. 16 notification services are supported, including Slack, PagerDuty, Opsgenie, Amazon SQS and Amazon EventBridge. SQS and EventBridge authenticate through the IAM Capability Role, so deployment events can feed event-driven workflows without storing credentials in the cluster; for services that need third-party credentials (such as a Slack token), an AWS Secrets Manager ARN can be referenced in place of the secret. Available at no additional charge in all regions where the capability is offered. This document's measurements predate the launch, so notification behavior was not tested here.
 
 ### Sign-in: IAM Identity Center only
 
@@ -352,7 +356,7 @@ In every layout, set scope rules so that no two clusters declare the same AWS re
 | Performance | kro, ACK and Argo CD self-heal match OSS; Argo CD default polling is slower | Baseline (Argo CD 3.4.6 and kro 0.9.4 measured at the same versions; ACK OSS ran one version newer) |
 | SSO | Identity Center only, two configuration fields | Dex, OIDC and others, configured yourself |
 | Remote clusters | EKS ARN + access entry; private clusters without network setup | API URL, auth and network path per cluster |
-| Missing features | Argo CD Notifications, CMP, `argocd admin`, Lua standard libraries; ACK FieldExport | None |
+| Missing features | CMP, `argocd admin`, Lua standard libraries; ACK FieldExport (Argo CD Notifications added November 2026) | None |
 | Not directly tunable | Argo CD polling, ACK resync interval, controller flags and resource limits; Argo CD self-heal backoff only through AWS Support | All tunable |
 | Logs | Vended Logs | `kubectl logs`, your own collection |
 
@@ -365,7 +369,7 @@ Managed fits when:
 
 Stay self-managed when:
 
-- You depend on Notifications, CMP, FieldExport or Lua standard libraries
+- You depend on CMP, FieldExport or Lua standard libraries
 - Non-EKS clusters are among your deployment destinations
 - Only Argo CD must use an IdP different from the organization's Identity Center and an account instance is not an option
 - You must control controller versions, upgrade timing and polling or resync intervals yourself

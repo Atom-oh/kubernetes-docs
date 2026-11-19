@@ -134,6 +134,97 @@
           "category": "feature"
         },
         {
+          "id": "6a8b309b850019c0",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.6.0"
+          ],
+          "title": "Argo CD v3.6.0 정식",
+          "summary": "Argo CD v3.6.0 정식(GA) 릴리스(ApplicationSet progressive sync 메트릭·조건, Dex 스토리지·TLS 설정 구성 등)와 2026-11-04 뒤이어 공개된 버그 수정 패치 v3.6.1 반영",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "36406eba78f85823",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.5.7"
+          ],
+          "title": "Argo CD v3.5.7/v3.4.13/v3.3.19 버그 수정 패치 릴리스",
+          "summary": "Argo CD v3.5.7/v3.4.13/v3.3.19 버그 수정 패치 릴리스 반영",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "c5daa3a9f231d1e2",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "eks/13-eks-capabilities.md",
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-argo-cd-notifications/"
+          ],
+          "title": "EKS Capability for Argo CD의 Argo CD Notifications 지원",
+          "summary": "EKS Capability for Argo CD의 Argo CD Notifications 지원(Slack·Amazon SQS·EventBridge 등 16개 서비스, IAM Capability Role 인증과 Secrets Manager 자격 증명 참조) 반영",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "bd6f7b6f0cd448de",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "observability/metrics/01-prometheus.md"
+          ],
+          "sources": [
+            "https://github.com/prometheus/prometheus/releases/tag/v3.16.0"
+          ],
+          "title": "Prometheus 3.16.0 릴리스",
+          "summary": "Prometheus 3.16.0 릴리스(smoothed/anchored 벡터 셀렉터 stable 승격, 실험적 쿼리 비용 추정·실행 제한, 실험적 integral() 함수, Agent 모드 metadata WAL records) 반영",
+          "topic": "observability",
+          "category": "release"
+        },
+        {
+          "id": "f8cffed5e07fef4d",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [
+            "https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.4"
+          ],
+          "title": "Cilium 1.21.0-pre.4 프리릴리스",
+          "summary": "Cilium 1.21.0-pre.4 프리릴리스(BGP unnumbered 피어링, BPF masquerading 기본 활성화, Gateway API 프런트엔드 mTLS·리스너 TLS 버전 옵션, multi-pool Resource IPAM, Gateway API Inference Extension) 반영",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "b55c1c5f35948590",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [
+            "https://github.com/kubernetes/kubernetes/releases/tag/v1.38.0-beta.0"
+          ],
+          "title": "Kubernetes v1.38.0-beta.0 프리릴리스",
+          "summary": "Kubernetes v1.38.0-beta.0 프리릴리스(v1.38 첫 베타, GA는 2026-12-16 목표) 반영",
+          "topic": "kubernetes",
+          "category": "preview"
+        },
+        {
           "id": "5fad87439987f70e",
           "period": "2026-W44",
           "week": "2026-W44",
@@ -1605,7 +1696,7 @@
           "category": "breaking"
         }
       ],
-      "updated": "2026-11-16"
+      "updated": "2026-11-19"
     },
     "en": {
       "entries": [
@@ -1738,6 +1829,97 @@
           "summary": "KubeRay, the Kubernetes operator for Ray workloads, announced as donated to the CNCF",
           "topic": "kubernetes",
           "category": "feature"
+        },
+        {
+          "id": "6a8b309b850019c0",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.6.0"
+          ],
+          "title": "Argo CD v3.6.0 GA release",
+          "summary": "applied the Argo CD v3.6.0 GA release (ApplicationSet progressive-sync metrics/conditions, configurable Dex storage/TLS settings and more) and the bug-fix patch v3.6.1 that followed on 2026-11-04",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "36406eba78f85823",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://github.com/argoproj/argo-cd/releases/tag/v3.5.7"
+          ],
+          "title": "Argo CD v3.5.7/v3.4.13/v3.3.19 bug-fix patch releases",
+          "summary": "applied the Argo CD v3.5.7/v3.4.13/v3.3.19 bug-fix patch releases",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "c5daa3a9f231d1e2",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "eks/13-eks-capabilities.md",
+            "gitops/argocd/README.md"
+          ],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-argo-cd-notifications/"
+          ],
+          "title": "Argo CD Notifications support in the EKS Capability for Argo CD",
+          "summary": "applied Argo CD Notifications support in the EKS Capability for Argo CD (16 services including Slack, Amazon SQS and EventBridge; IAM Capability Role authentication and Secrets Manager credential references)",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "bd6f7b6f0cd448de",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "observability/metrics/01-prometheus.md"
+          ],
+          "sources": [
+            "https://github.com/prometheus/prometheus/releases/tag/v3.16.0"
+          ],
+          "title": "Prometheus 3.16.0 release",
+          "summary": "applied the Prometheus 3.16.0 release (smoothed/anchored vector selectors graduate to stable, experimental query cost estimation and execution limits, experimental integral() function, Agent-mode metadata WAL records)",
+          "topic": "observability",
+          "category": "release"
+        },
+        {
+          "id": "f8cffed5e07fef4d",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [
+            "https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.4"
+          ],
+          "title": "Cilium 1.21.0-pre.4 prerelease",
+          "summary": "applied the Cilium 1.21.0-pre.4 prerelease (BGP unnumbered peering, BPF masquerading on by default, Gateway API frontend mTLS and listener TLS version options, multi-pool Resource IPAM, Gateway API Inference Extension)",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "b55c1c5f35948590",
+          "period": "2026-W46",
+          "week": "2026-W46",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [
+            "https://github.com/kubernetes/kubernetes/releases/tag/v1.38.0-beta.0"
+          ],
+          "title": "Kubernetes v1.38.0-beta.0 pre-release",
+          "summary": "applied the Kubernetes v1.38.0-beta.0 pre-release (first v1.38 beta; GA targeted for 2026-12-16)",
+          "topic": "kubernetes",
+          "category": "preview"
         },
         {
           "id": "5fad87439987f70e",
@@ -3211,7 +3393,7 @@
           "category": "breaking"
         }
       ],
-      "updated": "2026-11-16"
+      "updated": "2026-11-19"
     }
   }
 }

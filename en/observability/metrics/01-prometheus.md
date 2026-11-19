@@ -1,6 +1,6 @@
 # Prometheus
 
-> **Last Updated**: September 14, 2026. Local configuration/query checks are described below; no cluster or cloud deployment was performed.
+> **Last Updated**: November 19, 2026. Local configuration/query checks are described below; no cluster or cloud deployment was performed.
 
 ## Contents
 
@@ -33,6 +33,10 @@ This chapter uses the official **kube-prometheus-stack 90.0.0** package, release
 The chart's `kubeVersion` guard is `>=1.25.0-0`. This is not a complete compatibility matrix or a statement that every Kubernetes 1.25+ version remains supported. Check the actual cluster, component support, admission policy and storage driver.
 
 The profile targets **Linux EC2-backed EKS workers**. Fargate has no DaemonSets; Auto Mode, Hybrid Nodes and Windows require platform-specific collector/storage checks.
+
+### November 2026 update
+
+- [Prometheus 3.16.0](https://github.com/prometheus/prometheus/releases/tag/v3.16.0) was released on 2026-11-04. Highlights: smoothed and anchored (extended-range) vector selectors are now stable and always-on, experimental PromQL query cost estimation and configurable execution limits behind `--enable-feature=query-cost`, an experimental `integral()` function behind the experimental-functions flag, and `metadata-wal-records` support in Agent mode. This chapter's examples were verified on 3.14.0 and have not been re-run on 3.16.
 
 ### September 2026 update
 

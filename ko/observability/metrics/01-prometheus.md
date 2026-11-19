@@ -1,6 +1,6 @@
 # Prometheus
 
-> 검토: 2026년 9월 14일. 아래에 로컬 설정·쿼리 검증 범위를 명시합니다. 클러스터·클라우드 배포는 수행하지 않았습니다.
+> 검토: 2026년 11월 19일. 아래에 로컬 설정·쿼리 검증 범위를 명시합니다. 클러스터·클라우드 배포는 수행하지 않았습니다.
 
 ## 목차
 
@@ -33,6 +33,10 @@ Local 보존 기간은 설정할 수 있으며 30일을 넘길 수도 있습니�
 차트의 `kubeVersion` 조건은 `>=1.25.0-0`입니다. 전체 호환성 표는 아니며, 모든 Kubernetes 1.25 이상 버전이 계속 지원된다는 뜻도 아닙니다. 실제 cluster·컴포넌트 지원·admission 정책·storage driver를 확인합니다.
 
 Profile은 **Linux EC2 worker를 사용하는 EKS**를 대상으로 합니다. Fargate는 DaemonSet을 지원하지 않으며 Auto Mode·Hybrid Nodes·Windows는 수집기와 저장소를 별도로 검토해야 합니다.
+
+### 2026년 11월 업데이트
+
+- [Prometheus 3.16.0](https://github.com/prometheus/prometheus/releases/tag/v3.16.0)이 2026-11-04 릴리스되었습니다. 주요 변경: smoothed·anchored(확장 범위) 벡터 셀렉터가 stable로 승격되어 항상 활성화되고, `--enable-feature=query-cost` 뒤에 실험적 PromQL 쿼리 비용 추정·실행 제한이 추가되었으며, 실험적 함수 플래그 뒤에 `integral()` 함수가, Agent 모드에 `metadata-wal-records` 지원이 추가되었습니다. 이 장의 예제는 3.14.0에서 검증했으며 3.16에서 재실행하지 않았습니다.
 
 ### 2026년 9월 업데이트
 
