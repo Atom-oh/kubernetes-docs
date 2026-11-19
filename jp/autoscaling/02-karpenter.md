@@ -1,92 +1,92 @@
 # Karpenter
 
-> **対応バージョン**: Karpenter 1.14 LTS（例: 1.14.1）。Kubernetes/EKS のバージョンは互換性表とプロバイダーのサポート表を確認して選択してください。
-> **最終更新日**: 2026年10月16日
+> **サポート対象バージョン**: Karpenter 1.14 LTS（例: 1.14.1）。互換性およびプロバイダーのサポート表を使って、Kubernetes/EKS のバージョンを選択してください。
+> **最終更新日**: 2026年11月16日
 
 ## 目次
-- [概要](#introduction)
+- [はじめに](#introduction)
 - [アーキテクチャ](#architecture)
-- [インストールと設定](#installation-and-configuration)
+- [インストールと構成](#installation-and-configuration)
 - [NodePool](#nodepool)
-- [ノードクラス](#node-classes)
+- [Node Class](#node-classes)
 - [中断への対応](#interruption-handling)
-- [連携](#integration)
-- [Amazon EKS との連携](#integration-with-amazon-eks)
+- [統合](#integration)
+- [Amazon EKS との統合](#integration-with-amazon-eks)
 - [ベストプラクティス](#best-practices)
 - [トラブルシューティング](#troubleshooting)
 - [まとめ](#conclusion)
 
-## 概要 {#introduction}
+## はじめに
 
-Karpenter はオープンソースのノードオートスケーラーです。この章では、互換性のある Kubernetes ワークロード向けに EC2 キャパシティをプロビジョニングする AWS プロバイダーを扱います。可用性と効率は、制約、クラウド側のキャパシティ、ノードの初期化、アプリケーションの設計によって変わります。
+Karpenter はオープンソースのノードオートスケーラーです。この章では、互換性のある Kubernetes ワークロード向けに EC2 キャパシティをプロビジョニングする AWS プロバイダーを使用します。可用性と効率は、制約、クラウドのキャパシティ、ノードの初期化、アプリケーションの設計によって左右されます。
 
 ### Karpenter の主な利点
 
-1. **迅速なスケーリング**: スケジュールできないワークロードの需要に応じてプロビジョニングを開始します。ノードやアプリケーションが利用可能になるまでの時間は保証されません。
-2. **コスト最適化**: ワークロードに適したインスタンスタイプを選択します。
-3. **簡単な設定**: 宣言型 API で設定できます。
-4. **ワークロード中心の設計**: Pod の要件に基づいてノードをプロビジョニングします。
-5. **クラウドとの統合**: クラウドプロバイダーの機能を活用します。
-6. **効率的なビンパッキング**: リソースの利用率を最適化します。
-7. **柔軟なノード管理**: ノードのライフサイクル管理と中断への統合的な対応を提供します。
+1. **応答性の高いスケーリング**: スケジュールできないワークロードの需要に応じてプロビジョニングを開始します。ノードとアプリケーションの準備完了までの固定レイテンシは保証されません。
+2. **コストの最適化**: ワークロードに最も適したインスタンスタイプを選択
+3. **シンプルな構成**: 宣言型 API による簡単な構成
+4. **ワークロード中心の設計**: Pod の要件に基づくノードのプロビジョニング
+5. **クラウドとの統合**: クラウドプロバイダーの機能を活用
+6. **効率的なビンパッキング**: リソース利用率を最適化
+7. **柔軟なノード管理**: ノードのライフサイクル管理と中断対応の統合
 
 ### 既存のオートスケーラーとの比較
 
-| 項目 | Karpenter | Cluster Autoscaler | クラウドプロバイダーのマネージドノードグループ |
+| 機能 | Karpenter | Cluster Autoscaler | クラウドプロバイダー管理のノードグループ |
 |---------|-----------|-------------------|---------------------------|
 | スケーリング速度 | スケジューリング、EC2 キャパシティ、初期化に依存 | ノードグループのスケーリングと初期化に依存 | スケーリングポリシー、キャパシティ、初期化に依存 |
-| インスタンスタイプの選択 | 動的 | ノードグループ単位 | ノードグループ単位 |
+| インスタンスタイプの選択 | 動的 | ノードグループベース | ノードグループベース |
 | ビンパッキング効率 | ワークロードと制約に依存 | ワークロードとノードグループに依存 | スケジューラーとスケーリングコントローラーに依存 |
-| 設定の複雑さ | 低い | 中程度 | 低い |
-| クラウドとの統合 | プロバイダーごとの実装 | 複数のクラウドプロバイダーに対応 | プロバイダー標準の機能 |
-| ノードグループ管理 | 不要 | 必要 | 必要 |
-| 中断への対応 | 設定したイベント処理とノードライフサイクル | プラットフォームや連携方式に依存 | プラットフォーム固有の処理 |
+| 構成の複雑さ | 低 | 中 | 低 |
+| クラウドとの統合 | プロバイダー固有の実装 | 複数のクラウドプロバイダーとの統合 | プロバイダー標準 |
+| ノードグループの管理 | 不要 | 必要 | 必要 |
+| 中断への対応 | 構成されたイベント処理とノードライフサイクル | プラットフォーム/統合に依存 | プラットフォーム固有の処理 |
 
-> **注**: EKS は2026年4月8日、マネージドノードグループのウォームプール対応を追加しました。初期化済みインスタンスを使うと、初期化作業の繰り返しを減らせます。Stopped モードと Running モードでは遷移時間とコストが異なり、スケールイン時の再利用は任意です。AWS によると、Cluster Autoscaler との連携に追加設定は不要です。再開後もノードの準備とアプリケーションの起動には時間がかかります。これは EKS マネージドノードグループと Auto Scaling の機能であり、Karpenter が管理するプールの機能ではありません。
+> **注**: EKS は2026年4月8日に Managed Node Group のウォームプールサポートを追加しました。初期化済みのインスタンスを使うと、初期化作業の繰り返しを減らせます。Stopped モードと Running モードでは、状態遷移にかかる時間とコストが異なり、スケールイン時の再利用は任意です。AWS によると、Cluster Autoscaler との統合に追加の構成は必要ありません。再開、ノードの準備完了、アプリケーションの起動には、引き続き時間がかかります。これは EKS Managed Node Group/Auto Scaling の機能であり、Karpenter が管理するプールではありません。
 
-## アーキテクチャ {#architecture}
+## アーキテクチャ
 
-Karpenter は Kubernetes コントローラーとして動作し、スケジュールできない Pod を検出して適切なノードをプロビジョニングします。
+Karpenter は Kubernetes コントローラーとして動作し、スケジュールできない Pod を検出して、適切なノードをプロビジョニングします。
 
-![Kubernetes クラスター内で Karpenter コントローラーがスケジュールできない Pod を監視し、CEL 検証済みの NodePool および EC2NodeClass CRD を使って Kubernetes API とクラウドプロバイダーの Instance API を呼び出し、コンピューティングインスタンスをプロビジョニングする構成図。](../.gitbook/assets/en-autoscaling-02-karpenter-0.png)
+![Kubernetes クラスター内の Karpenter コントローラーがスケジュールできない Pod を監視し、CEL による検証を受ける NodePool および EC2NodeClass の CRD を使って、Kubernetes API とクラウドプロバイダーの Instance API を呼び出し、コンピューティングインスタンスをプロビジョニングする様子を示すアーキテクチャ図。](../.gitbook/assets/en-autoscaling-02-karpenter-0.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-0.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-0.html)
 
 ### Karpenter のワークフロー
 
-次の図は、EKS クラスターで Karpenter が動作する流れを示しています。
+次の図は、EKS クラスターで Karpenter がどのように動作するかを示しています。
 
-![スケジュールできない Pod が Kubernetes API 経由で Karpenter コントローラーに届き、Karpenter が AWS EC2 API に問い合わせてノードを要求し、新しいノードが登録されて Pod がスケジュールされるまでを示すシーケンス図。](../.gitbook/assets/en-autoscaling-02-karpenter-1.png)
+![スケジュールできない Pod が Kubernetes API 経由で Karpenter コントローラーに到達し、Karpenter が AWS EC2 API に問い合わせてノードを要求する。新しいノードが登録されると、最終的に Pod がスケジュールされる流れを示すシーケンス図。](../.gitbook/assets/en-autoscaling-02-karpenter-1.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-1.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-1.html)
 
 ### 主なコンポーネント
 
-1. **Karpenter コントローラー**: スケジューリングに必要なリソースをシミュレーションし、NodeClaim を作成してノードのライフサイクルを管理します。実際に Pod をノードへバインドするのは Kubernetes スケジューラーです。
-2. **CRD の CEL 検証**: NodePool と EC2NodeClass は CRD 内の CEL ルールで検証されます（アドミッション/変換 Webhook は Karpenter 1.1 で削除されました）。
-3. **NodePool と NodeClaim の CRD**: NodePool はポリシーを定義し、NodeClaim は個々にプロビジョニングされたノードの要件とライフサイクルを記録します。
-4. **EC2NodeClass CRD**: プロビジョニングするノードの設定を定義します。
-5. **クラウドプロバイダー連携**: クラウドプロバイダーの API と連携してコンピューティングリソースを管理します。
+1. **Karpenter コントローラー**: スケジューリングの必要性をシミュレートし、NodeClaim を作成してノードのライフサイクルを管理します。実際の Pod のバインドは Kubernetes スケジューラーが行います。
+2. **CRD の CEL 検証**: NodePool と EC2NodeClass は CRD 内の CEL ルールによって検証されます（アドミッション/変換 Webhook は Karpenter 1.1 で削除されました）。
+3. **NodePool および NodeClaim CRD**: NodePool はポリシーを定義し、NodeClaim はプロビジョニングされた個々のノードの要件とライフサイクルを記録します。
+4. **EC2NodeClass CRD**: プロビジョニングするノードの構成を定義します。
+5. **クラウドプロバイダーとの統合**: クラウドプロバイダーの API と統合し、コンピューティングリソースを管理します。
 
-### 動作の流れ
+### 動作の仕組み
 
 1. Karpenter コントローラーがスケジュールできない Pod を検出します。
-2. リソース、ノードセレクター、許容設定など、Pod の要件を分析します。
-3. NodePool と EC2NodeClass の設定に基づいて適切なノードタイプを決定します。
+2. Pod の要件（リソース、ノードセレクター、toleration など）を分析します。
+3. NodePool と EC2NodeClass の構成に基づいて、適切なノードタイプを決定します。
 4. クラウドプロバイダーの API を呼び出してノードをプロビジョニングします。
-5. ノードが登録されて準備完了になると、Kubernetes スケジューラーが条件を満たす Pod をバインドできます。Karpenter は kube-scheduler を置き換えません。
-6. Consolidation、ドリフト、有効期限、手動削除、クラウド中断にはそれぞれ異なるトリガーと保護策があります。すべてが SQS の中断イベントというわけではありません。
+5. ノードが登録されて準備完了になると、Kubernetes スケジューラーは条件を満たす Pod をバインドできます。Karpenter は kube-scheduler を置き換えるものではありません。
+6. Consolidation、drift、expiration、手動削除、クラウド中断にはそれぞれ異なるトリガーと保護策があります。これらすべてが SQS の中断イベントというわけではありません。
 
-## インストールと設定 {#installation-and-configuration}
+## インストールと構成
 
-apiVersion/kind を含まない YAML ブロックは、説明対象の NodePool または EC2NodeClass の仕様の一部を示す断片です。単独で kubectl apply に渡せるマニフェストではありません。
+apiVersion/kind のない YAML ブロックは、説明対象の NodePool または EC2NodeClass の spec に対する構成断片です。単独で kubectl apply できるドキュメントではありません。
 
-以下は既存クラスターを対象とする個別の学習用例であり、そのまま本番環境へ展開できる一式ではありません。同じオブジェクト名が繰り返される箇所は、別々の選択肢を示します。インストール前に IAM/OIDC、ノードアクセス、承認済みサブネットとセキュリティグループ、ブートストラップ用キャパシティ、中断通知キューを準備して確認してください。YAML 内の `my-cluster` などは文字どおりの例示名です。保存した YAML 内の `${CLUSTER_NAME}` を kubectl が展開することはありません。この監査では AWS リソースの作成、Karpenter のインストール、スケーリング計測は行っていません。新規インストール用コマンドは、同じリリースがすでに存在すると失敗します。既存環境では、バージョンに対応したアップグレードと CRD 移行の手順に従ってください。
+ここに示すのは既存クラスター向けの独立した学習例であり、本番環境ですぐに使えるデプロイ一式ではありません。同じオブジェクト名が繰り返されている場合、それらは選択肢です。インストール前に、IAM/OIDC、ノードアクセス、承認済みのサブネット/セキュリティグループ、ブートストラップ用キャパシティ、中断キューを準備して確認してください。すべての YAML では `my-cluster` などの例示名をそのまま使用しています。保存済みの YAML ファイル内で kubectl が `${CLUSTER_NAME}` を展開することはありません。この監査では AWS リソースのプロビジョニング、Karpenter のインストール、スケーリングの測定は実施していません。新規インストール用コマンドは、そのリリースがすでにインストールされている場合は失敗します。既存環境のインストールでは、バージョン別のアップグレード/CRD 移行ガイドに従ってください。
 
 ### 前提条件
 
-- 利用するプラットフォームと Karpenter の互換性表でサポートされる Kubernetes バージョンを使います。公開されている表では、Kubernetes 1.34 に対する Karpenter の最小バージョンは 1.6、1.35 では 1.9、1.36 では 1.13 です。これらの最小値は、古い Karpenter のすべてのマイナーバージョンが引き続き保守されることを意味しません。v1.14 の表には 1.37 が含まれず、v1.15 の表では Kubernetes 1.37 に Karpenter 1.15.x が必要です。EKS の各バージョンの提供状況とサポートは別途確認してください。
-- kubectl の設定
+- プラットフォームと Karpenter の互換性マトリクスでサポートされる Kubernetes バージョンを使用してください。公開されているマトリクスでは、Kubernetes 1.34 には Karpenter 1.6、1.35 には 1.9、1.36 には 1.13 がそれぞれ最小バージョンとして記載されています。これらの最小バージョンは、古い Karpenter のすべてのマイナーバージョンが引き続き保守されることを意味しません。v1.14 のマトリクスには 1.37 が含まれておらず、v1.15 のマトリクスでは Kubernetes 1.37 に Karpenter 1.15.x が必要です。EKS のバージョンの提供状況/サポートは別途確認してください。
+- kubectl の構成
 - クラウドプロバイダーの認証情報と権限
 - Helm（任意）
 
@@ -94,7 +94,7 @@ apiVersion/kind を含まない YAML ブロックは、説明対象の NodePool 
 
 #### 1. IAM ロールとポリシーの設定
 
-コマンドは、既存のコントローラーロールとノードロール、および API ベースの EKS 認証（API または API_AND_CONFIG_MAP）を前提とします。CONFIG_MAP のみを使うクラスターでは、list-access-entries の代わりに既存の aws-auth ノードマッピングを確認してください。この手順に便乗して認証モードを変更しないでください。ノードロールは EC2 を信頼し、ワーカーノードと ECR からのイメージ取得に必要な権限（例: AmazonEKSWorkerNodePolicy、AmazonEC2ContainerRegistryPullOnly）を持つ必要があります。対応している場合、VPC CNI には専用のアイデンティティを割り当てます。SSM 権限は任意で、エージェントの設定が必要です。AmazonEKSClusterPolicy は Karpenter コントローラーポリシーの代わりにはなりません。
+以下のコマンドは、既存のコントローラーロール、ノードロール、および API ベースの EKS 認証（API または API_AND_CONFIG_MAP）を前提としています。CONFIG_MAP のみを使用するクラスターでは、list-access-entries の代わりに既存の aws-auth ノードマッピングを確認してください。セットアップのついでに認証モードを変更しないでください。ノードロールは EC2 を信頼し、ワーカーノード/ECR の pull 権限（たとえば AmazonEKSWorkerNodePolicy と AmazonEC2ContainerRegistryPullOnly）を必要とします。サポートされている場合は、VPC CNI に独自の ID を付与してください。SSM 権限は任意であり、構成済みのエージェントが必要です。AmazonEKSClusterPolicy は Karpenter コントローラーポリシーの代替にはなりません。
 
 ```bash
 # Set the existing cluster and Region; these commands only inspect AWS/Kubernetes.
@@ -112,7 +112,7 @@ aws eks list-access-entries --region "$AWS_REGION" --cluster-name "$CLUSTER_NAME
 
 #### 2. Helm を使ったインストール
 
-参照先のキューとブートストラップ用キャパシティを準備したうえで、新規インストール用の例を一度だけ実行してください。アップグレード時は、バージョン別の移行ガイドを確認し、対応する CRD も更新します（例: 別管理の karpenter-crd チャート）。コントローラーチャートだけを更新しても、通常 CRD は更新されません。既存 CRD の移行前に所有者を確認してください。
+参照先のキューとブートストラップ用キャパシティを準備した後、新規インストールの例を一度だけ使用してください。アップグレードの場合は、バージョン別の移行ガイドを確認し、対応する CRD を更新してください（たとえば、別途管理される karpenter-crd chart を使用します）。コントローラーの chart だけをアップグレードしても、通常は CRD はアップグレードされません。既存の CRD インストールを移行する前に、所有権を確認してください。
 
 ```bash
 # Run only after the prerequisites and the current kubectl context are verified.
@@ -138,14 +138,14 @@ kubectl rollout status deployment/karpenter -n karpenter --timeout=180s
 kubectl get nodepools,ec2nodeclasses,nodeclaims
 ```
 
-コントローラーのレプリカが既定の2個の場合の出力例です（この監査で実行した結果ではありません）。
+デフォルトのコントローラーレプリカ数 2 に対する出力例（この監査での実行結果ではありません）:
 ```
 NAME                         READY   STATUS    RESTARTS   AGE
 karpenter-<hash>-<id-1>      1/1     Running   0          1m
 karpenter-<hash>-<id-2>      1/1     Running   0          1m
 ```
 
-### NodePool と EC2NodeClass の基本設定
+### 基本的な NodePool と EC2NodeClass の構成
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -208,11 +208,11 @@ spec:
 
 ## NodePool
 
-NodePool は、Karpenter がノードをどのようにプロビジョニングするかを定義する Kubernetes カスタムリソースです。以前の Provisioner を置き換えます。
+NodePool は、Karpenter がノードをどのようにプロビジョニングするかを定義する Kubernetes カスタムリソースです。以前の Provisioner に代わるものです。
 
-### NodePool の基本設定
+### 基本的な NodePool の構成
 
-以下の特別な taint は、対応する toleration を持つワークロードだけを受け入れるためのものです。これを削除する初期化処理が検証できるまでは startupTaints を空にしてください。担当コントローラーがない startup taint を設定すると、ノードを利用できなくするおそれがあります。limits、初期化、中断の各例は個別の選択肢であり、稼働中の本番 NodePool にすべて加える変更ではありません。
+以下の特別な taint は、対応する workload toleration を意図的に要求します。構成した taint を削除する初期化処理が確認できるまでは、startupTaints は空のままにしてください。担当コントローラーを用意せずに startup taint を設定すると、ノードが使用不能になる場合があります。Limits、初期化、中断の例はそれぞれ別の選択肢であり、稼働中の本番 NodePool に追加で適用する変更ではありません。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -259,11 +259,11 @@ spec:
     consolidateAfter: 30s
 ```
 
-### 要件の設定
+### 要件の構成
 
-要件は相互に、EC2NodeClass と、さらに Pod の制約とも突き合わせて評価されます。amd64 と arm64 の両方を許可しても、対象インスタンスタイプ、AMI、コンテナイメージが両方に対応している場合に限って意味があります。利用可能なゾーンやキャパシティタイプを列挙しても、均等な分散が保証されるわけではありません。分散が必要な場合はワークロードのトポロジー制約を使ってください。
+要件は互いに、EC2NodeClass と、Pod の制約との間で交差されます。amd64 と arm64 の両方を許可しても、条件を満たすインスタンスタイプ、AMI、コンテナイメージが両方をサポートしていなければ役に立ちません。使用可能なゾーン/キャパシティタイプを列挙しても、均等な分散は保証されません。その目的にはワークロードのトポロジー制約を使用してください。
 
-要件は Karpenter がプロビジョニングするノードの特性を定義します。
+要件は、Karpenter がプロビジョニングするノードの特性を定義します。
 
 ```yaml
 template:
@@ -299,9 +299,9 @@ template:
       - linux
 ```
 
-### 上限の設定
+### Limits の構成
 
-`spec.limits` はプロビジョニングするリソース全体の上限を設定します。ただし、並列プロビジョニング時の確認には結果整合性が使われるため、一時的に上限を超えることがあります。厳密な請求上限ではありません。数量を文字列で指定すると、API と GitOps の間で型が異なる問題を避けられます。
+`spec.limits` はプロビジョニング済みリソースの合計を制限しますが、並列プロビジョニングでは結果整合性のあるチェックが使われるため、一時的に上限を超える場合があります。厳密な請求上限ではありません。文字列形式の数量を使うと、API/GitOps 間の型の違いを避けられます。
 
 ```yaml
 limits:
@@ -310,13 +310,13 @@ limits:
   nvidia.com/gpu: '10'
 ```
 
-### 実験的な DRA 割り当て追跡（v1.13）
+### 実験的な DRA 割り当ての追跡（v1.13）
 
-Karpenter コア v1.13 は DRA デバイスの割り当て追跡を追加しました。これは、本番環境で DRA によるプロビジョニングが保証されたという意味ではありません。AWS 1.14.1 チャートでは `settings.ignoreDRARequests: true` が既定値であり、上流では正式な DRA サポートはまだ GA ではないとされています。Kubernetes 1.29 以上という最低要件だけでは互換性を判断できません。Kubernetes リソース API、DRA ドライバー、ResourceClaims/ResourceSlices、Karpenter の設定を個別に検証してください。DRA の要求を、後述するデバイスプラグインの拡張リソース例と同一視しないでください。
+Karpenter コア v1.13 では DRA デバイス割り当ての追跡が追加されました。これは、本番環境の DRA プロビジョニング全般を保証するものではありません。AWS 1.14.1 chart では `settings.ignoreDRARequests: true` がデフォルトであり、upstream は正式な DRA サポートをまだ GA ではないとしています。Kubernetes 1.29 以上であることだけでは、互換性の根拠として十分ではありません。実際に使用する Kubernetes リソース API、DRA ドライバー、ResourceClaims/ResourceSlices、Karpenter の構成を検証してください。DRA claim を、以下のデバイスプラグインの拡張リソース例と同等のものとして扱わないでください。
 
-### ノードの有効期限の設定
+### ノードの有効期限の構成
 
-`expireAfter` は、有効期限によるドレインを開始する時点を定義します。ノードの置き換えが完了する時刻を保証する設定ではありません。任意の `terminationGracePeriod` はドレインの期限を制限しますが、PDB によって退避できない Pod を含め、残った Pod を強制削除することがあります。アプリケーションの終了処理と復旧要件を確認してから期限を選んでください。
+`expireAfter` は、有効期限による drain が始まるタイミングを定義するもので、置き換えの完了時刻を保証するものではありません。以下の任意設定 `terminationGracePeriod` は drain の期限を設定しますが、PDB によってブロックされている Pod を含め、残っている Pod を強制削除する場合があります。この期限を設定するのは、アプリケーションのシャットダウンと復旧の要件を検証した後にしてください。
 
 ```yaml
 spec:
@@ -331,43 +331,55 @@ spec:
 
 ### NodeReadinessController の taint の認識（v1.13）
 
-Karpenter コア v1.13 は、初期化中の管理対象ノードについて、スケジューリングのシミュレーション時に別の NodeReadinessController が設定する `readiness.k8s.io/` taint を一時的なものとして認識します。初期化完了と判断する前に、これらの taint が消えるのを待ちます。Karpenter が taint を削除したり、Kubernetes スケジューラーに taint を無視させたりするわけではありません。ほかの初期化用 taint には、正しい `startupTaints` 設定と、それを削除するコントローラーが引き続き必要です。
+Karpenter コア v1.13 は、初期化されていない管理対象ノードのスケジューリングをシミュレートする際、別の NodeReadinessController が設定する `readiness.k8s.io/` taint を一時的なものとして認識します。ただし、初期化完了と判断するには、引き続きこれらの taint が消えるのを待ちます。taint を削除したり、Kubernetes スケジューラーによる taint の迂回を許可したりするものではありません。その他の初期化 taint には、引き続き正確な `startupTaints` 構成と、それを削除するコントローラーが必要です。
 
-### 2026年7月の更新: v1.14 のリリース
+### 2026年7月の更新: v1.14 リリース
 
-2026年7月11日にリリースされた Karpenter v1.14 には、次の変更が含まれます。
+2026年7月11日にリリースされた Karpenter v1.14 では、次の機能が追加されました。
 
-- **CapacityBuffers API のサポート**: 容量バッファーとのアルファ版連携です。`CapacityBuffer` は既定で無効で、対応する CRD とコントローラー設定が必要です。予約済みの余力は無料のキャパシティではなく、待ち時間の保証でもありません。
-- **プレビューインスタンスタイプのサポート**: 条件を満たすプレビュー提供タイプを認識します。実際のプロビジョニングには、アカウントとリージョンでの利用資格およびキャパシティが必要です。
-- **Nitro Enclaves のサポート**: プロバイダーは生成する起動テンプレートで `EnclaveOptions.Enabled` を設定します。これは NodeClaim のリソース要求に `eks.amazonaws.com/nip-slots` が含まれる場合に行われます。対応インスタンス、AMI、デバイスプラグインの準備は引き続き必要です。1.14.1 に `EC2NodeClass.spec.enclaveOptions` フィールドはありません。
-- バグ修正: セカンダリ ENI のプライマリ IP の計上、Zonal Shift キャッシュの初期化、AWS SDK クライアントのタイムアウトをオペレーター設定に反映する処理など
+- **CapacityBuffers API のサポート**: alpha 版のキャパシティバッファ統合です。`CapacityBuffer` はデフォルトで無効で、対応する CRD/コントローラーの構成が必要です。予約済みの余裕は、空きキャパシティでもレイテンシの保証でもありません。
+- **プレビューインスタンスタイプのサポート**: 条件を満たすプレビュー提供のインスタンスタイプを認識します。実際のプロビジョニングには、引き続きアカウント/Region でのアクセス権と提供状況が必要です。
+- **Nitro Enclaves のサポート**: NodeClaim のリソース要求に `eks.amazonaws.com/nip-slots` が含まれる場合、プロバイダーは生成する起動テンプレートの `EnclaveOptions.Enabled` を設定します。対応インスタンス、AMI、デバイスプラグインのセットアップは引き続き前提条件です。1.14.1 に `EC2NodeClass.spec.enclaveOptions` フィールドはありません。
+- バグ修正: セカンダリ ENI のプライマリ IP の考慮、Zonal Shift キャッシュの確実な初期化、AWS SDK クライアントのタイムアウトをオペレーター設定に組み込み、その他
 
-詳細は [v1.14.0 リリースノート](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0)を参照してください。
+詳細については、[v1.14.0 リリースノート](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0)を参照してください。
 
-2026年7月17日には、1.3.8 や 1.11.3 など、古いブランチにもパッチが提供されました。この過去のバックポートは、その間のすべてのマイナーバージョンが継続サポートされることを意味しません。現在のサポートポリシーでは、LTS 1.9 は2027年2月まで、LTS 1.14 は2027年7月までサポートされ、通常のマイナーバージョンは次のマイナーリリースまでのみサポートされます。古い系列が保守され続けると想定せず、サポート対象の系列を選び、移行ガイドに従ってください。
+2026年7月17日には、1.3.8 や 1.11.3 を含む古いブランチにパッチがリリースされました。この過去のバックポートは、その間にあるすべてのマイナーバージョンが引き続きサポートされることを示すものではありません。現在のサポートポリシーでは、LTS 1.9 は2027年2月まで、LTS 1.14 は2027年7月までサポートされます。通常のマイナーバージョンは次のマイナーバージョンがリリースされるまでのみサポートされます。古い系統が引き続き保守されると想定せず、サポート対象の系統を選び、その移行ガイダンスに従ってください。
 
-AWS は2026年7月22日、Karpenter/Amazon EKS Auto Mode 向け EFA ネットワークインターフェイスとプレイスメントグループの設定を発表しました。AWS Karpenter 1.14.1 では、該当するフィールドは NodePool ではなく `EC2NodeClass.spec.networkInterfaces` と `spec.placementGroupSelector` です。EFA 専用インターフェイスは VPC IP アドレスを消費しませんが、デバイス/カードインデックス 0 にプライマリ `interface` が必要です。名前または ID で既存のプレイスメントグループを選択します。クラスター、スプレッド、パーティションの各配置戦略と対応インスタンスタイプが配置先を制約します。ここで示す例は HPC ワークロードを設定または検証するものではありません。
+2026年7月22日の AWS の発表では、Karpenter/EKS Auto Mode 向けに EFA ネットワークインターフェイスとプレイスメントグループの構成が追加されました。AWS Karpenter 1.14.1 で使用するフィールドは `EC2NodeClass.spec.networkInterfaces` と `spec.placementGroupSelector` です（NodePool のフィールドではありません）。EFA 専用インターフェイスは VPC IP アドレスを消費しませんが、デバイス/カードインデックス 0 にはプライマリの `interface` が必要です。名前または ID で既存のプレイスメントグループを選択してください。そのクラスター/スプレッド/パーティション戦略および対応インスタンスが配置を制約します。ここに示す例は HPC ワークロードの構成や検証を行うものではありません。
 
 ### 2026年8月の更新: v1.14.1 パッチリリース
 
-v1.14 系列で最初のパッチとなる [v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1) は、2026年8月21日に公開されました。上流の `sigs.k8s.io/karpenter` バージョンを更新し、v1.14.0 以降の修正を取り込んだ保守リリースです。
+v1.14 系列で最初のパッチとなる [v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1) は、2026年8月21日に公開されました。upstream の `sigs.k8s.io/karpenter` のバージョンを更新し、v1.14.0 以降に行われた修正を cherry-pick したメンテナンスリリースです。
 
-### 2026年10月の更新: v1.15.0 標準リリース
+### 2026年10月の更新: v1.15.0 通常リリース
 
-標準（LTS ではない）マイナーリリースである [v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0) は、2026年10月10日に公開されました。主な変更は次のとおりです。
+通常（非 LTS）のマイナーバージョンである [v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0) は、2026年10月10日に公開されました。主な変更点は次のとおりです。
 
-- **ノード修復が任意の中断処理に統合**: キャパシティに制約のある NodePool で先に置き換えノードを用意できない場合、ノード修復では終了を先行させます。修復アクションとして `ec2:RebootInstances` による再起動が追加されました（AWS 機能ゲート `RebootForRepair` の背後で有効化）。従来の修復コントローラーは `--legacy-node-repair` フラグで引き続き利用できます。
-- **KubeletConfiguration での CEL サポート**: `maxPodsExpression`、`kubeReserved`、`systemReserved` で CEL 式を使えます。EC2NodeClass の KubeletConfiguration フィールドも拡張されました。
-- **DRA サポートの拡大**: 優先順位付き代替デバイスに加え、NVIDIA と EFA のドライバーによる DRA をサポートします。
-- そのほか: `--aws-feature-gates` フラグ、既定での Pod トポロジー分散の考慮、プロビジョニング時のインスタンスタイプ別ボリューム上限の計上、`karpenter_pods_disrupted_total` などの中断メトリクス、機能ゲートで有効にする Pod 削除コスト管理コントローラー
+- **ノード修復が任意の中断として扱われるように変更**: ノード修復が中断処理の仕組みに統合されました。キャパシティが制約された NodePool で、置き換えノードを先に用意できない場合は、先に終了してから修復します。修復アクションとして `ec2:RebootInstances` による再起動が追加されました（`RebootForRepair` AWS feature gate の背後にあります）。以前の修復コントローラーは `--legacy-node-repair` フラグを使うと引き続き利用できます。
+- **KubeletConfiguration での CEL サポート**: `maxPodsExpression`、`kubeReserved`、`systemReserved` が CEL 式を受け付けるようになり、EC2NodeClass の KubeletConfiguration フィールドが拡張されました。
+- **DRA サポートの拡大**: 優先順位付き代替案に加え、NVIDIA および EFA ドライバーの DRA サポートが追加されました。
+- その他: `--aws-feature-gates` フラグ、デフォルトの Pod トポロジー分散の認識、プロビジョニング時のインスタンスタイプのボリューム上限の考慮、`karpenter_pods_disrupted_total` などの新しい中断メトリクス、feature gate で有効化される Pod 削除コスト管理コントローラー
 
-サポートポリシーでは通常のマイナーバージョンは次のマイナーまでしかサポートされません。v1.15.0 のリリースに伴い、v1.14 が継続されるのは LTS 系列としてのみで、期限は2027年7月です。そのため、この章の例は 1.14 LTS（1.14.1）を引き続き使用します。Kubernetes 1.37 には Karpenter 1.15.x が必要です。Kubernetes 1.37 を使う場合や 1.15 に移行する場合は、先に [v1.15 互換性表](https://karpenter.sh/v1.15/upgrading/compatibility/)とアップグレード手順を確認してください。詳細は [v1.15.0 リリースノート](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0)を参照してください。
+サポートポリシーでは、通常のマイナーバージョンは次のマイナーバージョンがリリースされるまでのみサポートされます。そのため v1.15.0 のリリース後は、v1.14 は LTS 系列としてのみ継続されます（2027年7月まで）。したがって、この章の例は 1.14 LTS（1.14.1）のままです。Kubernetes 1.37 には Karpenter 1.15.x が必要です。Kubernetes 1.37 が必要な場合、または 1.15 に移行する場合は、まず [v1.15 互換性マトリクス](https://karpenter.sh/v1.15/upgrading/compatibility/)とアップグレードガイダンスを確認してください。詳細については、[v1.15.0 リリースノート](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0)を参照してください。
 
-## ノードクラス {#node-classes}
+### 2026年10月の更新: v1.15.1 および LTS パッチリリース
 
-ノードクラスは、Karpenter がプロビジョニングするノードの設定を定義します。AWS では EC2NodeClass CRD を使います。
+2026年10月20日から23日にかけて、サポート対象の系列でパッチリリースが公開されました。[v1.15.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.1)（1.15 系列で最初のパッチ。互換性のあるすべてのキャパシティ予約が満杯の場合に延期するのではなく選好条件を緩和する修正や、作成後にラベルが同期された場合のノード修復のキュー投入など）、1.14 LTS 系列の [v1.14.2](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.2) と [v1.14.3](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.3)（`SpotMaxPriceTooLow` を ICE エラーとして分類し、回収中の中断可能なキャパシティ予約を利用不可のキャパシティとして扱うなど）、および 1.9 LTS 系列の [v1.9.3](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.9.3) です。3 系列すべてで Go ツールチェーンが 1.26.10 に更新されました。これは、侵害された eMudhra 中間 CA 証明書を信頼しなくなる Go のパッチリリースです（CVE-2026-111943）。
 
-### AWS EC2NodeClass の設定
+### 2026年11月の更新: EKS Auto Mode と Karpenter 向け DRA サポートの発表
+
+2026年11月9日、AWS は EKS Auto Mode と Karpenter における NVIDIA GPU および Elastic Fabric Adapter（EFA）ネットワークデバイス向け Kubernetes Dynamic Resource Allocation（DRA）サポートを発表しました。ワークロードは DRA を通じて必要なデバイス属性を宣言でき、Pod 間で GPU デバイスを共有できます。Karpenter はすべての Kubernetes バージョンで DRA をサポートします。EKS Auto Mode は Kubernetes 1.36 以降をサポートしますが、AWS GovCloud (US) および中国の Region は対象外です。詳細については[発表](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-karpenter-dra/)を参照してください。
+
+### 2026年11月の更新: v1.15.2 パッチリリース
+
+2026年11月12日に公開された [v1.15.2](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.2) は、DRA インスタンスタイプのメタデータのみを更新します。alpha の `settings.awsFeatureGates.draNVIDIAGPU` または `settings.awsFeatureGates.draEFA` gate（または `settings.enableDRA`）が有効でなければ、変更の影響はありません。`g7` と `g7e` の NVIDIA GPU DRA メタデータを追加し、既存の GPU インスタンスタイプの GPU メモリ属性を更新する一方、分数 GPU の `g6f` と `gr6f` タイプには NVIDIA DRA メタデータが付かなくなりました。そのため、Karpenter はこれらを `gpu.nvidia.com` claim の候補に選びません。EFA DRA メタデータの対象は 29 タイプから 302 タイプに増えました。新たに追加されたエントリーで設定されるのは `dra.net/pciDevice`、`dra.net/pciVendor`、`dra.net/rdma` のみです。ソースからビルドするには Go 1.26.11 以降が必要になりました。
+
+## Node Class
+
+Node Class は、Karpenter がプロビジョニングするノードの構成を定義します。AWS では EC2NodeClass CRD を使用します。
+
+### AWS EC2NodeClass の構成
 
 ```yaml
 apiVersion: karpenter.k8s.aws/v1
@@ -408,7 +420,7 @@ spec:
 
 ### サブネットとセキュリティグループの選択
 
-サブネットとセキュリティグループは selector terms で選択します（複数の term は OR 条件、各 term 内のタグは AND 条件です）。
+サブネットとセキュリティグループは selector terms を使って選択します（複数の term は OR 条件で評価され、1 つの term 内のタグは AND 条件で評価されます）。
 
 ```yaml
 subnetSelectorTerms:
@@ -420,9 +432,9 @@ securityGroupSelectorTerms:
     karpenter.sh/discovery: my-cluster
 ```
 
-### AMI の設定
+### AMI の構成
 
-Karpenter は `amiSelectorTerms` で AMI を選択します。エイリアスはファミリーとバージョンを指定します。**`@latest` はバージョン固定ではありません**。解決される AMI が変わり、ドリフトが発生する可能性があります。`@latest` の例は学習用です。本番展開前に、実在するリリース日を使った `al2023@vYYYYMMDD` など、サポート対象の明示的な AMI リリース、または承認済み AMI ID を選び、テストしてください。Kubernetes 1.33 以降向けの AL2 EKS AMI は公開されていません。以下のバリエーションは代替案です。カスタム AMI には、正常なブートストラップ、登録 taint、kubelet、CNI/ランタイム、アイデンティティの設定が必要です。
+Karpenter は `amiSelectorTerms` を通じて AMI を選択します。alias はファミリー/バージョンを選択します。**`@latest` はバージョンを固定する指定ではありません**。解決される AMI が変わり、drift が発生する場合があります。`@latest` を使った例は学習用です。本番環境では、ロールアウト前に、サポートされている明示的な AMI リリース（実在するリリース日を指定した `al2023@vYYYYMMDD`）または承認済みの AMI ID を解決してテストしてください。Kubernetes 1.33 以降向けの AL2 EKS AMI は公開されていません。以下のバリアントは選択肢です。Custom AMI には、動作するブートストラップ、登録 taint、kubelet、CNI/ランタイム、ID の設定が必要です。
 
 ```yaml
 # Amazon Linux 2023
@@ -440,11 +452,11 @@ amiSelectorTerms:
 # Ubuntu: no v1 alias; use amiFamily: Custom with an id/tags/name term
 ```
 
-### ブロックデバイスの設定
+### ブロックデバイスの構成
 
-デバイスマッピングは AMI ファミリーごとに異なります。以下の AL2023 の例では /dev/xvda をルートデバイスに使います。他の AMI では実際のレイアウトを確認してください。追加ボリュームには、ファイルシステムとマウント、またはアプリケーション側のストレージ計画を明示する必要があります。カスタマーマネージド KMS キーにも適切なキー権限と IAM 権限が必要です。
+デバイスマッピングは AMI ファミリーごとに異なります。以下の AL2023 の例ではルートデバイスに /dev/xvda を使用しています。他の AMI では実際のレイアウトを確認してください。追加ボリュームには、明示的なファイルシステム/マウント、またはアプリケーション用ストレージの計画が必要です。カスタマーマネージドの KMS キーにも、適切なキー/IAM 権限が必要です。
 
-ノードのストレージ設定は次のように定義できます。
+ノードのストレージ構成を定義できます。
 
 ```yaml
 blockDeviceMappings:
@@ -465,9 +477,9 @@ blockDeviceMappings:
     encrypted: true
 ```
 
-### ユーザーデータの設定
+### User Data の構成
 
-以下のシェル形式のユーザーデータ断片は AL2023 を前提としています。Karpenter は AL2023 が生成するブートストラップ/nodeadm 設定にカスタムデータをマージします。汎用的な Bottlerocket/Windows のブートストラップとしては使えません。起動のたびに制限のないパッケージ更新を実行するのではなく、AMI にパッケージを含めてテストしてください。CloudWatch Agent を設定なしでインストールまたは起動しても、IAM とネットワーク経路が用意されていなければテレメトリー収集は確立されません。
+以下の shell user-data スニペットは AL2023 を前提としています。AL2023 では、Karpenter が生成する bootstrap/nodeadm 構成にカスタムデータがマージされます。これらは Bottlerocket/Windows に共通して使えるブートストラップではありません。起動のたびに無制限のパッケージ更新を実行するのではなく、AMI にパッケージを組み込んでテストしてください。構成、IAM、ネットワーク経路を用意せずに CloudWatch Agent をインストール/起動しても、テレメトリ収集が確立するわけではありません。
 
 ```yaml
 userData: |
@@ -482,26 +494,26 @@ userData: |
 
 ### ノードの Consolidation プロセス
 
-次の図は Karpenter のノード Consolidation の流れを示しています。クラスターの効率を高め、コストを抑えるうえで重要な機能です。
+次の図は、Karpenter のノード Consolidation プロセスを示しています。この機能は、クラスターの効率を高め、コストを削減するうえで重要です。
 
-![ワークロードが既存または置き換え後のキャパシティに収まるかシミュレーションし、必要な置き換えノードを準備したうえで、Pod を退避して再作成し、対象となる古いノードを終了する概念図。ライブマイグレーションや3対1の置き換え結果を保証するものではありません。](../.gitbook/assets/en-autoscaling-02-karpenter-2.png)
+![Consolidation の概念図: ワークロードが既存または置き換え後のキャパシティに収まるかシミュレートし、必要な置き換えノードを準備完了にしてから、対象となる古いノードを終了する前に Pod を退避して再作成する。これは稼働中の Pod の移行でも、3対1の結果を保証するものでもありません。](../.gitbook/assets/en-autoscaling-02-karpenter-2.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-2.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-2.html)
 
-## 中断への対応 {#interruption-handling}
+## 中断への対応
 
-設定された中断処理は、キャパシティを失う前に対応しようとします。通知、置き換えキャパシティ、シャットダウン期限、アプリケーションの復旧方法によって結果が変わります。中断のない可用性は保証されません。
+構成された中断処理は、キャパシティが失われる前に対応しようとします。結果は、通知、置き換えキャパシティ、シャットダウン期限、アプリケーションの復旧によって決まります。途切れない可用性は保証されません。
 
 ### 統合された中断処理
 
-クラウド中断への対応は Consolidation/有効期限による処理とは別です。次のような通知を扱います。
+クラウド中断への対応は、Consolidation/expiration とは別の機能です。次のようなシグナルを対象とします。
 
-1. **Spot 中断警告**: 可能な場合はドレインを開始し、置き換えキャパシティを要求します。通知からの猶予時間は復旧 SLA の保証ではありません。
-2. **スケジュール済みのヘルス/メンテナンスイベント**: 対象インスタンスに対応します。
-3. **インスタンスの停止/終了イベント**: サービスから離脱するキャパシティを調整します。
-4. **EC2 インスタンスステータスの障害**: 必要な EC2 API 権限を使ってヘルスを確認します。Rebalance recommendation はイベントとして通知されるだけで、自動的な taint、ドレイン、終了処理は行われません。
+1. **Spot 中断警告**: drain を開始し、可能であれば置き換えキャパシティを要求します。通知の猶予時間は、復旧 SLA を保証するものではありません。
+2. **スケジュール済みのヘルス/メンテナンスイベント**: 影響を受けるインスタンスに対応します。
+3. **インスタンスの停止/終了イベント**: サービスから離れるキャパシティを調整します。
+4. **EC2 インスタンスステータスの失敗**: 必要な EC2 API 権限を使ってヘルスを確認します。Rebalance recommendation はイベントとして発行されるだけで、自動的に taint/drain/terminate 操作が行われるわけではありません。
 
-### 中断処理の設定
+### 中断処理の構成
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -527,9 +539,9 @@ spec:
     consolidateAfter: 30s
 ```
 
-### ドレインの設定
+### Drain の構成
 
-Karpenter は通常、正常なドレイン中に eviction を使います。Helm の設定はコントローラーを構成します。NodePool の disruption budget は、任意の Consolidation/ドリフト処理の開始を制限しますが、同時に失われるすべてのノード数を制限するものではありません。30% の budget は切り上げた後、削除中または未準備のノード数を差し引きます。厳密な30%上限ではありません。有効期限、中断、修復では異なる強制処理が行われることがあります。`interruptionQueue` を有効にする前に、指定した SQS キュー、EventBridge ルール/ターゲット、キューポリシー、コントローラー権限を設定してください。Helm のフィールドだけではそれらは作成されません。
+Karpenter は通常、graceful drain 中に eviction を使用します。Helm の設定はコントローラーを構成します。NodePool の disruption budget が制限するのは、任意の Consolidation/drift の開始であり、同時に失われるすべてのノードではありません。30% の budget は切り上げた後、削除中/準備未完了のノードを差し引きます。厳密な 30% の上限ではありません。expiration、中断、修復では、異なる強制動作が発生する場合があります。`interruptionQueue` を有効にする前に、指定した SQS キュー、EventBridge ルール/ターゲット、キューポリシー、コントローラーの権限を設定してください。Helm フィールドだけでは、これらは作成されません。
 
 ```yaml
 settings:
@@ -574,9 +586,9 @@ spec:
       - nodes: "30%"   # Voluntary budget: round up, then subtract deleting/not-ready nodes
 ```
 
-### PDB（PodDisruptionBudget）との連携
+### PDB（PodDisruptionBudget）との統合
 
-PDB は正常なレプリカ数に応じて任意の eviction を制限します。レプリカを作成する機能でも、アプリケーションの可用性を保証する機能でもありません。以下で `minAvailable: 2` を設定する場合、eviction を許可するには一致する正常な Pod が十分に必要です。インスタンスの喪失や強制終了の期限によって、Pod が中断されることはあります。
+PDB は正常なレプリカ数に基づいて任意の eviction を制約します。レプリカを作成したり、アプリケーションの可用性を保証したりするものではありません。以下の `minAvailable: 2` の場合、eviction を許可するには、十分な数の正常な一致 Pod が必要です。インスタンスの喪失や強制終了の期限によって、それらの Pod が中断される場合はあります。
 
 ```yaml
 apiVersion: policy/v1
@@ -591,15 +603,15 @@ spec:
       app: my-app
 ```
 
-## 連携 {#integration}
+## 統合
 
-Karpenter は Kubernetes のさまざまな機能やクラウドサービスと連携します。
+Karpenter は、さまざまな Kubernetes サービスやクラウドサービスと統合されます。
 
-### Kubernetes との連携
+### Kubernetes との統合
 
-#### 1. Pod のトポロジー分散制約
+#### 1. Pod Topology Spread Constraints
 
-Karpenter はノードのプロビジョニング時に Pod のトポロジー分散制約を考慮します。
+Karpenter はノードのプロビジョニング時に Pod Topology Spread Constraints を考慮します。
 
 ```yaml
 apiVersion: apps/v1
@@ -637,9 +649,9 @@ spec:
       app: web-server
 ```
 
-#### 2. Pod のアフィニティ/アンチアフィニティ
+#### 2. Pod Affinity/Anti-Affinity
 
-Karpenter は Pod のアフィニティ/アンチアフィニティルールを考慮します。
+Karpenter は Pod Affinity と Anti-Affinity のルールを考慮します。
 
 ```yaml
 apiVersion: apps/v1
@@ -680,11 +692,11 @@ spec:
       app: web-server
 ```
 
-#### 3. taint と toleration
+#### 3. Taint と Toleration
 
-GPU の例を動かすには、互換性のあるアクセラレーテッド AMI、NVIDIA ドライバー、GPU taint を許容し nvidia.com/gpu を公開するデバイスプラグイン DaemonSet が必要です。BusyBox Pod は GPU を予約する方法を示すだけで、CUDA の実行やベンチマークは行いません。実際の GPU アプリケーションイメージで別途検証してください。
+GPU の例には、互換性のあるアクセラレーテッド AMI、NVIDIA ドライバー、GPU taint を許容して nvidia.com/gpu をアドバタイズするデバイスプラグイン DaemonSet が必要です。BusyBox Pod は GPU を予約する例にすぎず、CUDA を実行したりベンチマークしたりするものではありません。実際の GPU アプリケーションイメージを使って別途検証してください。
 
-Karpenter はノードをプロビジョニングする際に taint と toleration を考慮します。
+Karpenter はノードのプロビジョニング時に taint と toleration を考慮します。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -746,11 +758,11 @@ spec:
       app: gpu-app
 ```
 
-### AWS との連携
+### AWS との統合
 
 #### 1. EC2 Spot インスタンス
 
-Karpenter はコスト最適化のため EC2 Spot インスタンスをサポートします。
+Karpenter は、コストを最適化するために EC2 Spot インスタンスをサポートします。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -786,11 +798,11 @@ spec:
       karpenter.sh/discovery: my-cluster
 ```
 
-#### 2. EC2 インスタンスプロファイル
+#### 2. EC2 Instance Profile
 
-role と instanceProfile は同時に指定できません。role を使うと、Karpenter がインスタンスプロファイルを管理し、対応する IAM API 権限と接続経路を必要とします。クラスターから IAM エンドポイントへ接続できない場合は、事前作成した instanceProfile を使ってください。IAM には PrivateLink エンドポイントがありません。コントローラーにはノードロールを渡す PassRole 権限も必要です。また、EC2 認証情報があるだけでは EKS ノードアクセスが許可されたことにはなりません。
+role と instanceProfile は相互に排他的です。role を使用する場合、Karpenter が instance profile を管理するため、対応する IAM API の権限/接続が必要です。クラスターから IAM エンドポイントへの経路がない場合は、事前にプロビジョニングした instanceProfile を使用してください。IAM に PrivateLink エンドポイントはありません。コントローラーには、引き続きノードロールに対する PassRole が必要です。また、EC2 認証情報を持っていることと EKS ノードアクセスは別のものです。
 
-Karpenter は EC2 インスタンスプロファイルを使ってノードに IAM 権限を付与します。
+Karpenter は EC2 instance profile を使ってノードに IAM 権限を付与します。
 
 ```yaml
 apiVersion: karpenter.k8s.aws/v1
@@ -811,7 +823,7 @@ spec:
 
 #### 3. 起動テンプレートの置き換え（EC2NodeClass）
 
-Karpenter v1 はユーザー指定の EC2 起動テンプレートを受け付けません（旧 `launchTemplate` フィールドは削除されました）。Karpenter は EC2NodeClass から起動テンプレートを生成して管理するため、起動テンプレートに設定していた項目は EC2NodeClass に直接指定します。
+Karpenter v1 は、ユーザー指定の EC2 起動テンプレートを受け付けません（従来の `launchTemplate` フィールドは削除されました）。Karpenter は EC2NodeClass から起動テンプレートを生成して管理します。そのため、起動テンプレートに設定する項目は EC2NodeClass に直接記述します。
 
 ```yaml
 apiVersion: karpenter.k8s.aws/v1
@@ -846,22 +858,21 @@ spec:
     httpPutResponseHopLimit: 1
     httpTokens: required
 ```
+## Amazon EKS との統合
 
-## Amazon EKS との連携 {#integration-with-amazon-eks}
+Karpenter の AWS プロバイダーは、ID、ネットワーク、ノードアクセス、ブートストラップを構成すれば、EKS 管理のコンピューティングと並行して EC2 キャパシティをプロビジョニングできます。
 
-アイデンティティ、ネットワーク、ノードアクセス、ブートストラップを設定すれば、Karpenter の AWS プロバイダーは EKS 管理のコンピューティング環境と並行して EC2 キャパシティをプロビジョニングできます。
+![Amazon EKS クラスター内の Karpenter コントローラーが IAM ロールを引き受け、EC2 API を直接呼び出して EC2 インスタンスを作成する様子を示すアーキテクチャ図。Auto Scaling Group と Managed Node Group を介さずに動作します。](../.gitbook/assets/en-autoscaling-02-karpenter-3.png)
 
-![Karpenter コントローラーが Amazon EKS クラスターで IAM ロールを引き受けて EC2 API を直接呼び出し、Auto Scaling グループやマネージドノードグループを経由せず EC2 インスタンスを作成するアーキテクチャ図。](../.gitbook/assets/en-autoscaling-02-karpenter-3.png)
-
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-3.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-3.html)
 
 ### EKS クラスターの準備
 
-すべての例示名を一貫して置き換えてください。ワーカー用途に適したサブネットとセキュリティグループだけを選択します。コントロールプレーン用サブネットすべてにタグを付けて検出させる方法は安全ではありません。ノードの起動を許可する前に、サブネットのルート、セキュリティルール、CNI の IP 容量、必要なプライベートエンドポイントを確認してください。
+すべての例示名を一貫して置き換えてください。ワーカーに適したサブネット/セキュリティグループだけを選択してください。すべてのコントロールプレーン用サブネットにタグを付ける方法は、安全なリソース検出手段ではありません。ノードの起動を許可する前に、サブネットのルート、セキュリティルール、CNI の IP キャパシティ、必要なプライベートエンドポイントを確認してください。
 
 #### 1. クラスタータグの設定
 
-インフラストラクチャー設定で、承認済みのワーカー用サブネットとセキュリティグループだけにタグを付けてください。VPC にタグを付けても、対象リソースは選択されません。検出値は例の値（ここでは `my-cluster`）に一致させます。タグが付いているだけでは、プライベートルーティング、適切なセキュリティルール、十分な空きアドレスを証明できません。NodePool を適用する前に、実際のリソースとルートを調べてください。
+インフラストラクチャ構成で、承認済みのワーカー用サブネットとセキュリティグループだけにタグを付けてください。VPC へのタグ付けで、それらのリソースが選択されるわけではありません。検出用の値は例（ここでは `my-cluster`）と一致させる必要があります。タグを付けただけでは、プライベートルーティング、適切なセキュリティルール、十分な空きアドレスは保証されません。NodePool を適用する前に、実際のリソースとルートを調べてください。
 
 ```bash
 # Inspect resources that your infrastructure configuration has tagged for this cluster.
@@ -880,7 +891,7 @@ aws ec2 describe-route-tables --region "$AWS_REGION" \
 
 #### 2. IAM ロールの設定
 
-以前の不完全な手書きの全許可ポリシーではなく、バージョンに対応するコントローラーポリシーと以下のインフラストラクチャーリファレンスを使ってください。コントローラーの認証情報（ここでは IRSA）、ノードの認証情報、VPC CNI/ワークロードのアイデンティティはそれぞれ別です。コントローラーの信頼ポリシーは、クラスター OIDC プロバイダー、`system:serviceaccount:karpenter:karpenter`、`aud: sts.amazonaws.com` に一致する必要があります。このバージョンと有効にする機能に必要なアクション、リソース、条件だけを許可してください。API ベースの認証を有効にした EKS でノードロールが参加するには、通常 `EC2_LINUX` アクセスエントリで許可します。確認用コマンドが IAM ロールやアクセスエントリを作成することはありません。
+不完全な手書きの全許可ポリシーを使うのではなく、以下のバージョン固有のコントローラーポリシーとインフラストラクチャのリファレンスを使用してください。コントローラーの認証情報（ここでは IRSA）は、ノードの認証情報、および VPC CNI/ワークロードの ID とは別です。コントローラーの信頼関係は、クラスターの OIDC プロバイダー、`system:serviceaccount:karpenter:karpenter`、`aud: sts.amazonaws.com` と一致させてください。このバージョンと選択した機能に必要なアクション/リソース/条件のみを許可してください。ノードロールは EKS への参加を許可される必要があります。API ベースの認証が有効な場合、通常は `EC2_LINUX` アクセスエントリーを使います。以下の確認コマンドでは IAM ロールやアクセスエントリーは作成されません。
 
 ```bash
 # Download a versioned reference for review; this does not create a CloudFormation stack.
@@ -912,9 +923,9 @@ helm install karpenter oci://public.ecr.aws/karpenter/karpenter \
   --wait --timeout 5m
 ```
 
-### EKS マネージドノードグループとの併用
+### EKS Managed Node Group との併用
 
-Karpenter は EKS マネージドノードグループと共存できます。以下の NodePool は別個の EC2 ノードをプロビジョニングし、マネージドノードグループを管理するものではありません。コントローラーは信頼できるブートストラップ用キャパシティで稼働させてください（既定のチャートでは Karpenter ノードを除外し、異なるホストに2つのレプリカを要求します）。
+Karpenter は EKS Managed Node Group と共存できます。以下の NodePool は別個の EC2 ノードをプロビジョニングするものであり、Managed Node Group を管理するものではありません。コントローラーは信頼性の高いブートストラップ用キャパシティ上で稼働させてください（デフォルトの chart は Karpenter ノードを除外し、異なるホスト上に 2 つのレプリカを要求します）。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -969,9 +980,9 @@ spec:
 
 ### EKS Fargate との併用
 
-Fargate は Kubernetes の topologySpreadConstraints を実装しておらず、Kubernetes の affinity/anti-affinity ルールも適用されません。既定のチャートにある EC2 配置制約によって Fargate Pod が AZ 間で分散されると考えないでください。プロファイルとサブネットの配置は別途設計・検証してください。
+Fargate は Kubernetes の topologySpreadConstraints を実装しておらず、Kubernetes の Affinity/Anti-Affinity ルールも適用されません。デフォルトの chart にある EC2 配置制約で Fargate の AZ 分散が保証されるとは考えず、プロファイル/サブネットの配置を別途設計して検証してください。
 
-対象を絞った Fargate プロファイルでコントローラー Pod を実行し、Karpenter で EC2 ワーカーをプロビジョニングできます。Karpenter は Fargate キャパシティやプロファイルを作成・管理しません。`karpenter` 名前空間とコントローラーのラベルを対象とするプロファイルを用意し、`default`/`kube-system` 全体を選択しないようにします。JSON の selector は `[{"namespace":"karpenter","labels":{"app.kubernetes.io/name":"karpenter"}}]` です。プロファイルには専用の Pod 実行ロールとプライベートサブネットが必要です。コントローラーの AWS 権限には引き続き IRSA が必要です（EKS Pod Identity は Fargate でサポートされません）。以下のコマンドは既存プロファイルを確認するだけです。
+対象を絞った Fargate profile でコントローラー Pod を実行しながら、Karpenter で EC2 ワーカーをプロビジョニングできます。Karpenter は Fargate キャパシティを作成せず、Fargate profile を管理することもありません。`default`/`kube-system` 全体ではなく、namespace `karpenter` とコントローラーのラベルを選択する profile を準備してください。JSON の selector の形式は `[{"namespace":"karpenter","labels":{"app.kubernetes.io/name":"karpenter"}}]` です。profile には独自の Pod execution role/プライベートサブネットが必要です。また、コントローラーの AWS 権限には引き続き IRSA が必要です（EKS Pod Identity は Fargate ではサポートされていません）。以下のコマンドは既存の profile の確認のみを行います。
 
 ```bash
 # Inspect an existing, narrowly selected controller Fargate profile.
@@ -1018,19 +1029,19 @@ spec:
       karpenter.sh/discovery: my-cluster
 ```
 
-### AZ 障害への対応: Amazon ARC Zonal Shift との連携（2026年5月）
+### AZ 障害への対応: Amazon ARC Zonal Shift との統合（2026年5月）
 
-有効化済みの EKS ARC zonal shift リソースと Karpenter を連携できます。手動の zonal shift、または設定済みの自動シフトが開始されると、Karpenter はシフト対象 AZ への新規キャパシティ追加を避けます。すべての AZ 障害を独立して検出する機能ではなく、その AZ に固定する Pod/PV 要件を上書きするものでもありません。
+Karpenter は、有効化された EKS ARC の zonal-shift リソースと統合できます。手動の zonal shift または構成済みの autoshift が有効になると、Karpenter はシフト対象 AZ の新しいキャパシティを回避します。これは、あらゆる AZ 障害を個別に検出する機能ではありません。また、その AZ にワークロードを固定する Pod/PV 要件を上書きするものでもありません。
 
-シフト中は、対象 AZ 内の任意の中断処理が停止します。また、その AZ へ Pod を移動する必要がある健全な AZ 内の中断処理も阻止されます。健全な AZ での任意の中断がすべて無条件に停止するわけではありません。EKS/ARC の前提条件、`eks:DescribeCluster`/ARC 権限、`settings.enableZonalShift: true`（環境変数 `ENABLE_ZONAL_SHIFT`）を設定してください。自動シフトには、それぞれのオプトイン設定と演習も必要です。独自の ARC CRD は不要で、シフトが終了すると処理が再開します。
+シフト中は、シフト対象 AZ での任意の中断が停止します。また、Pod をその AZ に移動する必要がある場合は、正常な AZ での中断も防止されます。正常な AZ すべてにおける任意の中断が無条件にすべて停止するわけではありません。EKS/ARC の前提条件、`eks:DescribeCluster`/ARC の権限、`settings.enableZonalShift: true`（環境変数のオプション `ENABLE_ZONAL_SHIFT`）を設定してください。autoshift には、独自の opt-in/運用設定も必要です。カスタム ARC CRD は不要です。シフトが終了すると、処理が再開されます。
 
 ### EKS のコスト最適化
 
-Karpenter を使って EKS クラスターのコストを最適化できます。
+Karpenter を使って、EKS クラスターのコストを最適化できます。
 
-![ノードグループによるスケーリングと、Karpenter の動的なキャパシティ選択、Consolidation、Spot の選択肢を概念的に比較した図。スケーリング速度やコスト削減の実測値、普遍的な優劣を示すものではありません。](../.gitbook/assets/en-autoscaling-02-karpenter-4.png)
+![ノードグループのスケーリングと、Karpenter による動的なキャパシティ選択、Consolidation、Spot オプションの概念上の比較。スケーリング速度やコスト削減について、測定に基づく結果や普遍的な優劣が示されているわけではありません。](../.gitbook/assets/en-autoscaling-02-karpenter-4.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-4.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-4.html)
 
 #### 1. Spot インスタンスの使用
 
@@ -1150,18 +1161,18 @@ spec:
     consolidateAfter: 1m
 ```
 
-## ベストプラクティス {#best-practices}
+## ベストプラクティス
 
-![パフォーマンスの最適化、コスト最適化、可用性向上、セキュリティ強化の4分類に整理した Karpenter のベストプラクティス。](../.gitbook/assets/en-autoscaling-02-karpenter-5.png)
+![パフォーマンス最適化、コスト最適化、可用性向上、セキュリティ強化のカテゴリ別に、Karpenter のベストプラクティスを4つの並列リストで示す図。](../.gitbook/assets/en-autoscaling-02-karpenter-5.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-5.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-5.html)
 
 ### パフォーマンスの最適化
 
-1. **適切なインスタンスタイプを選ぶ**: ワークロードに適したインスタンスタイプを選択します。
-2. **多様なインスタンスタイプを許可する**: 可用性とコストを考慮し、複数のインスタンスタイプを許可します。
-3. **適切な TTL を設定する**: ワークロードのパターンに合う TTL を設定します。
-4. **ノード Consolidation を有効にする**: リソース利用率の最適化に役立ちます。
+1. **適切なインスタンスタイプを選択する**: ワークロードに適したインスタンスタイプを選択します。
+2. **多様なインスタンスタイプを許可する**: 可用性とコストの最適化のため、さまざまなインスタンスタイプを許可します。
+3. **適切な TTL を設定する**: ワークロードのパターンに合った TTL を設定します。
+4. **ノード Consolidation を有効にする**: リソース利用率を最適化するため、ノード Consolidation を有効にします。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1196,10 +1207,10 @@ spec:
 
 ### コストの最適化
 
-1. **Spot インスタンスを活用する**: コスト削減のため Spot インスタンスを使います。
-2. **適切なインスタンスサイズを選ぶ**: ワークロードに適したサイズを選択します。
-3. **空のノードの削除を評価する**: 条件を満たすワーカーノードの NodePool はゼロまでスケールできます。コントローラー/ブートストラップ用コンピューティングやクラスターのその他のコストは残ります。
-4. **ノードの更新を計画する**: 有効期限によって現在の制約に沿って対象キャパシティを入れ替えられますが、インスタンスタイプが自動的に新しくなるわけでも、固定した AMI がパッチされるわけでもありません。
+1. **Spot インスタンスを活用する**: コスト削減のため Spot インスタンスを使用します。
+2. **適切なインスタンスサイズを選択する**: ワークロードに適したインスタンスサイズを選択します。
+3. **空ノードの削除を評価する**: 条件を満たすワーカー NodePool はゼロまで縮小できます。コントローラー/ブートストラップ用のコンピューティングと、クラスター内のその他のコストは残ります。
+4. **ノードの更新を計画する**: expiration は現在の制約に従って条件を満たすキャパシティを入れ替えます。より新しいインスタンスタイプを自動的に選択したり、固定された AMI にパッチを適用したりするものではありません。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1226,10 +1237,10 @@ spec:
 
 ### 可用性の向上
 
-1. **複数のアベイラビリティーゾーンを使う**: 複数の AZ にノードを配置します。
-2. **オンデマンドと Spot を組み合わせる**: 可用性とコストのバランスを取ります。
-3. **適切な PDB を設定する**: 健全なレプリカ数の上限内で任意の退避を保護し、冗長性と復旧設計を組み合わせます。
-4. **中断への対応を設定してテストする**: 通知経路、シャットダウン期限、置き換えキャパシティを検証し、サービスが途切れないと想定しないでください。
+1. **複数のアベイラビリティゾーンを使用する**: 複数のアベイラビリティゾーンにノードをデプロイします。
+2. **On-demand と Spot インスタンスを組み合わせる**: 可用性とコストのバランスを取ります。
+3. **適切な PDB を設定する**: 冗長性と復旧の設計に加えて、実際の正常なレプリカ数の範囲内で任意の eviction を保護します。
+4. **中断処理を構成してテストする**: サービスが中断しないと想定せず、通知経路、シャットダウン期限、置き換えキャパシティを検証します。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1261,18 +1272,18 @@ spec:
     consolidateAfter: 60s
 ```
 
-## トラブルシューティング {#troubleshooting}
+## トラブルシューティング
 
 ### よくある問題
 
-#### 1. ノードのプロビジョニングに失敗する
+#### 1. ノードのプロビジョニング失敗
 
-**症状**: Pod が Pending のままで、ノードがプロビジョニングされない。
+**症状**: Pod が Pending のままで、ノードがプロビジョニングされない
 
-**対処方法**:
+**解決策**:
 - Karpenter のログを確認する
 - IAM 権限を確認する
-- NodePool の設定を確認する
+- NodePool の構成を確認する
 
 ```bash
 # Check Karpenter logs
@@ -1285,14 +1296,14 @@ kubectl describe nodepool <name>
 kubectl describe pod <name>
 ```
 
-#### 2. ノードが削除されない
+#### 2. ノード削除の問題
 
-**症状**: 想定どおりにノードが削除されない。
+**症状**: 期待どおりにノードが削除されない
 
-**対処方法**:
+**解決策**:
 - TTL の設定を確認する
 - ノード Consolidation の設定を確認する
-- Pod のドレイン状況を確認する
+- Pod の drain 状況を確認する
 
 ```bash
 # Check node status
@@ -1305,14 +1316,14 @@ kubectl get node <name> --show-labels
 kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller --since=30m
 ```
 
-#### 3. インスタンスタイプの選択に関する問題
+#### 3. インスタンスタイプ選択の問題
 
-**症状**: 想定と異なるインスタンスタイプがプロビジョニングされる。
+**症状**: 想定外のインスタンスタイプがプロビジョニングされる
 
-**対処方法**:
+**解決策**:
 - NodePool の要件を確認する
 - Pod のリソース要求を確認する
-- アベイラビリティーゾーンの制約を確認する
+- アベイラビリティゾーンの制約を確認する
 
 ```bash
 # Check NodePool requirements
@@ -1349,35 +1360,35 @@ helm get values karpenter --namespace karpenter
 kubectl get nodeclaims -o wide
 ```
 
-## まとめ {#conclusion}
+## まとめ
 
-Karpenter は、ワークロードとインフラストラクチャーの制約に応じてノードのプロビジョニングとライフサイクルを自動化します。キャパシティ管理を改善できますが、可用性、パフォーマンス、コストへの効果はワークロードごとに検証する必要があります。
+Karpenter は、ワークロードとインフラストラクチャの制約に従って、ノードのプロビジョニングとライフサイクルを自動化します。キャパシティ管理を改善できますが、可用性、パフォーマンス、コストの成果を得るには、ワークロードに応じた検証が必要です。
 
-この章では、Karpenter の基本概念、インストール方法、NodePool と EC2NodeClass の設定、中断への対応、各種連携、Amazon EKS との連携、ベストプラクティス、トラブルシューティングを扱いました。
+このドキュメントでは、Karpenter の基本概念、インストール方法、NodePool と EC2NodeClass の構成、中断への対応、各種統合、Amazon EKS との統合、ベストプラクティス、トラブルシューティングについて説明しました。
 
-Karpenter を使うと、クラスター管理を簡素化し、リソース利用率を最適化して、コストを抑えられる可能性があります。Amazon EKS のようなクラウド管理型 Kubernetes 環境では、Karpenter の利点を活用できます。
+Karpenter を使うと、クラスター管理を簡素化し、リソース利用率を最適化して、コストを削減できます。特に Amazon EKS のようなクラウド管理の Kubernetes 環境では、Karpenter の利点を最大限に活用できます。
 
 ### 次のステップ
 
-- Karpenter を使ったコスト最適化策を実装する
-- さまざまなワークロード向けに NodePool を設定する
-- ハイブリッドクラスターのアーキテクチャーを設計する
-- Karpenter をほかの Kubernetes ツールと連携させる
-- 高度なノードライフサイクル管理の方法を策定する
+- Karpenter を使ったコスト最適化戦略を実装する
+- さまざまなワークロードタイプ向けに NodePool を構成する
+- ハイブリッドクラスターアーキテクチャを設計する
+- Karpenter を他の Kubernetes ツールと統合する
+- 高度なノードライフサイクル管理戦略を策定する
 
 ## 参考資料
 
 - [Karpenter 公式ドキュメント](https://karpenter.sh/)
-- [Karpenter AWS プロバイダーリポジトリ](https://github.com/aws/karpenter-provider-aws)
+- [Karpenter AWS Provider リポジトリ](https://github.com/aws/karpenter-provider-aws)
 - [Amazon EKS Workshop - Karpenter](https://www.eksworkshop.com/docs/autoscaling/compute/karpenter/)
-- [AWS ブログ - Karpenter](https://aws.amazon.com/blogs/aws/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
+- [AWS Blog - Karpenter](https://aws.amazon.com/blogs/aws/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
 - [Karpenter のベストプラクティス](https://aws.github.io/aws-eks-best-practices/karpenter/)
-- [Karpenter GitHub リリース](https://github.com/aws/karpenter-provider-aws/releases)
-- [AWS What's New - Karpenter の ARC Zonal Shift サポート](https://aws.amazon.com/about-aws/whats-new/2026/05/karpenter-arc-zonal-shift/)
-- [AWS What's New - Amazon EKS マネージドノードグループのウォームプール対応](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-managed-node-groups-ec2-warm-pools/)
+- [Karpenter の GitHub リリース](https://github.com/aws/karpenter-provider-aws/releases)
+- [AWS What's New - Karpenter ARC Zonal Shift サポート](https://aws.amazon.com/about-aws/whats-new/2026/05/karpenter-arc-zonal-shift/)
+- [AWS What's New - Amazon EKS Managed Node Group の Warm Pool サポート](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-managed-node-groups-ec2-warm-pools/)
 
 ## クイズ
 
-この章の内容を確認するには、[トピック別クイズ](../quizzes/autoscaling/06-karpenter-quiz.md)に挑戦してください。
+この章で学んだ内容を確認するには、[トピック別クイズ](../quizzes/autoscaling/06-karpenter-quiz.md)に挑戦してください。
 
-この改訂で確認した一次資料: [互換性](https://karpenter.sh/v1.14/upgrading/compatibility/)、[NodePool](https://karpenter.sh/v1.14/concepts/nodepools/)、[EC2NodeClass](https://karpenter.sh/v1.14/concepts/nodeclasses/)、[Disruption](https://karpenter.sh/v1.14/concepts/disruption/)、[サポートポリシー](https://github.com/aws/karpenter-provider-aws/blob/main/SUPPORT.md)、[固定した Helm values](https://github.com/aws/karpenter-provider-aws/blob/v1.14.1/charts/karpenter/values.yaml)、[Readiness taint](https://github.com/kubernetes-sigs/karpenter/commit/05431485c90c76a3a662b678a46c1a8da330038d)、[固定した DRA オプション](https://github.com/kubernetes-sigs/karpenter/blob/6e7eab7a0f48/pkg/operator/options/options.go)、[EKS ノード IAM](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html)、[Fargate プロファイル](https://docs.aws.amazon.com/eks/latest/userguide/fargate-profile.html)。
+この改訂版で確認した一次資料: [互換性](https://karpenter.sh/v1.14/upgrading/compatibility/)、[NodePool](https://karpenter.sh/v1.14/concepts/nodepools/)、[EC2NodeClass](https://karpenter.sh/v1.14/concepts/nodeclasses/)、[Disruption](https://karpenter.sh/v1.14/concepts/disruption/)、[サポートポリシー](https://github.com/aws/karpenter-provider-aws/blob/main/SUPPORT.md)、[固定バージョンの Helm values](https://github.com/aws/karpenter-provider-aws/blob/v1.14.1/charts/karpenter/values.yaml)、[Readiness taint](https://github.com/kubernetes-sigs/karpenter/commit/05431485c90c76a3a662b678a46c1a8da330038d)、[固定バージョンの DRA オプション](https://github.com/kubernetes-sigs/karpenter/blob/6e7eab7a0f48/pkg/operator/options/options.go)、[EKS ノード IAM](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html)、[Fargate profile](https://docs.aws.amazon.com/eks/latest/userguide/fargate-profile.html)。
