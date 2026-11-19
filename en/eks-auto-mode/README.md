@@ -1,9 +1,17 @@
 # EKS Auto Mode Operations Guide
 
 > **Supported Versions**: EKS Auto Mode GA; example baseline EKS 1.36
-> **Last Updated**: October 12, 2026
+> **Last Updated**: November 16, 2026
 
 Amazon EKS Auto Mode automates Kubernetes node management, including provisioning and optimization for workload requirements. This guide covers Auto Mode concepts, configuration and operations. AWS manages the Auto Mode infrastructure; you remain responsible for application availability, resource requests, security, monitoring and cluster/VPC configuration. Validate examples in your environment before production use.
+
+### November 2026 Update: Security Groups for Pods Support
+
+As of November 11, 2026, EKS Auto Mode supports security groups for Pods, letting you apply dedicated EC2 security group rules to individual Pods. Different workloads on the same node can carry different security groups, giving Pods network-level segmentation without creating separate node pools for each application. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-security-groups-for-pods/) for details.
+
+### November 2026 Update: Dynamic Resource Allocation (DRA) Support
+
+On November 9, 2026, AWS announced Kubernetes Dynamic Resource Allocation (DRA) support for NVIDIA GPUs and Elastic Fabric Adapter (EFA) network devices with EKS Auto Mode and Karpenter. Workloads declare the device attributes they need through DRA and can share GPU devices across Pods. Karpenter supports DRA on all Kubernetes versions; EKS Auto Mode supports it on Kubernetes 1.36 and newer, in all AWS Regions except AWS GovCloud (US) and the China Regions. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-karpenter-dra/) for details.
 
 ### October 2026 Update: EKS 1.37 Defaults
 

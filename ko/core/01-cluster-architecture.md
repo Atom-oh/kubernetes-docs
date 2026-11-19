@@ -1,7 +1,7 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.35, 1.36, 1.37
-> **마지막 업데이트**: 2026년 10월 16일
+> **마지막 업데이트**: 2026년 11월 16일
 
 버전 헤더는 업스트림 Kubernetes 기준입니다. Kubernetes 프로젝트는 최신 세 마이너 버전(1.35–1.37)의 릴리스 브랜치를 유지합니다. upstream 1.34는 유지 관리 모드로 **2026년 10월 27일** 지원 종료(EOL) 전까지 패치 릴리스를 계속 받으며, 이는 EKS의 AWS 지원 종료일과 별도입니다.
 
@@ -190,6 +190,10 @@ etcdutl snapshot restore snapshot.db \
 - 핵심 의존성 bbolt v1.5.0, raft v3.7.0 포함
 
 자세한 내용은 [공식 발표](https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/)와 [etcd v3.7 체인지로그](https://github.com/etcd-io/etcd/blob/main/CHANGELOG/CHANGELOG-3.7.md)를 참고하세요.
+
+#### 2026년 11월 업데이트: Amazon EKS Provisioned Control Plane의 24 GB etcd
+
+관리형 서비스에서는 etcd 용량도 제공 티어에 따라 달라집니다. 2026년 11월 11일 Amazon EKS Provisioned Control Plane의 4XL·8XL 티어가 기존 16 GB에서 늘어난 **24 GB etcd 데이터베이스**를 제공한다고 발표되었습니다. etcd 데이터베이스가 가득 차면 클러스터 객체를 추가·변경할 수 없으므로, 대규모 AI/ML 학습·추론, 배치 처리, CI/CD처럼 많은 객체를 만들고 갱신하는 워크로드에 여유 공간을 더해줍니다. EKS 1.34 이상에서 4XL·8XL 티어를 선택하면 적용되고, 해당 티어의 기존 클러스터는 추가 조치 없이 자동으로 확대되며, Provisioned Control Plane이 제공되는 모든 상용(commercial) 리전에서 사용할 수 있습니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-provisioned-control-plane-larger-etcd-database/)를 참고하세요.
 
 ### kube-scheduler
 

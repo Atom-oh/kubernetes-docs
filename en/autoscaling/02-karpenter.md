@@ -1,7 +1,7 @@
 # Karpenter
 
 > **Supported Versions**: Karpenter 1.14 LTS (examples: 1.14.1); select Kubernetes/EKS versions using the compatibility and provider support tables.
-> **Last Updated**: October 26, 2026
+> **Last Updated**: November 16, 2026
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -366,6 +366,14 @@ Under the support policy, regular minors are supported only until the next minor
 ### October 2026 Update: v1.15.1 and LTS Patch Releases
 
 Between October 20 and 23, 2026, patch releases shipped across the supported lines: [v1.15.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.1) (first patch on the 1.15 line — fixes include relaxing preferences instead of deferring when all compatible capacity reservations are full, and node-repair enqueue when the label syncs after create), [v1.14.2](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.2) and [v1.14.3](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.3) on the 1.14 LTS line (classifying `SpotMaxPriceTooLow` as an ICE error and treating a reclaiming interruptible capacity reservation as unavailable capacity, among others), and [v1.9.3](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.9.3) on the 1.9 LTS line. All three lines also bump the Go toolchain to 1.26.10, the Go patch release that stops trusting the compromised eMudhra intermediate CA certificates (CVE-2026-111943).
+
+### November 2026 Update: DRA Support Announced for EKS Auto Mode and Karpenter
+
+On November 9, 2026, AWS announced Kubernetes Dynamic Resource Allocation (DRA) support for NVIDIA GPUs and Elastic Fabric Adapter (EFA) network devices with EKS Auto Mode and Karpenter. Workloads declare the device attributes they need through DRA and can share GPU devices across Pods. Karpenter supports DRA on all Kubernetes versions; EKS Auto Mode supports it on Kubernetes 1.36 and newer, excluding the AWS GovCloud (US) and China Regions. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-karpenter-dra/) for details.
+
+### November 2026 Update: v1.15.2 Patch Release
+
+[v1.15.2](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.2), published November 12, 2026, only updates the DRA instance type metadata; it changes nothing unless the alpha `settings.awsFeatureGates.draNVIDIAGPU` or `settings.awsFeatureGates.draEFA` gate (or `settings.enableDRA`) is enabled. It adds NVIDIA GPU DRA metadata for `g7` and `g7e` and updates GPU memory attributes for existing GPU instance types, while the fractional-GPU `g6f` and `gr6f` types no longer carry NVIDIA DRA metadata, so Karpenter won't choose them for `gpu.nvidia.com` claims. EFA DRA metadata now covers 302 instance types, up from 29; the newly added entries only set `dra.net/pciDevice`, `dra.net/pciVendor` and `dra.net/rdma`. Building from source now needs Go 1.26.11 or later.
 
 ## Node Classes
 

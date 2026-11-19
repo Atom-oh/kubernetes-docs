@@ -1,5 +1,5 @@
 # 소식
-> **마지막 업데이트**: 2026년 10월 26일
+> **마지막 업데이트**: 2026년 11월 16일
 
 Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. GitHub Actions는 매주 월요일 09:00 KST에 갱신안을 만들고 품질 검사를 통과하면 PR을 엽니다. 실제 사이트에는 PR 검토·머지와 배포가 완료된 뒤 반영됩니다.
 
@@ -12,6 +12,15 @@ Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. G
 
 ## 갱신 로그
 
+- 2026-W47: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.32.0 정식(GA) 릴리스 반영(같은 주 1.31.4/1.30.8 패치 릴리스 포함) ([원문](https://istio.io/latest/news/releases/1.32.x/announcing-1.32/))
+- 2026-W47: [eks-auto-mode/README.md](../eks-auto-mode/README.md) · [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — EKS Auto Mode·Karpenter의 NVIDIA GPU·EFA용 Dynamic Resource Allocation(DRA) 지원 발표(Karpenter는 전 Kubernetes 버전, Auto Mode는 1.36 이상) 반영 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-karpenter-dra/))
+- 2026-W47: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — EKS Auto Mode의 Pod용 보안 그룹(security groups for Pods) 지원 발표(노드 풀 분리 없이 Pod 단위 네트워크 분리) 반영 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-auto-mode-security-groups-for-pods/))
+- 2026-W47: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Amazon EKS Provisioned Control Plane 4XL·8XL 티어의 etcd 데이터베이스 24 GB 확대(기존 16 GB, EKS 1.34 이상, 기존 클러스터 자동 적용) 반영 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-provisioned-control-plane-larger-etcd-database/))
+- 2026-W47: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.15.2 패치 릴리스(DRA 인스턴스 타입 메타데이터만 갱신: g7·g7e NVIDIA GPU 메타데이터 추가, EFA 메타데이터 29→302개 타입 확대, Go 1.26.11) 반영 ([원문](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.2))
+- 2026-W47: 매칭 문서 없음 — AWS Nitro Sandboxes 출시: Nitro 하이퍼바이저가 관리하는 경량 VM으로 Amazon EKS Pod·ECS Task·VM(내부에서 실행되는 AI 에이전트 포함)을 하드웨어 수준에서 격리 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/11/nitro-sandboxes-eks-ecs-ec2/))
+- 2026-W47: [security/03-pod-security-standards.md](../security/03-pod-security-standards.md) — AWS Batch on Amazon EKS의 Linux capabilities·seccomp 프로파일·Pod 수준 설정 등 Kubernetes security context 지원 추가(Pod Security Standards restricted 프로파일을 강제하는 클러스터에서 실행 가능) 반영 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/11/aws-batch-eks-security-context/))
+- 2026-W47: 매칭 문서 없음 — PostgreSQL 오퍼레이터 CloudNativePG, CNCF 인큐베이팅 프로젝트 승격 ([원문](https://www.cncf.io/blog/2026/11/10/cloudnativepg-becomes-a-cncf-incubating-project/))
+- 2026-W47: 매칭 문서 없음 — Ray 워크로드용 Kubernetes 오퍼레이터 KubeRay, CNCF 기부 발표 ([원문](https://www.cncf.io/blog/2026/11/10/donating-kuberay-to-cncf/))
 - 2026-W44: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.3/1.30.7/1.29.10 보안 패치 릴리스(ISTIO-SECURITY-2026-008, CVE-2026-111943: 유출된 eMudhra 중간 CA 인증서 신뢰 제거, 1.29.10은 지원 종료 후 예외 릴리스) 반영 ([원문](https://istio.io/latest/news/security/istio-security-2026-008/))
 - 2026-W44: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.4/1.19.10/1.18.16 긴급(out-of-band) 보안 패치 릴리스(CVE-2026-111943, 유출된 eMudhra 중간 CA 인증서를 더 이상 신뢰하지 않는 Go 1.26.10 적용) 반영 ([원문](https://github.com/cilium/cilium/releases/tag/v1.20.4))
 - 2026-W44: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.6/v3.4.12/v3.3.17 버그 수정 패치 릴리스와 유출된 eMudhra CA 인증서 신뢰를 제거하는 보안 수정이 포함된 v3.3.18 반영 ([원문](https://github.com/argoproj/argo-cd/releases/tag/v3.3.18))
