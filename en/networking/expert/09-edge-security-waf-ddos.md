@@ -199,9 +199,9 @@ The web ACL's default action is Allow.
 |---|---|---|---|---|
 | 10 | `AWSManagedRulesCommonRuleSet` with every rule overridden to Count through `RuleActionOverrides` | Count (per rule) | `SizeRestrictions_BODY` on essentially all 40,000 daily `/api/upload` requests (bodies over 8 KB); other rules near zero for real users | Exclude `/api/upload` from the group with a scope-down statement, or keep `SizeRestrictions_BODY` in Count and add a label match rule for other paths |
 | 20 | `AWSManagedRulesSQLiRuleSet`, rules overridden to Count | Count (per rule) | Near zero from real users | Investigate every match from a known client before promotion |
-| 30 | `rate-login`: rate-based, aggregate on IP, window 300 s, limit 100, scope-down `POST` and path starting `/login` | Count | Ordinary users never match (p99 18 is far below 100); `198.51.100.20` matches every 5-minute window it exceeds 100, about 540 counted requests at its 640 peak | False positive: add `NOT` (IP set containing `198.51.100.20`) inside the scope-down, or a separate higher limit for that address |
+| 30 | `rate-login`: rate-based, aggregate on IP, window 300 s, limit 100, scope-down `POST` and path starting `/login` | Count | Ordinary users never match (p99 18 is far below 100); `198.51.100.20` matches whenever it exceeds 100: for one isolated 5-minute burst of 640 after a quiet period, about 540 counted requests (the ones beyond the limit); if it stays above 100 for longer, nearly all of its later requests are counted, because the rule keeps acting until the estimated rate falls below the limit | False positive: add `NOT` (IP set containing `198.51.100.20`) inside the scope-down, or a separate higher limit for that address |
 
-A fragment for row 30 follows. It is **one rule inside a web ACL**, not a complete web ACL or a deployment command; `PartnerNat` is an IP set you would create.
+A fragment for row 30 follows. It shows the rule **after** the false-positive decision, with the `PartnerNat` exclusion added; during the trial described in the table the `NotStatement` is absent. It is **one rule inside a web ACL**, not a complete web ACL or a deployment command; `PartnerNat` is an IP set you would create.
 
 ```json
 {
@@ -235,7 +235,7 @@ A fragment for row 30 follows. It is **one rule inside a web ACL**, not a comple
 
 1. Complete the plan: for each row write the evidence you will read (log field, metric or label), the trial length, and who decides.
 2. Explain why row 10 uses per-rule `RuleActionOverrides` and not the rule group return action override (section 5).
-3. Calculate the expected Count matches for `rate-login` with and without the `PartnerNat` exclusion, and state why the real number will differ (approximate counting, detection delay).
+3. Calculate the expected Count matches for `rate-login` with and without the `PartnerNat` exclusion, for one isolated burst and for a sustained peak, and state why the real number will differ (approximate counting, detection delay, limiting that continues briefly after the rate falls).
 4. Write a **rollback trigger** for each rule you promote to Block. It must contain a measurable threshold, a time window, an owner and the exact action. Example: "After `rate-login` moves to Block, if the `/login` success rate stays more than 2 percentage points below the 96% baseline for 10 consecutive minutes, or any request from the synthetic login check is blocked, the on-call engineer sets `rate-login` back to Count and records the change." Note that the rollback itself propagates over seconds to minutes and, for a rate-based rule, resets its counts.
 5. Decide what the mobile `/api/*` traffic gets instead of Challenge or CAPTCHA, and why.
 6. Decide whether the Anti-DDoS managed rule group belongs in the plan, and in what position relative to row 30.

@@ -112,7 +112,7 @@ T = {
     "v_on": 0.3, "v_go": 0.5, "v_travel": 1.1, "v_gap": 0.4,
     "l_on": 2.6, "l_go": 2.9, "l_sh": 3.9, "l_sh_go": 4.4, "l_waf": 5.3, "l_off": 6.3,
     "g_on": 6.5, "g_go": 6.7, "g_sh": 7.3, "g_sh_go": 7.7, "g_waf": 8.2, "g_waf_go": 8.9,
-    "g_eni": 9.5, "g_eni_go": 9.9, "g_alb": 10.4, "g_alb_go": 10.9, "g_pod": 11.5, "g_off": 12.2,
+    "g_eni": 9.5, "g_eni_go": 9.9, "g_alb": 10.4, "g_alb_go": 10.9, "g_pod": 11.7, "g_off": 12.3,
     "hold": 12.8,
 }
 V_ARRIVE = [T["v_go"] + i * T["v_gap"] + T["v_travel"] for i in range(3)]
@@ -434,8 +434,8 @@ def build(lang):
         (gt[1], T["g_sh"] + 0.1, T["g_waf"] - 0.1, "bl", 0, -24, "middle"),
         (gt[2], T["g_waf"] + 0.1, T["g_eni"] - 0.1, "bl", 0, -24, "middle"),
         (gt[3], T["g_eni"] + 0.1, T["g_alb"] - 0.1, "acc", 0, -50, "middle"),
-        (gt[4], T["g_alb"] + 0.1, T["g_alb_go"] + 0.3, "bl", 0, -46, "middle"),
-        (gt[5], T["g_alb_go"] + 0.4, T["g_pod"] - 0.1, "acc", 0, -50, "middle"),
+        (gt[4], T["g_alb"] + 0.1, T["g_alb_go"] - 0.1, "bl", 0, -46, "middle"),
+        (gt[5], T["g_alb_go"] + 0.1, T["g_pod"] - 0.1, "acc", 0, -50, "middle"),
         (gt[6], T["g_pod"] + 0.1, T["g_off"], "bl", -20, -46, "end"),
     ]))
     # captions

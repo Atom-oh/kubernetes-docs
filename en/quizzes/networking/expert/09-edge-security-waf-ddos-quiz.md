@@ -7,14 +7,14 @@ Choose one answer per question and explain which rule in the workbook supports i
 These are design reasoning exercises, not claims that a web ACL was deployed.
 
 1. A botnet sends a SYN flood at a CloudFront distribution whose origin is an internal ALB behind a VPC origin. Why does the ALB not receive a SYN flood?
-   - A) The WAF web ACL blocks SYN packets with a rate-based rule.
-   - B) At the edge, the Shield TCP SYN proxy verifies the handshake (stateless SYN cookies) before a connection reaches the service, and CloudFront keeps its own persistent connections to the origin.
+   - A) At the edge, the Shield TCP SYN proxy verifies the handshake (stateless SYN cookies) before a connection reaches the service, and CloudFront keeps its own persistent connections to the origin.
+   - B) The WAF web ACL blocks SYN packets with a rate-based rule.
    - C) The ALB security group drops SYN packets that arrive too fast.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) At the edge, the Shield TCP SYN proxy verifies the handshake (stateless SYN cookies) before a connection reaches the service, and CloudFront keeps its own persistent connections to the origin.**
+**Answer: A) At the edge, the Shield TCP SYN proxy verifies the handshake (stateless SYN cookies) before a connection reaches the service, and CloudFront keeps its own persistent connections to the origin.**
 
 **Explanation:** A SYN flood exhausts the listener's backlog of half-open connections. CloudFront is the listener here, and Shield's SYN proxy only passes connections that complete the handshake; a viewer's new connection is not a new origin connection. AWS WAF inspects HTTP requests, not TCP segments, and a security group is not a rate limiter.
 
@@ -36,13 +36,13 @@ These are design reasoning exercises, not claims that a web ACL was deployed.
 
 3. A request matches a rule whose action is CAPTCHA, and it carries a valid, unexpired CAPTCHA token. What does AWS WAF do?
    - A) It blocks the request and sends a new puzzle.
-   - B) It handles the request like Count and continues with the remaining rules.
-   - C) It allows the request immediately and stops evaluation.
+   - B) It allows the request immediately and stops evaluation.
+   - C) It handles the request like Count and continues with the remaining rules.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It handles the request like Count and continues with the remaining rules.**
+**Answer: C) It handles the request like Count and continues with the remaining rules.**
 
 **Explanation:** CAPTCHA and Challenge are non-terminating with a valid, unexpired token and terminating (blocked, with a puzzle or silent challenge) when the token is missing, invalid or expired. Allow and Block always terminate; Count never does. Blocked requests get `403 (Forbidden)` by default.
 
@@ -78,13 +78,13 @@ These are design reasoning exercises, not claims that a web ACL was deployed.
 
 6. You want to see what each rule in `AWSManagedRulesCommonRuleSet` would block before enforcing it. Which setting gives you that?
    - A) Override the rule group's return action to Count.
-   - B) Override each rule's action to Count with `RuleActionOverrides`.
-   - C) Set the web ACL default action to Count.
+   - B) Set the web ACL default action to Count.
+   - C) Override each rule's action to Count with `RuleActionOverrides`.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Override each rule's action to Count with `RuleActionOverrides`.**
+**Answer: C) Override each rule's action to Count with `RuleActionOverrides`.**
 
 **Explanation:** With a per-rule override, matching requests are handled as if that rule's action were Count, and the group keeps evaluating its other rules. A rule group return action override to Count does not change how the group evaluates: it stops at its first terminating match, so later rules in the group never run for that request. The default action is only Allow or Block.
 
@@ -105,14 +105,14 @@ These are design reasoning exercises, not claims that a web ACL was deployed.
 </details>
 
 8. You create a web ACL with the CLI to protect a CloudFront distribution. Which statement is correct?
-   - A) Use `--scope=REGIONAL` in the Region of the origin ALB, and associate the same web ACL with the ALB too.
-   - B) Use `--scope=CLOUDFRONT --region=us-east-1`; this global web ACL cannot also be associated with the ALB.
+   - A) Use `--scope=CLOUDFRONT --region=us-east-1`; this global web ACL cannot also be associated with the ALB.
+   - B) Use `--scope=REGIONAL` in the Region of the origin ALB, and associate the same web ACL with the ALB too.
    - C) Use `--scope=CLOUDFRONT` in any Region, because CloudFront is global.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Use `--scope=CLOUDFRONT --region=us-east-1`; this global web ACL cannot also be associated with the ALB.**
+**Answer: A) Use `--scope=CLOUDFRONT --region=us-east-1`; this global web ACL cannot also be associated with the ALB.**
 
 **Explanation:** A web ACL for CloudFront is global with the hard-coded Region US East (N. Virginia); the API and SDKs use the `us-east-1` endpoint. A web ACL associated with a CloudFront distribution cannot be associated with another resource type, so an ALB needs its own `REGIONAL` web ACL if you want a second inspection.
 
@@ -134,13 +134,13 @@ These are design reasoning exercises, not claims that a web ACL was deployed.
 
 10. A team subscribes to Shield Advanced and wants the Shield Response Team to contact them proactively during an attack. What must be in place?
    - A) Nothing more; the subscription includes it.
-   - B) A Business Support or Enterprise Support plan for SRT access, and health-based detection with a Route 53 health check on the protected resource.
-   - C) A regional web ACL on every ALB.
+   - B) A regional web ACL on every ALB.
+   - C) A Business Support or Enterprise Support plan for SRT access, and health-based detection with a Route 53 health check on the protected resource.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) A Business Support or Enterprise Support plan for SRT access, and health-based detection with a Route 53 health check on the protected resource.**
+**Answer: C) A Business Support or Enterprise Support plan for SRT access, and health-based detection with a Route 53 health check on the protected resource.**
 
 **Explanation:** The SRT requires one of those support plans. Proactive engagement is available only for resources with health-based detection, which uses Route 53 health checks. Shield Advanced also protects only the resources you add explicitly; Shield Standard is the automatic, no-cost layer.
 
@@ -161,14 +161,14 @@ These are design reasoning exercises, not claims that a web ACL was deployed.
 </details>
 
 12. During a count-mode trial, which evidence reliably shows that a rule inside a managed rule group would have matched?
-   - A) The sampled requests table in the web ACL view.
-   - B) The `nonTerminatingMatchingRules` field and labels in WAF logs, plus label metrics.
+   - A) The `nonTerminatingMatchingRules` field and labels in WAF logs, plus label metrics.
+   - B) The sampled requests table in the web ACL view.
    - C) The CloudFront standard log's status code.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The `nonTerminatingMatchingRules` field and labels in WAF logs, plus label metrics.**
+**Answer: A) The `nonTerminatingMatchingRules` field and labels in WAF logs, plus label metrics.**
 
 **Explanation:** WAF logs list Count matches under `nonTerminatingMatchingRules` and the labels added to each request. Samples for Count rules inside rule groups are not shown in the web ACL view, and Count-action rules inside rule groups do not emit web ACL dimension metrics. A Count match never changes the status code.
 
@@ -188,7 +188,7 @@ These are design reasoning exercises, not claims that a web ACL was deployed.
 
 </details>
 
-14. In the workbook's exercise, `rate-login` (window 300 s, limit 100, aggregate on IP, action Count) sees `198.51.100.20` send 640 `POST /login` requests in one 5-minute window. About how many requests from that address does the rule count, and why is the real number not exact?
+14. In the workbook's exercise, `rate-login` (window 300 s, limit 100, aggregate on IP, action Count) sees `198.51.100.20`, after a quiet hour, send one isolated burst of 640 `POST /login` requests within 5 minutes. About how many requests from that address does the rule count, and why is the real number not exact?
    - A) 640, because Count counts every request that matches the scope-down statement.
    - B) About 540, the requests beyond the limit, and approximate because AWS WAF estimates the rate and detects a breach with a delay.
    - C) 100, because the limit caps the count.
@@ -198,7 +198,7 @@ These are design reasoning exercises, not claims that a web ACL was deployed.
 
 **Answer: B) About 540, the requests beyond the limit, and approximate because AWS WAF estimates the rate and detects a breach with a delay.**
 
-**Explanation:** A rate-based rule applies its action to further matching requests from an instance that exceeds the limit: 640 - 100 = 540. AWS WAF weights recent requests and limits near, not exactly at, the configured value. The trial reveals a false positive (a shared office NAT), which the plan removes with an IP set inside a `NotStatement` in the scope-down.
+**Explanation:** A rate-based rule applies its action to further matching requests from an instance that exceeds the limit: 640 - 100 = 540. That holds for an isolated burst; if the address stayed above the limit, nearly all of its later requests would be counted, because the rule keeps acting until the estimated rate falls below the limit. AWS WAF weights recent requests and limits near, not exactly at, the configured value. The trial reveals a false positive (a shared office NAT), which the plan removes with an IP set inside a `NotStatement` in the scope-down.
 
 </details>
 

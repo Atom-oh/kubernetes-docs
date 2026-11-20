@@ -7,14 +7,14 @@
 설계 추론 문제이며 실제 웹 ACL을 배포했다는 주장이 아닙니다.
 
 1. 봇넷이 CloudFront 배포로 SYN 플러드를 보냅니다. 오리진은 VPC 오리진 뒤의 internal ALB입니다. ALB가 SYN 플러드를 받지 않는 이유는?
-   - A) WAF 웹 ACL의 속도 기반 규칙이 SYN 패킷을 Block하기 때문입니다.
-   - B) 엣지의 Shield TCP SYN 프록시가 연결이 서비스에 닿기 전에 핸드셰이크를 검증하고(상태 없는 SYN 쿠키), CloudFront는 오리진과 자체 지속 연결을 유지하기 때문입니다.
+   - A) 엣지의 Shield TCP SYN 프록시가 연결이 서비스에 닿기 전에 핸드셰이크를 검증하고(상태 없는 SYN 쿠키), CloudFront는 오리진과 자체 지속 연결을 유지하기 때문입니다.
+   - B) WAF 웹 ACL의 속도 기반 규칙이 SYN 패킷을 Block하기 때문입니다.
    - C) ALB 보안 그룹이 너무 빨리 들어오는 SYN 패킷을 버리기 때문입니다.
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 엣지의 Shield TCP SYN 프록시가 연결이 서비스에 닿기 전에 핸드셰이크를 검증하고(상태 없는 SYN 쿠키), CloudFront는 오리진과 자체 지속 연결을 유지하기 때문입니다.**
+**정답: A) 엣지의 Shield TCP SYN 프록시가 연결이 서비스에 닿기 전에 핸드셰이크를 검증하고(상태 없는 SYN 쿠키), CloudFront는 오리진과 자체 지속 연결을 유지하기 때문입니다.**
 
 **설명:** SYN 플러드는 리스너의 반열림 연결 백로그를 바닥냅니다. 여기서 리스너는 CloudFront이고, Shield의 SYN 프록시는 핸드셰이크를 끝낸 연결만 통과시킵니다. 뷰어의 새 연결은 새 오리진 연결이 아닙니다. AWS WAF는 TCP 세그먼트가 아니라 HTTP 요청을 검사하며, 보안 그룹은 속도를 제한하지 않습니다.
 
@@ -36,13 +36,13 @@
 
 3. 요청이 작업이 CAPTCHA인 규칙과 일치하고, 유효하며 만료되지 않은 CAPTCHA 토큰을 가지고 있습니다. AWS WAF는 어떻게 하는가?
    - A) 요청을 Block하고 새 퍼즐을 보냅니다.
-   - B) Count처럼 처리하고 남은 규칙으로 평가를 계속합니다.
-   - C) 즉시 Allow하고 평가를 멈춥니다.
+   - B) 즉시 Allow하고 평가를 멈춥니다.
+   - C) Count처럼 처리하고 남은 규칙으로 평가를 계속합니다.
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Count처럼 처리하고 남은 규칙으로 평가를 계속합니다.**
+**정답: C) Count처럼 처리하고 남은 규칙으로 평가를 계속합니다.**
 
 **설명:** CAPTCHA와 Challenge는 유효하고 만료되지 않은 토큰이 있으면 평가를 끝내지 않고, 토큰이 없거나 잘못되었거나 만료되었으면 평가를 끝내고 Block합니다(퍼즐이나 조용한 챌린지와 함께). Allow와 Block은 항상 평가를 끝내고 Count는 끝내지 않습니다. Block된 요청은 기본적으로 `403 (Forbidden)`을 받습니다.
 
@@ -78,13 +78,13 @@
 
 6. `AWSManagedRulesCommonRuleSet`의 각 규칙이 무엇을 Block할지 적용 전에 보고 싶습니다. 어떤 설정이 그것을 보여 주는가?
    - A) 규칙 그룹의 반환 작업을 Count로 재정의합니다.
-   - B) `RuleActionOverrides`로 각 규칙의 작업을 Count로 재정의합니다.
-   - C) 웹 ACL 기본 작업을 Count로 설정합니다.
+   - B) 웹 ACL 기본 작업을 Count로 설정합니다.
+   - C) `RuleActionOverrides`로 각 규칙의 작업을 Count로 재정의합니다.
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) `RuleActionOverrides`로 각 규칙의 작업을 Count로 재정의합니다.**
+**정답: C) `RuleActionOverrides`로 각 규칙의 작업을 Count로 재정의합니다.**
 
 **설명:** 규칙별 재정의를 쓰면 일치한 요청을 그 규칙의 작업이 Count인 것처럼 처리하고, 그룹은 다른 규칙을 계속 평가합니다. 규칙 그룹 반환 작업을 Count로 재정의해도 그룹의 평가 방식은 바뀌지 않아서 첫 종료 일치에서 멈추므로, 그 요청에 대해 그룹의 뒤쪽 규칙은 실행되지 않습니다. 기본 작업은 Allow 또는 Block뿐입니다.
 
@@ -105,14 +105,14 @@
 </details>
 
 8. CloudFront 배포를 보호할 웹 ACL을 CLI로 만듭니다. 옳은 설명은?
-   - A) 오리진 ALB 리전에서 `--scope=REGIONAL`을 쓰고, 같은 웹 ACL을 ALB에도 연결합니다.
-   - B) `--scope=CLOUDFRONT --region=us-east-1`을 씁니다. 이 전역 웹 ACL은 ALB에 함께 연결할 수 없습니다.
+   - A) `--scope=CLOUDFRONT --region=us-east-1`을 씁니다. 이 전역 웹 ACL은 ALB에 함께 연결할 수 없습니다.
+   - B) 오리진 ALB 리전에서 `--scope=REGIONAL`을 쓰고, 같은 웹 ACL을 ALB에도 연결합니다.
    - C) CloudFront는 전역이므로 아무 리전에서나 `--scope=CLOUDFRONT`를 씁니다.
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) `--scope=CLOUDFRONT --region=us-east-1`을 씁니다. 이 전역 웹 ACL은 ALB에 함께 연결할 수 없습니다.**
+**정답: A) `--scope=CLOUDFRONT --region=us-east-1`을 씁니다. 이 전역 웹 ACL은 ALB에 함께 연결할 수 없습니다.**
 
 **설명:** CloudFront용 웹 ACL은 리전이 미국 동부(버지니아 북부)로 고정된 전역 웹 ACL이며, API와 SDK는 `us-east-1` 엔드포인트를 씁니다. CloudFront 배포에 연결한 웹 ACL은 다른 자원 유형에 연결할 수 없으므로, 두 번째 검사를 원하면 ALB에는 자체 `REGIONAL` 웹 ACL이 필요합니다.
 
@@ -134,13 +134,13 @@
 
 10. 한 팀이 Shield Advanced를 구독했고, 공격 중에 Shield Response Team이 먼저 연락해 주기를 원합니다. 무엇이 갖춰져야 하는가?
    - A) 더 필요한 것은 없습니다. 구독에 포함됩니다.
-   - B) SRT 이용을 위한 Business Support 또는 Enterprise Support 플랜, 그리고 보호 대상 자원에 Route 53 상태 확인을 쓰는 상태 기반 탐지가 필요합니다.
-   - C) 모든 ALB에 리전 웹 ACL이 필요합니다.
+   - B) 모든 ALB에 리전 웹 ACL이 필요합니다.
+   - C) SRT 이용을 위한 Business Support 또는 Enterprise Support 플랜, 그리고 보호 대상 자원에 Route 53 상태 확인을 쓰는 상태 기반 탐지가 필요합니다.
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) SRT 이용을 위한 Business Support 또는 Enterprise Support 플랜, 그리고 보호 대상 자원에 Route 53 상태 확인을 쓰는 상태 기반 탐지가 필요합니다.**
+**정답: C) SRT 이용을 위한 Business Support 또는 Enterprise Support 플랜, 그리고 보호 대상 자원에 Route 53 상태 확인을 쓰는 상태 기반 탐지가 필요합니다.**
 
 **설명:** SRT를 쓰려면 이 지원 플랜 중 하나가 필요합니다. 선제 대응은 상태 기반 탐지(Route 53 상태 확인 사용)를 켠 자원에서만 쓸 수 있습니다. Shield Advanced는 명시적으로 추가한 자원만 보호하며, 자동이고 추가 비용이 없는 계층은 Shield Standard입니다.
 
@@ -161,14 +161,14 @@
 </details>
 
 12. count 모드 시험 중에 관리형 규칙 그룹 안의 규칙이 일치했을 것임을 믿을 만하게 보여 주는 증거는?
-   - A) 웹 ACL 화면의 샘플 요청 표
-   - B) WAF 로그의 `nonTerminatingMatchingRules` 필드와 레이블, 그리고 레이블 지표
+   - A) WAF 로그의 `nonTerminatingMatchingRules` 필드와 레이블, 그리고 레이블 지표
+   - B) 웹 ACL 화면의 샘플 요청 표
    - C) CloudFront 표준 로그의 상태 코드
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) WAF 로그의 `nonTerminatingMatchingRules` 필드와 레이블, 그리고 레이블 지표**
+**정답: A) WAF 로그의 `nonTerminatingMatchingRules` 필드와 레이블, 그리고 레이블 지표**
 
 **설명:** WAF 로그는 Count 일치를 `nonTerminatingMatchingRules`에, 요청마다 붙은 레이블을 함께 남깁니다. 규칙 그룹 안 Count 규칙의 샘플은 웹 ACL 화면에 보이지 않고, 규칙 그룹 안의 Count 작업 규칙은 웹 ACL 차원 지표를 내지 않습니다. Count 일치는 상태 코드를 바꾸지 않습니다.
 
@@ -188,7 +188,7 @@
 
 </details>
 
-14. 워크북 과제에서 `rate-login`(기간 300초, 한도 100, IP 집계, 작업 Count)은 `198.51.100.20`이 5분 구간 하나에 `POST /login` 요청 640건을 보내는 것을 봅니다. 규칙은 그 주소의 요청을 대략 몇 건 Count하며, 실제 값이 정확하지 않은 이유는?
+14. 워크북 과제에서 `rate-login`(기간 300초, 한도 100, IP 집계, 작업 Count)은 `198.51.100.20`이 한 시간 동안 조용하다가 5분 안에 `POST /login` 요청 640건을 단발 버스트로 보내는 것을 봅니다. 규칙은 그 주소의 요청을 대략 몇 건 Count하며, 실제 값이 정확하지 않은 이유는?
    - A) 640건. Count는 범위 축소 문과 일치하는 모든 요청을 세기 때문입니다.
    - B) 한도를 넘은 요청인 약 540건. AWS WAF가 속도를 추정하고 초과를 늦게 탐지하므로 근사값입니다.
    - C) 100건. 한도가 카운트를 제한하기 때문입니다.
@@ -198,7 +198,7 @@
 
 **정답: B) 한도를 넘은 요청인 약 540건. AWS WAF가 속도를 추정하고 초과를 늦게 탐지하므로 근사값입니다.**
 
-**설명:** 속도 기반 규칙은 한도를 넘은 인스턴스의 이후 일치 요청에 작업을 적용합니다. 640 - 100 = 540입니다. AWS WAF는 최근 요청에 가중치를 두어 설정값과 정확히 같지 않고 그 근처에서 제한합니다. 이 시험은 오탐(여럿이 함께 쓰는 사무실 NAT)을 드러내며, 계획은 범위 축소 문 안의 `NotStatement`에 IP 세트를 넣어 이를 없앱니다.
+**설명:** 속도 기반 규칙은 한도를 넘은 인스턴스의 이후 일치 요청에 작업을 적용합니다. 640 - 100 = 540입니다. 이는 단발 버스트일 때이며, 그 주소가 한도를 넘는 상태를 계속 유지하면 추정 속도가 한도 아래로 떨어질 때까지 규칙이 작업을 계속 적용하므로 이후 요청 거의 전부가 Count됩니다. AWS WAF는 최근 요청에 가중치를 두어 설정값과 정확히 같지 않고 그 근처에서 제한합니다. 이 시험은 오탐(여럿이 함께 쓰는 사무실 NAT)을 드러내며, 계획은 범위 축소 문 안의 `NotStatement`에 IP 세트를 넣어 이를 없앱니다.
 
 </details>
 
