@@ -213,7 +213,7 @@ HTTP/2 and HTTP/3 keep HTTP semantics and change framing (Part 3), so a cache ke
 | `x-amz-cf-pop` | Viewer response | The POP that answered; compare it across requests before concluding anything from a second Miss |
 | `Via` | Viewer response | The intermediaries that handled the message ([RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html)); the server identifier can differ between two requests to the same POP |
 | `x-edge-result-type` | Standard logs | `Hit`, `RefreshHit`, `Miss`, `LimitExceeded`, `CapacityExceeded`, `Error`, `Redirect`; WebSocket and gRPC are always `Miss` |
-| `x-edge-detailed-result-type` | Standard logs | `OriginShieldHit` when Origin Shield served it (a request routed to the regional edge cache acting as Origin Shield is logged as `Hit`) |
+| `x-edge-detailed-result-type` | Standard logs | Same value as `x-edge-result-type` except in listed cases; `OriginShieldHit` when Origin Shield served it (a request routed to the regional edge cache acting as Origin Shield is logged as `Hit`) |
 | `time-to-first-byte` | Standard logs | Seconds from receiving the request to writing the first byte, measured on the server |
 | Cache hit rate, origin latency | CloudWatch additional metrics (paid, up to 8 per distribution, published in us-east-1) | Hit rate counts only cacheable requests (`POST`, `PUT` and errors excluded); origin latency is first-byte latency for requests served from the origin |
 

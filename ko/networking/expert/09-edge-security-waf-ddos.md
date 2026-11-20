@@ -8,7 +8,7 @@
 
 이 장은 [워크북 08](./08-cdn-edge-delivery.md#edge-origin-path)의 엣지에서 오리진까지의 경로(CloudFront → VPC 오리진 → internal ALB)를 바탕으로 하며 그 내용을 다시 가르치지 않습니다. 서버 자체의 호스트 방화벽은 [beginner 06](../beginner/06-firewalls-host-security.md)에 있습니다. WAF 배치, 규칙 순서의 함정, 요청 본문 검사 한도, 전달된 클라이언트 IP, 로그 필드 전체 목록은 [WAF·엣지·API 보안](../../security/14-waf-edge-api-security.md)에 있으므로 이 워크북은 해당 절을 링크합니다. Pod 수준 규칙은 [네트워크 정책](../../security/04-network-policies.md)에, Ingress 쪽은 [AWS Load Balancer Controller](../03-aws-lb-controller.md)에 있습니다. 컨트롤러 문서의 예시는 `alb.ingress.kubernetes.io/scheme: internet-facing`을 쓰지만, **이 과정의 엣지 설계에서 ALB는 internal**(`alb.ingress.kubernetes.io/scheme: internal`)이며 CloudFront VPC 오리진 뒤에 있으므로 그 값 하나를 바꿔서 읽습니다. BGP 기반 Anycast는 [워크북 02](./02-routing-policy-convergence.md)에, TCP 핸드셰이크는 [네트워크 기초 Part 2](../../basics/06-network-fundamentals-part2.md)에 있습니다.
 
-**준비 조건:** 텍스트 편집기와 AWS 문서만 있으면 됩니다. AWS 계정은 필요 없습니다. 이 설계를 직접 구축하면 AWS WAF 요금(웹 ACL당, 규칙당, 요청 100만 건당, 그리고 Bot Control, 계정 탈취 방지, Anti-DDoS 규칙 그룹, CAPTCHA와 Challenge, 1,500 WCU 초과 용량, 로깅의 추가 요금), CloudFront와 로드 밸런서 요금, 구독한다면 AWS Shield Advanced 요금(요금 페이지 기준 월 3,000달러부터, 1년 약정)이 발생하며 그 **비용과 정리 책임은 학습자 본인**에게 있습니다. 서면으로 승인된 테스트 계획 없이는 자신의 자원을 대상으로도 공격 트래픽으로 시험하지 않습니다.
+**준비 조건:** 텍스트 편집기와 AWS 문서만 있으면 됩니다. AWS 계정은 필요 없습니다. 이 설계를 직접 구축하면 AWS WAF 요금(웹 ACL당, 규칙당, 요청 100만 건당, 그리고 Bot Control, 계정 탈취 방지, Anti-DDoS 규칙 그룹(Shield Advanced가 포함하는 경우 제외), CAPTCHA와 Challenge, 1,500 WCU 초과 용량, 로깅의 추가 요금), CloudFront와 로드 밸런서 요금, 구독한다면 AWS Shield Advanced 요금(요금 페이지 기준 월 3,000달러부터, 1년 약정)이 발생하며 그 **비용과 정리 책임은 학습자 본인**에게 있습니다. 서면으로 승인된 테스트 계획 없이는 자신의 자원을 대상으로도 공격 트래픽으로 시험하지 않습니다.
 
 ## 1. 질문을 정하고 읽기
 
@@ -130,14 +130,14 @@ CloudFront → ALB → Ingress에서 어떤 클라이언트 주소로 집계할�
 |---|---|---|
 | 비용과 활성화 | 모든 AWS 고객에게 추가 요금 없이 자동 적용 | 구독. 요금 페이지는 월 3,000달러부터, 자동 갱신되는 1년 약정으로 안내. 명시적으로 추가한 자원(또는 AWS Firewall Manager Shield Advanced 정책으로 보호하는 자원)만 보호 |
 | 범위 | 가장 흔하고 자주 일어나는 네트워크·전송 계층 공격. CloudFront 배포, Route 53 호스팅 영역, Global Accelerator 표준 가속기는 알려진 모든 네트워크·전송 계층 공격에 대한 보호를 받음 | CloudFront, Route 53 호스팅 영역, Global Accelerator 표준 가속기, 탄력적 IP 주소(와 그 뒤의 EC2 인스턴스, NLB), ALB, Classic Load Balancer |
-| 애플리케이션 계층(L7) | 자체적으로는 없음. L7은 WAF의 일 | AWS WAF 웹 ACL을 사용. 보호 대상 자원의 표준 WAF 요금은 1,500 WCU와 기본 본문 크기까지 포함. Bot Control, CAPTCHA, 1,500 WCU 초과 용량, 더 큰 본문 검사는 포함되지 않음 |
+| 애플리케이션 계층(L7) | 자체적으로는 없음. L7은 WAF의 일 | AWS WAF 웹 ACL을 사용. 보호 대상 자원의 표준 WAF 요금은 1,500 WCU와 기본 본문 크기까지 포함. Bot Control, CAPTCHA, 1,500 WCU 초과 용량, 더 큰 본문 검사는 포함되지 않음. 구독에는 Anti-DDoS 규칙 그룹이 추가 비용 없이 포함되며, 결제자(payer)당 월 500억 요청까지 AWS WAF 요청 요금을 포함하고 그 이후는 100만 건당 0.15달러 |
 | 자동 L7 완화 | 없음 | 다음 문단 참조 |
 | 대응 팀 | 없음 | 공격 중 지원과 사용자 지정 완화를 맡는 **Shield Response Team(SRT)**. Business Support 또는 Enterprise Support 플랜이 필요(DDoS 복원력 백서는 Business Support+ 또는 Enterprise Support로 표기) |
 | 탐지 | 자동 | Route 53 상태 확인을 쓰는 상태 기반 탐지. **선제 대응(proactive engagement)**(SRT가 먼저 연락)에 필요 |
 | 비용 보호 | 없음 | 공격으로 생긴 일부 확장 요금에 대한 Shield Advanced 서비스 크레딧 |
 | 가시성 | 서비스 지표 외에는 없음 | 콘솔, API, CloudWatch 지표의 이벤트 정보, 보호 그룹 |
 
-**2026년의 자동 L7 완화.** 2026년 3월 26일부터 **Anti-DDoS 관리형 규칙 그룹**(`AWSManagedRulesAntiDDoSRuleSet`, 50 WCU, 추가 요금)이 HTTP 요청 플러드에 대한 AWS의 기본 해법이며, Shield Advanced의 Layer 7 자동 완화를 대체합니다(기존 고객은 계속 쓸 수 있음). 이 규칙 그룹은 트래픽을 자원의 기준선과 비교하고, 이벤트 중에는 모든 요청에 레이블(`awswaf:managed:aws:anti-ddos:event-detected`)을, 의심 출발지에는 신뢰도별 레이블(`low-`, `medium-`, `high-suspicion-ddos-request`)을 붙이며, 약한 완화로 조용한 Challenge를 보내고(`GET` 요청만 challengeable 레이블을 받음) 강한 완화로 Block합니다. 이전 Shield Advanced 기능은 150 WCU 규칙 그룹을 추가하고, 기준선을 익히는 데 24시간에서 30일이 걸리며, Count 또는 Block으로 동작하고, CDN 뒤의 ALB에서는 CDN이 원래 클라이언트 속성을 전달하지 않을 수 있어 효과가 줄어듭니다. AWS는 대신 CloudFront 배포에서 켜라고 권장합니다.
+**2026년의 자동 L7 완화.** 2026년 3월 26일부터 **Anti-DDoS 관리형 규칙 그룹**(`AWSManagedRulesAntiDDoSRuleSet`, 50 WCU, AWS WAF만 쓰면 추가 요금, Shield Advanced 구독에는 추가 비용 없이 포함)이 HTTP 요청 플러드에 대한 AWS의 기본 해법이며, Shield Advanced의 Layer 7 자동 완화를 대체합니다(기존 고객은 계속 쓸 수 있음). 이 규칙 그룹은 트래픽을 자원의 기준선과 비교하고, 이벤트 중에는 모든 요청에 레이블(`awswaf:managed:aws:anti-ddos:event-detected`)을, 의심 출발지에는 신뢰도별 레이블(`low-`, `medium-`, `high-suspicion-ddos-request`)을 붙이며, 약한 완화로 조용한 Challenge를 보내고(`GET` 요청만 challengeable 레이블을 받음) 강한 완화로 Block합니다. 이전 Shield Advanced 기능은 150 WCU 규칙 그룹을 추가하고, 기준선을 익히는 데 24시간에서 30일이 걸리며, Count 또는 Block으로 동작하고, CDN 뒤의 ALB에서는 CDN이 원래 클라이언트 속성을 전달하지 않을 수 있어 효과가 줄어듭니다. AWS는 대신 CloudFront 배포에서 켜라고 권장합니다.
 
 ## 7. 기준 경로의 심층 방어
 

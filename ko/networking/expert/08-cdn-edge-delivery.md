@@ -213,7 +213,7 @@ HTTP/2와 HTTP/3는 HTTP 의미를 유지하고 프레이밍만 바꾸므로(Par
 | `x-amz-cf-pop` | 뷰어 응답 | 응답한 POP. 두 번째 Miss에서 결론을 내리기 전에 요청 사이에 비교함 |
 | `Via` | 뷰어 응답 | 메시지를 처리한 중개자([RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html)). 같은 POP에 보낸 두 요청에서 서버 식별자가 다를 수 있음 |
 | `x-edge-result-type` | 표준 로그 | `Hit`, `RefreshHit`, `Miss`, `LimitExceeded`, `CapacityExceeded`, `Error`, `Redirect`. WebSocket과 gRPC는 항상 `Miss` |
-| `x-edge-detailed-result-type` | 표준 로그 | Origin Shield가 응답하면 `OriginShieldHit`(Origin Shield 역할을 하는 리전 엣지 캐시로 라우팅된 요청은 `Hit`로 기록) |
+| `x-edge-detailed-result-type` | 표준 로그 | `x-edge-result-type`와 같은 값이지만 문서에 나열된 경우는 예외; Origin Shield가 응답하면 `OriginShieldHit`(Origin Shield 역할을 하는 리전 엣지 캐시로 라우팅된 요청은 `Hit`로 기록) |
 | `time-to-first-byte` | 표준 로그 | 요청을 받은 뒤 첫 바이트를 쓰기까지의 초, 서버에서 측정 |
 | 캐시 적중률, 오리진 지연 | CloudWatch 추가 지표(유료, 배포당 최대 8개, us-east-1에 게시) | 적중률은 캐시 가능한 요청만 셈(`POST`, `PUT`, 오류 제외). 오리진 지연은 오리진에서 응답한 요청의 첫 바이트 지연 |
 
