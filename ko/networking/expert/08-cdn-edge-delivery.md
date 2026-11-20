@@ -32,7 +32,7 @@ CDN은 세 가지를 바꾸며, 설계 문서는 그중 무엇을 사려는지 �
 |---|---|---|
 | **지연(RTT) 단축** | 뷰어의 TCP/QUIC·TLS 핸드셰이크가 먼 오리진이 아니라 가까운 POP에서 끝나고, 캐시 적중이면 오리진 왕복이 아예 없음 | 캐시 미스는 여전히 POP에서 오리진까지의 경로를 지남. Part 2에서 본 TLS 1.3 전체 핸드셰이크 약 1 RTT가 짧은 뷰어-POP RTT로 바뀔 뿐임 |
 | **오리진 부하 감소** | 적중은 오리진에 닿지 않고, 리전 엣지 캐시·Origin Shield·요청 병합이 남은 미스를 줄임 | 적중률은 CDN이 아니라 고른 캐시 키와 TTL이 정함(5절, 6절) |
-| **흡수** | 트래픽이 오리진 하나가 아니라 넓게 분산된 엣지에 도착 | CDN을 우회해 오리진에 닿을 수 없을 때만 오리진이 보호됨(9절). 볼륨형·L7 공격 방어는 다음 워크북(엣지 보안)의 주제 |
+| **흡수** | 트래픽이 오리진 하나가 아니라 넓게 분산된 엣지에 도착 | CDN을 우회해 오리진에 닿을 수 없을 때만 오리진이 보호됨(9절). 볼륨형·L7 공격 방어는 다음 워크북인 [엣지 보안](./09-edge-security-waf-ddos.md)의 주제 |
 
 CloudFront는 요청을 가장 잘 처리할 수 있는 엣지 로케이션, 보통 지연이 가장 낮은 곳으로 보내고, 오리진 쪽 트래픽은 AWS 네트워크로 운반합니다.
 
@@ -202,7 +202,7 @@ HTTP/2와 HTTP/3는 HTTP 의미를 유지하고 프레이밍만 바꾸므로(Par
 
 **internal ALB를 CloudFront 밖에서 닿을 수 없는 이유:** internal 로드 밸런서의 노드는 프라이빗 IP 주소만 가집니다. DNS 이름은 공개적으로 조회되지만 그 프라이빗 주소로 풀리므로 VPC에 접근할 수 있는 클라이언트만 닿습니다. 이는 필터가 아니라 라우팅의 성질이라서, 나중에 보안 그룹 규칙이 느슨해져도 유지됩니다. ALB를 Kubernetes Ingress로 만든다면 [AWS Load Balancer Controller](../03-aws-lb-controller.md)에서 `alb.ingress.kubernetes.io/scheme: internal`로 지정합니다.
 
-**prefix list와 서비스 보안 그룹의 차이:** 관리형 prefix list는 모든 CloudFront origin-facing 서버를 담으므로 **어느 배포든** 허용하고, VPC 오리진 서비스 그룹은 자신의 배포만 허용합니다. prefix list를 인바운드 규칙에 쓰면 보안 그룹 규칙 할당량에서 규칙 55개의 가중치로 셉니다. [WAF·엣지·API 보안](../../security/14-waf-edge-api-security.md)은 WAF 배치를 다루고, 이 설계를 기준 설계가 쓰지 않는 더 약한 방식인 공개 ALB 오리진(prefix list와 비밀 헤더)과 비교하며, 다음 워크북(엣지 보안)은 이 경로 위에 공격 쪽 관점을 더합니다.
+**prefix list와 서비스 보안 그룹의 차이:** 관리형 prefix list는 모든 CloudFront origin-facing 서버를 담으므로 **어느 배포든** 허용하고, VPC 오리진 서비스 그룹은 자신의 배포만 허용합니다. prefix list를 인바운드 규칙에 쓰면 보안 그룹 규칙 할당량에서 규칙 55개의 가중치로 셉니다. [WAF·엣지·API 보안](../../security/14-waf-edge-api-security.md)은 WAF 배치를 다루고, 이 설계를 기준 설계가 쓰지 않는 더 약한 방식인 공개 ALB 오리진(prefix list와 비밀 헤더)과 비교하며, 다음 워크북인 [엣지 보안](./09-edge-security-waf-ddos.md)은 이 경로 위에 공격 쪽 관점을 더합니다.
 
 ## 10. 관측: 신호별로 증명하는 것
 
@@ -303,7 +303,7 @@ age: 5
 | 오리진 경로와 규칙 | internal ALB로 가는 VPC 오리진, 보안 그룹 규칙의 원본(서비스 그룹 또는 prefix list), 구간별 TLS 표 |
 | 장애 표 | 행마다 예상 동작, 증거, 그 증거의 한계 |
 
-요청이 POP으로 유도되는 방식, 어느 계층이 왜 응답하는지, 캐시 키와 TTL 규칙이 적중률을 정하는 방식, 무효화와 버전 이름의 차이, 오리진이 CloudFront를 통해서만 닿는 이유를 근거 문서와 함께 설명할 수 있으면 완료입니다. 같은 경로의 공격 쪽은 다음 워크북(엣지 보안)에서 이어 가고, WAF 배치는 [WAF·엣지·API 보안](../../security/14-waf-edge-api-security.md)에서 검토한 뒤 [퀴즈](../../quizzes/networking/expert/08-cdn-edge-delivery-quiz.md)를 풉니다.
+요청이 POP으로 유도되는 방식, 어느 계층이 왜 응답하는지, 캐시 키와 TTL 규칙이 적중률을 정하는 방식, 무효화와 버전 이름의 차이, 오리진이 CloudFront를 통해서만 닿는 이유를 근거 문서와 함께 설명할 수 있으면 완료입니다. 같은 경로의 공격 쪽은 다음 워크북인 [엣지 보안](./09-edge-security-waf-ddos.md)에서 이어 가고, WAF 배치는 [WAF·엣지·API 보안](../../security/14-waf-edge-api-security.md)에서 검토한 뒤 [퀴즈](../../quizzes/networking/expert/08-cdn-edge-delivery-quiz.md)를 풉니다.
 
 ## 참고 자료
 

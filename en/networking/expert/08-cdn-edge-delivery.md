@@ -32,7 +32,7 @@ A CDN changes three things, and a design should say which one it is buying.
 |---|---|---|
 | **Lower latency (RTT)** | The viewer's TCP/QUIC and TLS handshakes end at a nearby POP instead of a distant origin; a cache hit removes the origin round trip entirely | A miss still pays the POP-to-origin path. Part 2 showed that a full TLS 1.3 handshake costs about 1 RTT; that RTT is now the short viewer-to-POP one |
 | **Origin offload** | Hits never reach the origin; regional edge caches, Origin Shield and request collapsing reduce the misses that do | The hit ratio depends on the cache key and TTLs you choose (sections 5 and 6), not on the CDN alone |
-| **Absorption** | Traffic lands on a large distributed edge instead of one origin | Absorption protects the origin only if the origin cannot be reached around the CDN (section 9). Volumetric and L7 attack defenses are the next workbook's topic (edge security) |
+| **Absorption** | Traffic lands on a large distributed edge instead of one origin | Absorption protects the origin only if the origin cannot be reached around the CDN (section 9). Volumetric and L7 attack defenses are the topic of the next workbook, [edge security](./09-edge-security-waf-ddos.md) |
 
 CloudFront routes each request to the edge location that can best serve it, typically the one with the lowest latency, and carries origin traffic over the AWS network.
 
@@ -202,7 +202,7 @@ HTTP/2 and HTTP/3 keep HTTP semantics and change framing (Part 3), so a cache ke
 
 **Why an internal ALB cannot be reached around CloudFront:** the nodes of an internal load balancer have only private IP addresses. Its DNS name is publicly resolvable, but it resolves to those private addresses, so only clients with access to the VPC can reach it. That is a routing property, not a filter, and it holds even if a security group rule is later loosened. If the ALB comes from a Kubernetes Ingress, the [AWS Load Balancer Controller](../03-aws-lb-controller.md) sets it with `alb.ingress.kubernetes.io/scheme: internal`.
 
-**Prefix list or service security group:** the managed prefix list contains all CloudFront origin-facing servers, so it admits **any** distribution; the VPC origin service group admits only yours. As an inbound rule the prefix list counts with a weight of 55 rules toward the security group rule quota. [WAF, Edge and API Security](../../security/14-waf-edge-api-security.md) covers WAF placement and compares this design with the weaker public-ALB origin (prefix list plus a secret header), which the house reference design does not use; the next workbook (edge security) builds the attack-side view on top of this path.
+**Prefix list or service security group:** the managed prefix list contains all CloudFront origin-facing servers, so it admits **any** distribution; the VPC origin service group admits only yours. As an inbound rule the prefix list counts with a weight of 55 rules toward the security group rule quota. [WAF, Edge and API Security](../../security/14-waf-edge-api-security.md) covers WAF placement and compares this design with the weaker public-ALB origin (prefix list plus a secret header), which the house reference design does not use; the next workbook, [edge security](./09-edge-security-waf-ddos.md), builds the attack-side view on top of this path.
 
 ## 10. Observability: what each signal proves
 
@@ -303,7 +303,7 @@ Use this table to decide **what evidence would settle each verdict**. If you lat
 | Origin path and rules | VPC origin to an internal ALB, the security group rule source (service group or prefix list) and the per-leg TLS table |
 | Failure table | Each row has the expected behavior, the evidence and its limit |
 
-You are done when you can explain, with sources, how a request is steered to a POP, which tier answers it and why, how the cache key and TTL rules decide the hit ratio, the difference between invalidation and versioned names, and why the origin is unreachable except through CloudFront. Continue with the next workbook (edge security) for the attack side of the same path, review the WAF placement in [WAF, Edge and API Security](../../security/14-waf-edge-api-security.md), and take the [quiz](../../quizzes/networking/expert/08-cdn-edge-delivery-quiz.md).
+You are done when you can explain, with sources, how a request is steered to a POP, which tier answers it and why, how the cache key and TTL rules decide the hit ratio, the difference between invalidation and versioned names, and why the origin is unreachable except through CloudFront. Continue with the next workbook, [edge security](./09-edge-security-waf-ddos.md), for the attack side of the same path, review the WAF placement in [WAF, Edge and API Security](../../security/14-waf-edge-api-security.md), and take the [quiz](../../quizzes/networking/expert/08-cdn-edge-delivery-quiz.md).
 
 ## References
 
