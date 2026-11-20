@@ -220,7 +220,7 @@ Continue with [protocol details](../../basics/06-network-fundamentals-part1.md),
 
 ## Continue to the expert path
 
-The [expert networking path](../expert/README.md) follows this beginner course with six workbooks on protocols, routing, packet paths and before/during/after policy/failure evidence. Environments differ across chapters; start with its [entry check](../expert/README.md#entry-check).
+The [expert networking path](../expert/README.md) follows this beginner course with nine workbooks on protocols, routing, packet paths and before/during/after policy/failure evidence. Environments differ across chapters; start with its [entry check](../expert/README.md#entry-check).
 
 ## Using external courses {#further-study}
 

@@ -2,11 +2,12 @@
 
 > **마지막 업데이트**: 2026년 9월 14일
 
-::: tip 4부작 시리즈입니다
+::: tip 5부작 시리즈입니다
 **Part 1: 계층 모델과 링크·라우팅** *(현재 문서)* ·
 [Part 2: 전송 계층과 TLS](./06-network-fundamentals-part2.md) ·
 [Part 3: 애플리케이션 프로토콜](./06-network-fundamentals-part3.md) ·
-[Part 4: 요청의 여정과 클라우드](./06-network-fundamentals-part4.md)
+[Part 4: 요청의 여정과 클라우드](./06-network-fundamentals-part4.md) ·
+[Part 5: 네트워크 장비, LAN과 WAN](./06-network-fundamentals-part5.md)
 :::
 
 브라우저 요청에는 여러 프로토콜이 협력합니다. 실제 순서는 캐시, 연결 재사용, IP 및 HTTP 버전에 따라 달라지므로 장애 분석에서는 HTTP뿐 아니라 관련 계층도 확인해야 합니다.

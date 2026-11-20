@@ -2,11 +2,12 @@
 
 > **마지막 업데이트**: 2026년 9월 14일
 
-::: tip 4부작 시리즈입니다
+::: tip 5부작 시리즈입니다
 [Part 1: 계층 모델과 링크·라우팅](./06-network-fundamentals-part1.md) ·
 [Part 2: 전송 계층과 TLS](./06-network-fundamentals-part2.md) ·
 **Part 3: 애플리케이션 프로토콜** *(현재 문서)* ·
-[Part 4: 요청의 여정과 클라우드](./06-network-fundamentals-part4.md)
+[Part 4: 요청의 여정과 클라우드](./06-network-fundamentals-part4.md) ·
+[Part 5: 네트워크 장비, LAN과 WAN](./06-network-fundamentals-part5.md)
 :::
 
 전송 프로토콜이 제공하는 스트림·데이터그램 위에서 애플리케이션 프로토콜이 실제 서비스를 만듭니다. 이 파트는 이름 해석(DNS·DoH), 부트스트랩(DHCP), 운영 접속(SSH), 메일(SMTP), HTTP/3·WebSocket·WebRTC·gRPC·MQTT를 다룹니다.

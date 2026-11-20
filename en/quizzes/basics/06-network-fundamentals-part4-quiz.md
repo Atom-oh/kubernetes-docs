@@ -56,4 +56,4 @@ Endpoints can remove matching service traffic from the NAT path, but interface e
 
 ---
 
-[Back to Study Material](../../basics/06-network-fundamentals-part4.md) | [Next Quiz: Cluster Architecture](../core/01-cluster-architecture-quiz.md)
+[Back to Study Material](../../basics/06-network-fundamentals-part4.md) | [Next Quiz: Part 5](./06-network-fundamentals-part5-quiz.md)

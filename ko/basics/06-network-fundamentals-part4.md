@@ -2,11 +2,12 @@
 
 > **마지막 업데이트**: 2026년 10월 12일
 
-::: tip 4부작 시리즈입니다
+::: tip 5부작 시리즈입니다
 [Part 1: 계층 모델과 링크·라우팅](./06-network-fundamentals-part1.md) ·
 [Part 2: 전송 계층과 TLS](./06-network-fundamentals-part2.md) ·
 [Part 3: 애플리케이션 프로토콜](./06-network-fundamentals-part3.md) ·
-**Part 4: 요청의 여정과 클라우드** *(현재 문서)*
+**Part 4: 요청의 여정과 클라우드** *(현재 문서)* ·
+[Part 5: 네트워크 장비, LAN과 WAN](./06-network-fundamentals-part5.md)
 :::
 
 이 시리즈의 프로토콜·메커니즘 25개를 예시 요청으로 연결하고 AWS·쿠버네티스의 관련 역할과 비교합니다. 기능상 대응 관계이며 일대일 대체 관계는 아닙니다.

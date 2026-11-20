@@ -156,3 +156,10 @@
   docs: [service-mesh/vpc-lattice/03-auth-flow.md, service-mesh/vpc-lattice/06-constraints.md]
 - keywords: [consortium blockchain, permissioned ledger, validator key custody]
   docs: [blockchain/04-financial-services.md]
+
+- keywords: [direct connect, site-to-site vpn, transit gateway, sd-wan]
+  docs: [networking/expert/07-wan-hybrid-connectivity.md]
+- keywords: [cloudfront, cdn, edge cache, origin shield]
+  docs: [networking/expert/08-cdn-edge-delivery.md]
+- keywords: [aws waf, aws shield, ddos, bot control]
+  docs: [networking/expert/09-edge-security-waf-ddos.md]

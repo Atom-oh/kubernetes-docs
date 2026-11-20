@@ -2,7 +2,7 @@
 
 > **Last Updated**: November 19, 2026
 
-::: tip This part extends the series
+::: tip This is a five-part series
 [Part 1: The Layer Model, Link and Routing Layers](./06-network-fundamentals-part1.md) ·
 [Part 2: The Transport Layer and TLS](./06-network-fundamentals-part2.md) ·
 [Part 3: Application Protocols](./06-network-fundamentals-part3.md) ·

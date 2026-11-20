@@ -60,6 +60,7 @@
    - [Part 2: eksctl을 사용한 클러스터 생성](./eks/02-eks-cluster-creation-part2.md) | [퀴즈](./quizzes/eks/02-eks-cluster-creation-part2-quiz.md)
    - [Part 3: AWS Management Console 및 CLI를 사용한 클러스터 생성](./eks/02-eks-cluster-creation-part3.md) | [퀴즈](./quizzes/eks/02-eks-cluster-creation-part3-quiz.md)
    - [Part 4: Terraform 및 CDK를 사용한 클러스터 생성](./eks/02-eks-cluster-creation-part4.md) | [퀴즈](./quizzes/eks/02-eks-cluster-creation-part4-quiz.md)
+   - [Part 5: 네트워크 장비, LAN과 WAN 기초](./basics/06-network-fundamentals-part5.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part5-quiz.md)
    - [Part 5: 클러스터 액세스, 검증, 업그레이드 및 삭제](./eks/02-eks-cluster-creation-part5.md) | [퀴즈](./quizzes/eks/02-eks-cluster-creation-part5-quiz.md)
 3. EKS 네트워킹
    - [Part 1: 기본 개념 및 VPC 구성](./eks/03-eks-networking-part1.md) | [퀴즈](./quizzes/eks/03-eks-networking-part1-quiz.md)
@@ -124,6 +125,9 @@
    - [4. Linux 패킷 경로와 성능](./networking/expert/04-linux-performance.md) | [퀴즈](./quizzes/networking/expert/04-linux-performance-quiz.md)
    - [5. 클라우드·CNI 설계](./networking/expert/05-cloud-cni-design.md) | [퀴즈](./quizzes/networking/expert/05-cloud-cni-design-quiz.md)
    - [6. 자동화와 종합 평가](./networking/expert/06-automation-capstone.md) | [퀴즈](./quizzes/networking/expert/06-automation-capstone-quiz.md)
+   - [7. WAN과 하이브리드 연결 설계](./networking/expert/07-wan-hybrid-connectivity.md) | [퀴즈](./quizzes/networking/expert/07-wan-hybrid-connectivity-quiz.md)
+   - [8. CDN과 엣지 전송 설계](./networking/expert/08-cdn-edge-delivery.md) | [퀴즈](./quizzes/networking/expert/08-cdn-edge-delivery-quiz.md)
+   - [9. 엣지 보안: WAF와 DDoS 방어](./networking/expert/09-edge-security-waf-ddos.md) | [퀴즈](./quizzes/networking/expert/09-edge-security-waf-ddos-quiz.md)
 3. [Kubernetes 네트워킹 개요](./networking/README.md) | [퀴즈](./quizzes/networking/00-networking-overview-quiz.md)
 4. [네트워크 기초: 프로토콜 25개](./basics/06-network-fundamentals-part1.md)
    - [Part 1: 계층 모델과 링크·라우팅](./basics/06-network-fundamentals-part1.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part1-quiz.md)

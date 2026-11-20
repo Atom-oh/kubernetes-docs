@@ -2,11 +2,12 @@
 
 > **Last Updated**: October 12, 2026
 
-::: tip This is a four-part series
+::: tip This is a five-part series
 [Part 1: The Layer Model, Link and Routing Layers](./06-network-fundamentals-part1.md) ·
 [Part 2: The Transport Layer and TLS](./06-network-fundamentals-part2.md) ·
 [Part 3: Application Protocols](./06-network-fundamentals-part3.md) ·
-**Part 4: A Request's Journey and the Cloud** *(this document)*
+**Part 4: A Request's Journey and the Cloud** *(this document)* ·
+[Part 5: Network Devices, LAN and WAN](./06-network-fundamentals-part5.md)
 :::
 
 This part connects the series’ 25 protocols and mechanisms through an illustrative request, then maps related responsibilities in AWS and Kubernetes. These are functional comparisons, not one-to-one replacements.

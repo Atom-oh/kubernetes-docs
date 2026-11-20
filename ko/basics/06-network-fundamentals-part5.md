@@ -2,7 +2,7 @@
 
 > **마지막 업데이트**: 2026년 11월 19일
 
-::: tip 시리즈 확장편입니다
+::: tip 5부작 시리즈입니다
 [Part 1: 계층 모델과 링크·라우팅](./06-network-fundamentals-part1.md) ·
 [Part 2: 전송 계층과 TLS](./06-network-fundamentals-part2.md) ·
 [Part 3: 애플리케이션 프로토콜](./06-network-fundamentals-part3.md) ·

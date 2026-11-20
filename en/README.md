@@ -60,6 +60,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 2: Creating Clusters with eksctl](./eks/02-eks-cluster-creation-part2.md) | [Quiz](./quizzes/eks/02-eks-cluster-creation-part2-quiz.md)
    - [Part 3: Creating Clusters with AWS Management Console and CLI](./eks/02-eks-cluster-creation-part3.md) | [Quiz](./quizzes/eks/02-eks-cluster-creation-part3-quiz.md)
    - [Part 4: Creating Clusters with Terraform and CDK](./eks/02-eks-cluster-creation-part4.md) | [Quiz](./quizzes/eks/02-eks-cluster-creation-part4-quiz.md)
+   - [Part 5: Network Devices, LAN and WAN Basics](./basics/06-network-fundamentals-part5.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part5-quiz.md)
    - [Part 5: Cluster Access, Validation, Upgrade and Deletion](./eks/02-eks-cluster-creation-part5.md) | [Quiz](./quizzes/eks/02-eks-cluster-creation-part5-quiz.md)
 3. EKS Networking
    - [Part 1: Basic Concepts and VPC Configuration](./eks/03-eks-networking-part1.md) | [Quiz](./quizzes/eks/03-eks-networking-part1-quiz.md)
@@ -124,6 +125,9 @@ This training content provides quizzes for each topic along with the learning ma
    - [4. Linux Packet Paths and Performance](./networking/expert/04-linux-performance.md) | [Quiz](./quizzes/networking/expert/04-linux-performance-quiz.md)
    - [5. Cloud and CNI Design](./networking/expert/05-cloud-cni-design.md) | [Quiz](./quizzes/networking/expert/05-cloud-cni-design-quiz.md)
    - [6. Automation and Final Assessment](./networking/expert/06-automation-capstone.md) | [Quiz](./quizzes/networking/expert/06-automation-capstone-quiz.md)
+   - [7. WAN and Hybrid Connectivity Design](./networking/expert/07-wan-hybrid-connectivity.md) | [Quiz](./quizzes/networking/expert/07-wan-hybrid-connectivity-quiz.md)
+   - [8. CDN and Edge Delivery Design](./networking/expert/08-cdn-edge-delivery.md) | [Quiz](./quizzes/networking/expert/08-cdn-edge-delivery-quiz.md)
+   - [9. Edge Security: WAF and DDoS Defense](./networking/expert/09-edge-security-waf-ddos.md) | [Quiz](./quizzes/networking/expert/09-edge-security-waf-ddos-quiz.md)
 3. [Kubernetes Networking Overview](./networking/README.md) | [Quiz](./quizzes/networking/00-networking-overview-quiz.md)
 4. [Network Fundamentals: 25 Protocols](./basics/06-network-fundamentals-part1.md)
    - [Part 1: The Layer Model, Link and Routing Layers](./basics/06-network-fundamentals-part1.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part1-quiz.md)

@@ -2,11 +2,12 @@
 
 > **마지막 업데이트**: 2026년 9월 11일
 
-::: tip 4부작 시리즈입니다
+::: tip 5부작 시리즈입니다
 [Part 1: 계층 모델과 링크·라우팅](./06-network-fundamentals-part1.md) ·
 **Part 2: 전송 계층과 TLS** *(현재 문서)* ·
 [Part 3: 애플리케이션 프로토콜](./06-network-fundamentals-part3.md) ·
-[Part 4: 요청의 여정과 클라우드](./06-network-fundamentals-part4.md)
+[Part 4: 요청의 여정과 클라우드](./06-network-fundamentals-part4.md) ·
+[Part 5: 네트워크 장비, LAN과 WAN](./06-network-fundamentals-part5.md)
 :::
 
 Part 1이 패킷을 목적지 호스트까지 보냈다면, 이 파트는 신뢰성 있는 스트림(TCP·QUIC)과 UDP 데이터그램을 비교하고 TLS의 통신 보호를 설명합니다. UDP 자체에는 신뢰성이나 TLS가 내장되어 있지 않습니다. 애플리케이션은 DTLS 같은 적절한 보안 프로토콜을 선택하거나 TLS 1.3을 통합한 QUIC 같은 전송 프로토콜을 사용합니다.
