@@ -330,7 +330,7 @@ def build(lang):
         ("GET /img/logo.png", T["p1_on"], T["p1_pop"] - 0.1, "acc", 0, -24, "middle"),
         ("MISS · cache key /img/logo.png", T["p1_pop"] + 0.1, T["p1_rec"] - 0.1, "bl", 0, -58, "middle"),
         ("regional cache: MISS", T["p1_rec"] + 0.1, T["p1_org"] - 0.1, "bl", 0, -58, "middle"),
-        ("200 OK\nCache-Control: max-age=3600", T["p1_org"] + 0.1, T["p1_pop2"] - 0.1, "acc", -12, -76, "end"),
+        ("200 OK\nCache-Control: max-age=3600", T["p1_org"] + 0.1, T["p1_pop2"] - 0.1, "acc", -12, -60, "end"),
         ("x-cache: Miss from cloudfront\nCache-Control: max-age=3600", T["p1_pop2"] + 0.1, T["p1_pop2_go"] + 0.35, "acc", 10, -60, "end"),
     ]))
     f2 = P2_F

@@ -114,7 +114,7 @@ Other rules:
 - If both `max-age` and `Expires` are present, CloudFront uses only `max-age`.
 - A viewer's `Cache-Control` or `Pragma` in a GET cannot force CloudFront back to the origin; CloudFront ignores them.
 - Without a cache policy (legacy settings), the default TTL is 24 hours.
-- **Trap:** with a minimum TTL above 0, an origin that sends `no-cache` still gets cached for the minimum TTL, and if the origin later becomes unreachable CloudFront can serve the object it fetched earlier. Add `Cache-Control: stale-if-error=0` to prevent that.
+- **Trap:** with a minimum TTL above 0, an origin that sends `no-cache` still gets cached for the minimum TTL. If the origin later becomes unreachable and the minimum **or** maximum TTL is above 0, CloudFront serves the object it fetched earlier, so lowering only the minimum TTL does not stop it. Add `Cache-Control: stale-if-error=0` to the origin's response to make CloudFront return an error instead.
 
 **Serving stale on purpose:** CloudFront supports the [RFC 5861](https://www.rfc-editor.org/rfc/rfc5861.html) extensions.
 
@@ -189,7 +189,7 @@ HTTP/2 and HTTP/3 keep HTTP semantics and change framing (Part 3), so a cache ke
 
 **The reference design:** CloudFront → **VPC origin** → **internal** ALB in private subnets → target group. The origin has no public address, and its only ingress is from CloudFront. Do not put an internet-facing load balancer behind CloudFront, and never add an inbound rule that admits a public CIDR to the origin.
 
-![Edge-to-origin path animation. ① A viewer sends a cacheable GET /menu.json over HTTPS; TLS ends at the edge POP, and the request misses at both the POP and the regional edge cache. ② CloudFront connects to the origin through the VPC origin: a service-managed ENI in a private subnet (for example 10.0.11.25) opens the connection to the internal ALB (10.0.12.40). ③ The ALB security group admits only traffic from CloudFront-VPCOrigins-Service-SG (or the CloudFront origin-facing managed prefix list). ④ The ALB listener forwards to the target group, whose targets accept traffic only from the ALB security group. ⑤ An internet client tries to reach the ALB directly and fails at the VPC boundary: an internal ALB has only private addresses, so nothing on the internet routes to it. The VPC has an internet gateway attached, but it is not used to route this path.](../../.gitbook/assets/en-networking-expert-08-cdn-edge-delivery-anim-1.svg)
+![Edge-to-origin path animation. ① A viewer sends a cacheable GET /menu.json over HTTPS; TLS ends at the edge POP, and the request misses at both the POP and the regional edge cache. ② CloudFront connects to the origin through the VPC origin: a service-managed ENI in a private subnet (for example 10.0.11.25) opens the connection to the internal ALB (10.0.12.40). ③ The ALB security group admits only traffic from CloudFront-VPCOrigins-Service-SG (or the CloudFront origin-facing managed prefix list). ④ The ALB listener forwards to the target group, whose targets accept traffic only from the ALB security group. ⑤ An internet client tries to reach the ALB directly and fails: an internal ALB has only private addresses, so nothing on the internet routes to it and the attempt never reaches the VPC. The VPC has an internet gateway attached, but it is not used to route this path.](../../.gitbook/assets/en-networking-expert-08-cdn-edge-delivery-anim-1.svg)
 
 **VPC origin requirements** (Developer Guide):
 
@@ -202,7 +202,7 @@ HTTP/2 and HTTP/3 keep HTTP semantics and change framing (Part 3), so a cache ke
 
 **Why an internal ALB cannot be reached around CloudFront:** the nodes of an internal load balancer have only private IP addresses. Its DNS name is publicly resolvable, but it resolves to those private addresses, so only clients with access to the VPC can reach it. That is a routing property, not a filter, and it holds even if a security group rule is later loosened. If the ALB comes from a Kubernetes Ingress, the [AWS Load Balancer Controller](../03-aws-lb-controller.md) sets it with `alb.ingress.kubernetes.io/scheme: internal`.
 
-**Prefix list or service security group:** the managed prefix list contains all CloudFront origin-facing servers, so it admits **any** distribution; the VPC origin service group admits only yours. As an inbound rule the prefix list counts with a weight of 55 rules toward the security group rule quota. For a public ALB origin protected by headers instead, and for WAF placement, see [WAF, Edge and API Security](../../security/14-waf-edge-api-security.md); the next workbook (edge security) builds the attack-side view on top of this path.
+**Prefix list or service security group:** the managed prefix list contains all CloudFront origin-facing servers, so it admits **any** distribution; the VPC origin service group admits only yours. As an inbound rule the prefix list counts with a weight of 55 rules toward the security group rule quota. [WAF, Edge and API Security](../../security/14-waf-edge-api-security.md) covers WAF placement and compares this design with the weaker public-ALB origin (prefix list plus a secret header), which the house reference design does not use; the next workbook (edge security) builds the attack-side view on top of this path.
 
 ## 10. Observability: what each signal proves
 
@@ -285,10 +285,10 @@ Use this table to decide **what evidence would settle each verdict**. If you lat
 |---|---|---|---|
 | Origin down, object still fresh | Hits continue; misses fail | `x-cache: Hit` with rising `age`; `Error` results for misses in logs | That every object is cached |
 | Origin down, object stale, `stale-if-error` set | Stale copy served until the lesser of the directive and the maximum TTL | `age` beyond `max-age`; origin errors in logs | How long the outage lasted |
-| Origin down, minimum TTL > 0 and `no-cache` | A previously fetched copy can be served (section 6 trap) | Responses where you expected errors | That this is acceptable for that content |
+| Origin down, minimum or maximum TTL > 0, `no-cache` without `stale-if-error=0` | A previously fetched copy can be served (section 6 trap) | Responses where you expected errors | That this is acceptable for that content |
 | Cache key grows (a header or cookie added) | Hit rate falls, origin latency and origin load rise | CloudWatch cache hit rate, origin request counts | Which value split the key (compare policies) |
 | Origin certificate mismatch or expiry | `502` to viewers on misses | Viewer `502`; origin TLS errors | Whether hits were affected (they are not) |
-| Security group change removes the CloudFront source | Misses fail to connect; hits continue | `502`/`504` on misses; the SG rule history | That the internal ALB became reachable from the internet (it cannot: no public address) |
+| Security group change removes the CloudFront source | Misses fail to connect; hits continue | `504` on misses (an origin firewall or security rule that blocks CloudFront traffic returns 504); the SG rule history | That the internal ALB became reachable from the internet (it cannot: no public address) |
 | Bad deployment fixed by invalidation | Edges refetch; browsers and proxies may keep the old copy | Invalidation status; `x-cache: Miss` then `Hit` | That users' browsers updated (only versioned names do that) |
 
 **Recovery is a load event.** After an invalidation or an origin outage, many POPs miss at once. Regional edge caches, Origin Shield and request collapsing reduce the number of origin requests, but plan origin capacity for the refill. Zero observed errors only means the sampling did not catch any.
@@ -325,10 +325,13 @@ Amazon CloudFront Developer Guide
 - [Request Anycast static IPs](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/request-static-ips.html)
 - [View CloudFront and edge function metrics](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/viewing-cloudfront-metrics.html) (cache hit rate, origin latency), [Standard log file fields](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/standard-logs-reference.html)
 - [Restrict access to Application Load Balancers](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/restrict-access-to-load-balancer.html) (ALB certificate Region versus the us-east-1 viewer certificate)
+- [HTTP 504 status code (Gateway Timeout)](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/http-504-gateway-timeout.html) (origin firewall blocking CloudFront)
 
 Other AWS sources
 
 - [How Elastic Load Balancing works](https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html) (internal load balancer scheme)
+- [AWS whitepaper: Origin HTTPS configuration](https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/origin-https-configuration.html) (origin certificate conditions, SNI, `502`)
+- [AWS Knowledge Center: What protocols does CloudFront support?](https://repost.aws/knowledge-center/cloudfront-supported-protocols) (HTTP/1.0 and 1.1 on by default, HTTP/1.1 to custom origins)
 - [AWS Knowledge Center: X-Cache: Miss from CloudFront](https://repost.aws/knowledge-center/cloudfront-x-cachemiss-error), [Custom object caching and origin headers](https://repost.aws/knowledge-center/cloudfront-custom-object-caching) (`x-cache` values, `x-amz-cf-pop`)
 - [AWS Knowledge Center: Associate a certificate in US East (N. Virginia)](https://repost.aws/knowledge-center/migrate-ssl-cert-us-east)
 - [Amazon CloudFront FAQs](https://aws.amazon.com/cloudfront/faqs/) (older concurrent invalidation limits), [Amazon CloudFront pricing](https://aws.amazon.com/cloudfront/pricing/)

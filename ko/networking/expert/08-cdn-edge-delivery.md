@@ -97,7 +97,7 @@ CloudFront는 요청을 가장 잘 처리할 수 있는 엣지 로케이션, 보
 
 ## 6. TTL, Cache-Control, 무효화
 
-**이 장에서 쓰는 HTTP 캐시 용어**(RFC 9111): 저장된 응답은 신선도 수명(freshness lifetime)이 지나기 전까지 **신선**(fresh)하고, 지나면 **오래된**(stale) 응답입니다. 공유 캐시(CDN)는 `s-maxage`, `max-age`, `Expires`에서 `Date`를 뺀 값 순으로 처음 있는 것을 수명으로 씁니다. 오래된 응답을 다시 쓰려면 보통 오리진과 **검증(validation)**해야 하며, 조건부 요청이 `304 Not Modified`를 받을 수 있습니다. `Age` 헤더는 응답이 오리진에서 생성되거나 검증된 뒤 지난 초를 보낸 쪽이 추정한 값이며, 이 헤더가 있다는 것은 이번 요청에 대해 오리진이 응답을 만들지 않았다는 뜻입니다. 응답은 신선도 수명이 현재 나이(age)보다 큰 동안 신선하므로, 남은 시간은 수명에서 `Age`를 뺀 값입니다. `no-cache`는 검증에 성공하기 전에는 저장된 응답을 다시 쓰지 말라는 뜻이고, `no-store`는 저장하지 말라는 뜻입니다.
+**이 장에서 쓰는 HTTP 캐시 용어**(RFC 9111): 저장된 응답은 신선도 수명(freshness lifetime)이 지나기 전까지 **신선**(fresh)하고, 지나면 **오래된**(stale) 응답입니다. 공유 캐시(CDN)는 `s-maxage`, `max-age`, `Expires`에서 `Date`를 뺀 값 순으로 처음 있는 것을 수명으로 씁니다. 오래된 응답을 다시 쓰려면 보통 오리진과 **검증**(validation)해야 하며, 조건부 요청이 `304 Not Modified`를 받을 수 있습니다. `Age` 헤더는 응답이 오리진에서 생성되거나 검증된 뒤 지난 초를 보낸 쪽이 추정한 값이며, 이 헤더가 있다는 것은 이번 요청에 대해 오리진이 응답을 만들지 않았다는 뜻입니다. 응답은 신선도 수명이 현재 나이(age)보다 큰 동안 신선하므로, 남은 시간은 수명에서 `Age`를 뺀 값입니다. `no-cache`는 검증에 성공하기 전에는 저장된 응답을 다시 쓰지 말라는 뜻이고, `no-store`는 저장하지 말라는 뜻입니다.
 
 **CloudFront가 오리진 헤더와 캐시 정책 TTL을 합치는 방식:**
 
@@ -114,7 +114,7 @@ CloudFront는 요청을 가장 잘 처리할 수 있는 엣지 로케이션, 보
 - `max-age`와 `Expires`가 함께 있으면 CloudFront는 `max-age`만 씁니다.
 - 뷰어가 GET에 넣은 `Cache-Control`이나 `Pragma`로는 CloudFront를 오리진으로 되돌려 보낼 수 없습니다. CloudFront는 그 헤더를 무시합니다.
 - 캐시 정책 없이(레거시 설정) 쓰면 기본 TTL은 24시간입니다.
-- **함정:** 최소 TTL이 0보다 크면 오리진이 `no-cache`를 보내도 최소 TTL만큼 캐시되며, 나중에 오리진에 닿을 수 없게 되면 CloudFront가 예전에 받은 객체를 내줄 수 있습니다. 이를 막으려면 `Cache-Control: stale-if-error=0`을 붙입니다.
+- **함정:** 최소 TTL이 0보다 크면 오리진이 `no-cache`를 보내도 최소 TTL만큼 캐시됩니다. 나중에 오리진에 닿을 수 없고 최소 **또는** 최대 TTL이 0보다 크면 CloudFront는 예전에 받은 객체를 내주므로, 최소 TTL만 낮춰서는 막을 수 없습니다. 오리진 응답에 `Cache-Control: stale-if-error=0`을 붙이면 CloudFront가 대신 오류를 돌려줍니다.
 
 **의도적으로 오래된 사본 쓰기:** CloudFront는 [RFC 5861](https://www.rfc-editor.org/rfc/rfc5861.html) 확장을 지원합니다.
 
@@ -189,7 +189,7 @@ HTTP/2와 HTTP/3는 HTTP 의미를 유지하고 프레이밍만 바꾸므로(Par
 
 **기준 설계:** CloudFront → **VPC 오리진** → 프라이빗 서브넷의 **internal** ALB → 대상 그룹입니다. 오리진에는 공인 주소가 없고, 들어오는 길은 CloudFront뿐입니다. CloudFront 뒤에 인터넷용(internet-facing) 로드 밸런서를 두지 않으며, 오리진에 공개 CIDR을 허용하는 인바운드 규칙을 절대 넣지 않습니다.
 
-![엣지에서 오리진까지의 경로 애니메이션. ① 뷰어가 HTTPS로 캐시할 수 있는 GET /menu.json을 보낸다. TLS는 엣지 POP에서 끝나고, 요청은 POP과 리전 엣지 캐시에서 모두 MISS다. ② CloudFront가 VPC 오리진으로 오리진에 연결한다. 프라이빗 서브넷의 서비스 관리형 ENI(예: 10.0.11.25)가 internal ALB(10.0.12.40)로 연결을 연다. ③ ALB 보안 그룹은 CloudFront-VPCOrigins-Service-SG(또는 CloudFront origin-facing 관리형 prefix list)에서 온 트래픽만 허용한다. ④ ALB 리스너가 대상 그룹으로 전달하고, 대상은 ALB 보안 그룹에서 온 트래픽만 받는다. ⑤ 인터넷 클라이언트가 ALB에 직접 접속하려 하지만 VPC 경계에서 실패한다. internal ALB는 프라이빗 주소만 가지므로 인터넷에서 그곳으로 가는 경로가 없다. VPC에는 인터넷 게이트웨이가 연결되어 있지만 이 경로의 라우팅에는 쓰이지 않는다.](../../.gitbook/assets/ko-networking-expert-08-cdn-edge-delivery-anim-1.svg)
+![엣지에서 오리진까지의 경로 애니메이션. ① 뷰어가 HTTPS로 캐시할 수 있는 GET /menu.json을 보낸다. TLS는 엣지 POP에서 끝나고, 요청은 POP과 리전 엣지 캐시에서 모두 MISS다. ② CloudFront가 VPC 오리진으로 오리진에 연결한다. 프라이빗 서브넷의 서비스 관리형 ENI(예: 10.0.11.25)가 internal ALB(10.0.12.40)로 연결을 연다. ③ ALB 보안 그룹은 CloudFront-VPCOrigins-Service-SG(또는 CloudFront origin-facing 관리형 prefix list)에서 온 트래픽만 허용한다. ④ ALB 리스너가 대상 그룹으로 전달하고, 대상은 ALB 보안 그룹에서 온 트래픽만 받는다. ⑤ 인터넷 클라이언트가 ALB에 직접 접속하려 하지만 실패한다. internal ALB는 프라이빗 주소만 가지므로 인터넷에서 그곳으로 가는 경로가 없고, 시도는 VPC에 닿지 못한다. VPC에는 인터넷 게이트웨이가 연결되어 있지만 이 경로의 라우팅에는 쓰이지 않는다.](../../.gitbook/assets/ko-networking-expert-08-cdn-edge-delivery-anim-1.svg)
 
 **VPC 오리진 요건**(개발자 안내서):
 
@@ -202,7 +202,7 @@ HTTP/2와 HTTP/3는 HTTP 의미를 유지하고 프레이밍만 바꾸므로(Par
 
 **internal ALB를 CloudFront 밖에서 닿을 수 없는 이유:** internal 로드 밸런서의 노드는 프라이빗 IP 주소만 가집니다. DNS 이름은 공개적으로 조회되지만 그 프라이빗 주소로 풀리므로 VPC에 접근할 수 있는 클라이언트만 닿습니다. 이는 필터가 아니라 라우팅의 성질이라서, 나중에 보안 그룹 규칙이 느슨해져도 유지됩니다. ALB를 Kubernetes Ingress로 만든다면 [AWS Load Balancer Controller](../03-aws-lb-controller.md)에서 `alb.ingress.kubernetes.io/scheme: internal`로 지정합니다.
 
-**prefix list와 서비스 보안 그룹의 차이:** 관리형 prefix list는 모든 CloudFront origin-facing 서버를 담으므로 **어느 배포든** 허용하고, VPC 오리진 서비스 그룹은 자신의 배포만 허용합니다. prefix list를 인바운드 규칙에 쓰면 보안 그룹 규칙 할당량에서 규칙 55개의 가중치로 셉니다. 헤더로 보호하는 공개 ALB 오리진 방식과 WAF 배치는 [WAF·엣지·API 보안](../../security/14-waf-edge-api-security.md)을 참고하고, 다음 워크북(엣지 보안)은 이 경로 위에 공격 쪽 관점을 더합니다.
+**prefix list와 서비스 보안 그룹의 차이:** 관리형 prefix list는 모든 CloudFront origin-facing 서버를 담으므로 **어느 배포든** 허용하고, VPC 오리진 서비스 그룹은 자신의 배포만 허용합니다. prefix list를 인바운드 규칙에 쓰면 보안 그룹 규칙 할당량에서 규칙 55개의 가중치로 셉니다. [WAF·엣지·API 보안](../../security/14-waf-edge-api-security.md)은 WAF 배치를 다루고, 이 설계를 기준 설계가 쓰지 않는 더 약한 방식인 공개 ALB 오리진(prefix list와 비밀 헤더)과 비교하며, 다음 워크북(엣지 보안)은 이 경로 위에 공격 쪽 관점을 더합니다.
 
 ## 10. 관측: 신호별로 증명하는 것
 
@@ -285,10 +285,10 @@ age: 5
 |---|---|---|---|
 | 오리진 다운, 객체는 아직 신선 | 적중은 계속되고 미스는 실패 | `age`가 커지는 `x-cache: Hit`, 로그의 미스 `Error` | 모든 객체가 캐시되어 있다는 것 |
 | 오리진 다운, 객체는 오래됨, `stale-if-error` 설정 | 지시어 값과 최대 TTL 중 작은 값까지 오래된 사본 제공 | `max-age`를 넘긴 `age`, 로그의 오리진 오류 | 장애가 얼마나 이어졌는지 |
-| 오리진 다운, 최소 TTL > 0이고 `no-cache` | 예전에 받은 사본이 나갈 수 있음(6절 함정) | 오류를 예상한 곳에서 나온 응답 | 그 콘텐츠에 이 동작이 허용되는지 |
+| 오리진 다운, 최소 또는 최대 TTL > 0, `stale-if-error=0` 없는 `no-cache` | 예전에 받은 사본이 나갈 수 있음(6절 함정) | 오류를 예상한 곳에서 나온 응답 | 그 콘텐츠에 이 동작이 허용되는지 |
 | 캐시 키가 커짐(헤더나 쿠키 추가) | 적중률이 떨어지고 오리진 지연과 부하가 오름 | CloudWatch 캐시 적중률, 오리진 요청 수 | 어떤 값이 키를 쪼갰는지(정책 비교) |
 | 오리진 인증서 불일치·만료 | 미스에서 뷰어에게 `502` | 뷰어 `502`, 오리진 TLS 오류 | 적중이 영향을 받았는지(받지 않음) |
-| 보안 그룹 변경으로 CloudFront 원본이 빠짐 | 미스는 연결 실패, 적중은 계속 | 미스의 `502`/`504`, 보안 그룹 규칙 변경 이력 | internal ALB가 인터넷에서 닿게 되었다는 것(공인 주소가 없으므로 닿지 않음) |
+| 보안 그룹 변경으로 CloudFront 원본이 빠짐 | 미스는 연결 실패, 적중은 계속 | 미스의 `504`(CloudFront 트래픽을 막는 오리진 방화벽·보안 규칙은 504를 일으킴), 보안 그룹 규칙 변경 이력 | internal ALB가 인터넷에서 닿게 되었다는 것(공인 주소가 없으므로 닿지 않음) |
 | 잘못된 배포를 무효화로 수정 | 엣지는 다시 가져오지만 브라우저·프록시는 예전 사본을 가질 수 있음 | 무효화 상태, `x-cache: Miss` 다음 `Hit` | 사용자 브라우저가 갱신되었다는 것(버전 이름만 보장) |
 
 **복구는 부하 사건입니다.** 무효화나 오리진 장애 뒤에는 여러 POP이 한꺼번에 미스를 냅니다. 리전 엣지 캐시, Origin Shield, 요청 병합이 오리진 요청 수를 줄이지만, 캐시를 다시 채우는 동안의 오리진 용량을 계획합니다. 관찰된 오류 0은 그 샘플링이 오류를 포착하지 못했다는 뜻일 뿐입니다.
@@ -325,10 +325,13 @@ Amazon CloudFront 개발자 안내서
 - [Request Anycast static IPs](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/request-static-ips.html)
 - [View CloudFront and edge function metrics](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/viewing-cloudfront-metrics.html) (캐시 적중률, 오리진 지연), [Standard log file fields](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/standard-logs-reference.html)
 - [Restrict access to Application Load Balancers](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/restrict-access-to-load-balancer.html) (ALB 인증서 리전과 us-east-1 뷰어 인증서)
+- [HTTP 504 status code (Gateway Timeout)](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/http-504-gateway-timeout.html) (CloudFront를 막는 오리진 방화벽)
 
 그 밖의 AWS 자료
 
 - [How Elastic Load Balancing works](https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html) (internal 로드 밸런서 스킴)
+- [AWS 백서: Origin HTTPS configuration](https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/origin-https-configuration.html) (오리진 인증서 조건, SNI, `502`)
+- [AWS 지식 센터: CloudFront가 지원하는 프로토콜](https://repost.aws/knowledge-center/cloudfront-supported-protocols) (HTTP/1.0·1.1 기본 활성, 사용자 지정 오리진에는 HTTP/1.1)
 - [AWS 지식 센터: X-Cache: Miss from CloudFront](https://repost.aws/knowledge-center/cloudfront-x-cachemiss-error), [사용자 지정 객체 캐싱과 오리진 헤더](https://repost.aws/knowledge-center/cloudfront-custom-object-caching) (`x-cache` 값, `x-amz-cf-pop`)
 - [AWS 지식 센터: 미국 동부(버지니아 북부) 인증서 연결](https://repost.aws/knowledge-center/migrate-ssl-cert-us-east)
 - [Amazon CloudFront FAQs](https://aws.amazon.com/cloudfront/faqs/) (예전 동시 무효화 한도), [Amazon CloudFront pricing](https://aws.amazon.com/cloudfront/pricing/)

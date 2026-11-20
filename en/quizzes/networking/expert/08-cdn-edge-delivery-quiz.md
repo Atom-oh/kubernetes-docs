@@ -58,7 +58,7 @@ These are design reasoning exercises, not claims that a distribution was built.
 
 **Answer: B) CloudFront caches the object for the minimum TTL despite `no-cache`, and can serve the earlier copy if the origin is unreachable; adding `Cache-Control: stale-if-error=0` prevents that.**
 
-**Explanation:** The Developer Guide warns that a minimum TTL above 0 wins over `no-cache`, `no-store` and `private`. For content that must not be reused, set the minimum TTL to 0 for that behavior, or at least add `stale-if-error=0`.
+**Explanation:** The Developer Guide warns that a minimum TTL above 0 wins over `no-cache`, `no-store` and `private`, and that when the origin is unreachable and the minimum or maximum TTL is above 0, CloudFront serves the object it fetched earlier. Lowering only the minimum TTL therefore does not stop the stale copy; `stale-if-error=0` makes CloudFront return an error instead.
 
 </details>
 

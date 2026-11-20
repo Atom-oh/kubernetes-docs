@@ -58,7 +58,7 @@
 
 **정답: B) `no-cache`가 있어도 최소 TTL만큼 캐시하며, 오리진에 닿지 않으면 예전 사본을 내줄 수 있습니다. `Cache-Control: stale-if-error=0`을 붙이면 막을 수 있습니다.**
 
-**설명:** 개발자 안내서는 최소 TTL이 0보다 크면 `no-cache`, `no-store`, `private`보다 최소 TTL이 우선한다고 경고합니다. 다시 쓰면 안 되는 콘텐츠는 그 동작의 최소 TTL을 0으로 두거나, 적어도 `stale-if-error=0`을 붙입니다.
+**설명:** 개발자 안내서는 최소 TTL이 0보다 크면 `no-cache`, `no-store`, `private`보다 최소 TTL이 우선하고, 오리진에 닿을 수 없을 때 최소 또는 최대 TTL이 0보다 크면 예전에 받은 객체를 내준다고 경고합니다. 따라서 최소 TTL만 낮춰서는 오래된 사본을 막을 수 없고, `stale-if-error=0`을 붙이면 CloudFront가 대신 오류를 돌려줍니다.
 
 </details>
 

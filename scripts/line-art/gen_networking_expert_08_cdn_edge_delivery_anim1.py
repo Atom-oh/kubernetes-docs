@@ -149,8 +149,8 @@ COPY = {
                  "서브넷에 만든 서비스 관리형 ENI(예: 10.0.11.25)가 internal ALB(10.0.12.40)에 연결한다. ALB 보안 그룹은 "
                  "CloudFront-VPCOrigins-Service-SG(또는 CloudFront origin-facing 관리형 prefix list)에서 오는 트래픽만 "
                  "허용하고, ALB 리스너가 대상 그룹으로 전달한다. 이어서 인터넷 클라이언트가 ALB에 직접 접속하려 한다. "
-                 "internal ALB의 노드는 프라이빗 주소만 가지므로 인터넷에서 그 주소로 가는 경로가 없고 연결은 VPC 경계에서 "
-                 "실패한다. 이 그림에는 인터넷용 로드 밸런서도, 공개 CIDR을 허용하는 인바운드 규칙도 없다."),
+                 "internal ALB의 노드는 프라이빗 주소만 가지므로 인터넷에서 그 주소로 가는 경로가 없고 시도는 VPC에 "
+                 "닿지 못한다. 이 그림에는 인터넷용 로드 밸런서도, 공개 CIDR을 허용하는 인바운드 규칙도 없다."),
         "viewer": ["뷰어", "HTTPS"],
         "attack": ["인터넷 클라이언트", "ALB 직접 접속 시도"],
         "pop": ["엣지 POP", "TLS 종료"],
@@ -180,7 +180,7 @@ COPY = {
                  "CloudFront-VPCOrigins-Service-SG (or the CloudFront origin-facing managed prefix list), and the ALB "
                  "listener forwards to the target group. Then an internet client tries to reach the ALB directly. The "
                  "nodes of an internal ALB have private addresses only, so nothing on the internet routes to them and the "
-                 "attempt fails at the VPC boundary. There is no internet-facing load balancer and no inbound rule that "
+                 "attempt never reaches the VPC. There is no internet-facing load balancer and no inbound rule that "
                  "admits a public CIDR."),
         "viewer": ["Viewer", "HTTPS"],
         "attack": ["Internet client", "tries the ALB directly"],
