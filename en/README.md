@@ -60,7 +60,6 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 2: Creating Clusters with eksctl](./eks/02-eks-cluster-creation-part2.md) | [Quiz](./quizzes/eks/02-eks-cluster-creation-part2-quiz.md)
    - [Part 3: Creating Clusters with AWS Management Console and CLI](./eks/02-eks-cluster-creation-part3.md) | [Quiz](./quizzes/eks/02-eks-cluster-creation-part3-quiz.md)
    - [Part 4: Creating Clusters with Terraform and CDK](./eks/02-eks-cluster-creation-part4.md) | [Quiz](./quizzes/eks/02-eks-cluster-creation-part4-quiz.md)
-   - [Part 5: Network Devices, LAN and WAN Basics](./basics/06-network-fundamentals-part5.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part5-quiz.md)
    - [Part 5: Cluster Access, Validation, Upgrade and Deletion](./eks/02-eks-cluster-creation-part5.md) | [Quiz](./quizzes/eks/02-eks-cluster-creation-part5-quiz.md)
 3. EKS Networking
    - [Part 1: Basic Concepts and VPC Configuration](./eks/03-eks-networking-part1.md) | [Quiz](./quizzes/eks/03-eks-networking-part1-quiz.md)
@@ -134,6 +133,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 2: The Transport Layer and TLS](./basics/06-network-fundamentals-part2.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part2-quiz.md)
    - [Part 3: Application Protocols](./basics/06-network-fundamentals-part3.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part3-quiz.md)
    - [Part 4: A Request's Journey and the Cloud](./basics/06-network-fundamentals-part4.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part4-quiz.md)
+   - [Part 5: Network Devices, LAN and WAN Basics](./basics/06-network-fundamentals-part5.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part5-quiz.md)
 5. [Linux Network Diagnostics Practice](./networking/07-linux-network-diagnostics.md) | [Quiz](./quizzes/networking/07-linux-network-diagnostics-quiz.md)
 6. [VPC CNI](./networking/01-vpc-cni.md) | [Quiz](./quizzes/networking/01-vpc-cni-quiz.md)
 7. **Cilium Deep Dive**
