@@ -1,10 +1,10 @@
 # EKS Auto Mode NodePool 設定クイズ
 
-> **関連ドキュメント**: [NodePool 設定](../../eks-auto-mode/02-nodepool-configuration.md)
+> **関連ドキュメント**: [NodePool Configuration](../../eks-auto-mode/02-nodepool-configuration.md)
 
-## 選択問題
+## 選択式問題
 
-### 1. EKS Auto Mode が提供する任意選択の組み込み NodePool はどれですか？
+### 1. EKS Auto Mode が提供するオプションの組み込み NodePool は何ですか？
 
 - A) default、worker
 - B) general-purpose、system
@@ -12,12 +12,12 @@
 - D) primary、secondary
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) general-purpose、system**
+**回答: B) general-purpose、system**
 
-**解説:**
-有効にすると、`general-purpose` と `system` は第 5 世代以降の On-Demand C/M/R インスタンスを使用します。general-purpose は amd64、system は amd64 と arm64 をサポートし、`CriticalAddonsOnly` taint が付与されます。Spot を使う場合はカスタムプールを使用してください。Auto Mode のローカル DNS／サービスネットワーク機能は、system プールにスケジュールする通常の Pod ではありません。
+**説明:**
+有効にすると、`general-purpose` と `system` は第 5 世代以降の On-Demand C/M/R インスタンスを使用します。general-purpose は amd64 を使用し、system は amd64 と arm64 をサポートし、`CriticalAddonsOnly` taint が設定されています。Spot を使用する場合は、カスタムプールを使用してください。Auto Mode のローカル DNS／サービスネットワーキング機能は、system プールにスケジュールする必要がある通常の Pod ではありません。
 
 ```yaml
 # eksctl configuration fragment
@@ -26,41 +26,41 @@ autoModeConfig:
   nodePools: [general-purpose, system]
 ```
 
-組み込みプールの名前を削除すると、その NodePool も削除され、管理対象ノードは drain されて終了します。両方を無効にする場合は、`default` が存在すると想定せず、カスタム NodeClass を用意する必要があります。
+組み込み名を削除すると、その NodePool が削除され、管理対象ノードがドレイン／終了されます。両方を無効にする場合は、`default` が存在すると想定せず、カスタム NodeClass を用意する必要もあります。
 
 </details>
 
-### 2. Auto Mode ノードの IMDS はどのように設定されていますか？
+### 2. Auto Mode ノードの IMDS はどのように設定されますか？
 
 - A) NodeClass で `metadataOptions.httpTokens: optional` を設定する
-- B) AWS が IMDSv2 と hop limit 1 を強制し、NodeClass からこれらを上書きできない
-- C) IMDSv2 を使うため hop limit を 0 にする
-- D) AL2023 を選ぶと IMDS 認証が無効になる
+- B) AWS が IMDSv2 とホップ制限 1 を強制し、NodeClass ではこれらの設定を上書きできない
+- C) IMDSv2 を動作させるために、ホップ制限を 0 に設定する
+- D) AL2023 を選択すると IMDS 認証が無効になる
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) AWS が IMDSv2 と hop limit 1 を強制し、NodeClass からこれらを上書きできない**
+**回答: B) AWS が IMDSv2 とホップ制限 1 を強制し、NodeClass ではこれらの設定を上書きできない**
 
-**解説:**
-管理対象インスタンスの既定値では IMDSv2 と hop limit 1 が必須で、Auto Mode では変更できません。以前の `metadataOptions` の例は別の API のものでした。hop limit は hostNetwork を使わない Pod からのアクセスを制限しますが、hostNetwork のワークロードを含むすべての Pod が隔離される保証ではありません。ノード認証情報に頼らず、ワークロード ID とリージョンや設定の明示を使ってください。[管理対象インスタンスの制約](https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html)を参照してください。
+**説明:**
+管理対象インスタンスのデフォルトでは IMDSv2 とホップ制限 1 が必須で、Auto Mode では変更できません。以前の `metadataOptions` の例は、別の API のものでした。ホップ制限はホストネットワークを使用しない Pod を制限しますが、ホストネットワークを使用するワークロードを含むすべての Pod が隔離されることを保証するものではありません。ノード認証情報に頼るのではなく、ワークロード ID と明示的なリージョン／設定を使用してください。[管理対象インスタンスの制限事項](https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html)を参照してください。
 
 </details>
 
-### 3. Auto Mode ノードのオペレーティングシステムイメージを選択するのは誰ですか？
+### 3. Auto Mode ノードのオペレーティングシステムイメージは誰が選択しますか？
 
-- A) ユーザーが `amiFamily` で Amazon Linux 2 または Ubuntu を選ぶ
+- A) ユーザーが amiFamily で Amazon Linux 2 または Ubuntu を選択する
 - B) AWS が適切な管理対象 Bottlerocket バリアントを選択する
 - C) ユーザーが任意の Windows AMI を指定する
-- D) NodePool の weight によって AL2023 と Bottlerocket のどちらを使うか決まる
+- D) NodePool の weight によって、Bottlerocket ではなく AL2023 が選択される
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) AWS が適切な管理対象 Bottlerocket バリアントを選択する**
+**回答: B) AWS が適切な管理対象 Bottlerocket バリアントを選択する**
 
-**解説:**
-Auto Mode は AWS 管理の Bottlerocket バリアントを使用します。AWS NodeClass では `amiFamily: AL2023` や `amiFamily: Bottlerocket` を選択できません。ストレージ、ネットワーク、証明書、サポート対象のカーネル設定については、ドキュメントに記載された NodeClass の設定を使用してください。任意の AMI 選択やシェルの user data とは異なります。
+**説明:**
+Auto Mode は、AWS が管理する Bottlerocket バリアントを使用します。AWS NodeClass では、`amiFamily: AL2023` や `amiFamily: Bottlerocket` を選択する設定は公開されていません。ストレージ、ネットワーキング、証明書、サポートされるカーネル設定には、ドキュメントに記載された NodeClass 設定を使用してください。これらは任意の AMI 選択やシェルのユーザーデータとは異なります。
 
 </details>
 
@@ -72,12 +72,12 @@ Auto Mode は AWS 管理の Bottlerocket バリアントを使用します。AWS
 - D) karpenter.sh/gpu-type
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) eks.amazonaws.com/instance-gpu-manufacturer**
+**回答: B) eks.amazonaws.com/instance-gpu-manufacturer**
 
-**解説:**
-AWS Auto Mode のラベル `eks.amazonaws.com/instance-gpu-manufacturer` を使用します。NVIDIA GPU ハードウェアを使う場合、要件には次のように指定できます。
+**説明:**
+AWS Auto Mode のラベル `eks.amazonaws.com/instance-gpu-manufacturer` を使用します。NVIDIA GPU ハードウェアの場合、要件には次のような設定を含められます。
 
 ```yaml
 # Requirements fragment inside a complete NodePool
@@ -90,24 +90,24 @@ requirements:
     values: ["nvidia"]
 ```
 
-ハードウェアを選択しても、コンテナに GPU が割り当てられるわけではありません。Pod が `nvidia.com/gpu` などの適切な拡張リソースを要求し、互換性のあるイメージ／ランタイムを使う必要があります。この監査では GPU の実行確認をしていません。
+ハードウェアを選択しても、コンテナに GPU が割り当てられるわけではありません。Pod は `nvidia.com/gpu` などの適切な拡張リソースを要求し、互換性のあるイメージ／ランタイムを使用する必要があります。この監査では GPU の実行は行っていません。
 
 </details>
 
 ### 5. EC2 の第 6 世代以降を選択する条件はどれですか？
 
 - A) node.kubernetes.io/instance-generation: "6"
-- B) eks.amazonaws.com/instance-generation に `Gt` と値 "5" を指定する
+- B) eks.amazonaws.com/instance-generation に Gt と値 "5" を指定する
 - C) eks.amazonaws.com/generation: "6"
 - D) instance-generation: 6
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) eks.amazonaws.com/instance-generation に `Gt` と値 "5" を指定する**
+**回答: B) eks.amazonaws.com/instance-generation に Gt と値 "5" を指定する**
 
-**解説:**
-`Gt` は数値の厳密な下限を表すため、`Gt ["5"]` は第 6 世代以降を選択します。`In ["6"]` は第 6 世代だけを選択し、同じ意味ではありません。どちらも最新世代だけを指定する条件ではありません。
+**説明:**
+`Gt` は厳密な数値の下限を表すため、`Gt ["5"]` は第 6 世代以降を選択します。`In ["6"]` は第 6 世代のみを選択するため、同じ意味ではありません。どちらの条件も、利用可能な最新世代のみを意味するわけではありません。
 
 ```yaml
 # Requirements fragment inside a complete NodePool
@@ -121,18 +121,18 @@ requirements:
 
 ### 6. NodeClass でプライベートサブネットを選択するにはどうすればよいですか？
 
-- A) `subnetType: private` を設定する
-- B) 確認済みのサブネット ID／タグを選び、ルートと IP 設定を検証する
-- C) `privateSubnetsOnly: true` を設定する
-- D) `networkType: private` を設定する
+- A) subnetType: private を設定する
+- B) 確認済みのサブネット ID／タグを選択し、ルーティングと IP 設定を確認する
+- C) privateSubnetsOnly: true を設定する
+- D) networkType: private を設定する
 
 <details>
-<summary>解答を表示</summary>
+<summary>回答を表示</summary>
 
-**解答: B) 確認済みのサブネット ID／タグを選び、ルートと IP 設定を検証する**
+**回答: B) 確認済みのサブネット ID／タグを選択し、ルーティングと IP 設定を確認する**
 
-**解説:**
-`subnetSelectorTerms` では ID またはタグを使って選択します。`kubernetes.io/role/internal-elb` などのタグは慣例であり、プライベートなルートテーブルを使っている証拠ではありません。複数の term は選択肢として扱われ、1 つの term 内の複数のタグはすべて一致する必要があります。VPC／AZ の選択、ルート、パブリック IP の動作を確認してください。
+**説明:**
+`subnetSelectorTerms` は ID またはタグによって選択します。`kubernetes.io/role/internal-elb` などのタグは慣例にすぎず、プライベートルートテーブルであることの証明にはなりません。各 term は選択肢として扱われ、1 つの term 内の複数のタグはすべて一致する必要があります。VPC／AZ の選択、ルート、パブリック IP の動作を確認してください。
 
 ```yaml
 # Selection fragment; a complete NodeClass also needs identity and security groups
@@ -144,6 +144,31 @@ advancedNetworking:
   associatePublicIPAddress: false
 ```
 
-`associatePublicIPAddress: false` を設定しても、パブリック IP の割り当てが防がれるだけで、NAT ルートや VPC endpoint が作られるわけではありません。NodeClass に必要な identity と security group の設定をすべて用意し、Ready 状態を検証してください。
+`associatePublicIPAddress: false` を設定するとパブリック IP の割り当ては防げますが、NAT ルートや VPC エンドポイントが作成されるわけではありません。NodeClass の ID／セキュリティグループ設定をすべて指定し、準備状態を確認してください。
+
+</details>
+
+### 7. 既存の Auto Mode NodeClass で `maxPods` などの kubelet 設定を変更すると、どうなりますか？
+
+- A) EKS が実行中のノードの kubelet を中断なくインプレースでパッチする
+- B) 既存ノードは古い設定を維持し、新しいノードだけが変更後の設定を使用する
+- C) NodeClass を使用するノードにドリフトがマークされ、EKS が新しい設定を使用するノードに置き換える
+- D) SSH で各ノードの kubelet を再起動する必要がある
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: C) NodeClass を使用するノードにドリフトがマークされ、EKS が新しい設定を使用するノードに置き換える**
+
+**説明:**
+`spec.advancedCompute.kubelet` の kubelet 設定は、ノードの作成時に適用されます。これらを編集すると既存ノードにドリフトが発生するため、EKS は実行中のノードを変更するのではなく置き換えます。まず PDB と中断予算を確認してください。`maxPods` は上限にすぎず、有効な値は、設定値、インスタンスタイプが提供する IP アドレス数、Auto Mode のノードあたり 110 Pod という上限のうち、最も低い値になります。
+
+```yaml
+# NodeClass fragment
+advancedCompute:
+  kubelet:
+    maxPods: 60
+    podPidsLimit: 4096
+```
 
 </details>
