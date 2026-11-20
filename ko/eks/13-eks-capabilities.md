@@ -1,7 +1,7 @@
 # Amazon EKS Capabilities: 관리형 Argo CD, kro, ACK
 
 > **지원 버전**: EKS 1.36~1.37, Argo CD `3.4.6-eks-2`·`3.4.7-eks-1`, kro `0.9.4-eks-1`, ACK `46.186.1-eks-1`, AWS CLI 2.38.3
-> **마지막 업데이트**: 2026년 10월 23일
+> **마지막 업데이트**: 2026년 11월 19일
 
 EKS Capabilities는 Argo CD, kro(Kube Resource Orchestrator), ACK(AWS Controllers for Kubernetes) 컨트롤러를 AWS가 클러스터 밖에서 운영하는 기능입니다. 2025년 11월 30일에 정식 출시됐고, 2026년 6월에 컨트롤러 로그 전달(Vended Logs), 8월에 Argo CD의 `argocd-cm` 사용자 지정 구성이 추가됐습니다.
 
@@ -130,7 +130,11 @@ drift self-heal은 관리형 2.08~2.32초, self-managed 1.05~3.06초로 같았�
 
 Argo CD 3.x는 리소스 health를 기본으로 Application status에 저장하지 않으므로 `kubectl get application -o json`의 `.status.resources[].health`가 비어 있어도 정상입니다. health는 `argocd app get`이나 UI로 확인합니다.
 
-문서상 지원하지 않는 기능은 Config Management Plugin(CMP), Notifications 컨트롤러, 사용자 지정 SSO, UI 확장, `argocd admin` 명령 등입니다. Notifications로 배포 알림을 보내거나 CMP로 사내 템플릿 도구를 붙였다면 관리형으로 그대로 옮길 수 없습니다.
+문서상 지원하지 않는 기능은 Config Management Plugin(CMP), 사용자 지정 SSO, UI 확장, `argocd admin` 명령 등입니다. CMP로 사내 템플릿 도구를 붙였다면 관리형으로 그대로 옮길 수 없습니다. 위 2026년 10월 실측 시점에는 지원되지 않던 Notifications 컨트롤러는 2026년 11월에 추가되었습니다(아래 참고).
+
+### 2026년 11월 업데이트: Argo CD Notifications 지원
+
+[2026-11-03 발표](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-argo-cd-notifications/)에 따라 EKS Capability for Argo CD가 Argo CD Notifications를 지원합니다. 업스트림 Argo CD와 같은 방식으로 클러스터에 트리거와 메시지 템플릿을 정의하고 Application에 어노테이션을 달아 구독합니다. Slack, PagerDuty, Opsgenie, Amazon SQS, Amazon EventBridge를 포함한 16개 알림 서비스를 지원합니다. SQS·EventBridge는 IAM Capability Role로 인증하므로 클러스터에 자격 증명을 저장하지 않고 배포 이벤트를 이벤트 기반 워크플로로 보낼 수 있고, Slack 토큰처럼 서드파티 자격 증명이 필요한 서비스는 secret 대신 AWS Secrets Manager ARN을 지정할 수 있습니다. capability가 제공되는 모든 리전에서 추가 요금 없이 사용할 수 있습니다. 이 문서의 실측은 해당 출시 이전이어서 알림 동작은 시험하지 않았습니다.
 
 ### 로그인: Identity Center만 지원
 
@@ -352,7 +356,7 @@ kro와 ACK capability는 자기 클러스터만 관리합니다. hub의 Argo CD�
 | 성능 | kro, ACK, Argo CD self-heal은 OSS와 같음. Argo CD 기본 폴링은 더 느림 | 비교 기준(Argo CD 3.4.6, kro 0.9.4는 같은 버전으로 측정. ACK는 OSS가 한 단계 높은 버전) |
 | SSO | Identity Center만, 설정 두 필드 | Dex, OIDC 등 직접 구성 |
 | 원격 클러스터 | EKS ARN + access entry, private도 네트워크 설정 없이 | 클러스터마다 API 주소, 인증, 네트워크 경로 |
-| 빠지는 기능 | Argo CD Notifications, CMP, `argocd admin`, Lua 표준 라이브러리, ACK FieldExport | 없음 |
+| 빠지는 기능 | CMP, `argocd admin`, Lua 표준 라이브러리, ACK FieldExport (Argo CD Notifications는 2026년 11월 추가) | 없음 |
 | 직접 조정할 수 없는 값 | Argo CD 폴링, ACK resync 주기, 컨트롤러 플래그·리소스 한도. Argo CD self-heal 백오프는 AWS Support 경유 | 모두 조정 가능 |
 | 로그 | Vended Logs | `kubectl logs`, 직접 수집 |
 
@@ -365,7 +369,7 @@ kro와 ACK capability는 자기 클러스터만 관리합니다. hub의 Argo CD�
 
 self-managed를 유지하는 편이 나은 경우는 다음과 같습니다.
 
-- Notifications, CMP, FieldExport, Lua 표준 라이브러리에 의존할 때
+- CMP, FieldExport, Lua 표준 라이브러리에 의존할 때
 - EKS가 아닌 클러스터가 배포 대상에 섞여 있을 때
 - Argo CD만 조직 Identity Center와 다른 IdP를 써야 하는데 계정 인스턴스를 쓸 수 없을 때
 - 컨트롤러 버전과 업그레이드 시점, 폴링·resync 주기를 직접 통제해야 할 때

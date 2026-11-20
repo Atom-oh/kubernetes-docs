@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Review baseline**: Argo CD 3.5.2, Argo Rollouts 1.10.0; Argo CD manifest pins updated to patch 3.5.5 after release-note review (examples not re-run)
-> **Last Updated**: October 26, 2026
+> **Last Updated**: November 19, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -232,6 +232,8 @@ This is the upstream test matrix recorded in the 3.5.5 repository. It differs fr
 - [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): first release candidate of the 3.6 line, published 2026-09-15. Not a production baseline.
 - [3.6.0-rc3](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc3): release candidate of the 3.6 line, published 2026-10-15. Likewise not a production baseline.
 - [3.6.0-rc4](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc4): latest release candidate of the 3.6 line, published 2026-10-22. Likewise not a production baseline.
+- 3.5.7: released 2026-11-02. A bug-fix patch release; v3.4.13 and v3.3.19 were published the same day. See the [release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.5.7).
+- 3.6.0: released **2026-11-03**, the GA release of the 3.6 line (ApplicationSet progressive-sync metrics/conditions and forced-refresh annotations, configurable Dex storage and TLS settings, hibernate/rehydrate actions for CloudNativePG clusters, and more). The bug-fix patch v3.6.1 followed on 2026-11-04. This document's review baseline remains 3.5.x; read the [upgrade guidance and release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0) before moving a minor version.
 
 ### October 2026 Update: Argo CD 4.0 Visioning Begins
 
@@ -245,7 +247,7 @@ Rollouts is a separate controller and can be used without Argo CD. This review u
 
 EKS Capability for Argo CD is a distinct operating model from a self-managed installation. Its custom configuration applies only to **supported** argocd-cm keys, in the capability-configured namespace and with the label `app.kubernetes.io/part-of: argocd`. Unsupported keys/flags are ignored; do not assume standard Lua libraries or arbitrary execution plugins are available. See the [managed configuration guide](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html).
 
-In October 2026 testing, even the local cluster had to be registered with a cluster Secret using its EKS ARN, and the auto-created access entry could not sync until `AmazonEKSEditPolicy` and `AmazonEKSAdminViewPolicy` were both attached. Default Git polling took 342–697 seconds from commit to Synced; a GitHub webhook brought it to about 7 seconds. Sign-in is IAM Identity Center only, Notifications, CMP and `argocd admin` are unavailable, and AWS chooses the version. For permissions, multi-cluster layouts, version preparedness and the self-managed comparison, see [EKS Capabilities](../../eks/13-eks-capabilities.md).
+In October 2026 testing, even the local cluster had to be registered with a cluster Secret using its EKS ARN, and the auto-created access entry could not sync until `AmazonEKSEditPolicy` and `AmazonEKSAdminViewPolicy` were both attached. Default Git polling took 342–697 seconds from commit to Synced; a GitHub webhook brought it to about 7 seconds. Sign-in is IAM Identity Center only, CMP and `argocd admin` are unavailable, and AWS chooses the version. Argo CD Notifications, previously unavailable, is supported since the [November 3, 2026 announcement](https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-eks-argo-cd-notifications/), including Amazon SQS/EventBridge delivery via the IAM Capability Role and third-party tokens referenced from AWS Secrets Manager. For permissions, multi-cluster layouts, version preparedness and the self-managed comparison, see [EKS Capabilities](../../eks/13-eks-capabilities.md).
 
 ## Next Steps
 
