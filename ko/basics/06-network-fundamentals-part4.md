@@ -2,11 +2,12 @@
 
 > **마지막 업데이트**: 2026년 10월 12일
 
-::: tip 4부작 시리즈입니다
+::: tip 5부작 시리즈입니다
 [Part 1: 계층 모델과 링크·라우팅](./06-network-fundamentals-part1.md) ·
 [Part 2: 전송 계층과 TLS](./06-network-fundamentals-part2.md) ·
 [Part 3: 애플리케이션 프로토콜](./06-network-fundamentals-part3.md) ·
-**Part 4: 요청의 여정과 클라우드** *(현재 문서)*
+**Part 4: 요청의 여정과 클라우드** *(현재 문서)* ·
+[Part 5: 네트워크 장비, LAN과 WAN](./06-network-fundamentals-part5.md)
 :::
 
 이 시리즈의 프로토콜·메커니즘 25개를 예시 요청으로 연결하고 AWS·쿠버네티스의 관련 역할과 비교합니다. 기능상 대응 관계이며 일대일 대체 관계는 아닙니다.
@@ -96,6 +97,7 @@ TCP는 복구·순서 유지 비용으로 신뢰성 있는 순차 전달을 제�
 
 먼저 프로토콜 기초를 Linux 관측에 연결한 뒤, [네트워킹 학습 경로](../networking/README.md#learning-path)를 따라 컨테이너·Service에서 CNI 구현으로 나아갑니다.
 
+- [Part 5: 네트워크 장비, LAN과 WAN 기초](./06-network-fundamentals-part5.md): 장비별 포워딩 결정, VLAN·STP·FHRP, NAT·CGNAT, WAN 유형 | [퀴즈](../quizzes/basics/06-network-fundamentals-part5-quiz.md)
 - [커널 네트워킹 스택](../kernel/02-network-stack.md): 소켓/VFS 진입 경로, 버퍼, 패킷 처리
 - [Linux 네트워크 진단 실습](../networking/07-linux-network-diagnostics.md): 관측값 해석과 가설 확인 | [퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md)
 - [eBPF 기초](./05-ebpf-fundamentals.md): 커널에서 패킷을 처리하는 방식

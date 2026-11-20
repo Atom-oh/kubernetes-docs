@@ -2,11 +2,12 @@
 
 > **Last Updated**: September 11, 2026
 
-::: tip This is a four-part series
+::: tip This is a five-part series
 [Part 1: The Layer Model, Link and Routing Layers](./06-network-fundamentals-part1.md) ·
 **Part 2: The Transport Layer and TLS** *(this document)* ·
 [Part 3: Application Protocols](./06-network-fundamentals-part3.md) ·
-[Part 4: A Request's Journey and the Cloud](./06-network-fundamentals-part4.md)
+[Part 4: A Request's Journey and the Cloud](./06-network-fundamentals-part4.md) ·
+[Part 5: Network Devices, LAN and WAN](./06-network-fundamentals-part5.md)
 :::
 
 Part 1 delivered packets to the destination host. This part compares reliable streams (TCP and QUIC) with UDP datagrams, then explains how TLS protects communication. UDP itself does not supply reliability or TLS; applications choose an appropriate security protocol, such as DTLS, or use a transport such as QUIC that integrates TLS 1.3.

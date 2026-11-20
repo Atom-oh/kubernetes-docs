@@ -16,11 +16,12 @@ Proceed to chapter 1 when you can explain and reproduce the following:
 - Read `ip route get`, `ss` and a bounded `tcpdump` capture, identifying the observation point.
 - Verify SSH key access and the lab firewall policy, then restore the previous state.
 - Distinguish an HTTP error, connection failure and name-resolution failure.
+- Explain the roles of switches, routers, firewalls and load balancers, VLANs, and the LAN/WAN boundary. Before chapter 7, check this against [Network Fundamentals Part 5](../../basics/06-network-fundamentals-part5.md).
 - Separate management and experiment paths and identify your own files, VMs and containers.
 
 Use the [beginner capstone](../beginner/08-container-cloud-capstone.md) to revisit missing skills. Complete [guest tool preparation](../beginner/README.md#guest-tools) when a host command is unavailable.
 
-## Six workbooks {#course-map}
+## Nine workbooks {#course-map}
 
 Each row follows **reading → experiment or design validation → evidence → explained quiz**. External courses supply reading scope; these workbooks supply a way to assess your own results.
 
@@ -32,6 +33,9 @@ Each row follows **reading → experiment or design validation → evidence → 
 | 4 | [Linux packet paths and performance](04-linux-performance.md) · [Quiz](../../quizzes/networking/expert/04-linux-performance-quiz.md) | Time-correlated queues, counters and packets; measurement limits and recovery |
 | 5 | [Cloud and CNI design](05-cloud-cni-design.md) · [Quiz](../../quizzes/networking/expert/05-cloud-cni-design-quiz.md) | Design and evidence from DNS to backend and return path |
 | 6 | [Automation and final assessment](06-automation-capstone.md) · [Quiz](../../quizzes/networking/expert/06-automation-capstone-quiz.md) | Evidence and change review covering normal, forbidden, failed and recovered states |
+| 7 | [WAN and hybrid connectivity design](07-wan-hybrid-connectivity.md) · [Quiz](../../quizzes/networking/expert/07-wan-hybrid-connectivity-quiz.md) | Predicted path in each direction, failover rule, time and what shrinks (bandwidth, MTU) when a link fails |
+| 8 | [CDN and edge delivery design](08-cdn-edge-delivery.md) · [Quiz](../../quizzes/networking/expert/08-cdn-edge-delivery-quiz.md) | Where a request is answered, explained from response headers, and an edge-to-origin path reachable only through CloudFront |
+| 9 | [Edge security: WAF and DDoS defense](09-edge-security-waf-ddos.md) · [Quiz](../../quizzes/networking/expert/09-edge-security-waf-ddos-quiz.md) | Where each attack layer is stopped, and a count-mode WAF rule plan with a rollback trigger |
 
 Existing references remain useful: [protocol foundations](../../basics/06-network-fundamentals-part1.md), [kernel networking](../../kernel/02-network-stack.md), [Calico BGP](../calico/04-bgp-deep-dive.md), [Cilium](../cilium/README.md), and [VPC CNI](../01-vpc-cni.md).
 

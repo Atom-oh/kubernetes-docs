@@ -2,11 +2,12 @@
 
 > **Last Updated**: September 14, 2026
 
-::: tip This is a four-part series
+::: tip This is a five-part series
 **Part 1: The Layer Model, Link and Routing Layers** *(this document)* ·
 [Part 2: The Transport Layer and TLS](./06-network-fundamentals-part2.md) ·
 [Part 3: Application Protocols](./06-network-fundamentals-part3.md) ·
-[Part 4: A Request's Journey and the Cloud](./06-network-fundamentals-part4.md)
+[Part 4: A Request's Journey and the Cloud](./06-network-fundamentals-part4.md) ·
+[Part 5: Network Devices, LAN and WAN](./06-network-fundamentals-part5.md)
 :::
 
 A browser request relies on several cooperating protocols. The exact sequence depends on caches, connection reuse, IP version and HTTP version, so troubleshooting needs to examine more than HTTP alone.

@@ -2,11 +2,12 @@
 
 > **Last Updated**: September 14, 2026
 
-::: tip This is a four-part series
+::: tip This is a five-part series
 [Part 1: The Layer Model, Link and Routing Layers](./06-network-fundamentals-part1.md) ·
 [Part 2: The Transport Layer and TLS](./06-network-fundamentals-part2.md) ·
 **Part 3: Application Protocols** *(this document)* ·
-[Part 4: A Request's Journey and the Cloud](./06-network-fundamentals-part4.md)
+[Part 4: A Request's Journey and the Cloud](./06-network-fundamentals-part4.md) ·
+[Part 5: Network Devices, LAN and WAN](./06-network-fundamentals-part5.md)
 :::
 
 Transport protocols provide streams or datagrams; application protocols turn them into services. This part covers name resolution (DNS and DoH), bootstrapping (DHCP), operational access (SSH), mail (SMTP), and HTTP/3, WebSocket, WebRTC, gRPC and MQTT.

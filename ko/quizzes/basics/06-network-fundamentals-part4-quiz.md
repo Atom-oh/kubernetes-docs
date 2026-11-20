@@ -56,4 +56,4 @@ Linux kube-proxy는 iptables·nftables를 설정하며 IPVS 모드는 Kubernetes
 
 ---
 
-[학습 자료로 돌아가기](../../basics/06-network-fundamentals-part4.md) | [다음 퀴즈: 클러스터 아키텍처](../core/01-cluster-architecture-quiz.md)
+[학습 자료로 돌아가기](../../basics/06-network-fundamentals-part4.md) | [다음 퀴즈: Part 5](./06-network-fundamentals-part5-quiz.md)

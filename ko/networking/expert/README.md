@@ -16,11 +16,12 @@
 - `ip route get`, `ss`, 제한된 `tcpdump` 캡처를 읽고 관측 위치를 말합니다.
 - SSH 키 로그인과 실습 방화벽 정책을 검증하고 원래 상태로 돌립니다.
 - HTTP 오류, 연결 실패, 이름 해석 실패를 구분합니다.
+- 스위치·라우터·방화벽·로드밸런서의 역할과 VLAN, LAN/WAN 경계를 설명합니다. 7장 전에는 특히 [네트워크 기초 Part 5](../../basics/06-network-fundamentals-part5.md)로 확인합니다.
 - 관리 경로와 실습 경로를 분리하고, 자신의 실습 파일·VM·컨테이너를 식별합니다.
 
 막히는 항목은 [입문 종합 실습](../beginner/08-container-cloud-capstone.md)으로 돌아가 확인합니다. 호스트 도구가 없으면 [게스트 도구 준비](../beginner/README.md#guest-tools)를 먼저 마칩니다.
 
-## 여섯 개의 워크북 {#course-map}
+## 아홉 개의 워크북 {#course-map}
 
 각 행은 **읽기 → 실험 또는 설계 검증 → 증거 기록 → 해설 퀴즈** 순서입니다. 외부 강의는 읽을 범위를 제공하고, 이 워크북은 자신의 결과를 평가하는 방법을 제공합니다.
 
@@ -32,6 +33,9 @@
 | 4 | [Linux 패킷 경로와 성능](04-linux-performance.md) · [퀴즈](../../quizzes/networking/expert/04-linux-performance-quiz.md) | 큐·카운터·패킷의 시간대 비교, 측정 조건과 한계, 복구 기록 |
 | 5 | [클라우드·CNI 설계](05-cloud-cni-design.md) · [퀴즈](../../quizzes/networking/expert/05-cloud-cni-design-quiz.md) | DNS부터 backend·반환 경로까지의 설계와 관측 근거 |
 | 6 | [자동화와 종합 평가](06-automation-capstone.md) · [퀴즈](../../quizzes/networking/expert/06-automation-capstone-quiz.md) | 정상·금지·장애·복구를 검증하는 증거 묶음과 변경 검토서 |
+| 7 | [WAN과 하이브리드 연결 설계](07-wan-hybrid-connectivity.md) · [퀴즈](../../quizzes/networking/expert/07-wan-hybrid-connectivity-quiz.md) | 양방향 경로 예측, 링크 장애 시 전환 규칙·소요 시간·축소되는 대역폭과 MTU 근거 |
+| 8 | [CDN과 엣지 전송 설계](08-cdn-edge-delivery.md) · [퀴즈](../../quizzes/networking/expert/08-cdn-edge-delivery-quiz.md) | 응답 헤더로 설명하는 응답 위치, 오리진이 CloudFront로만 접근되는 엣지-오리진 경로 |
+| 9 | [엣지 보안: WAF와 DDoS 방어](09-edge-security-waf-ddos.md) · [퀴즈](../../quizzes/networking/expert/09-edge-security-waf-ddos-quiz.md) | 공격 계층별 차단 위치, count 모드로 시작하고 롤백 조건을 갖춘 WAF 규칙 계획 |
 
 기존 설명서도 연결합니다. [프로토콜 기초](../../basics/06-network-fundamentals-part1.md), [커널 네트워킹](../../kernel/02-network-stack.md), [Calico BGP](../calico/04-bgp-deep-dive.md), [Cilium](../cilium/README.md), [VPC CNI](../01-vpc-cni.md)는 필요한 개념을 찾아볼 심화 자료입니다.
 

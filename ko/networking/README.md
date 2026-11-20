@@ -23,12 +23,14 @@ Linux나 네트워크를 처음 접한다면 [입문 과정](beginner/README.md)
 | 단계 | 역할 | 선수 지식 | 학습 결과 | 읽기 / 실습 |
 |---|---|---|---|---|
 | 프로토콜·주소·HTTP | 기본 용어 정립 | 기본 명령줄 사용 | 요청의 흐름을 따라가며 주소·전송·애플리케이션 동작 구분 | 네트워크 기초 [Part 1](../basics/06-network-fundamentals-part1.md), [Part 2](../basics/06-network-fundamentals-part2.md), [Part 3](../basics/06-network-fundamentals-part3.md), [Part 4](../basics/06-network-fundamentals-part4.md) |
+| 네트워크 장비·LAN·WAN | 장비별 역할과 경계 구분 | 프로토콜·주소 기초 | 스위치·라우터·방화벽·로드밸런서와 VLAN, NAT, WAN 유형을 구분해 설명 | [네트워크 기초 Part 5](../basics/06-network-fundamentals-part5.md) · [퀴즈](../quizzes/basics/06-network-fundamentals-part5-quiz.md) |
 | Linux 소켓·VFS·패킷 경로 | API와 커널 연결 | TCP/IP 기초 | FD·소켓 버퍼·윈도·큐 구분 | [커널 네트워킹 스택](../kernel/02-network-stack.md) |
 | Linux 네트워크 진단 | 증거로 가설 확인 | 소켓과 패킷 경로 개념 | 소켓·패킷·애플리케이션 관측값 대조 | [진단 실습](07-linux-network-diagnostics.md) · [퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md) |
 | Docker·컨테이너 네트워킹 | 네임스페이스 경계 파악 | Linux 패킷 경로와 기본 진단 | 브리지 네트워킹·포트 게시·컨테이너 이름 해석 설명 | [컨테이너 기술](../basics/03-container-technology.md) |
 | Kubernetes Service·DNS·Ingress | 클러스터 추상화 연결 | 컨테이너 네트워킹 | 이름에서 Service와 엔드포인트까지 추적하고 진입점 역할 구분 | [Service와 네트워킹](../core/03-services-networking.md) · [실습](../labs/core/03-services-networking-lab.md) |
 | eBPF·CNI·정책 | 구현별 역할 비교 | Pod와 Service 경로 | 패킷 전달·정책 강제·관측성 구분 | [eBPF 기초](../basics/05-ebpf-fundamentals.md) · [Cilium](cilium/README.md) · [Calico](calico/README.md) |
 | AWS 네트워크 경계·성능 | 클라우드 경로에 모델 적용 | CNI 개념과 측정 방법 | VPC·노드·AZ 경계를 구분하고 측정 조건에 맞게 결과 해석 | [VPC CNI](01-vpc-cni.md) · [AWS Load Balancer Controller](03-aws-lb-controller.md) · [Cross-Org VPC 연결](05-cross-org-vpc-connectivity.md) · [Pod 네트워크 실측 벤치마크](06-pod-network-benchmark.md) |
+| WAN·하이브리드·엣지 | 온프레미스와 클라우드, 사용자 사이의 경로 설계 | 라우팅 정책, AWS 네트워크 경계 | 하이브리드 경로·전환, CDN 응답 위치, WAF·DDoS 방어 위치를 증거로 설명 | [WAN과 하이브리드](expert/07-wan-hybrid-connectivity.md) · [CDN과 엣지](expert/08-cdn-edge-delivery.md) · [엣지 보안](expert/09-edge-security-waf-ddos.md) |
 
 ## Kubernetes 네트워킹 모델
 
