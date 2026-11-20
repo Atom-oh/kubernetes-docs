@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-labelledby="t d" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', 'Segoe UI', sans-serif">
+<title id="t">엣지에서 오리진까지: VPC 오리진과 internal ALB</title><desc id="d">뷰어가 HTTPS로 GET /menu.json을 보낸다. 캐시할 수 있는 GET이지만 엣지 POP과 리전 엣지 캐시에서 모두 MISS이므로 CloudFront가 오리진에 요청한다. 오리진 연결은 VPC 오리진을 거친다. CloudFront가 프라이빗 서브넷에 만든 서비스 관리형 ENI(예: 10.0.11.25)가 internal ALB(10.0.12.40)에 연결한다. ALB 보안 그룹은 CloudFront-VPCOrigins-Service-SG(또는 CloudFront origin-facing 관리형 prefix list)에서 오는 트래픽만 허용하고, ALB 리스너가 대상 그룹으로 전달한다. 이어서 인터넷 클라이언트가 ALB에 직접 접속하려 한다. internal ALB의 노드는 프라이빗 주소만 가지므로 인터넷에서 그 주소로 가는 경로가 없고 연결은 VPC 경계에서 실패한다. 이 그림에는 인터넷용 로드 밸런서도, 공개 CIDR을 허용하는 인바운드 규칙도 없다.</desc>
+<style>
+  svg{--paper:#f7f1e3;--ink:#2b2724;--soft:#8a8177;--accent:#d9480f;--blue:#1864ab;--wash:#efe5cf}
+  @media (prefers-color-scheme:dark){svg{--paper:#1e2240;--ink:#ece6d6;--soft:#9aa0bd;--accent:#ff8b5e;--blue:#8cc8ff;--wash:#272c52}}
+  .paper{fill:var(--paper)} .wash{fill:var(--wash)}
+  .ink{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:var(--ink);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+  .cable{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-linecap:round}
+  .trunk{fill:none;stroke:var(--blue);stroke-width:1.5;stroke-linecap:round}
+  .fillink{fill:var(--ink)} .t{fill:var(--ink);font-size:15px} .s{fill:var(--soft);font-size:12.5px}
+  .h{fill:var(--ink);font-size:17px;font-weight:600} .acc{fill:var(--accent)} .bl{fill:var(--blue)}
+  .pk{fill:var(--paper);stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+  .pkl{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .tag{font-size:12px;font-weight:700} .cap{font-size:15px;fill:var(--ink)}
+  .row{fill:var(--ink);font-size:13.5px}
+  .halo{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+  .static{display:none}
+  @media (prefers-reduced-motion:reduce){.motion{display:none}.static{display:inline}}
+</style>
+<defs><filter id="pen" filterUnits="userSpaceOnUse" x="0" y="0" width="960" height="500">
+  <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="7"/>
+  <feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs>
+<rect class="paper" width="960" height="500"/>
+<text class="h" x="32" y="40">엣지에서 오리진까지: VPC 오리진과 internal ALB</text>
+<g filter="url(#pen)">
+<path class="thin" stroke-dasharray="3 6" d="M556 82 q0 -6 6 -6 l376 1 q6 0 6 6 l-1 258 q0 6 -6 6 l-376 -1 q-6 0 -6 -6 z"/>
+<path class="thin" stroke-dasharray="1 5" d="M574 104 l352 1 l-1 150 l-351 -1 z"/>
+<path class="cable" d="M146 153.5 C184 135.5 210 175.5 240 157.5"/>
+<path class="cable" d="M146 158.5 C184 140.5 210 180.5 240 162.5"/>
+<path class="cable" d="M300 157.5 C340 137.5 372 177.5 402 157.5"/>
+<path class="cable" d="M300 162.5 C340 142.5 372 182.5 402 162.5"/>
+<path class="cable" d="M478 157.5 C520 137.5 568 177.5 602 157.5"/>
+<path class="cable" d="M478 162.5 C520 142.5 568 182.5 602 162.5"/>
+<path class="cable" d="M638 157.5 C672 139.5 700 175.5 726 157.5"/>
+<path class="cable" d="M638 162.5 C672 144.5 700 180.5 726 162.5"/>
+<path class="cable" d="M794 157.5 C820 143.5 846 171.5 870 157.5"/>
+<path class="cable" d="M794 162.5 C820 148.5 846 176.5 870 162.5"/>
+<path class="cable" stroke-dasharray="6 7" d="M138 282 C270 258 420 306 552 290"/>
+<path class="ink" d="M46 120 q2 -3 6 -3 l76 1 q5 0 5 5 l-1 50 l-88 1 z"/>
+<path class="thin" d="M54 129 l70 1 l-1 34 l-69 0 z"/>
+<path class="ink" d="M36 173 l108 0 q4 0 2 4 l-6 7 l-100 0 l-6 -7 q-2 -4 2 -4"/>
+<path class="ink" d="M46 278 q2 -3 6 -3 l76 1 q5 0 5 5 l-1 50 l-88 1 z"/>
+<path class="thin" d="M54 287 l70 1 l-1 34 l-69 0 z"/>
+<path class="ink" d="M36 331 l108 0 q4 0 2 4 l-6 7 l-100 0 l-6 -7 q-2 -4 2 -4"/>
+<path class="ink" d="M240 124 q0 -4 4 -4 l52 1 q5 0 5 5 l-1 68 q0 4 -4 4 l-52 -1 q-4 0 -4 -4 z"/>
+<path class="thin" d="M256 134 l28 1 l0 8 l-28 0 z"/>
+<path class="thin" d="M256 149 l28 1 l0 8 l-28 0 z"/>
+<path class="thin" d="M256 164 l28 1 l0 8 l-28 0 z"/>
+<path class="thin" d="M256 179 l28 1 l0 8 l-28 0 z"/>
+<circle class="fillink" cx="278" cy="138" r="1.8"/>
+<path class="ink" d="M406 124 q0 -4 4 -4 l60 1 q5 0 5 5 l-1 68 q0 4 -4 4 l-60 -1 q-4 0 -4 -4 z"/>
+<path class="thin" d="M426 134 l28 1 l0 8 l-28 0 z"/>
+<path class="thin" d="M426 149 l28 1 l0 8 l-28 0 z"/>
+<path class="thin" d="M426 164 l28 1 l0 8 l-28 0 z"/>
+<path class="thin" d="M426 179 l28 1 l0 8 l-28 0 z"/>
+<circle class="fillink" cx="448" cy="138" r="1.8"/>
+<path class="ink" d="M602 146 l36 1 l-1 28 l-35 -1 z"/>
+<path class="thin" d="M612 156 l16 0 l0 8 l-16 0 z"/>
+<path class="ink" d="M738 144 q0 -4 4 -4 l26 0 q4 0 4 4 l0 32 q0 4 -4 4 l-26 0 q-4 0 -4 -4 z"/>
+<path class="thin" d="M748 160 l16 -9 M748 160 l16 0 M748 160 l16 9"/>
+<ellipse class="trunk" stroke-dasharray="4 5" cx="760" cy="160" rx="40" ry="34"/>
+<path class="ink" d="M874 119 l28 1 l-1 21 l-27 -1 z"/>
+<path class="ink" d="M874 149 l28 1 l-1 21 l-27 -1 z"/>
+<path class="ink" d="M874 179 l28 1 l-1 21 l-27 -1 z"/>
+</g>
+<text class="t" x="90" y="208" text-anchor="middle" font-weight="600">뷰어</text>
+<text class="s" x="90" y="226" text-anchor="middle">HTTPS</text>
+<text class="t" x="156" y="326" font-weight="600">인터넷 클라이언트</text>
+<text class="s" x="156" y="344">ALB 직접 접속 시도</text>
+<text class="t" x="270" y="218" text-anchor="middle" font-weight="600" font-size="14">엣지 POP</text>
+<text class="s" x="270" y="235" text-anchor="middle">TLS 종료</text>
+<text class="t" x="440" y="218" text-anchor="middle" font-weight="600" font-size="14">리전 엣지 캐시</text>
+<text class="t" x="620" y="200" text-anchor="middle" font-weight="600" font-size="14">VPC 오리진 ENI</text>
+<text class="s" x="620" y="217" text-anchor="middle">10.0.11.25</text>
+<text class="t" x="760" y="214" text-anchor="middle" font-weight="600" font-size="14">internal ALB</text>
+<text class="s" x="760" y="231" text-anchor="middle">10.0.12.40</text>
+<text class="t" x="888" y="224" text-anchor="middle" font-weight="600" font-size="14">대상 그룹</text>
+<text class="s" x="570" y="332" font-weight="700">VPC: 프라이빗 서브넷만 사용</text>
+<text class="s" x="936" y="362" text-anchor="end">인터넷 게이트웨이는 연결만 필요, 이 경로의 라우팅에는 쓰이지 않음</text>
+<text class="s bl" x="918" y="244" text-anchor="end">SG 인바운드: CloudFront-VPCOrigins-Service-SG만</text>
+<g class="motion">
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4143;0.4286;0.4929;0.5071;1.0000" values="0;0;1;1;0;0"/><ellipse class="trunk" stroke-width="3" cx="760" cy="160" rx="40" ry="34"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.7250;0.7357;0.9143;0.9250;1.0000" values="0;0;1;1;0;0"/><path class="pkl" stroke-width="3" d="M542 280 L562 300 M562 280 L542 300"/><text class="tag acc" x="536" y="264" text-anchor="end">× 경로 없음</text><text class="s" x="536" y="280" text-anchor="end">internal ALB = 프라이빗 주소만</text></g>
+<g><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0071;0.0214;0.5857;0.6000;1.0000" values="0;0;1;1;0;0"/><animateMotion dur="14.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.1684;0.1684;0.3974;0.3974;0.6389;0.6389;0.8280;0.8280;1.0000;1.0000" keyTimes="0.0000;0.0571;0.1214;0.1643;0.2214;0.2571;0.3214;0.3714;0.4286;0.4929;0.5500;1.0000" path="M146 156 C184 138 210 178 240 160 L270 160 L300 160 C340 140 372 180 402 160 L440 160 L478 160 C520 140 568 180 602 160 L620 160 L638 160 C672 142 700 178 726 160 L760 160 L794 160 C820 146 846 174 870 160 L888 160"/><path class="pk" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="pkl" d="M-17 -11 l17 12 l17 -12"/><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0071;0.0214;0.1143;0.1286;1.0000" values="0;0;1;1;0;0"/><text class="tag halo acc" x="0" y="-24" text-anchor="middle"><tspan x="0" dy="0">HTTPS · GET /menu.json</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1143;0.1286;0.2143;0.2286;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="-54" text-anchor="middle"><tspan x="0" dy="0">TLS ends · MISS</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.2143;0.2286;0.3143;0.3286;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="-54" text-anchor="middle"><tspan x="0" dy="0">regional cache: MISS</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.3143;0.3286;0.4214;0.4357;1.0000" values="0;0;1;1;0;0"/><text class="tag halo acc" x="0" y="-50" text-anchor="middle"><tspan x="0" dy="0">src 10.0.11.25 (ENI)</tspan><tspan x="0" dy="14">dst 10.0.12.40</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4214;0.4357;0.5429;0.5571;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="-46" text-anchor="middle"><tspan x="0" dy="0">SG: src = VPC origin SG ✓</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5357;0.5500;0.5857;0.6000;1.0000" values="0;0;1;1;0;0"/><text class="tag halo acc" x="-20" y="-46" text-anchor="end"><tspan x="-20" dy="0">→ target</tspan></text></g></g>
+<g><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5929;0.6071;0.7714;0.7857;1.0000" values="0;0;1;1;0;0"/><animateMotion dur="14.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;1.0000;1.0000" keyTimes="0.0000;0.6286;0.7357;1.0000" path="M138 282 C270 258 420 306 552 290"/><path class="pk" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="pkl" d="M-17 -11 l17 12 l17 -12"/><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5929;0.6071;0.7714;0.7857;1.0000" values="0;0;1;1;0;0"/><text class="tag halo acc" x="0" y="-20" text-anchor="middle"><tspan x="0" dy="0">dst 10.0.12.40 (private)</tspan></text></g></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0071;0.0214;0.2571;0.2786;0.9143;0.9429;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="384">① 뷰어 → 엣지 POP (HTTPS): 캐시할 수 있는 GET이 POP과 리전 엣지 캐시에서 모두 MISS</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.2429;0.2571;0.3929;0.4143;0.9143;0.9429;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="406">② CloudFront가 VPC 오리진으로 연결: 프라이빗 서브넷의 서비스 관리형 ENI가 출발지</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4143;0.4286;0.4929;0.5143;0.9143;0.9429;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="428">③ ALB 보안 그룹은 VPC 오리진 SG(또는 origin-facing prefix list)에서 온 트래픽만 허용</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4786;0.4929;0.5857;0.6071;0.9143;0.9429;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="450">④ ALB 리스너 → 대상 그룹: 대상은 ALB 보안 그룹에서 온 트래픽만 받도록 설계</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5929;0.6071;0.8714;0.8929;0.9143;0.9429;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="472">⑤ 인터넷에서 ALB로 직접 접속: internal ALB는 프라이빗 주소만 있어 인터넷 경로가 없다</text></g>
+<text class="s" x="928" y="486" text-anchor="end">패킷 위 꼬리표: 지금 바뀐 헤더 값</text>
+</g>
+<g class="static">
+<path class="pkl" stroke-width="3" d="M542 280 L562 300 M562 280 L542 300"/>
+<text class="tag acc" x="536" y="264" text-anchor="end">× 경로 없음</text><text class="s" x="536" y="280" text-anchor="end">internal ALB = 프라이빗 주소만</text>
+<text class="cap" x="40" y="384">① 뷰어 → 엣지 POP (HTTPS): 캐시할 수 있는 GET이 POP과 리전 엣지 캐시에서 모두 MISS</text>
+<text class="cap" x="40" y="406">② CloudFront가 VPC 오리진으로 연결: 프라이빗 서브넷의 서비스 관리형 ENI가 출발지</text>
+<text class="cap" x="40" y="428">③ ALB 보안 그룹은 VPC 오리진 SG(또는 origin-facing prefix list)에서 온 트래픽만 허용</text>
+<text class="cap" x="40" y="450">④ ALB 리스너 → 대상 그룹: 대상은 ALB 보안 그룹에서 온 트래픽만 받도록 설계</text>
+<text class="cap" x="40" y="472">⑤ 인터넷에서 ALB로 직접 접속: internal ALB는 프라이빗 주소만 있어 인터넷 경로가 없다</text>
+<text class="tag acc" x="82" y="108" font-size="16">①</text>
+<text class="tag acc" x="612" y="136" font-size="16">②</text>
+<text class="tag acc" x="712" y="124" font-size="16">③</text>
+<text class="tag acc" x="852" y="116" font-size="16">④</text>
+<text class="tag acc" x="196" y="262" font-size="16">⑤</text>
+</g>
+</svg>
