@@ -125,6 +125,8 @@
   docs: [security/15-ngfw-paloalto-fortinet.md, security/13-defense-in-depth-incident-response.md]
 - keywords: [gateway load balancer, gwlb, gwlb geneve, transit gateway appliance mode]
   docs: [security/16-gwlb-geneve-inspection.md]
+- keywords: [eks pod identity, pod identity agent, irsa, iam roles for service accounts, eks auth]
+  docs: [security/17-eks-workload-identity-migration.md]
 
 - keywords: [helm]
   docs: [platform-engineering/01-helm.md]

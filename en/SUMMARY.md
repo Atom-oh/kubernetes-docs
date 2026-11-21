@@ -343,6 +343,7 @@
 * [WAF, Edge, API and Origin Protection](security/14-waf-edge-api-security.md)
 * [Palo Alto and Fortinet NGFW](security/15-ngfw-paloalto-fortinet.md)
 * [GWLB and GENEVE Paths and Failure Validation](security/16-gwlb-geneve-inspection.md)
+* [Migrate EKS node IAM permissions to IRSA and Pod Identity](security/17-eks-workload-identity-migration.md)
 
 ## GitOps
 
@@ -717,6 +718,7 @@
   * [WAF and Origin Protection Quiz](quizzes/security/14-waf-edge-api-security-quiz.md)
   * [Palo Alto and Fortinet NGFW Quiz](quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
   * [GWLB and GENEVE Quiz](quizzes/security/16-gwlb-geneve-inspection-quiz.md)
+  * [EKS workload IAM migration quiz](quizzes/security/17-eks-workload-identity-migration-quiz.md)
 * Container Registry
   * [Docker Hub Quiz](quizzes/container-registry/01-docker-hub-quiz.md)
   * [Amazon ECR Quiz](quizzes/container-registry/02-amazon-ecr-quiz.md)
