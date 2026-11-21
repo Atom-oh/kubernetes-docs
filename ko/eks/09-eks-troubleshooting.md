@@ -919,7 +919,7 @@ aws eks list-pod-identity-associations --cluster-name "$CLUSTER_NAME" --region "
   --namespace "$NAMESPACE" --service-account "$SERVICE_ACCOUNT"
 ```
 
-반환된 association ID, role trust·permission과 agent·SDK·compute 지원 조건을 확인합니다. IRSA annotation 부재가 Pod Identity 장애는 아닙니다. association 변경, credential cache와 앞선 SDK provider를 고려합니다. 모든 소비자를 검증하기 전에 identity 방식을 바꾸거나 기존 IRSA trust를 제거하지 않습니다. 현재 설정·마이그레이션은 [보안 장](./05-eks-security.md)을 확인합니다.
+반환된 association ID, role trust·permission과 agent·SDK·compute 지원 조건을 확인합니다. IRSA annotation 부재가 Pod Identity 장애는 아닙니다. association 변경, credential cache와 앞선 SDK provider를 고려합니다. 모든 소비자를 검증하기 전에 identity 방식을 바꾸거나 기존 IRSA trust를 제거하지 않습니다. 현재 설정은 [EKS Pod Identity](./05-eks-security-pod-identity.md)를, 이전 절차는 [IRSA와 Pod Identity 이전 워크북](../security/17-eks-workload-identity-migration.md)을 확인합니다.
 
 ### 노드 조인 실패
 

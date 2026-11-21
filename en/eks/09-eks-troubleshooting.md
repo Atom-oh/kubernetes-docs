@@ -919,7 +919,7 @@ aws eks list-pod-identity-associations --cluster-name "$CLUSTER_NAME" --region "
   --namespace "$NAMESPACE" --service-account "$SERVICE_ACCOUNT"
 ```
 
-Then inspect the returned association ID, role trust/permissions and supported agent/SDK/compute requirements. A missing IRSA annotation is not a Pod Identity failure. Association updates, credential caching and earlier SDK credential providers matter; do not switch identity mechanisms or remove existing IRSA trust before validating all consumers. See the [security chapter](./05-eks-security.md) for the current setup/migration paths.
+Then inspect the returned association ID, role trust/permissions and supported agent/SDK/compute requirements. A missing IRSA annotation is not a Pod Identity failure. Association updates, credential caching and earlier SDK credential providers matter; do not switch identity mechanisms or remove existing IRSA trust before validating all consumers. See [EKS Pod Identity](./05-eks-security-pod-identity.md) for the current setup and the [IRSA and Pod Identity migration workbook](../security/17-eks-workload-identity-migration.md) for migration.
 
 ### Node Join Failure
 
