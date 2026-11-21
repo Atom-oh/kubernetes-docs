@@ -130,7 +130,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" rollout status \
 
 ![데모 흐름. 처음에는 orders 앱 세 벌이 모두 IMDS에서 노드 역할을 받아 S3를 읽는다. migrate-irsa 뒤 한 벌은 STS로 IRSA 역할을, migrate-podid 뒤 다른 한 벌은 Pod Identity Agent로 Pod Identity 역할을 받는다. revoke로 노드 역할의 S3 권한을 지우면 레거시 한 벌만 AccessDenied가 된다.](../.gitbook/assets/ko-security-17-eks-workload-identity-migration-anim-3.svg)
 
-데모는 기존 EKS 1.36 클러스터에 전용 관리형 노드 그룹 한 대(t3.medium, Private 서브넷, taint 적용)를 추가하고 그 위에 같은 orders 앱을 세 벌 띄웁니다. 세 벌은 3초마다 STS `GetCallerIdentity`와 S3 `GetObject`를 호출하고, 자격 증명 출처·역할 이름·S3 결과를 JSON 한 줄로 남깁니다. 출발점은 운영 노드 그룹과 같은 IMDSv2 필수·hop limit 2이고, 노드 역할에 앱의 `s3:GetObject`가 붙어 있는 상태입니다. 레거시 Pod도 hostNetwork 없는 일반 Pod입니다. [데모 코드와 발표 런북](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/eks-workload-identity)
+데모는 기존 EKS 1.36 클러스터에 전용 관리형 노드 그룹 한 대(t3.medium, Private 서브넷, taint 적용)를 추가하고 그 위에 같은 orders 앱을 세 벌 띄웁니다. 세 벌은 3초마다 STS `GetCallerIdentity`와 S3 `GetObject`를 호출하고, 자격 증명 출처·역할 이름·S3 결과를 JSON 한 줄로 남깁니다. 출발점은 운영 노드 그룹과 같은 IMDSv2 필수·hop limit 2이고, 노드 역할에 앱의 `s3:GetObject`가 붙어 있는 상태입니다. 레거시 Pod도 hostNetwork 없는 일반 Pod입니다. [데모 코드와 발표 런북](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/eks-workload-identity) · [발표 자료](https://presentation.atomai.click/eks-workload-identity/)
 
 ```bash
 cd examples/security/eks-workload-identity
