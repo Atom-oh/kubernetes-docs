@@ -18,6 +18,8 @@ Pod 안의 AWS SDK와 AWS CLI는 [기본 자격 증명 공급자 체인](https:/
 | IRSA | `AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE`, 토큰 볼륨 | 리전 STS(Security Token Service) `AssumeRoleWithWebIdentity` | ServiceAccount 주석의 역할 |
 | EKS Pod Identity | `AWS_CONTAINER_CREDENTIALS_FULL_URI`, `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`, 토큰 볼륨 | 같은 노드의 Pod Identity Agent `169.254.170.23` | association에 지정한 역할 |
 
+**변수는 누가, 언제 넣나.** Pod를 만들면 API 서버가 인증·인가 뒤 mutating admission 단계에서 웹훅 `iam-for-pods.amazonaws.com`(amazon-eks-pod-identity-webhook)을 호출합니다. EKS가 이 웹훅을 컨트롤 플레인 안에서 운영하므로 노드에는 웹훅 Pod가 없습니다. 웹훅은 Pod의 ServiceAccount를 보고 association이 있으면 Pod Identity 변수와 토큰 볼륨을, IRSA 주석만 있으면 IRSA 변수와 토큰 볼륨을 Pod 스펙에 추가하고, 둘 다 있으면 Pod Identity만 넣습니다. 그 뒤 kubelet이 projected 토큰을 해당 audience로 발급받아 마운트합니다. 데모 클러스터의 `MutatingWebhookConfiguration`을 보면 규칙은 `CREATE pods`뿐이고 `failurePolicy`는 `Ignore`입니다. 그래서 이미 실행 중인 Pod는 rollout 전까지 바뀌지 않고, 웹훅이 응답하지 못하면 Pod가 변수 없이 만들어져 조용히 노드 역할을 씁니다. 결과는 호출자 ARN으로 확인하고, Pod를 만들기 전에는 `kubectl create --dry-run=server`로 웹훅을 거친 Pod 스펙을 미리 볼 수 있습니다.
+
 IMDS 응답 hop limit이 2 이상이면 hostNetwork를 쓰지 않는 일반 Pod도 IMDSv2 토큰을 받아 노드 역할 자격 증명을 가져갈 수 있습니다. 관리형 노드 그룹의 launch template이 이 값을 2로 두는 경우가 많습니다. 이전을 마친 뒤 hop limit을 1로 내려 이 경로를 닫는 이유입니다.
 
 <a id="irsa-flow"></a>
