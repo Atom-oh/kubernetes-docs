@@ -15,15 +15,15 @@ This quiz checks your understanding of [EKS Pod Identity](../../eks/05-eks-secur
 
 ### 1. Which statement about an EKS Pod Identity association is correct?
 
-- A) Creating an association creates the ServiceAccount automatically
-- B) An association also grants Kubernetes RBAC permissions
-- C) An association maps a cluster, namespace and ServiceAccount to an IAM role; it neither creates the ServiceAccount nor grants RBAC permissions
-- D) An association is stored as a ServiceAccount annotation
+- A) Creating it automatically creates the ServiceAccount in the namespace
+- B) It grants Kubernetes RBAC permissions along with the IAM role
+- C) It is stored in Kubernetes as an annotation on the ServiceAccount object itself
+- D) It maps a cluster, namespace and ServiceAccount to an IAM role in the EKS API
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) An association maps a cluster, namespace and ServiceAccount to an IAM role; it neither creates the ServiceAccount nor grants RBAC permissions**
+**Answer: D) It maps a cluster, namespace and ServiceAccount to an IAM role in the EKS API**
 
 **Explanation:**
 
@@ -33,33 +33,33 @@ An association is a cluster/namespace/ServiceAccount to IAM role mapping stored 
 
 ### 2. How does the AWS SDK in a newly created, associated Pod obtain Pod Identity credentials?
 
-- A) The agent transparently intercepts every AWS request from the Pod and signs it
-- B) The SDK calls the agent endpoint (commonly 169.254.170.23/v1/credentials); the agent calls AssumeRoleForPodIdentity on EKS Auth and makes the credentials available to the SDK
-- C) The SDK calls STS AssumeRoleWithWebIdentity directly with a web-identity token
-- D) The SDK receives node role credentials from IMDSv2
+- A) The SDK calls the node agent, which gets the credentials from EKS Auth
+- B) The agent transparently intercepts and signs every AWS request from the Pod
+- C) The SDK calls STS AssumeRoleWithWebIdentity with a web-identity token
+- D) The SDK uses node IAM role credentials that it receives from IMDSv2
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The SDK calls the agent endpoint (commonly 169.254.170.23/v1/credentials); the agent calls AssumeRoleForPodIdentity on EKS Auth and makes the credentials available to the SDK**
+**Answer: A) The SDK calls the node agent, which gets the credentials from EKS Auth**
 
 **Explanation:**
 
-For an associated new Pod, EKS injects a token with audience `pods.eks.amazonaws.com`, a token-file environment variable and a container credentials URI. The SDK calls the agent endpoint, and the agent calls AssumeRoleForPodIdentity on EKS Auth and returns the credentials to the SDK. It is not a request interceptor; the application still calls AWS services directly with its credentials.
+For an associated new Pod, EKS injects a token with audience `pods.eks.amazonaws.com`, a token-file environment variable and a container credentials URI. The SDK calls the agent endpoint, commonly `169.254.170.23/v1/credentials`, and the agent calls AssumeRoleForPodIdentity on EKS Auth and returns the credentials to the SDK. It is not a request interceptor; the application still calls AWS services directly with its credentials.
 
 </details>
 
 ### 3. Which statement about the Pod Identity role trust example is correct?
 
-- A) It names the IAM OIDC provider as the `Federated` principal
-- B) It allows `sts:AssumeRole` and `sts:TagSession` for `pods.eks.amazonaws.com` and restricts cluster, namespace and ServiceAccount with `aws:RequestTag/...` conditions, so disabling session tags requires reviewing those conditions
-- C) Allowing only `sts:AssumeRoleWithWebIdentity` is sufficient
-- D) Trusting `pods.eks.amazonaws.com` without conditions is least privilege
+- A) It names the cluster's IAM OIDC provider as the `Federated` principal in the trust
+- B) Allowing only `sts:AssumeRoleWithWebIdentity` is enough for Pod Identity
+- C) It trusts `pods.eks.amazonaws.com` for AssumeRole/TagSession, scoped by tags
+- D) Trusting `pods.eks.amazonaws.com` with no conditions is least privilege
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It allows `sts:AssumeRole` and `sts:TagSession` for `pods.eks.amazonaws.com` and restricts cluster, namespace and ServiceAccount with `aws:RequestTag/...` conditions, so disabling session tags requires reviewing those conditions**
+**Answer: C) It trusts `pods.eks.amazonaws.com` for AssumeRole/TagSession, scoped by tags**
 
 **Explanation:**
 
@@ -69,15 +69,15 @@ The example trust policy allows `sts:AssumeRole` and `sts:TagSession` for the `p
 
 ### 4. Which statement about reaching resources in another account with Pod Identity is correct?
 
-- A) Attach an arbitrary role from the other account directly as the association role
-- B) Keep the association role in the EKS cluster account and chain to an optional target IAM role in the other account, with trust and assume-role permissions on both sides
-- C) Pod Identity cannot do cross-account access, so always use IRSA
-- D) With a target role, association changes reset the credential cache immediately
+- A) Attach any role from the other account directly as the association role
+- B) Keep the association role in the cluster account and chain to a target role
+- C) Pod Identity has no cross-account support, so always switch those workloads to IRSA
+- D) With a target role, association changes reset the credential cache at once
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Keep the association role in the EKS cluster account and chain to an optional target IAM role in the other account, with trust and assume-role permissions on both sides**
+**Answer: B) Keep the association role in the cluster account and chain to a target role**
 
 **Explanation:**
 
@@ -87,15 +87,15 @@ The association role must be in the EKS cluster account. An optional target IAM 
 
 ### 5. When one ServiceAccount has both an IRSA annotation and a Pod Identity association, how does EKS inject credentials?
 
-- A) New Pods receive both IRSA and Pod Identity variables and the SDK picks one at random
-- B) New Pods receive only the Pod Identity variables, not the IRSA ones, and running Pods keep their IRSA variables until they are recreated
-- C) Creating the association immediately rewrites the environment of running Pods
-- D) The IRSA annotation always wins, so the association is ignored
+- A) New Pods get only Pod Identity variables; running Pods keep their IRSA ones
+- B) New Pods get both sets of variables, and the SDK picks one of them at random
+- C) Creating the association immediately rewrites running Pods' environment
+- D) The IRSA annotation always wins, so new Pods ignore the association
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) New Pods receive only the Pod Identity variables, not the IRSA ones, and running Pods keep their IRSA variables until they are recreated**
+**Answer: A) New Pods get only Pod Identity variables; running Pods keep their IRSA ones**
 
 **Explanation:**
 

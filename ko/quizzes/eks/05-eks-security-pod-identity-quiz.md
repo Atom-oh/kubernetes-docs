@@ -15,15 +15,15 @@
 
 ### 1. EKS Pod Identity association에 대한 설명으로 옳은 것은 무엇인가요?
 
-- A) Association을 만들면 ServiceAccount가 자동으로 생성된다
-- B) Association은 Kubernetes RBAC 권한도 함께 부여한다
-- C) Association은 클러스터·네임스페이스·ServiceAccount와 IAM 역할의 매핑이며 ServiceAccount 생성이나 RBAC 권한 부여 기능은 아니다
-- D) Association은 ServiceAccount 주석으로 저장된다
+- A) Association을 만들면 대상 ServiceAccount가 네임스페이스에 자동 생성된다
+- B) Association은 IAM 역할과 함께 Kubernetes RBAC 권한도 부여한다
+- C) Association은 ServiceAccount의 annotation으로 Kubernetes에 저장된다
+- D) 클러스터·네임스페이스·ServiceAccount를 IAM 역할에 매핑하는 EKS API 리소스다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Association은 클러스터·네임스페이스·ServiceAccount와 IAM 역할의 매핑이며 ServiceAccount 생성이나 RBAC 권한 부여 기능은 아니다**
+**정답: D) 클러스터·네임스페이스·ServiceAccount를 IAM 역할에 매핑하는 EKS API 리소스다**
 
 **설명:**
 
@@ -33,33 +33,33 @@ Association은 EKS API에 저장되는 클러스터/네임스페이스/ServiceAc
 
 ### 2. Association이 있는 새 Pod에서 AWS SDK가 Pod Identity 자격 증명을 얻는 경로로 옳은 것은 무엇인가요?
 
-- A) Agent가 Pod의 모든 AWS 요청을 투명하게 가로채 대신 서명한다
-- B) SDK가 agent endpoint(일반적으로 169.254.170.23/v1/credentials)를 호출하고, agent가 EKS Auth의 AssumeRoleForPodIdentity를 호출해 받은 자격 증명을 SDK에 제공한다
-- C) SDK가 web-identity token으로 STS AssumeRoleWithWebIdentity를 직접 호출한다
-- D) SDK가 IMDSv2에서 노드 역할 자격 증명을 받는다
+- A) SDK가 노드 agent endpoint를 호출하고 agent가 EKS Auth에서 자격 증명을 받는다
+- B) Agent가 Pod의 모든 AWS 요청을 투명하게 가로채 대신 서명한다
+- C) SDK가 web-identity token으로 STS AssumeRoleWithWebIdentity를 호출한다
+- D) SDK가 노드의 IMDSv2에서 노드 IAM 역할 자격 증명을 받아 사용한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) SDK가 agent endpoint(일반적으로 169.254.170.23/v1/credentials)를 호출하고, agent가 EKS Auth의 AssumeRoleForPodIdentity를 호출해 받은 자격 증명을 SDK에 제공한다**
+**정답: A) SDK가 노드 agent endpoint를 호출하고 agent가 EKS Auth에서 자격 증명을 받는다**
 
 **설명:**
 
-EKS는 association이 있는 새 Pod에 audience가 `pods.eks.amazonaws.com`인 token, token-file 환경 변수와 container credentials URI를 주입합니다. SDK는 agent endpoint를 호출하고 agent는 EKS Auth의 AssumeRoleForPodIdentity로 받은 자격 증명을 SDK에 제공합니다. 앱 요청을 가로채는 방식이 아니며 앱은 그 자격 증명으로 AWS 서비스에 직접 요청합니다.
+EKS는 association이 있는 새 Pod에 audience가 `pods.eks.amazonaws.com`인 token, token-file 환경 변수와 container credentials URI를 주입합니다. SDK는 agent endpoint(일반적으로 `169.254.170.23/v1/credentials`)를 호출하고 agent는 EKS Auth의 AssumeRoleForPodIdentity로 받은 자격 증명을 SDK에 제공합니다. 앱 요청을 가로채는 방식이 아니며 앱은 그 자격 증명으로 AWS 서비스에 직접 요청합니다.
 
 </details>
 
 ### 3. Pod Identity 역할 신뢰 예제에 대한 설명으로 옳은 것은 무엇인가요?
 
-- A) IAM OIDC provider를 `Federated` principal로 지정한다
-- B) `pods.eks.amazonaws.com`에 `sts:AssumeRole`과 `sts:TagSession`을 허용하고 `aws:RequestTag/...` 조건으로 클러스터·네임스페이스·ServiceAccount를 제한하므로, session tag를 비활성화하면 조건을 재검토해야 한다
-- C) `sts:AssumeRoleWithWebIdentity`만 허용하면 된다
-- D) 조건 없이 `pods.eks.amazonaws.com`만 신뢰하는 것이 최소 권한이다
+- A) IAM OIDC provider를 `Federated` principal로 지정해 클러스터별로 신뢰를 제한한다
+- B) `sts:AssumeRoleWithWebIdentity` 하나만 허용하면 Pod Identity에 충분하다
+- C) `pods.eks.amazonaws.com`에 AssumeRole·TagSession을 허용하고 태그로 제한한다
+- D) 조건 없이 `pods.eks.amazonaws.com`만 신뢰하는 것이 가장 좁은 최소 권한 구성이다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) `pods.eks.amazonaws.com`에 `sts:AssumeRole`과 `sts:TagSession`을 허용하고 `aws:RequestTag/...` 조건으로 클러스터·네임스페이스·ServiceAccount를 제한하므로, session tag를 비활성화하면 조건을 재검토해야 한다**
+**정답: C) `pods.eks.amazonaws.com`에 AssumeRole·TagSession을 허용하고 태그로 제한한다**
 
 **설명:**
 
@@ -69,15 +69,15 @@ EKS는 association이 있는 새 Pod에 audience가 `pods.eks.amazonaws.com`인 
 
 ### 4. Pod Identity로 다른 계정의 리소스에 접근하려 할 때 옳은 설명은 무엇인가요?
 
-- A) 다른 계정의 임의 IAM 역할을 association 역할로 직접 지정한다
-- B) Association 역할은 EKS 클러스터 계정에 두고, 다른 계정의 선택적 target IAM role로 양쪽 신뢰·assume-role 권한을 구성해 chaining한다
-- C) 교차 계정은 Pod Identity에서 불가능하므로 항상 IRSA를 쓴다
-- D) Target role을 지정하면 association 변경이 즉시 자격 증명 캐시를 초기화한다
+- A) 다른 계정의 임의 IAM 역할을 association 역할로 직접 지정해 사용한다
+- B) Association 역할은 클러스터 계정에 두고 다른 계정의 target role로 chaining한다
+- C) Pod Identity는 교차 계정을 지원하지 않으므로 그런 워크로드는 항상 IRSA를 사용한다
+- D) Target role을 지정하면 association을 바꿀 때마다 자격 증명 캐시가 즉시 초기화된다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Association 역할은 EKS 클러스터 계정에 두고, 다른 계정의 선택적 target IAM role로 양쪽 신뢰·assume-role 권한을 구성해 chaining한다**
+**정답: B) Association 역할은 클러스터 계정에 두고 다른 계정의 target role로 chaining한다**
 
 **설명:**
 
@@ -87,15 +87,15 @@ Association 역할은 EKS 클러스터 계정에 있어야 합니다. 선택적 
 
 ### 5. 같은 ServiceAccount에 IRSA annotation과 Pod Identity association이 모두 있을 때 EKS의 주입 동작으로 옳은 것은 무엇인가요?
 
-- A) 새 Pod에 IRSA와 Pod Identity 변수가 모두 주입되고 SDK가 임의로 선택한다
-- B) 새 Pod에는 Pod Identity 변수만 주입되고 IRSA 변수는 넣지 않으며, 이미 실행 중인 Pod는 다시 만들기 전까지 IRSA 변수를 유지한다
+- A) 새 Pod에는 Pod Identity 변수만 주입되고 실행 중인 Pod는 IRSA 변수를 유지한다
+- B) 새 Pod에 IRSA와 Pod Identity 변수가 모두 주입되고 SDK가 임의로 고른다
 - C) Association을 만드는 즉시 실행 중인 Pod의 환경 변수가 Pod Identity로 바뀐다
-- D) IRSA annotation이 항상 우선하므로 association은 무시된다
+- D) IRSA annotation이 항상 우선하므로 새 Pod에서도 association은 무시된다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 새 Pod에는 Pod Identity 변수만 주입되고 IRSA 변수는 넣지 않으며, 이미 실행 중인 Pod는 다시 만들기 전까지 IRSA 변수를 유지한다**
+**정답: A) 새 Pod에는 Pod Identity 변수만 주입되고 실행 중인 Pod는 IRSA 변수를 유지한다**
 
 **설명:**
 

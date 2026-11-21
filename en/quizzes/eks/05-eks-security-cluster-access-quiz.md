@@ -153,15 +153,15 @@ References: [EKS access entries](https://docs.aws.amazon.com/eks/latest/userguid
 
 ### 2. Which statement about moving from the CONFIG_MAP authentication mode to API_AND_CONFIG_MAP or API is correct?
 
-- A) It is a switch you can always flip back, so no prior review is needed
-- B) It is not a freely reversible switch; preserve administrator/node mappings and review identities, policies, nodes and a recovery path before choosing API-only
-- C) Clean up first by overwriting aws-auth with a short sample that omits node roles
-- D) API mode migrates every aws-auth mapping to access entries automatically, so nothing needs checking
+- A) It is not freely reversible; preserve admin/node mappings and plan a recovery path
+- B) It can always be flipped back later, so switch modes without any prior review
+- C) Overwrite aws-auth first with a short sample ConfigMap that omits the node roles
+- D) API mode auto-migrates every aws-auth mapping to access entries, so skip all checks
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It is not a freely reversible switch; preserve administrator/node mappings and review identities, policies, nodes and a recovery path before choosing API-only**
+**Answer: A) It is not freely reversible; preserve admin/node mappings and plan a recovery path**
 
 **Explanation:**
 
@@ -171,15 +171,15 @@ Inspect the current authentication mode in `describe-cluster`'s `accessConfig` a
 
 ### 3. Which statement about the standard EKS cluster IAM role and developer permissions is correct?
 
-- A) The cluster role trusts the `eks.amazonaws.com` service, and attaching AmazonEKSClusterPolicy to a developer role grants no Kubernetes application access
-- B) The cluster role must trust the developer IAM user for kubectl to work
-- C) Attaching AmazonEKSClusterPolicy to a developer role grants Kubernetes permissions in every namespace
-- D) CreateCluster supports resource-ARN scoping, so restricting it to the cluster ARN is sufficient
+- A) The cluster role must trust the developer IAM user before kubectl can work
+- B) AmazonEKSClusterPolicy on a developer role grants access to every namespace
+- C) CreateCluster supports resource-ARN scoping, so scoping to the cluster ARN alone suffices
+- D) The cluster role trusts the `eks.amazonaws.com` service, not developer identities
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) The cluster role trusts the `eks.amazonaws.com` service, and attaching AmazonEKSClusterPolicy to a developer role grants no Kubernetes application access**
+**Answer: D) The cluster role trusts the `eks.amazonaws.com` service, not developer identities**
 
 **Explanation:**
 
@@ -189,15 +189,15 @@ The standard EKS cluster role's trust relationship allows `sts:AssumeRole` for t
 
 ### 4. After configuring a developer's access entry and RBAC, what does a `kubectl auth can-i --as=...` result tell you?
 
-- A) It proves both the real IAM login and the access-policy path work
-- B) It is a Kubernetes impersonation/RBAC check, not proof of the IAM access-policy path, so also test with the actual intended IAM login
-- C) The kubeconfig grants the permissions, so no separate test is needed
-- D) `--as` results are unrelated to RBAC
+- A) Proof that both the real IAM login and the access-policy path work
+- B) Only Kubernetes impersonation/RBAC, not proof of the IAM access-policy path
+- C) Nothing extra is needed, because the kubeconfig itself grants the permissions
+- D) Only the IAM policy evaluation, since `--as` bypasses RBAC entirely
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It is a Kubernetes impersonation/RBAC check, not proof of the IAM access-policy path, so also test with the actual intended IAM login**
+**Answer: B) Only Kubernetes impersonation/RBAC, not proof of the IAM access-policy path**
 
 **Explanation:**
 
@@ -207,15 +207,15 @@ The standard EKS cluster role's trust relationship allows `sts:AssumeRole` for t
 
 ### 5. Which statement about a namespace-scoped AmazonEKSViewPolicy association and the `eks:namespaces` condition is correct?
 
-- A) Adding the View association revokes broader existing RBAC grants for the same principal
-- B) `eks:namespaces` is an IAM condition that filters every kubectl API call by namespace
-- C) Allows are additive, so adding View does not revoke broader grants, and `eks:namespaces` filters access-policy association requests
-- D) `eks:AccessKubernetesApi` is a general namespace RBAC permission for kubectl
+- A) Adding View revokes the principal's broader existing RBAC grants
+- B) `eks:namespaces` limits every kubectl API call to the listed namespaces
+- C) `eks:AccessKubernetesApi` is a general namespace RBAC permission for kubectl
+- D) Adding View revokes nothing; `eks:namespaces` filters association requests
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Allows are additive, so adding View does not revoke broader grants, and `eks:namespaces` filters access-policy association requests**
+**Answer: D) Adding View revokes nothing; `eks:namespaces` filters association requests**
 
 **Explanation:**
 

@@ -153,15 +153,15 @@ kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n another-team
 
 ### 2. CONFIG_MAP 인증 모드에서 API_AND_CONFIG_MAP 또는 API로 전환할 때 올바른 설명은 무엇인가요?
 
-- A) 언제든 이전 모드로 되돌릴 수 있는 스위치이므로 사전 검토가 필요 없다
-- B) 자유롭게 되돌리는 스위치가 아니므로 관리자·노드 매핑을 보존하고 API-only 전에 신원·정책·노드·복구 경로를 검토한다
-- C) 전환 전에 노드 역할이 빠진 짧은 예제로 aws-auth를 덮어써 정리한다
-- D) API 모드로 바꾸면 기존 aws-auth 매핑이 access entry로 자동 이전되므로 확인할 것이 없다
+- A) 되돌리기 어려운 전환이므로 관리자·노드 매핑을 보존하고 복구 경로를 검토한다
+- B) 언제든 이전 모드로 되돌릴 수 있으므로 별도의 사전 검토 없이 전환한다
+- C) 전환 전에 노드 역할이 빠진 짧은 예제로 aws-auth ConfigMap을 덮어쓴다
+- D) API 모드는 aws-auth 매핑을 모두 access entry로 자동 이전하므로 확인이 불필요하다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 자유롭게 되돌리는 스위치가 아니므로 관리자·노드 매핑을 보존하고 API-only 전에 신원·정책·노드·복구 경로를 검토한다**
+**정답: A) 되돌리기 어려운 전환이므로 관리자·노드 매핑을 보존하고 복구 경로를 검토한다**
 
 **설명:**
 
@@ -171,15 +171,15 @@ kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n another-team
 
 ### 3. 일반 EKS cluster IAM role과 개발자 권한에 대한 설명으로 옳은 것은 무엇인가요?
 
-- A) Cluster role은 `eks.amazonaws.com` 서비스를 신뢰하며, 개발자 역할에 AmazonEKSClusterPolicy를 붙여도 Kubernetes 앱 접근 권한은 생기지 않는다
-- B) Cluster role은 개발자 IAM 사용자를 신뢰해야 kubectl을 사용할 수 있다
-- C) 개발자 역할에 AmazonEKSClusterPolicy를 붙이면 모든 네임스페이스의 Kubernetes 권한이 생긴다
-- D) CreateCluster는 resource ARN 범위를 지원하므로 클러스터 ARN으로만 제한하면 충분하다
+- A) Cluster role이 개발자 IAM 사용자를 신뢰해야 개발자가 kubectl을 사용할 수 있다
+- B) 개발자 역할에 AmazonEKSClusterPolicy를 붙이면 모든 네임스페이스 권한이 생긴다
+- C) CreateCluster는 resource ARN 범위를 지원하므로 클러스터 ARN 제한만으로 충분하다
+- D) Cluster role은 개발자 신원이 아니라 `eks.amazonaws.com` 서비스를 신뢰한다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: A) Cluster role은 `eks.amazonaws.com` 서비스를 신뢰하며, 개발자 역할에 AmazonEKSClusterPolicy를 붙여도 Kubernetes 앱 접근 권한은 생기지 않는다**
+**정답: D) Cluster role은 개발자 신원이 아니라 `eks.amazonaws.com` 서비스를 신뢰한다**
 
 **설명:**
 
@@ -189,15 +189,15 @@ kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n another-team
 
 ### 4. Access entry와 RBAC로 개발자 권한을 구성한 뒤 `kubectl auth can-i --as=...`로 확인한 결과는 무엇을 의미하나요?
 
-- A) 실제 IAM 로그인과 access policy 경로가 모두 정상이라는 증거다
-- B) Kubernetes impersonation·RBAC 검사 결과일 뿐 IAM access-policy 경로의 증거는 아니므로 의도한 실제 IAM 로그인으로도 검증해야 한다
-- C) kubeconfig가 권한을 부여하므로 별도 검증이 필요 없다
-- D) `--as` 결과는 RBAC와 무관하다
+- A) 실제 IAM 로그인과 EKS access policy 경로가 모두 정상이라는 증거가 된다
+- B) impersonation·RBAC 검사일 뿐 IAM access-policy 경로의 증거는 아니다
+- C) kubeconfig가 권한을 부여하므로 다른 검증 없이 결과를 그대로 신뢰해도 된다는 뜻이다
+- D) `--as` 결과는 RBAC와 무관하며 IAM 정책 평가 결과만 보여 주는 검사다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Kubernetes impersonation·RBAC 검사 결과일 뿐 IAM access-policy 경로의 증거는 아니므로 의도한 실제 IAM 로그인으로도 검증해야 한다**
+**정답: B) impersonation·RBAC 검사일 뿐 IAM access-policy 경로의 증거는 아니다**
 
 **설명:**
 
@@ -207,15 +207,15 @@ kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n another-team
 
 ### 5. 네임스페이스 범위 AmazonEKSViewPolicy association과 `eks:namespaces` 조건에 대한 설명으로 옳은 것은 무엇인가요?
 
-- A) View association을 추가하면 같은 주체의 더 넓은 기존 RBAC 권한이 취소된다
-- B) `eks:namespaces`는 모든 kubectl API 호출을 네임스페이스로 필터링하는 IAM 조건이다
-- C) 허용 권한은 합산되므로 View 추가가 더 넓은 기존 권한을 취소하지 않으며, `eks:namespaces`는 access-policy association 요청을 필터링하는 조건이다
-- D) `eks:AccessKubernetesApi`는 kubectl용 일반 네임스페이스 RBAC 권한이다
+- A) View association을 추가하면 같은 주체가 가진 더 넓은 기존 RBAC 권한이 모두 취소된다
+- B) `eks:namespaces`는 모든 kubectl API 호출을 네임스페이스로 제한하는 범용 IAM 조건이다
+- C) `eks:AccessKubernetesApi`는 kubectl에 쓰는 일반 네임스페이스 RBAC 권한이다
+- D) View 추가는 권한을 취소하지 않으며 `eks:namespaces`는 association 요청용 조건이다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 허용 권한은 합산되므로 View 추가가 더 넓은 기존 권한을 취소하지 않으며, `eks:namespaces`는 access-policy association 요청을 필터링하는 조건이다**
+**정답: D) View 추가는 권한을 취소하지 않으며 `eks:namespaces`는 association 요청용 조건이다**
 
 **설명:**
 
