@@ -7,6 +7,8 @@ Same house style and helpers as gen_security_17_eks_workload_identity_migration_
 stack, caption layout, packet tags, ko/en COPY, anim()/win()/move() on one
 shared SMIL clock with the keyTimes self-check. CSS only handles palette
 (light/dark) and the reduced-motion static view.
+A tracking camera on the same clock follows the request in the motion
+layer; the static view stays the unmoved overview (see the camera section).
 
 Story:
 a. A Pod Identity association in the EKS API maps cluster + namespace +
@@ -217,6 +219,104 @@ def fits(s, size, room, bold=False):
     assert tw(s, size, bold) <= room, (s, round(tw(s, size, bold)), room)
 
 
+# ---------- camera ------------------------------------------------------------
+# The view follows the request. The motion layer holds its own copy of the
+# diagram inside a camera <g> that moves on the shared SMIL clock: translate +
+# scale (additive="sum"), calcMode="spline", eased in and out. Paper bands
+# outside VIEW mask the zoomed diagram (no clip-path: only url(#pen) is
+# allowed, and a nested <svg> would get its own SMIL clock); the title,
+# captions, hint and badges are drawn after them and never move. The static
+# (reduced-motion) layer keeps an unmoved copy, so no camera exists there.
+VIEW = (0, 42, 960, 324)             # camera viewport: x, y, w, h (the AWS label sits at y 52)
+OV = (VIEW[0] + VIEW[2] / 2, VIEW[1] + VIEW[3] / 2, 1.0)  # overview = identity
+CAMS = []                            # every camera animation, validated before writing
+
+
+def shot(x0, y0, x1, y1, zmax=1.8, pad=8):
+    """Shot (cx, cy, zoom) framing the box plus pad, kept inside VIEW."""
+    vx, vy, vw, vh = VIEW
+    z = max(1.0, min(zmax, vw / (x1 - x0 + 2 * pad), vh / (y1 - y0 + 2 * pad)))
+    hw, hh = vw / z / 2, vh / z / 2
+    cx = min(max((x0 + x1) / 2, vx + hw), vx + vw - hw)
+    cy = min(max((y0 + y1) / 2, vy + hh), vy + vh - hh)
+    wx0, wy0, wx1, wy1 = cx - hw, cy - hh, cx + hw, cy + hh
+    assert wx0 <= x0 and wy0 <= y0 and x1 <= wx1 and y1 <= wy1, ("box not in shot", (x0, y0, x1, y1))
+    return (round(cx, 2), round(cy, 2), round(z, 4))
+
+
+def camera(keys):
+    """keys: [(seconds, shot[, "via"]), ...] from 0 to DUR. Equal neighbours hold; a move
+    eases in and out, except through a "via" key, which it passes without stopping."""
+    vx, vy, vw, vh = VIEW
+    mx, my = vx + vw / 2, vy + vh / 2
+    stop = [len(k) == 2 for k in keys]
+    keys = [k[:2] for k in keys]
+    ts = ";".join(kt(t) for t, _ in keys)
+    num = lambda v: f"{v:.2f}".replace("-0.00", "0.00")
+    tr = ";".join(f"{num(mx - z * cx)} {num(my - z * cy)}" for _, (cx, cy, z) in keys)
+    sc = ";".join(f"{z:.4f}" for _, (cx, cy, z) in keys)
+    ks = ";".join("0 0 1 1" if a == b else f"{0.42 if s0 else 0} 0 {0.58 if s1 else 1} 1"
+                  for (_, a), (_, b), s0, s1 in zip(keys, keys[1:], stop, stop[1:]))
+    CAMS.append((ts, tr, sc, ks, keys, stop))
+    common = (f'dur="{DUR}s" repeatCount="indefinite" calcMode="spline" '
+              f'keyTimes="{ts}" keySplines="{ks}"')
+    return (f'<animateTransform attributeName="transform" type="translate" {common} values="{tr}"/>'
+            f'<animateTransform attributeName="transform" type="scale" additive="sum" {common} values="{sc}"/>')
+
+
+def check_camera():
+    assert CAMS, "no camera"
+    for ts, tr, sc, ks, keys, stop in CAMS:
+        t = [float(x) for x in ts.split(";")]
+        assert t[0] == 0 and t[-1] == 1 and all(0 <= x <= 1 for x in t), ts
+        assert all(b > a for a, b in zip(t, t[1:])), ("camera keyTimes not monotonic", ts)
+        trs, scs = tr.split(";"), sc.split(";")
+        assert len(trs) == len(scs) == len(t) == len(ks.split(";")) + 1, ts
+        assert keys[0][1] == keys[-1][1] == OV, "camera must start and end on the overview"
+        assert trs[0] == trs[-1] == "0.00 0.00" and float(scs[0]) == float(scs[-1]) == 1.0, (trs[0], scs[0])
+        assert all(1.0 <= z <= 2.0 for _, (_, _, z) in keys), "zoom out of range"
+        assert stop[0] and stop[-1], "the loop starts and ends on a stop"
+        segs = list(zip(keys, keys[1:]))
+        move0 = None
+        for i, ((t0, a), (t1, b)) in enumerate(segs):
+            if a != b:  # a move runs from one stop to the next, maybe through "via" keys
+                move0 = t0 if stop[i] else move0
+                if stop[i + 1]:
+                    assert 0.8 - 1e-6 <= t1 - move0 <= 1.5 + 1e-6, ("camera move must take 0.8-1.5 s", move0, t1)
+            else:
+                assert stop[i] and stop[i + 1], ("a hold cannot touch a via key", t0)
+                if 0 < i < len(segs) - 1:
+                    assert t1 - t0 >= 0.6 - 1e-6, ("camera hold must last at least 0.6 s", t0, t1)
+        seam = (segs[0][1][0] - segs[0][0][0]) + (segs[-1][1][0] - segs[-1][0][0])
+        assert segs[0][0][1] == segs[0][1][1] == segs[-1][0][1] and seam >= 1.0, "overview beat across the seam"
+
+
+BANDS = (f'<rect class="paper" width="{W}" height="{VIEW[1]}"/>'
+         f'<rect class="paper" y="{VIEW[1] + VIEW[3]}" width="{W}" height="{H - VIEW[1] - VIEW[3]}"/>')
+
+
+# Camera script: one shot per step; the request is followed from the Pod
+# through the Agent to EKS Auth, and the credentials are followed back.
+CAM_A = shot(520, 64, 930, 136)          # a: Pod Identity association
+CAM_B = shot(0, 60, 518, 234, 2.0, pad=0)       # b: injected env, Pod (node box edge kept out)
+CAM_C = shot(0, 161, 527, 337, 2.0, pad=0)      # c, f: Pod <-> Agent, node role below
+CAM_D = shot(210, 165, 726, 340)         # d: Agent -> EKS Auth with the node role
+CAM_E1 = shot(518, 64, 930, 226)         # e: token valid, association found
+CAM_E2 = shot(453, 175, 960, 346, 2.0, pad=0)   # e: role assumed, trust policy, session tags
+CAM_F = (468.0, 252.0, 1.85)                    # pass-through between E2 and C
+CAM_KEYS = [
+    (0, OV), (0.3, OV),
+    (1.3, CAM_A), (2.3, CAM_A),          # association maps the ServiceAccount to a role
+    (3.5, CAM_B), (4.4, CAM_B),          # EKS injects env and the projected token
+    (5.2, CAM_C), (6.2, CAM_C),          # SDK calls the Agent on the node
+    (7.0, CAM_D), (7.8, CAM_D),          # Agent calls EKS Auth with the node role
+    (8.6, CAM_E1), (9.5, CAM_E1),        # EKS Auth validates the token, finds the association
+    (10.3, CAM_E2), (10.9, CAM_E2),      # assumes the role and tags the session
+    (11.6, CAM_F, "via"),               # credentials leave EKS Auth (label kept in frame)
+    (12.3, CAM_C), (14.2, CAM_C),        # back through the Agent to the SDK
+    (15.2, OV), (DUR, OV),               # overview beat
+]
+
 # ---------- copy --------------------------------------------------------------
 COPY = {
     "ko": {
@@ -406,6 +506,7 @@ def card3(o, card, lines):
 
 def build(lang):
     ANIMS.clear()
+    CAMS.clear()
     k = COPY[lang]
     steps_t = [(T["assoc"], T["a_end"]), (T["inj"], T["b_end"]), (T["req_on"], T["c_end"]),
                (T["node_role"], T["d_end"]), (T["auth"], T["f_end"])]
@@ -438,16 +539,16 @@ def build(lang):
     g.append(f'<path class="ink" d="M{px-POD_W//2} {py-POD_H//2} l{POD_W} 1 l-1 {POD_H-1} l-{POD_W-1} -1 z"/>')
     g.append(f'<path class="thin" d="M{px-18} {py-14} l36 0 l0 28 l-36 0 z"/>')
     g.append('</g>')
-    o.extend(g)
+    dia = list(g)  # the diagram: drawn once in the camera, once in the static view
 
     # labels
     nx, ny, nw, nh = NODE_BOX
     ax, ay, aw, ah = AWS_BOX
-    o.append(f'<text class="s" x="{nx+14}" y="{ny+nh-10}" font-weight="700">{esc(k["node"])}</text>')
-    o.append(f'<text class="s" x="{ax+aw-12}" y="{ay-6}" text-anchor="end" font-weight="700">{esc(k["aws"])}</text>')
+    dia.append(f'<text class="s" x="{nx+14}" y="{ny+nh-10}" font-weight="700">{esc(k["node"])}</text>')
+    dia.append(f'<text class="s" x="{ax+aw-12}" y="{ay-6}" text-anchor="end" font-weight="700">{esc(k["aws"])}</text>')
     for card, lines in cards:
-        card3(o, card, lines)
-    o.append(f'<text class="t" x="{px}" y="{py + POD_H // 2 + 20}" text-anchor="middle" font-weight="600" '
+        card3(dia, card, lines)
+    dia.append(f'<text class="t" x="{px}" y="{py + POD_H // 2 + 20}" text-anchor="middle" font-weight="600" '
              f'style="font-size:13.5px">{esc(k["pod"])}</text>')
 
     ix, iy, iw, ih = INJ_NOTE
@@ -458,7 +559,7 @@ def build(lang):
     found = (f'<text class="tag halo gr" x="{AUTH[0] + 14}" y="{bottom(ASSOC) + 22}">{esc(k["found"])}</text>')
 
     # --- motion layer ---
-    m = ['<g class="motion">']
+    m = ['<g class="motion">', '<g>', camera(CAM_KEYS)] + dia
 
     def hl(d, start, end, cls="trunk"):
         return (f'<g opacity="0">{win(start, end, fade=0.2)}'
@@ -501,6 +602,10 @@ def build(lang):
                    [(T["ret_on"], T["ret_agent_go"]), (T["ret_thr"], T["hold"])], KEY,
                    [(k["ret"], T["ret_on"], T["ret_agent_go"], "gr", 42)]))
 
+    m.append('</g>' + BANDS)  # end of camera; captions and hint stay fixed
+    # the bands cover the root title in this layer, so it is drawn again on top
+    m.append(f'<text class="h halo" x="32" y="40">{esc(k["title"])}</text>')
+
     # captions
     cy0 = 378
     for i, (txt, (s0, s1)) in enumerate(zip(k["steps"], steps_t)):
@@ -516,7 +621,7 @@ def build(lang):
     o.extend(m)
 
     # --- static (reduced motion) layer: end state ---
-    st = ['<g class="static">', inj, trust, valid, found]
+    st = ['<g class="static">'] + dia + [inj, trust, valid, found]
     st.append(f'<g transform="translate({(right(AGENT) + left(AUTH)) // 2} {Y})">{ENVELOPE}</g>')
     st.append(f'<g transform="translate({POD_R} {Y})">{KEY}</g>')
     for (x, y, label) in ((right(ASSOC) - 22, top(ASSOC) + 18, "①"), (ix + iw - 24, iy + 18, "②"),
@@ -530,6 +635,7 @@ def build(lang):
     o.extend(st)
     o.append('</svg>')
     check_anims()
+    check_camera()
     return "\n".join(o)
 
 

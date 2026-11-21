@@ -112,7 +112,7 @@
 
 **정답: B) IRSA**
 
-**설명:** EKS Pod Identity는 EKS의 Linux EC2 노드에서만 지원됩니다. Fargate, Windows EC2 노드, Outposts, EKS Anywhere에서는 IRSA를 씁니다.
+**설명:** EKS Pod Identity는 EKS의 Linux EC2 노드와 EKS Hybrid Nodes(Agent의 하이브리드 DaemonSet과 노드 자격 증명 파일 설정 필요)에서 지원됩니다. Fargate, Windows EC2 노드, Outposts, EKS Anywhere에서는 IRSA를 씁니다.
 
 </details>
 

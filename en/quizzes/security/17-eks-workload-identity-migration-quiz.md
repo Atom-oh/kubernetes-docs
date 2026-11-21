@@ -112,7 +112,7 @@
 
 **Answer: B) IRSA**
 
-**Explanation:** EKS Pod Identity supports only Linux EC2 nodes in EKS. Use IRSA on Fargate, Windows EC2 nodes, Outposts and EKS Anywhere.
+**Explanation:** EKS Pod Identity supports Linux EC2 nodes in EKS and EKS Hybrid Nodes (with the agent's hybrid DaemonSet and the node credentials file). Use IRSA on Fargate, Windows EC2 nodes, Outposts and EKS Anywhere.
 
 </details>
 
