@@ -429,11 +429,11 @@ kubectl -n "$NS" get sa orders-podid -o jsonpath='{.metadata.annotations}{"\n"}'
 
 ## 공개 데모 페이지 (선택)
 
-청중이 각자 브라우저로 볼 수 있는 읽기 전용 실시간 페이지를 띄웁니다. 카드 세 장이 각 복사본의 자격 증명 출처, 역할, S3 결과, EKS가 주입한 `AWS_*` 변수 이름, 최근 읽기 기록을 보여 주며 바꾸는 기능은 없습니다. **URL을 아는 사람은 누구나 볼 수 있으므로** 역할 이름 외의 정보는 내보내지 않습니다.
+청중이 각자 브라우저로 볼 수 있는 읽기 전용 실시간 페이지를 띄웁니다. 카드 세 장이 각 복사본의 자격 증명 출처, 역할, S3 결과, EKS가 주입한 `AWS_*` 변수 이름, 최근 읽기 기록을 보여 주며 바꾸는 기능은 없습니다. **URL을 아는 사람은 누구나 볼 수 있으므로** 역할 이름, Pod 이름, 주입된 변수 이름, 읽기 결과 외의 정보(자격 증명, 토큰, 계정 ID, ARN)는 내보내지 않습니다.
 
 경로는 CloudFront(HTTPS, GET/HEAD만, HTTP는 HTTPS로 리다이렉트) → CloudFront VPC origin → **internal** ALB(HTTP 80) → 대시보드 Pod입니다. ALB 보안 그룹은 VPC의 `CloudFront-VPCOrigins-Service-SG`만 받아들이고, 그 보안 그룹이 아직 없으면 CloudFront managed prefix list(`com.amazonaws.global.cloudfront.origin-facing`)로 제한합니다. 인터넷에 직접 열린 로드 밸런서나 공인 IP, 공인 CIDR 규칙은 만들지 않습니다. 대시보드 Pod에는 IAM 역할이 없고, Role은 이 namespace의 Pod 목록과 로그 읽기만 허용합니다. 데모 노드는 hop limit 2라서 NetworkPolicy로 Pod의 egress를 DNS와 TCP 443(Kubernetes API)으로 제한해 IMDS와 Pod Identity Agent에 닿지 못하게 합니다.
 
-**추가 사전 요구 사항**: AWS Load Balancer Controller, VPC CNI 네트워크 정책 활성화(`enableNetworkPolicy`), CloudFront VPC origin을 지원하는 최신 AWS CLI v2, CloudFront·ELB·Route 53·ACM 읽기 권한. env 파일에 다음 세 값을 추가합니다.
+**추가 사전 요구 사항**: AWS Load Balancer Controller, VPC CNI 네트워크 정책 활성화(`enableNetworkPolicy`), CloudFront VPC origin을 지원하는 최신 AWS CLI v2, CloudFront(VPC origin, 배포)·ELB·EC2 보안 그룹·Route 53 레코드를 만들고 지울 권한과 ACM 인증서 조회 권한. env 파일에 다음 세 값을 추가합니다.
 
 ```bash
 export PAGE_DOMAIN=<페이지 호스트 이름>
@@ -448,7 +448,7 @@ export PAGE_ZONE_ID=<PAGE_DOMAIN의 공개 호스팅 영역 ID>
 ./demo.sh status "$RUN_ID"      # page https://<PAGE_DOMAIN>/ (Deployed)
 ```
 
-`PAGE_DOMAIN`에 이 run의 배포를 가리키지 않는 기존 레코드가 있으면 스크립트는 DNS를 건드리지 않고 멈춥니다. `page-down` 뒤에 다시 `page-up`하면, 그 사이에 주소를 조회한 리졸버가 "없음" 응답을 최대 15분(호스팅 영역 SOA의 negative TTL) 동안 캐시할 수 있습니다. 실측에서도 다시 만든 직후 이 서버의 VPC 리졸버만 NXDOMAIN을 돌려줬고, 권한 서버와 공용 리졸버는 정상이었습니다. 발표 직전에는 페이지를 다시 만들지 않습니다.
+`PAGE_DOMAIN`에 이 run의 배포를 가리키지 않는 기존 레코드가 있으면 스크립트는 DNS를 건드리지 않고 멈춥니다. `page-down` 뒤에 다시 `page-up`하면, 그 사이에 주소를 조회한 리졸버가 "없음" 응답을 최대 15분(호스팅 영역 SOA의 negative TTL) 동안 캐시할 수 있습니다. 다시 만든 직후 작업 호스트의 VPC 리졸버만 NXDOMAIN을 돌려주는 것을 관찰했고(권한 서버와 공용 리졸버는 정상), 약 10분 뒤에는 정상으로 돌아왔습니다. 발표 직전에는 페이지를 다시 만들지 않습니다.
 
 **예상 화면** (실측, run `d1124`, 단계마다 캡처로 확인): 제목 줄의 단계가 데모 진행에 따라 바뀝니다. 시작에는 "0 · 시작: 세 벌 모두 노드 역할"과 노드 (IMDS) 카드 세 장, `migrate-irsa` 뒤에는 orders-irsa 카드가 IRSA로, `migrate-podid` 뒤에는 orders-podid 카드가 Pod Identity로 바뀌고 주입된 변수 이름이 나타납니다. `revoke` 뒤에는 orders-legacy 카드만 빨간 테두리와 `denied`가 됩니다.
 

@@ -429,11 +429,11 @@ kubectl -n "$NS" get sa orders-podid -o jsonpath='{.metadata.annotations}{"\n"}'
 
 ## Public Demo Page (Optional)
 
-This brings up a read-only live page the audience can open in their own browsers. Three cards show each copy's credential source, role, S3 result, the names of the `AWS_*` variables EKS injected, and recent reads; nothing on the page changes anything. **Anyone with the URL can see it**, so it exposes nothing beyond role names.
+This brings up a read-only live page the audience can open in their own browsers. Three cards show each copy's credential source, role, S3 result, the names of the `AWS_*` variables EKS injected, and recent reads; nothing on the page changes anything. **Anyone with the URL can see it**, so it shows only role names, Pod names, injected variable names and read results, never credentials, tokens, account IDs or ARNs.
 
 The path is CloudFront (HTTPS, GET/HEAD only, HTTP redirected to HTTPS) → CloudFront VPC origin → **internal** ALB (HTTP 80) → dashboard Pod. The ALB security group admits only the VPC's `CloudFront-VPCOrigins-Service-SG`, or the CloudFront managed prefix list (`com.amazonaws.global.cloudfront.origin-facing`) if that group does not exist yet. No internet-facing load balancer, public IP or public CIDR rule is created. The dashboard Pod has no IAM role, and its Role only lists Pods and reads their logs in this namespace. Because the demo node uses hop limit 2, a NetworkPolicy limits the Pod's egress to DNS and TCP 443 (Kubernetes API), so it cannot reach IMDS or the Pod Identity Agent.
 
-**Extra prerequisites**: the AWS Load Balancer Controller, VPC CNI network policy enabled (`enableNetworkPolicy`), a current AWS CLI v2 that supports CloudFront VPC origins, and CloudFront, ELB, Route 53 and ACM permissions. Add three values to the env file:
+**Extra prerequisites**: the AWS Load Balancer Controller, VPC CNI network policy enabled (`enableNetworkPolicy`), a current AWS CLI v2 that supports CloudFront VPC origins, and permissions to create and delete CloudFront VPC origins and distributions, ELB, EC2 security groups and Route 53 records, plus read access to the ACM certificate. Add three values to the env file:
 
 ```bash
 export PAGE_DOMAIN=<page host name>
@@ -448,7 +448,7 @@ export PAGE_ZONE_ID=<public hosted zone ID for PAGE_DOMAIN>
 ./demo.sh status "$RUN_ID"      # page https://<PAGE_DOMAIN>/ (Deployed)
 ```
 
-If `PAGE_DOMAIN` already has records that do not point at this run's distribution, the script stops without touching DNS. After `page-down` followed by `page-up`, resolvers that looked the name up in between can cache the "no such name" answer for up to 15 minutes (the hosted zone's SOA negative TTL). In our run, right after recreation only this host's VPC resolver returned NXDOMAIN while the authoritative servers and a public resolver answered correctly. Do not recreate the page right before a talk.
+If `PAGE_DOMAIN` already has records that do not point at this run's distribution, the script stops without touching DNS. After `page-down` followed by `page-up`, resolvers that looked the name up in between can cache the "no such name" answer for up to 15 minutes (the hosted zone's SOA negative TTL). Right after recreation we observed only the work host's VPC resolver returning NXDOMAIN (the authoritative servers and a public resolver answered correctly); about 10 minutes later it resolved normally. Do not recreate the page right before a talk.
 
 **Expected screen** (measured, run `d1124`, checked with a screenshot at each step): the step in the title line follows the demo. At the start it reads "0 · 시작: 세 벌 모두 노드 역할" with three node (IMDS) cards; after `migrate-irsa` the orders-irsa card switches to IRSA, after `migrate-podid` the orders-podid card switches to Pod Identity and lists the injected variable names; after `revoke` only the orders-legacy card turns red with `denied`.
 

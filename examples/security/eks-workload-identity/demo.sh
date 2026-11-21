@@ -529,6 +529,10 @@ dns_change() { # UPSERT|DELETE distribution-domain
 cmd_page_up() {
   require_page_env
   preflight
+  # The dashboard's IMDS isolation is a NetworkPolicy; refuse to expose it where policies are not enforced.
+  aws eks describe-addon --cluster-name "$cluster" --addon-name vpc-cni --query addon.configurationValues --output text |
+    jq -e '(.enableNetworkPolicy // "false") | tostring == "true"' >/dev/null 2>&1 \
+    || die "vpc-cni network policy is not enabled; the public page would let its Pod reach IMDS"
   log "security group for the internal ALB (CloudFront VPC origin only)"
   local sg alb vo dist dns
   sg=$(setup_page_sg)
@@ -832,8 +836,8 @@ cmd_status() {
 
 cmd_down() {
   load_cluster
-  # A subshell keeps a page-down failure (e.g. no CloudFront permission) from aborting the core cleanup.
-  if ! ( cmd_page_down ); then
+  # A separate process keeps set -e in force inside page-down, and its failure from aborting core cleanup.
+  if ! "$script_dir/demo.sh" page-down "$run_id"; then
     printf '%swarning:%s page cleanup failed; fix it and run ./demo.sh page-down %s\n' "$Y" "$N" "$run_id" >&2
   fi
   local id
