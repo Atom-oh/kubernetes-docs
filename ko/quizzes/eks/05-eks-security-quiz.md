@@ -1,159 +1,21 @@
 # Amazon EKS 보안 퀴즈
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 11월 21일
 
 이 퀴즈는 Amazon EKS의 보안 기능, 모범 사례 및 구성에 대한 이해를 테스트합니다.
 
 ## 퀴즈 개요
-- EKS 인증 및 권한 부여
 - 네트워크 보안
 - 컨테이너 보안
 - 데이터 보안
 - 규정 준수 및 감사
 - 보안 모범 사례
 
+클러스터 접근 인증, IRSA·OIDC, Pod Identity 문제는 각 상세 페이지의 퀴즈에 있습니다: [EKS 클러스터 접근 인증 퀴즈](./05-eks-security-cluster-access-quiz.md), [IRSA와 OIDC Provider 퀴즈](./05-eks-security-irsa-oidc-quiz.md), [EKS Pod Identity 퀴즈](./05-eks-security-pod-identity-quiz.md).
+
 ## 객관식 문제
 
-### 1. IAM 사용자·역할에 대해 신원 인증과 Kubernetes 권한 부여를 올바르게 결합하는 EKS 구성은 무엇인가요?
-
-- A) IAM 관리 권한만 사용
-- B) 신원 인증 경로 없이 RBAC 규칙만 생성
-- C) IAM 클러스터 접근과 적절한 RBAC·EKS access policy 구성
-- D) API endpoint 네트워크 제한만 사용
-
-<details>
-<summary>정답 보기</summary>
-
-**정답: C) IAM 클러스터 접근과 적절한 RBAC·EKS access policy 구성**
-
-**설명:**
-
-IAM은 구성한 EKS 접근 경로에서 의도한 사람·자동화 신원을 인증합니다. Kubernetes RBAC와 EKS access policy는 Kubernetes 작업 권한을 부여하며 grant는 합산됩니다. 네트워크 제한은 별도 계층이며 권한 부여를 대체하지 않습니다. Pod의 Kubernetes 인증은 일반적으로 ServiceAccount token을 사용하고 IRSA·Pod Identity는 워크로드 AWS 자격 증명을 제공합니다.
-
-EKS cluster 서비스 역할과 개발자 역할의 목적은 다릅니다. 개발자에게 AmazonEKSClusterPolicy를 붙여도 Kubernetes 접근 권한이 생기지 않으며 DescribeCluster·ListClusters나 kubeconfig 파일만으로 workload 작업이 허용되지는 않습니다.
-
-**범위가 있는 구현:** 권한 있는 플랫폼 운영자가 승인된 기존 개발자 IAM 역할을 위해 아래 namespace·RBAC를 준비합니다. 클러스터는 access entry를 이미 지원해야 합니다. 관리자·노드 매핑을 보존하고 authentication mode migration을 검토하며 sample ConfigMap으로 aws-auth를 덮어쓰지 않습니다.
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: security-demo
-  labels:
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: v1.36
-```
-
-
-
-```bash
-set -euo pipefail
-: "${CLUSTER_NAME:?Set the verified cluster name}"
-: "${AWS_REGION:?Set its Region}"
-: "${DEVELOPER_ROLE_ARN:?Set a prepared IAM role ARN, not an STS session ARN}"
-MODE=$(aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
-  --query cluster.accessConfig.authenticationMode --output text)
-case "$MODE" in
-  API|API_AND_CONFIG_MAP) ;;
-  *) echo "Access entries are not enabled; review the migration first"; exit 1 ;;
-esac
-aws eks list-access-entries --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
-  --output json > security-access-entries.json
-python3 - "$DEVELOPER_ROLE_ARN" <<'PY'
-import json, sys
-with open("security-access-entries.json") as stream:
-    existing = json.load(stream)["accessEntries"]
-if sys.argv[1] in existing:
-    raise SystemExit("Entry already exists; inspect its groups/policies instead of overwriting")
-PY
-aws eks create-access-entry --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
-  --principal-arn "$DEVELOPER_ROLE_ARN" --type STANDARD \
-  --kubernetes-groups security-demo-developers
-```
-
-
-
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: developer
-  namespace: security-demo
-rules:
-- apiGroups:
-  - ''
-  resources:
-  - pods
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-- apiGroups:
-  - batch
-  resources:
-  - jobs
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: developer
-  namespace: security-demo
-subjects:
-- kind: Group
-  name: security-demo-developers
-  apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: Role
-  name: developer
-  apiGroup: rbac.authorization.k8s.io
-```
-
-Access entry의 그룹 이름과 RoleBinding subject가 일치해야 합니다. 이 Role은 security-demo 안에서 표시한 작업을 허용하지만 기존 다른 grant가 접근 범위를 넓힐 수 있습니다. Deployment·Job 생성자는 namespace의 Secret·PVC·ServiceAccount를 간접적으로 사용할 수 있으므로 Secret 직접 읽기 규칙이 없다는 사실만으로 tenant 경계가 보장되지는 않습니다. Tenant를 분리하고 admission·소유권 제어로 workload 신원·리소스 사용을 제한합니다.
-
-별도 검토한 viewer는 namespace 범위 AmazonEKSViewPolicy association을 사용할 수도 있습니다. 추가 전에 기존 access policy를 확인하며 이 grant가 더 넓은 RBAC·다른 access policy 권한을 취소하지는 않습니다. `eks:namespaces`는 일반 kubectl 요청이 아닌 access policy association 요청을 필터링합니다.
-
-**실제 로그인 검증:** 호출자는 cluster 조회와 승인된 역할 assume 권한이 있어야 합니다. 다음은 기본 context를 대체하지 않고 임시 kubeconfig를 만듭니다:
-
-```bash
-set -euo pipefail
-umask 077
-: "${CLUSTER_NAME:?Set the reviewed cluster name}"
-: "${AWS_REGION:?Set the cluster Region}"
-: "${DEVELOPER_ROLE_ARN:?Set the intended IAM role ARN}"
-review_dir=$(mktemp -d "${TMPDIR:-/tmp}/eks-login-check.XXXXXXXX")
-trap 'rm -rf -- "$review_dir"' EXIT
-aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION" \
-  --role-arn "$DEVELOPER_ROLE_ARN" --kubeconfig "$review_dir/config"
-kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n security-demo
-kubectl --kubeconfig "$review_dir/config" auth can-i create jobs -n security-demo
-kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n another-team
-```
-
-의도한 grant와 결과를 비교하고 예상하지 못한 다른 namespace 권한을 조사합니다. `--as`는 impersonation·RBAC를 검사하며 IAM access policy 경로의 동작 증명이 아닙니다. 이 퀴즈에서 실제 IAM 로그인·Kubernetes 권한 시험은 실행하지 않았으며 로컬 증거는 schema·shell 검사와 mocked access entry 흐름입니다.
-
-참고: [EKS access entry](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html), [EKS access policy](https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html), [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
-
-</details>
-
-### 2. 정책 시행을 지원하는 EKS 네트워크에서 label 기반 Pod 트래픽 규칙을 표현하는 Kubernetes 기능은 무엇인가요?
+### 1. 정책 시행을 지원하는 EKS 네트워크에서 label 기반 Pod 트래픽 규칙을 표현하는 Kubernetes 기능은 무엇인가요?
 
 - A) 인스턴스 security group만 사용
 - B) 시행 가능한 네트워크 구현과 NetworkPolicy resource
@@ -383,7 +245,7 @@ spec:
 
 </details>
 
-### 3. EKS 컨테이너 이미지 보안에 상호 보완적인 제어를 결합하는 방법은 무엇인가요?
+### 2. EKS 컨테이너 이미지 보안에 상호 보완적인 제어를 결합하는 방법은 무엇인가요?
 
 - A) 수동 이미지 검사에만 의존
 - B) 모든 공식 이미지에 취약점이 없다고 가정
@@ -553,7 +415,7 @@ spec:
 
 </details>
 
-### 4. EKS에서 일관된 현재 Pod 보안 기준을 적용하는 방법은 무엇인가요?
+### 3. EKS에서 일관된 현재 Pod 보안 기준을 적용하는 방법은 무엇인가요?
 
 - A) privileged mode만 비활성화
 - B) PSA로 버전이 있는 PSS profile을 시행하고 필요한 admission policy 검토
@@ -672,7 +534,7 @@ Manifest·schema와 실제 Kyverno CLI 사례 6개로 생략·false, 일반·ini
 
 </details>
 
-### 5. EKS 워크로드에 상호 보완적인 보안 증거를 제공하는 접근 방식은 무엇인가요?
+### 4. EKS 워크로드에 상호 보완적인 보안 증거를 제공하는 접근 방식은 무엇인가요?
 
 - A) 가끔 수행하는 수동 검토만 사용
 - B) AWS Config 검사만 사용
@@ -799,7 +661,7 @@ Query에 의존하기 전에 표본 record의 필드·stream 이름을 확인합
 
 </details>
 
-### 6. 중앙에서 통제하는 AWS 접근·수명 주기 관리가 필요한 앱 credential에 적합한 접근 방식은 무엇인가요?
+### 5. 중앙에서 통제하는 AWS 접근·수명 주기 관리가 필요한 앱 credential에 적합한 접근 방식은 무엇인가요?
 
 - A) 접근·rotation·reload 계획 없이 값 저장
 - B) 환경 변수를 암호화 수단으로 간주

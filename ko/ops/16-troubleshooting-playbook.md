@@ -430,7 +430,7 @@ aws iam get-role --role-name <role> --query 'Role.AssumeRolePolicyDocument'
 | env는 정상, 특정 API만 `AccessDenied` | 권한 정책, 리소스 정책, SCP, boundary, session/VPC endpoint 정책 등의 거부 | 사용 주체와 요청 리소스를 확인하고 명시적 Deny까지 추적. CloudTrail data event는 수집 설정이 필요할 수 있음 |
 | Pod Identity env 있는데 SDK가 `Unable to locate credentials` | SDK가 너무 오래되어 컨테이너 자격 증명 공급자(`FULL_URI`)를 지원 안 함 | SDK 업그레이드(지원 최소 버전은 EKS 문서 참고) |
 
-IRSA와 Pod Identity의 동작 원리·설정 방법은 [EKS 보안 모범 사례](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts)와 [EKS 보안](../eks/05-eks-security.md#eks-pod-identity)에, 토큰 만료·webhook 이슈는 [EKS 고급 디버깅: 컨트롤 플레인 디버깅](../eks/11-eks-advanced-debugging.md#2-컨트롤-플레인-디버깅)에 있습니다.
+IRSA와 Pod Identity의 동작 원리·설정 방법은 [EKS 보안 모범 사례](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts)와 [EKS Pod Identity](../eks/05-eks-security-pod-identity.md)에, 토큰 만료·webhook 이슈는 [EKS 고급 디버깅: 컨트롤 플레인 디버깅](../eks/11-eks-advanced-debugging.md#2-컨트롤-플레인-디버깅)에 있습니다.
 
 <span id="9-eks-enivpc-cni-ip-고갈"></span>
 

@@ -430,7 +430,7 @@ aws iam get-role --role-name <role> --query 'Role.AssumeRolePolicyDocument'
 | Env is fine, only a specific API is `AccessDenied` | Denial from identity/resource policies, SCPs, boundaries, session or VPC endpoint policies | Check caller/resource and explicit Deny; relevant CloudTrail data events may require logging configuration |
 | Pod Identity env present but the SDK says `Unable to locate credentials` | SDK too old to support the container credential provider (`FULL_URI`) | Upgrade the SDK (minimum supported versions are listed in the EKS docs) |
 
-How IRSA and Pod Identity work and how to set them up is in [EKS Security Best Practices](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts) and [EKS Security](../eks/05-eks-security.md#eks-pod-identity); token expiry and webhook issues are in [EKS Advanced Debugging: Control Plane Debugging](../eks/11-eks-advanced-debugging.md#2-control-plane-debugging).
+How IRSA and Pod Identity work and how to set them up is in [EKS Security Best Practices](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts) and [EKS Pod Identity](../eks/05-eks-security-pod-identity.md); token expiry and webhook issues are in [EKS Advanced Debugging: Control Plane Debugging](../eks/11-eks-advanced-debugging.md#2-control-plane-debugging).
 
 <span id="9-eks-enivpc-cni-ip-exhaustion"></span>
 
