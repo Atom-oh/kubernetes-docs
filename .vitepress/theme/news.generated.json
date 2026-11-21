@@ -225,6 +225,77 @@
           "category": "preview"
         },
         {
+          "id": "f7b1683bafae8e9d",
+          "period": "2026-W45",
+          "week": "2026-W45",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [
+            "https://github.com/kubernetes/kubernetes/releases/tag/v1.37.2"
+          ],
+          "title": "Kubernetes v1.37.2/v1.36.6/v1.35.10/v1.34.13 패치 릴리스",
+          "summary": "Kubernetes v1.37.2/v1.36.6/v1.35.10/v1.34.13 패치 릴리스(유출된 eMudhra 중간 CA 인증서를 신뢰하지 않는 Go 1.26.10, v1.34.13은 2026-10-27 지원 종료(EOL)된 1.34 라인의 마지막 패치) 반영",
+          "topic": "kubernetes",
+          "category": "release"
+        },
+        {
+          "id": "646aee7030b83529",
+          "period": "2026-W45",
+          "week": "2026-W45",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [
+            "https://github.com/istio/istio/releases/tag/1.32.0-rc.0"
+          ],
+          "title": "Istio 1.32.0-rc.0/rc.1 release candidate 공개",
+          "summary": "Istio 1.32.0-rc.0/rc.1 release candidate 공개(문서에는 이후 GA 검토로 1.32.0 RC 과정이 이미 반영됨)",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "07c8e48a610bca51",
+          "period": "2026-W45",
+          "week": "2026-W45",
+          "documents": [
+            "service-mesh/linkerd/README.md"
+          ],
+          "sources": [
+            "https://github.com/linkerd/linkerd2/releases/tag/edge-26.10.2"
+          ],
+          "title": "Linkerd edge-26.10.2 릴리스",
+          "summary": "Linkerd edge-26.10.2 릴리스(GOAWAY 방지를 위한 policy 컨트롤러 gRPC HTTP/2 연결 윈도우 확대, tap API 서버 클라이언트 TLS 수정, proxy v2.372.0, Go 1.26.9, proxy-init v2.4.11·CNI 플러그인 v1.7.1) 반영",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "84af9147e024faac",
+          "period": "2026-W45",
+          "week": "2026-W45",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/10/27/announcing-workload-conformance-wg/"
+          ],
+          "title": "Workload Conformance Working Group 발족",
+          "summary": "Workload Conformance Working Group 발족(Kubernetes 워크로드의 런타임 동작에 대한 공통 표준 수립), Kubernetes 블로그",
+          "topic": "kubernetes",
+          "category": "guide"
+        },
+        {
+          "id": "3a409c7ee6a1920d",
+          "period": "2026-W45",
+          "week": "2026-W45",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/10/29/sig-arch-ai-conformance-2026/"
+          ],
+          "title": "AI Conformance가 Working Group에서 SIG Architecture 하위 프로젝트로 이동, Kubernetes 블로그 스포트라이트",
+          "summary": "AI Conformance가 Working Group에서 SIG Architecture 하위 프로젝트로 이동, Kubernetes 블로그 스포트라이트",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
           "id": "5fad87439987f70e",
           "period": "2026-W44",
           "week": "2026-W44",
@@ -1696,7 +1767,7 @@
           "category": "breaking"
         }
       ],
-      "updated": "2026-11-19"
+      "updated": "2026-11-21"
     },
     "en": {
       "entries": [
@@ -1920,6 +1991,77 @@
           "summary": "applied the Kubernetes v1.38.0-beta.0 pre-release (first v1.38 beta; GA targeted for 2026-12-16)",
           "topic": "kubernetes",
           "category": "preview"
+        },
+        {
+          "id": "f7b1683bafae8e9d",
+          "period": "2026-W45",
+          "week": "2026-W45",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [
+            "https://github.com/kubernetes/kubernetes/releases/tag/v1.37.2"
+          ],
+          "title": "Kubernetes v1.37.2/v1.36.6/v1.35.10/v1.34.13 patch releases",
+          "summary": "applied the Kubernetes v1.37.2/v1.36.6/v1.35.10/v1.34.13 patch releases (Go 1.26.10, which distrusts the compromised eMudhra intermediate CA certificates; v1.34.13 is the final patch for the 1.34 line, which reached EOL on 2026-10-27)",
+          "topic": "kubernetes",
+          "category": "release"
+        },
+        {
+          "id": "646aee7030b83529",
+          "period": "2026-W45",
+          "week": "2026-W45",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [
+            "https://github.com/istio/istio/releases/tag/1.32.0-rc.0"
+          ],
+          "title": "Istio 1.32.0-rc.0/rc.1 release candidates published",
+          "summary": "Istio 1.32.0-rc.0/rc.1 release candidates published (the doc already covers the 1.32.0 RC cycle through its later GA review)",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "07c8e48a610bca51",
+          "period": "2026-W45",
+          "week": "2026-W45",
+          "documents": [
+            "service-mesh/linkerd/README.md"
+          ],
+          "sources": [
+            "https://github.com/linkerd/linkerd2/releases/tag/edge-26.10.2"
+          ],
+          "title": "Linkerd edge-26.10.2 release",
+          "summary": "applied the Linkerd edge-26.10.2 release (policy-controller gRPC HTTP/2 connection window raised to avoid GOAWAYs, tap API server client TLS fix, proxy v2.372.0, Go 1.26.9, proxy-init v2.4.11/CNI plugin v1.7.1)",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "84af9147e024faac",
+          "period": "2026-W45",
+          "week": "2026-W45",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/10/27/announcing-workload-conformance-wg/"
+          ],
+          "title": "Announcing the Workload Conformance Working Group",
+          "summary": "Announcing the Workload Conformance Working Group (a shared standard for how workloads behave at runtime on Kubernetes), Kubernetes blog",
+          "topic": "kubernetes",
+          "category": "guide"
+        },
+        {
+          "id": "3a409c7ee6a1920d",
+          "period": "2026-W45",
+          "week": "2026-W45",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/10/29/sig-arch-ai-conformance-2026/"
+          ],
+          "title": "AI Conformance moves from a Working Group to a SIG Architecture subproject, Kubernetes blog spotlight",
+          "summary": "AI Conformance moves from a Working Group to a SIG Architecture subproject, Kubernetes blog spotlight",
+          "topic": "ai",
+          "category": "guide"
         },
         {
           "id": "5fad87439987f70e",
@@ -3393,7 +3535,7 @@
           "category": "breaking"
         }
       ],
-      "updated": "2026-11-19"
+      "updated": "2026-11-21"
     }
   }
 }
