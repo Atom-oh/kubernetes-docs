@@ -15,7 +15,7 @@
 7. [モニタリングとログ記録のベストプラクティス](#monitoring-and-logging-best-practices)
 8. [トラブルシューティングとデバッグ](#troubleshooting-and-debugging)
 
-## モニタリングとログ記録の概要
+## モニタリングとログ記録の概要 {#monitoring-and-logging-overview}
 
 ### モニタリングとログ記録の重要性
 
@@ -52,7 +52,7 @@ AWS は、マネージドコントロールプレーンのログを CloudWatch L
 6. **自動化する**: モニタリングとログ記録のプロセスを可能な限り自動化します
 7. **定期的に見直す**: モニタリングとログ記録の戦略を定期的に見直し、改善します
 
-## EKS コントロールプレーンのログ記録
+## EKS コントロールプレーンのログ記録 {#eks-control-plane-logging}
 
 EKS は、選択したマネージドコントロールプレーンのログタイプを CloudWatch Logs にエクスポートします。ノード側のコレクターがマネージドコントロールプレーンのファイルシステムをスクレイプすることはありません。ログ配信はベストエフォートです。アクセス権と保持期間を設定し、ログ欠落の検出を行ったうえで、実際にログが到着していることを確認してください。
 
@@ -202,7 +202,7 @@ CloudWatch Logs の送信先では Logs Insights クエリを実行できます�
 
 参照先: [EKS コントロールプレーンのログ記録](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)、[監査ポリシーとクエリ例](https://docs.aws.amazon.com/eks/latest/best-practices/auditing-and-logging.html)、[capability controller のログ](https://docs.aws.amazon.com/eks/latest/userguide/capabilities-controller-logs.html)。
 
-## コンテナのログ記録
+## コンテナのログ記録 {#container-logging}
 
 コンテナランタイムは、stdout/stderr をノードの CRI ログファイルに書き込みます。kubelet はローテーションを管理し、Pod のログアクセスを提供します。コレクターはファイルを追跡して、選択したバックエンドにレコードを転送します。JSON 形式のアプリケーションメッセージも CRI ラッパーの中にあるため、コンテナログの行全体を Docker JSON として解析してはいけません。
 
@@ -444,7 +444,7 @@ fields @timestamp, kubernetes.namespace_name, kubernetes.pod_name, data.level, l
 
 参照先: [AWS image release 3.4.14](https://github.com/aws/aws-for-fluent-bit/releases/tag/v3.4.14)、[CloudWatch output](https://docs.fluentbit.io/manual/data-pipeline/outputs/cloudwatch)、[Fluent Bit buffering](https://docs.fluentbit.io/manual/data-pipeline/buffering)、[Promtail lifecycle](https://grafana.com/docs/loki/latest/send-data/promtail/)。
 
-## クラスターのモニタリング
+## クラスターのモニタリング {#cluster-monitoring}
 
 EKS クラスターの状態、パフォーマンス、リソース使用量を追跡するには、効果的なクラスターのモニタリングが不可欠です。このセクションでは、EKS クラスターをモニタリングするためのさまざまなツールと手法について説明します。
 
@@ -1150,7 +1150,7 @@ Grafana でカスタムダッシュボードを作成し、アプリケーショ
 6. パネルのタイトル、説明、可視化の種類を設定します
 7. 「Save」をクリックします
 
-## アラートとイベント管理
+## アラートとイベント管理 {#alerting-and-event-management}
 
 EKS クラスターの問題を迅速に検出し、対応するには、効果的なアラートとイベント管理が不可欠です。このセクションでは、EKS クラスターのアラートとイベントを管理するためのさまざまなツールと手法について説明します。
 
@@ -1702,7 +1702,7 @@ PagerDuty などのツールを使って、アラートのエスカレーショ�
 3. **アラートのスロットリング**: 繰り返し発生するアラートの頻度を制限します
 4. **アラートの時間帯**: 業務上重要でないアラートは営業時間内のみ配信します
 
-## ログ分析と可視化
+## ログ分析と可視化 {#log-analysis-and-visualization}
 
 ログ分析と可視化は、EKS クラスターで発生する問題の診断と解決に重要な役割を果たします。このセクションでは、EKS クラスターのログを分析、可視化するさまざまなツールと手法について説明します。
 
@@ -2089,7 +2089,7 @@ versioning が有効な bucket では、current version の期限切れによっ
 
 この監査では保持ポリシーもオブジェクト lifecycle action も適用していません。参照先: [lifecycle replacement API](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html)、[移行の制約](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html)、[期限切れ／versioning／最低期間](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-expire-general-considerations.html)。
 
-## モニタリングとログ記録のベストプラクティス
+## モニタリングとログ記録のベストプラクティス {#monitoring-and-logging-best-practices}
 
 EKS クラスターでモニタリングとログ記録を効果的に実装するためのベストプラクティスを見ていきましょう。
 
@@ -2263,7 +2263,7 @@ route:
 2. **ウォームストレージ**: アクセス頻度が低いログ
 3. **コールドストレージ**: アーカイブされたログ
 
-## トラブルシューティングとデバッグ
+## トラブルシューティングとデバッグ {#troubleshooting-and-debugging}
 
 EKS クラスターの問題をトラブルシューティング、デバッグするためのさまざまな手法を見ていきましょう。
 

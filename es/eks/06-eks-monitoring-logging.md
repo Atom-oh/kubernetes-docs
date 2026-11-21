@@ -15,7 +15,7 @@ La supervisión y el registro eficaces son esenciales para mantener la fiabilida
 7. [Prácticas recomendadas de supervisión y registro](#monitoring-and-logging-best-practices)
 8. [Solución de problemas y depuración](#troubleshooting-and-debugging)
 
-## Descripción general de la supervisión y el registro
+## Descripción general de la supervisión y el registro {#monitoring-and-logging-overview}
 
 ### Importancia de la supervisión y el registro
 
@@ -52,7 +52,7 @@ Sigue estos pasos para desarrollar una estrategia eficaz de supervisión y regis
 6. **Automatizar**: automatiza los procesos de supervisión y registro tanto como sea posible
 7. **Revisar periódicamente**: revisa y mejora periódicamente la estrategia de supervisión y registro
 
-## Registro del plano de control de EKS
+## Registro del plano de control de EKS {#eks-control-plane-logging}
 
 EKS exporta a CloudWatch Logs los registros seleccionados del plano de control administrado. Un recopilador del lado del nodo no examina el sistema de archivos del plano de control administrado. La entrega de registros se realiza según el mejor esfuerzo; configura el acceso y la retención, y detecta los registros faltantes, para luego verificar que efectivamente lleguen.
 
@@ -202,7 +202,7 @@ Cada origen de entrega que se agrega pone la capacidad en estado `UPDATING` dura
 
 Referencias: [registro del plano de control de EKS](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [política de auditoría y ejemplos de consultas](https://docs.aws.amazon.com/eks/latest/best-practices/auditing-and-logging.html), [registros de controladores de capacidades](https://docs.aws.amazon.com/eks/latest/userguide/capabilities-controller-logs.html).
 
-## Registro de contenedores
+## Registro de contenedores {#container-logging}
 
 Los entornos de ejecución de contenedores escriben stdout/stderr en los archivos de registro CRI del nodo. Kubelet administra la rotación y proporciona acceso a los registros de los Pod; un recopilador sigue los archivos y reenvía los registros al backend seleccionado. Un mensaje JSON de la aplicación sigue estando dentro del contenedor CRI y no debe analizarse como si toda la línea de registro del contenedor fuera JSON de Docker.
 
@@ -444,7 +444,7 @@ La validación abarcó los metadatos publicados del chart/imagen, las conexiones
 
 Referencias: [versión 3.4.14 de la imagen de AWS](https://github.com/aws/aws-for-fluent-bit/releases/tag/v3.4.14), [salida de CloudWatch](https://docs.fluentbit.io/manual/data-pipeline/outputs/cloudwatch), [almacenamiento en búfer de Fluent Bit](https://docs.fluentbit.io/manual/data-pipeline/buffering), [ciclo de vida de Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/).
 
-## Supervisión del clúster
+## Supervisión del clúster {#cluster-monitoring}
 
 La supervisión eficaz del clúster es esencial para hacer seguimiento del estado, el rendimiento y el uso de recursos de tu clúster de EKS. En esta sección se exploran diversas herramientas y técnicas para supervisar clústeres de EKS.
 
@@ -1150,7 +1150,7 @@ Crea paneles personalizados en Grafana para visualizar las métricas de la aplic
 6. Configura el título y la descripción del panel, y el tipo de visualización
 7. Haz clic en "Save"
 
-## Alertas y gestión de eventos
+## Alertas y gestión de eventos {#alerting-and-event-management}
 
 La gestión eficaz de alertas y eventos es esencial para detectar y responder rápidamente a los problemas del clúster de EKS. En esta sección se exploran diversas herramientas y técnicas para administrar alertas y eventos en clústeres de EKS.
 
@@ -1702,7 +1702,7 @@ Implementa estrategias para reducir la fatiga por alertas:
 3. **Limitación de frecuencia de alertas**: limitar la frecuencia de las alertas repetidas
 4. **Ventanas horarias de alertas**: entregar alertas que no sean críticas para el negocio solo durante el horario laboral
 
-## Análisis y visualización de registros
+## Análisis y visualización de registros {#log-analysis-and-visualization}
 
 El análisis y la visualización de registros desempeñan un papel importante en el diagnóstico y la resolución de problemas del clúster de EKS. En esta sección se exploran diversas herramientas y técnicas para analizar y visualizar registros de clústeres de EKS.
 
@@ -2091,7 +2091,7 @@ En un bucket con versionado habilitado, la caducidad de la versión actual norma
 
 Durante esta auditoría no se aplicó ninguna política de retención ni acción de ciclo de vida de objetos. Referencias: [API de reemplazo del ciclo de vida](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html), [restricciones de transición](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html), [caducidad/versionado/duración mínima](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-expire-general-considerations.html).
 
-## Prácticas recomendadas de supervisión y registro
+## Prácticas recomendadas de supervisión y registro {#monitoring-and-logging-best-practices}
 
 Exploremos las prácticas recomendadas para implementar eficazmente la supervisión y el registro en clústeres de EKS.
 
@@ -2265,7 +2265,7 @@ Implementa niveles de almacenamiento rentables:
 2. **Almacenamiento templado**: registros a los que se accede con menos frecuencia
 3. **Almacenamiento frío**: registros archivados
 
-## Solución de problemas y depuración
+## Solución de problemas y depuración {#troubleshooting-and-debugging}
 
 Exploremos diversas técnicas para solucionar problemas y depurar problemas en clústeres de EKS.
 

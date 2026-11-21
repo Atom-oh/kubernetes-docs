@@ -1,84 +1,84 @@
 # Prometheus
 
-> **最終更新**: September 14, 2026. 以下ではローカルでの設定／クエリ検証について説明します。クラスターやクラウドへのデプロイは実施していません。
+> **最終更新日**: 2026年11月19日。ローカルでの設定／クエリ確認については以下に記載しています。クラスターまたはクラウドへのデプロイは実施していません。
 
 ## 目次
 
 - [概要とバージョン](#introduction-and-versions)
 - [アーキテクチャとコンポーネント](#architecture-and-components)
 - [PromQL](#promql)
-- [ディスカバリと Operator セレクター](#discovery-and-operator-selectors)
-- [kube-prometheus-stack のインストール](#kube-prometheus-stack-installation)
-- [ルールと Alertmanager](#rules-and-alertmanager)
-- [Remote write と AMP](#remote-write-and-amp)
+- [ディスカバリーとOperatorセレクター](#discovery-and-operator-selectors)
+- [kube-prometheus-stackのインストール](#kube-prometheus-stack-installation)
+- [ルールとAlertmanager](#rules-and-alertmanager)
+- [Remote writeとAMP](#remote-write-and-amp)
 - [パフォーマンス、HA、トラブルシューティング](#performance-ha-and-troubleshooting)
 
-<span id="introduction-and-versions"></span>
+## 概要とバージョン {#introduction-and-versions}
 
-## 概要とバージョン
+Prometheusは、SoundCloudで開発されたCNCF監視ツールキットです。数値時系列データを収集し、ローカルTSDBに保存し、PromQLと記録／アラートルールを評価して、Alertmanagerにアラートを送信します。通常の収集にはHTTPスクレイピングを使用します。Remote writeやオプションのバッチ統合により、ほかのデータ配信経路も追加できます。イベントログ、トレースストア、またはリクエストごとの厳密な課金台帳ではありません。
 
-Prometheus は、もともと SoundCloud で開発された CNCF の監視ツールキットです。数値の時系列を収集してローカル TSDB に保存し、PromQL と recording/alert ルールを評価して、アラートを Alertmanager に送信します。通常の収集は HTTP スクレイピングを使用し、remote write やオプションのバッチ連携が別の配信経路を追加します。イベントログ、トレースストア、リクエスト単位の正確な課金台帳ではありません。
+ローカルのデータ保持期間は設定可能で、30日を超える期間にもできます。別のストアを使用するかどうかは、保持期間、容量、共有クエリ、障害／復旧要件に応じて決定します。
 
-ローカルの保持期間は設定可能で、30 日を超えることもできます。別のストアを使うかどうかは、保持期間、容量、共有クエリ、障害／復旧の要件によって決まる選択です。
-
-この章では、2026 年 9 月 6 日にリリースされた公式の **kube-prometheus-stack 90.0.0** パッケージを使用します。そのコンポーネントバージョンは一つのまとまりとして確認しました。
+この章では、2026年9月6日にリリースされた公式の**kube-prometheus-stack 90.0.0**パッケージを使用します。コンポーネントのバージョンは、検証済みの組み合わせとして確認しました。
 
 | コンポーネント | パッケージのデフォルト |
 |---|---|
 | Prometheus Operator | 0.93.1 |
-| Prometheus | 3.14.0, distroless イメージ |
+| Prometheus | 3.14.0、distrolessイメージ |
 | Alertmanager | 0.34.0 |
-| Grafana | 13.2.1, サブチャート 13.2.2 |
-| kube-state-metrics | 2.20.0, サブチャート 8.4.2 |
-| node-exporter | 1.12.1, サブチャート 4.56.3 |
+| Grafana | 13.2.1、サブチャート13.2.2 |
+| kube-state-metrics | 2.20.0、サブチャート8.4.2 |
+| node-exporter | 1.12.1、サブチャート4.56.3 |
 
-チャートの `kubeVersion` ガードは `>=1.25.0-0` です。これは完全な互換性マトリクスではなく、Kubernetes 1.25 以降のすべてのバージョンが引き続きサポートされるという意味でもありません。実際のクラスター、コンポーネントのサポート状況、admission ポリシー、ストレージドライバーを確認してください。
+Chartの`kubeVersion`ガードは`>=1.25.0-0`です。これは完全な互換性マトリックスではなく、Kubernetes 1.25以降のすべてのバージョンが引き続きサポートされるという意味でもありません。実際のクラスター、コンポーネントのサポート状況、Admissionポリシー、ストレージドライバーを確認してください。
 
-このプロファイルは **Linux EC2 ベースの EKS ワーカー** を対象としています。Fargate には DaemonSet がありません。Auto Mode、Hybrid Nodes、Windows では、プラットフォーム固有のコレクター／ストレージ確認が必要です。
+このプロファイルは、**Linux EC2を基盤とするEKSワーカー**を対象としています。FargateにはDaemonSetがありません。Auto Mode、Hybrid Nodes、Windowsでは、プラットフォーム固有のコレクター／ストレージ確認が必要です。
 
-### 2026 年 9 月の更新
+### 2026年11月の更新
 
-[2026 年 9 月 11 日の Kubernetes ブログ](https://kubernetes.io/blog/2026/09/11/kubernetes-v1-37-native-histograms-beta/) と [Prometheus のネイティブヒストグラム](https://prometheus.io/docs/specs/native_histograms/) によると、Kubernetes コンポーネントメトリクス（KEP-5808）向けの Prometheus native histogram サポートは Beta に昇格し、v1.37 ではデフォルトで有効になります。高解像度でカーディナリティの低いバケットが固定の `le` バケットに置き換わることで、レイテンシメトリクスの精度が向上し、ストレージとスクレイプのオーバーヘッドが削減されます。この機能を利用するには、スクレイプする Prometheus を native histogram を取り込むように設定する必要があります。また、既存のクラシックヒストグラムのクエリやダッシュボードは別途見直してください。
+- [Prometheus 3.16.0](https://github.com/prometheus/prometheus/releases/tag/v3.16.0)は2026年11月4日にリリースされました。主な内容は、smoothedおよびanchored（extended-range）ベクトルセレクターの安定化と常時有効化、`--enable-feature=query-cost`による実験的なPromQLクエリコスト推定と設定可能な実行制限、実験的関数フラグによる実験的な`integral()`関数、Agentモードでの`metadata-wal-records`のサポートです。この章の例は3.14.0で検証しており、3.16では再実行していません。
 
-### 2026 年 7 月の更新履歴
+### 2026年9月の更新
 
-- [7 月 14 日の Kubernetes exporter に関する記事](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/) では、アプリケーションの計装とカスタム exporter について説明されています。HPA で利用するには、適切な metrics API／アダプターも必要です。スクレイピングだけでは任意のメトリクスが HPA に接続されるわけではありません。
-- [7 月 21 日の AMP のアナウンス](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/) では、ワークスペースあたり最大 15 億のアクティブ系列と 200,000 の recording/alerting ルールが説明されています。これらはアナウンスされたスケーリング上限であり、自動的に付与されるデフォルトクォータや承認の保証ではありません。対象のワークスペース／アカウントの現在のクォータを確認してください。
+- [9月11日のKubernetesブログ記事](https://kubernetes.io/blog/2026/09/11/kubernetes-v1-37-native-histograms-beta/)によると、Kubernetesコンポーネントメトリクス向けの[Prometheusネイティブヒストグラム](https://prometheus.io/docs/specs/native_histograms/)サポート（KEP-5808）はBetaに昇格し、v1.37でデフォルト有効になりました。高解像度でカーディナリティの低いバケットが固定の`le`バケットに置き換わり、ストレージとスクレイプのオーバーヘッドを減らしながら、レイテンシーメトリクスの精度を高めます。この機能を活用するには、スクレイピングを行うPrometheus側でもネイティブヒストグラムを取り込む設定が必要です。また、既存のクラシックヒストグラム向けクエリ／ダッシュボードは別途見直す必要があります。
 
-<span id="architecture-and-components"></span>
+### 2026年7月の過去の更新
 
-## アーキテクチャとコンポーネント
+- [7月14日のKubernetesエクスポーター記事](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/)では、アプリケーションのインストルメンテーションとカスタムエクスポーターについて説明しています。HPAで使用するには、適切なメトリクスAPI／アダプターも必要です。スクレイピングだけでは、任意のメトリクスがHPAに接続されるわけではありません。
+- [7月21日のAMP発表](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/)では、ワークスペースあたり最大15億のアクティブシリーズと20万件の記録／アラートルールについて説明しています。これは発表されたスケーリング上限であり、デフォルトのクォータが自動的に付与されることや、承認が保証されることを意味しません。対象のワークスペース／アカウントについて、現在のクォータを確認してください。
 
-![Prometheus discovery, scrape, storage/query and rule-to-Alertmanager flow.](../../.gitbook/assets/en-observability-metrics-01-prometheus-0.png)
+## アーキテクチャとコンポーネント {#architecture-and-components}
 
-[インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-01-prometheus-0.html)
+![Prometheusのディスカバリー、スクレイプ、ストレージ／クエリ、ルールからAlertmanagerへのフロー。](../../.gitbook/assets/en-observability-metrics-01-prometheus-0.png)
 
-Pushgateway の分岐は、適切なサービスレベルのバッチジョブに対するオプションであり、すべての短命な Pod のためのものではありません。グループにはライフサイクル管理が必要です。[メトリクス概要](README.md)を参照してください。`up` はスクレイピングの健全性を示すもので、アプリケーションの可用性ではありません。
+[インタラクティブな図](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-01-prometheus-0.html)
+
+Pushgatewayへの経路は、適切なサービスレベルのバッチジョブ向けのオプションであり、すべての短命なPodに適用するものではありません。グループにはライフサイクル管理が必要です。[メトリクスの概要](README.md)を参照してください。`up`が示すのはスクレイプの正常性であり、アプリケーションの可用性ではありません。
 
 | コンポーネント | 役割と前提条件 |
 |---|---|
-| Prometheus | ディスカバリ、スクレイピング、ローカル TSDB、クエリ API、ルール評価 |
-| kube-state-metrics | API オブジェクトの状態。ServiceAccount、RBAC、スクレイプエンドポイントが必要 |
-| node-exporter | ホスト OS のメトリクス。ホストアクセス／マウントとプラットフォームサポートの確認が必要 |
-| kubelet/cAdvisor | コンテナの測定値。サービング証明書、認可、エンドポイントの可用性を検証 |
-| metrics-server / アダプター | オートスケーリング用のリソース／カスタムメトリクス API。履歴用 TSDB ストレージとは別物 |
-| Alertmanager | アラートのグループ化、重複排除、抑止、設定済みレシーバーへのルーティング |
-| Grafana | データソースのクエリ／可視化。認証とデータベース／ストレージには個別の設定が必要 |
+| Prometheus | ディスカバリー、スクレイピング、ローカルTSDB、クエリAPI、ルール評価 |
+| kube-state-metrics | APIオブジェクトの状態。ServiceAccount、RBAC、スクレイプエンドポイントが必要 |
+| node-exporter | ホストOSメトリクス。ホストへのアクセス／マウントとプラットフォームのサポートを確認する必要あり |
+| kubelet/cAdvisor | コンテナの測定値。サービング証明書、認可、エンドポイントの可用性を確認 |
+| metrics-server / adapters | オートスケーリング用のリソース／カスタムメトリクスAPI。履歴TSDBストレージとは別 |
+| Alertmanager | アラートをグループ化、重複排除、抑制し、設定済みのレシーバーにルーティング |
+| Grafana | データソースをクエリ／可視化。認証とデータベース／ストレージには個別の設定が必要 |
 
-チャートは exporter と補助リソースを提供します。不完全な単体の Deployment/DaemonSet スニペットは、不足している ServiceAccount、RBAC、Service を補うものではなく、監視スタックを重複して作成すべきではありません。
+このChartはエクスポーターと関連リソースを提供します。不完全な単独のDeployment／DaemonSetスニペットでは不足しているServiceAccount、RBAC、Serviceが提供されないため、監視スタックを重複して作成しないでください。
 
-### TSDB と設定のレイヤー
+### TSDBと設定レイヤー
 
-直近のサンプルは head/WAL を使用します。コンパクション済みブロックには chunk、index、メタデータが含まれます。tombstone は削除された範囲を示します。WAL のリプレイはクラッシュ復旧に役立ちますが、バックアップの代わりにはならず、ボリューム消失に耐えることも、すべてのイベントの復旧を保証することもできません。
+直近のサンプルはhead／WALを使用し、圧縮済みブロックにはチャンク、インデックス、メタデータが含まれます。Tombstoneは削除済みの範囲を示します。WALの再生はクラッシュ復旧に役立ちますが、バックアップの代わりにはならず、ボリュームの喪失に耐えられるわけでも、すべてのイベントの復旧を保証するわけでもありません。
 
-| レイヤー | 正しい設定項目 |
+| レイヤー | 適切な設定 |
 |---|---|
-| プロセスのフラグ | `--storage.tsdb.path`, `--storage.tsdb.retention.time`, `--storage.tsdb.retention.size` |
-| Prometheus の設定 | `global`, `scrape_configs`, `rule_files`, `remote_write` |
-| Operator の `Prometheus.spec` | `retention`, `retentionSize`, `storage`, `replicas`, `shards` |
-| このチャートの values | `prometheus.prometheusSpec.retention`, `storageSpec` および以下の値 |
+| プロセスフラグ | `--storage.tsdb.path`、`--storage.tsdb.retention.time`、`--storage.tsdb.retention.size` |
+| Prometheus設定 | `global`、`scrape_configs`、`rule_files`、`remote_write` |
+| Operatorの`Prometheus.spec` | `retention`、`retentionSize`、`storage`、`replicas`、`shards` |
+| このChartのvalues | `prometheus.prometheusSpec.retention`、`storageSpec`および以下のvalues |
 
-古い `storage.tsdb.path/retention.time/...` の YAML は、有効なプロセス設定ではありません。**別個のスタンドアロンインストール** では、基本的なフラグは次のようになります。
+古い形式の`storage.tsdb.path/retention.time/...` YAMLは、有効なプロセス設定ではありません。**別途単独でインストールする場合**の基本的なフラグは次のようになります。
 
 ```sh
 prometheus --config.file=prometheus.yml \
@@ -87,59 +87,59 @@ prometheus --config.file=prometheus.yml \
   --storage.tsdb.retention.size=15GB
 ```
 
-Operator によるインストールでは、所有元の Helm values を設定します。保持サイズはディスク全体のハードリミットではありません。WAL、head、index、コンパクション用の余裕を残してください。サポートされているローカル／ブロックストレージを使用してください。任意の NFS はサポートされた代替ではありません。
+Operatorによるインストールでは、所有元となるHelm valuesを設定してください。保持サイズはディスク全体に対する厳密な上限ではありません。WAL、head、インデックス、圧縮処理のための空き領域を確保してください。サポートされているローカル／ブロックストレージを使用してください。任意のNFSをサポート対象の代替として使うことはできません。
 
 ## PromQL
 
-例では `job="example-app"` と、チャートの node-exporter／kube-state-metrics のジョブラベルを前提としています。実際のターゲットに合わせて調整してください。`example_queue_depth` と `temperature_celsius` はアプリケーション定義の Gauge であり、Kubernetes 組み込みのメトリクスではありません。
+以下の例では、`job="example-app"`と、Chartのnode-exporter／kube-state-metricsのジョブラベルを想定しています。実際のターゲットに合わせて調整してください。`example_queue_depth`と`temperature_celsius`はアプリケーションで定義されるGaugeであり、組み込みのKubernetesメトリクスではありません。
 
 ### セレクター、範囲、レート
 
-インスタントセレクターは lookback／staleness のルールに従って対象となるサンプルを探します。「現在」の値であっても、評価時点そのものに観測値があることは保証されません。範囲セレクターはサンプル区間を選択します。サブクエリは指定した解像度で式を評価するもので、保存された生サンプルの N 個ごとを選択するものではありません。
+Instantセレクターは、lookback／stalenessルールを使って条件を満たすサンプルを見つけます。「現在」の値が、評価時刻ちょうどの観測値であるとは限りません。Rangeセレクターはサンプルの時間範囲を選びます。サブクエリは保存された生サンプルをN個ごとに選ぶのではなく、指定した分解能で式を評価します。
 
-| 目的 | PromQL |
+| 用途 | PromQL |
 |---|---|
-| インスタントセレクター | `http_requests_total{job="example-app"}` |
-| 肯定／正規表現によるフィルタリング | `http_requests_total{job="example-app",method="GET",status=~"2[0-9]{2}"}` |
+| Instantセレクター | `http_requests_total{job="example-app"}` |
+| 正の条件／正規表現によるフィルタリング | `http_requests_total{job="example-app",method="GET",status=~"2[0-9]{2}"}` |
 | 否定の正規表現 | `http_requests_total{job="example-app",status!~"5[0-9]{2}"}` |
-| 範囲ベクトル | `http_requests_total{job="example-app"}[5m]` |
-| 5 分解像度の 1 時間サブクエリ | `rate(http_requests_total{job="example-app"}[5m])[1h:5m]` |
-| 1 時間前のレートウィンドウ | `rate(http_requests_total{job="example-app"}[5m] offset 1h)` |
-| Counter の平均秒間レート | `rate(http_requests_total{job="example-app"}[5m])` |
-| 直近の利用可能な 2 サンプルからのレート | `irate(http_requests_total{job="example-app"}[5m])` |
-| 外挿された Counter の増加量 | `increase(http_requests_total{job="example-app"}[1h])` |
+| Range vector | `http_requests_total{job="example-app"}[5m]` |
+| 分解能5分の1時間サブクエリ | `rate(http_requests_total{job="example-app"}[5m])[1h:5m]` |
+| 1時間前のレート期間 | `rate(http_requests_total{job="example-app"}[5m] offset 1h)` |
+| 1秒あたりの平均カウンターレート | `rate(http_requests_total{job="example-app"}[5m])` |
+| 直近の使用可能な2サンプルから求めるレート | `irate(http_requests_total{job="example-app"}[5m])` |
+| 外挿されたカウンター増加量 | `increase(http_requests_total{job="example-app"}[1h])` |
 
-否定のマッチャーは、そのラベルを持たない系列を選択することがあります。`rate()` と `increase()` は観測されたリセットを処理し外挿を行いますが、見逃されたすべての増分を復元できるわけではありません。**集約の前に rate を適用** してください。`irate()` は最新のサンプルに敏感で、安定したアラート条件にはあまり適していません。
+否定マッチャーは、そのラベルを持たないシリーズも選択する場合があります。`rate()`と`increase()`は観測されたリセットを処理して外挿しますが、見逃した増分をすべて復元できるわけではありません。**集約より先にrateを適用してください**。`irate()`は最新のサンプルに敏感であり、安定したアラート条件には通常あまり適しません。
 
-範囲ベクトルは範囲関数への入力であり、そのままレンジクエリのグラフになるものではありません。たとえば、評価済みのレート系列が必要な場合は `rate(counter[5m])` を使用します。
+Range vectorは範囲関数への入力であり、そのまま範囲クエリのグラフとして使用できるものではありません。たとえば、評価済みのレート系列をリクエストするときは`rate(counter[5m])`を使います。
 
 ### 集約、Gauge、時刻
 
-| 目的 | PromQL |
+| 用途 | PromQL |
 |---|---|
 | メソッド別のリクエストレート | `sum by (method) (rate(http_requests_total{job="example-app"}[5m]))` |
-| instance を集約で除去 | `sum without (instance) (rate(http_requests_total{job="example-app"}[5m]))` |
-| 重複排除した Running 指標の合計 | `sum(max by (namespace,pod,uid) (kube_pod_status_phase{job="kube-state-metrics",phase="Running"}))` |
-| 利用可能メモリの最大値 | `max(node_memory_MemAvailable_bytes{job="node-exporter"})` |
-| 空／インフラコンテナラベルを除いた Pod CPU 上位 | `topk(5, sum by (namespace,pod) (rate(container_cpu_usage_seconds_total{job="kubelet",container!="",container!="POD"}[5m])))` |
-| 現在のキュー深度 Gauge 全体の分位点 | `quantile(0.95, example_queue_depth{job="example-app"})` |
-| レートの標準偏差 | `stddev(rate(http_requests_total{job="example-app"}[5m]))` |
-| 外挿された Gauge の変化量 | `delta(temperature_celsius{job="example-app"}[1h])` |
-| Gauge の秒あたり傾き | `deriv(temperature_celsius{job="example-app"}[1h])` |
-| 20°C からの絶対偏差 | `abs(temperature_celsius{job="example-app"} - 20)` |
+| instanceを除いて集約 | `sum without (instance) (rate(http_requests_total{job="example-app"}[5m]))` |
+| 重複を排除したRunningインジケーターの合計 | `sum(max by (namespace,pod,uid) (kube_pod_status_phase{job="kube-state-metrics",phase="Running"}))` |
+| 使用可能メモリの最大値 | `max(node_memory_MemAvailable_bytes{job="node-exporter"})` |
+| 空の／インフラ用containerラベルを除いたPod CPU上位 | `topk(5, sum by (namespace,pod) (rate(container_cpu_usage_seconds_total{job="kubelet",container!="",container!="POD"}[5m])))` |
+| 現在のキュー深度Gauge間の分位点 | `quantile(0.95, example_queue_depth{job="example-app"})` |
+| レート間の標準偏差 | `stddev(rate(http_requests_total{job="example-app"}[5m]))` |
+| 外挿されたGaugeの変化量 | `delta(temperature_celsius{job="example-app"}[1h])` |
+| 1秒あたりのGauge傾き | `deriv(temperature_celsius{job="example-app"}[1h])` |
+| 20°Cからの絶対偏差 | `abs(temperature_celsius{job="example-app"} - 20)` |
 | 切り上げ | `ceil(example_queue_depth{job="example-app"})` |
-| 範囲へのクランプ | `clamp(example_queue_depth{job="example-app"}, 0, 100)` |
+| 範囲に制限 | `clamp(example_queue_depth{job="example-app"}, 0, 100)` |
 | 平方根 | `sqrt(example_queue_depth{job="example-app"})` |
 | 自然対数 | `ln(example_queue_depth{job="example-app"})` |
-| Unix 秒での評価時刻 | `time()` |
+| Unix秒で表した評価時刻 | `time()` |
 | 選択されたサンプルのタイムスタンプ | `timestamp(up{job="example-app"})` |
-| サンプルの UTC 時 | `hour(timestamp(up{job="example-app"}))` |
+| サンプルのUTC時刻 | `hour(timestamp(up{job="example-app"}))` |
 
-`kube_pod_status_phase{phase="Running"}` の系列をカウントすると、値が 0 のものも数えてしまいます。重複した exporter の識別情報を除いたうえで 0/1 の指標を合計すると、0 の指標だけが存在する場合は 0 になり、テレメトリが存在しない場合は依然として欠損のままになります。
+`kube_pod_status_phase{phase="Running"}`のシリーズを数えると、値が0のものも数えます。重複するエクスポーターIDを除いた後で0／1のインジケーターを合計すると、0のインジケーターしか存在しない場合は0になります。一方、テレメトリが存在しない場合は、引き続き欠損のままです。
 
-Gauge に対する `quantile()` の例は、系列間で値を比較します。ヒストグラムのリクエストレイテンシ p95 を計算するものではなく、Summary の p99 値を統合するものでもありません。数学関数には入力の定義域の制約があります。たとえば、非正の値の対数は意図的な処理が必要です。関連する関数として `floor`、`round`、`clamp_min`、`clamp_max` があります。
+Gaugeの`quantile()`の例は、シリーズ間で値を比較します。ヒストグラムのリクエストレイテンシーp95を計算したり、Summaryのp99値を統合したりするものではありません。数学関数には入力値の範囲に関する制約があります。たとえば、0以下の対数は意識して処理する必要があります。関連関数には`floor`、`round`、`clamp_min`、`clamp_max`があります。
 
-次の営業時間フィルターは **UTC** であり、ブラウザやクラスターのタイムゾーンではありません。
+この業務時間フィルターは**UTC**であり、ブラウザー／クラスターのタイムゾーンではありません。
 
 ```promql
 sum(rate(http_requests_total{job="example-app"}[5m])) and on() (hour() >= 9 < 18)
@@ -159,57 +159,55 @@ histogram_quantile(0.99, sum by (le,method) (rate(http_request_duration_seconds_
 sum(rate(http_request_duration_seconds_sum{job="example-app"}[5m])) / sum(rate(http_request_duration_seconds_count{job="example-app"}[5m]))
 ```
 
-互換性のあるクラシックバケットを集約し、`le` を保持してください。分位点はバケット内で補間されます。Summary の分位点も近似値であり、平均をとってフリート全体のパーセンタイルにすることはできません。sum/count はフリート全体の平均を計算できます。
+互換性のあるクラシックバケットを集約し、`le`を保持してください。分位点はバケット内で補間されます。Summaryの分位点も近似値であり、平均してフリート全体のパーセンタイルを求めることはできません。sum/countを使えば、フリート全体の平均を計算できます。
 
-`predict_linear()` は Gauge にフィットさせたトレンドを外挿します。負の予測値は調査すべき理由であり、将来のディスク障害が保証されるわけではありません。
+`predict_linear()`は、当てはめたGaugeの傾向を外挿します。負の予測値は調査すべき理由になりますが、将来のディスク障害を保証するものではありません。
 
 ```promql
 predict_linear(node_filesystem_avail_bytes{job="node-exporter",mountpoint="/",fstype!~"tmpfs|overlay"}[6h], 86400)
 ```
 
-Prometheus 3 では `holt_winters` が `double_exponential_smoothing` に改名されました。これは **Holt の線形スムージングであり、季節性を扱う三重指数平滑法の予測ではありません**。また Gauge の float サンプルが必要です。任意で使える式: `double_exponential_smoothing(example_queue_depth{job="example-app"}[1h], 0.5, 0.5)`。評価するサーバーには `--enable-feature=promql-experimental-functions` が必要です。ローカル監査ではパーサー構文を確認しました。実験的機能の値の評価が通ったとは主張していません。
+Prometheus 3では、`holt_winters`の名称が`double_exponential_smoothing`に変更されました。これは**Holt線形平滑化であり、季節性を考慮した三重指数平滑化の予測ではありません**。Gaugeのfloatサンプルが必要です。オプションの式は次のとおりです。`double_exponential_smoothing(example_queue_depth{job="example-app"}[1h], 0.5, 0.5)`。評価を行うサーバーには`--enable-feature=promql-experimental-functions`が必要です。ローカル監査ではパーサー構文を確認しましたが、実験的な値評価に合格したとは主張していません。
 
-### 運用上の例
+### 運用例
 
-| 目的 | PromQL |
+| 用途 | PromQL |
 |---|---|
-| CPU の非アイドル率 | `100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{job="node-exporter",mode="idle"}[5m])))` |
-| MemAvailable として報告されていない割合 | `100 * (1 - node_memory_MemAvailable_bytes{job="node-exporter"} / node_memory_MemTotal_bytes{job="node-exporter"})` |
-| 再起動の推定増加が 3 を超える場合 | `increase(kube_pod_container_status_restarts_total{job="kube-state-metrics"}[1h]) > 3` |
-| ファイルシステムの利用不可領域の割合 | `100 * (1 - node_filesystem_avail_bytes{job="node-exporter",mountpoint="/"} / node_filesystem_size_bytes{job="node-exporter",mountpoint="/"})` |
-| 受信 + 送信バイト毎秒 | `rate(node_network_receive_bytes_total{job="node-exporter",device="eth0"}[5m]) + rate(node_network_transmit_bytes_total{job="node-exporter",device="eth0"}[5m])` |
+| CPUの非アイドル率 | `100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{job="node-exporter",mode="idle"}[5m])))` |
+| MemAvailableとして報告されていない割合 | `100 * (1 - node_memory_MemAvailable_bytes{job="node-exporter"} / node_memory_MemTotal_bytes{job="node-exporter"})` |
+| 3回を超える推定再起動増加量 | `increase(kube_pod_container_status_restarts_total{job="kube-state-metrics"}[1h]) > 3` |
+| ファイルシステムの使用不可領域の割合 | `100 * (1 - node_filesystem_avail_bytes{job="node-exporter",mountpoint="/"} / node_filesystem_size_bytes{job="node-exporter",mountpoint="/"})` |
+| 受信＋送信バイト数／秒 | `rate(node_network_receive_bytes_total{job="node-exporter",device="eth0"}[5m]) + rate(node_network_transmit_bytes_total{job="node-exporter",device="eth0"}[5m])` |
 
-エラー率については、正常なサービスには 5xx の系列が存在しないこともあります。以下のゼロフォールバックは、トラフィック総量のグループと一致させるためだけに存在します。欠損しているサービスに対して正常なデータを作り出すものではありません。
+エラー率については、正常なサービスに5xxシリーズが存在しない場合があります。以下のゼロフォールバックは、合致する総トラフィックのグループにのみ適用されます。データの欠損しているサービスに正常なデータを作り出すものではありません。
 
 ```promql
 100 * (sum by (namespace, service) (rate(http_requests_total{job="example-app",status=~"5[0-9]{2}"}[5m])) or on (namespace, service) (0 * (sum by (namespace, service) (rate(http_requests_total{job="example-app"}[5m]))))) / (sum by (namespace, service) (rate(http_requests_total{job="example-app"}[5m])))
 ```
 
-観測された正常なトラフィックでは 0 になり、すべて 5xx のトラフィックでは 100 になり、分母が 0 の場合は未定義のままです。欠損したテレメトリは欠損したままです。収集の失敗は別に監視してください。
+正常なトラフィックが観測されると0になり、すべてが5xxのトラフィックなら100になります。分母が0の場合は未定義のままです。テレメトリが欠損している場合も欠損のままです。収集の失敗は別途監視してください。
 
-<span id="discovery-and-operator-selectors"></span>
+## ディスカバリーとOperatorセレクター {#discovery-and-operator-selectors}
 
-## ディスカバリと Operator セレクター
+![Operatorによるワークロードの調整と、Monitor／ルールの選択。](../../.gitbook/assets/en-observability-metrics-01-prometheus-1.png)
 
-![Operator workload reconciliation and monitor/rule selection.](../../.gitbook/assets/en-observability-metrics-01-prometheus-1.png)
+[インタラクティブな図](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-01-prometheus-1.html)
 
-[インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-01-prometheus-1.html)
+この図のPrometheus／Alertmanagerノードは**カスタムリソース**を表します。Operatorがそれらを読み取り、StatefulSetなどの実際のワークロードを調整します。オブジェクトやPrometheusサーバーが、それぞれ独立してStatefulSetを作成するわけではありません。
 
-この図中の Prometheus/Alertmanager ノードは **カスタムリソース** を意味します。Operator がそれらを読み取り、StatefulSet などの実際のワークロードを調整（reconcile）します。オブジェクトや Prometheus サーバー自体が独自に StatefulSet を作成するわけではありません。
-
-| 選択の段階 | 選択されるオブジェクト |
+| 選択段階 | 選択されるオブジェクト |
 |---|---|
-| Prometheus の `serviceMonitorNamespaceSelector` | ServiceMonitor オブジェクトを含む Namespace |
-| Prometheus の `serviceMonitorSelector` | それら ServiceMonitor オブジェクトのラベル |
-| ServiceMonitor の `namespaceSelector` / `selector` | 対象 Service の Namespace とラベル |
-| ServiceMonitor エンドポイントの `port` | **Service のポート名**。任意のコンテナポート番号ではない |
-| PodMonitor の selector / エンドポイントの `port` | Pod のラベルと宣言されたコンテナポート名 |
+| Prometheusの`serviceMonitorNamespaceSelector` | ServiceMonitorオブジェクトを含むNamespace |
+| Prometheusの`serviceMonitorSelector` | それらのServiceMonitorオブジェクトに付けられたラベル |
+| ServiceMonitorの`namespaceSelector` / `selector` | ターゲットとなるServiceのNamespaceとラベル |
+| ServiceMonitorエンドポイントの`port` | **Serviceのポート名**。任意のコンテナポート番号ではない |
+| PodMonitorのセレクター／エンドポイントの`port` | Podのラベルと、宣言されたコンテナポート名 |
 
-RBAC、ディスカバリ、ネットワーク／TLS アクセスは別個の要件です。セレクターは認可の代わりにはなりません。Helm の `*SelectorNilUsesHelmValues` の真偽値はラベルセレクターのデフォルトに影響するもので、すべての対象 Namespace に影響するわけではありません。
+RBAC、ディスカバリー、ネットワーク／TLSアクセスは、それぞれ別の要件です。セレクターは認可の代わりにはなりません。Helmの`*SelectorNilUsesHelmValues`ブール値が影響するのはラベルセレクターのデフォルトであり、すべてのターゲットNamespaceではありません。
 
-### 一貫したアプリケーションのスクレイピング
+### 一貫性のあるアプリケーションのスクレイプ設定
 
-`example-app` に計装済みの Deployment が既に存在し、Pod ラベルが `app: example-app`、`/metrics` を提供する `metrics` という名前のポートが宣言されていることを前提とします。以下の Service はアプリケーションを作成するものではありません。
+`example-app`に既存のインストルメント済みDeploymentがあり、Podラベルが`app: example-app`、`metrics`という名前のポートが宣言されていて、`/metrics`を提供しているものとします。以下のServiceはアプリケーションを作成しません。
 
 ```yaml
 # service.yaml
@@ -264,9 +262,9 @@ spec:
       targetLabel: pod
 ```
 
-ServiceMonitor の `release: kube-prom` はインストールと一致します。その `jobLabel` は Service の `metrics-job: example-app` を読み取り、アプリケーションクエリ用のジョブラベルを確立します。
+ServiceMonitorの`release: kube-prom`はインストールに一致します。その`jobLabel`はServiceの`metrics-job: example-app`を参照し、アプリケーションクエリ用のjobラベルを設定します。
 
-PodMonitor は同じ Pod に対する **代替手段** です。重複した取り込みを避けるため、あるエンドポイントには意図した収集経路を 1 つ選んでください。
+PodMonitorは、同じPodに対する**代替手段**です。重複してデータを取り込まないよう、エンドポイントに対して意図した収集経路を1つ選択してください。
 
 ```yaml
 # podmonitor.yaml
@@ -295,28 +293,26 @@ spec:
       replacement: example-app
 ```
 
-### その他のディスカバリ経路
+### ほかのディスカバリー経路
 
-- スタンドアロン／エージェントの Pod ディスカバリでは、[概要の名前付きポート設定](README.md#metric-collection-models)を使用でき、ディスカバリが提供する IPv4/IPv6 アドレスを保持できます。`prometheus.io/scheme` のようなアノテーションは、実際の設定がそれを利用しない限り効果はありません。
-- Service のブラックボックス監視には、インストール済みの exporter、定義済みの probe モジュール、適切なターゲット URL／スキーム、そして `Probe`／スクレイプ設定が必要です。`up` は exporter のスクレイピングを表します。probe の成否は別のシグナルです。
-- ノードのディスカバリが到達するのは kubelet のエンドポイントであり、自動的に node-exporter に到達するわけではありません。サービング証明書、正しい CA、ノードメトリクスの RBAC を検証してください。Kubernetes API の CA は、任意のノード証明書に対する信頼を証明しません。
-- 無制限なノードの `labelmap` ではなく、レビュー済みの namespace／service／team ラベルを使用してください。識別ラベルの削除は集約操作ではありません。
+- 単独／AgentのPodディスカバリーでは、[概要に記載された名前付きポートの設定](README.md#metric-collection-models)を使うと、ディスカバリーで取得したIPv4／IPv6アドレスを保持できます。`prometheus.io/scheme`などのアノテーションは、実際の設定で参照されない限り効果がありません。
+- Serviceのblackboxプローブには、インストール済みのエクスポーター、定義済みのプローブモジュール、適切なターゲットURL／スキーム、`Probe`／スクレイプ設定が必要です。`up`が示すのはエクスポーターのスクレイピング状況です。プローブの成功は別のシグナルです。
+- Nodeのディスカバリーがアクセスするのはkubeletエンドポイントであり、自動的にnode-exporterにアクセスするわけではありません。サービング証明書、正しいCA、ノードメトリクス用RBACを確認してください。Kubernetes APIのCAが、任意のノード証明書への信頼を保証するわけではありません。
+- ノードに対する無制限の`labelmap`ではなく、審査済みのNamespace／Service／チームラベルを使用してください。IDラベルを削除しても、集約にはなりません。
 
-<span id="kube-prometheus-stack-installation"></span>
+## kube-prometheus-stackのインストール {#kube-prometheus-stack-installation}
 
-## kube-prometheus-stack のインストール
+以下はクラスターを変更するOperatorコマンドであり、**監査時に実行したコマンドではありません**。意図したコンテキストと所有対象のreleaseを使ってください。既存のインストールがある場合は、監視スタックを重複してインストールするのではなく、実際のvalues、CRD、ストレージ、アップグレードノートを確認してください。
 
-以下はクラスターを変更するオペレーター向けのコマンドであり、**監査で実行したコマンドではありません**。意図したコンテキストと自分が所有するリリースを使用してください。既存のインストールに対しては、スタックを重複してインストールするのではなく、実際の values、CRD、ストレージ、アップグレードノートを確認してください。
+このプロファイルの前提条件は次のとおりです。
 
-このプロファイルの前提条件:
+- 認可されたHelm／Kubernetesアクセスと、Linux EC2ノードの十分なリソース。
+- 動作するデフォルトのブロックストレージStorageClass／CSIドライバー、またはすべてのPVCについて個別に審査されたStorageClass名。`gp3`が必ず存在するとは限りません。
+- 既存の`monitoring`Namespace、Secrets Store CSIドライバー、Linux EC2ノード上のAWSプロバイダー（ASCP）。AWS Secrets Manager（`ap-northeast-2`）で`observability/grafana-admin`を準備し、JSON文字列キー`admin-password`を設定してください。Kubernetes Secretに同期しないでください。
+- `metrics-demo-grafana` ServiceAccountには、そのシークレットを対象とするスコープを限定したIRSAロールが必要です。以下のIAMロールARNの例を置き換え、対応するSecretProviderClassを適用してください。[ID、KMS、マウント、ローテーションの前提条件](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md)を参照してください。
+- 検証済みのkubelet TLS信頼。証明書検証を有効にするこのプロファイルでは、証明書の発行者が異なる場合に検証を無効化するのではなく、適切なCAを指定してください。
 
-- 権限のある Helm／Kubernetes アクセスと、十分な Linux EC2 ノードリソース。
-- 動作するデフォルトのブロックストレージ StorageClass／CSI ドライバー、またはすべての PVC に対して明示的にレビュー済みのクラス名。`gp3` の存在は保証されません。
-- Linux EC2 ノード上に、既存の `monitoring` Namespace、Secrets Store CSI ドライバー、AWS プロバイダー（ASCP）。AWS Secrets Manager（`ap-northeast-2`）で `observability/grafana-admin` を JSON 文字列キー `admin-password` として用意してください。Kubernetes Secret へ同期しないでください。
-- `metrics-demo-grafana` サービスアカウントには、そのシークレットに限定した IRSA ロールが必要です。以下の例の IAM ロール ARN を置き換え、対応する SecretProviderClass を適用してください。[アイデンティティ、KMS、マウント、ローテーションの完全な前提条件](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md)を参照してください。
-- 検証済みの kubelet TLS 信頼。このプロファイルは証明書検証を有効にします。証明書が別の発行者を使用している場合は、検証を回避するのではなく適切な CA を提供してください。
-
-サイジングは例示です。各 Prometheus レプリカは専用の PVC を持ちます。保持サイズは WAL／head／コンパクションの使用量を制限しません。Grafana は PVC ベースのデータベースを持つ 1 レプリカのままです。レプリカを増やすだけでは、共有データベースによる HA にはなりません。
+サイズ設定は説明用です。Prometheusの各レプリカはそれぞれ独自のPVCを取得します。保持サイズはWAL／head／圧縮処理の使用量を制限しません。GrafanaはPVCベースのデータベースを使用する単一レプリカのままです。レプリカ数を増やすだけでは、共有データベースによるHAにはなりません。
 
 ```yaml
 # kube-prometheus-stack 90.0.0; replace the example IRSA role ARN before use.
@@ -425,15 +421,15 @@ grafana:
     readOnly: true
 ```
 
-この EKS プロファイルは、マネージドなコントロールプレーンコンポーネントと、ここでは公開を前提としない kube-proxy エンドポイントに対するモニターを無効化します。Kubernetes 自体を無効化するものではありません。`monitoring`／`example-app` の ServiceMonitor には一致するリリースラベルが必要です。ルールは `monitoring` から選択されます。
+このEKSプロファイルでは、ここでは公開されることを前提としていない、マネージドコントロールプレーンコンポーネントとkube-proxyエンドポイントのMonitorを無効にしています。Kubernetes自体を無効にするものではありません。`monitoring`／`example-app`のServiceMonitorには、一致するreleaseラベルが必要です。ルールは`monitoring`から選択されます。
 
-Grafana の `GF_SECURITY_ADMIN_PASSWORD` には、パスワードの値ではなく **リテラルのファイルプロバイダー式** が渡されます。これによりチャートの自動的な認証情報の環境変数参照が抑制されます。Grafana 13.2.1 は、環境変数によるオーバーライドの後に設定内で `$__file{...}` を評価します。`__FILE` のエントリポイントやシェルがファイル内容をエクスポートするわけではありません。読み取り専用の CSI ファイルは UID/GID 472 で読み取れる必要があり（`fsGroup: 472`、モード `0440`）、マウントするのはメインの Grafana コンテナのみです。パスワードは先頭・末尾に空白を含まないものを使用してください。ファイルプロバイダーはそれをトリムします。
+Grafanaの`GF_SECURITY_ADMIN_PASSWORD`には、パスワード値ではなく、**リテラルのfile-provider式**が渡されます。これにより、Chartの自動認証情報環境変数参照を抑制します。Grafana 13.2.1は、環境変数による上書き後に設定内の`$__file{...}`を評価します。`__FILE`エントリーポイントやシェルによってファイル内容がエクスポートされることはありません。読み取り専用のCSIファイルはUID/GID 472で読み取り可能である必要があります（`fsGroup: 472`、モード`0440`）。このファイルをマウントするのは、Grafanaのメインコンテナのみです。ファイルプロバイダーが前後の空白を取り除くため、前後に空白を含まないパスワードを使用してください。
 
-ダッシュボード／データソースの init コンテナは、起動前にプロビジョニングファイルを配置します。サイドカーはファイルを監視し続けますが `skipReload: true` を使用するため、いずれも管理者の認証情報を必要としません。Grafana はダッシュボードファイルを 30 秒ごとにポーリングします。**データソースの更新には制御された Pod の再起動が必要です**。`admin_password` は新規データベースの初期化時のみ有効です。AWS のシークレット変更、CSI のローテーション、再起動によって、既存の PVC／データベース内の管理者パスワードがリセットされることはありません。承認されたパスワード変更／SSO の手順を使用し、シークレットを整合させてください。PVC は保持してください。
+ダッシュボード／データソースのinitコンテナは、起動前にプロビジョニングファイルを配置します。サイドカーはファイルを引き続き監視しますが、`skipReload: true`を使用するため、管理者認証情報は必要ありません。Grafanaは30秒ごとにダッシュボードファイルをポーリングします。**データソースを更新するには、制御されたPodの再起動が必要です**。`admin_password`が初期化するのは新しいデータベースのみです。AWSシークレットの変更、CSIローテーション、再起動では、既存のPVC／データベースの管理者パスワードはリセットされません。承認済みのパスワード変更／SSO手順を使用して、シークレットの内容を調整してください。PVCは保持してください。
 
-`grafana-secret-provider.yaml` を含む[再利用可能なプロファイル](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md)全体を使用してください。ローカルでのレンダリング／テストは設定とマウントを対象としており、実環境の CSI 権限、ログイン、ローテーションは対象外です。主要な契約: [Grafana の設定](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)と[AWS ASCP](https://github.com/aws/secrets-store-csi-driver-provider-aws/blob/main/README.md)。
+`grafana-secret-provider.yaml`を含む、完全な[再利用可能プロファイル](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md)を使用してください。ローカルでのレンダリング／テストでは設定とマウントを確認しますが、実際のCSI権限、ログイン、ローテーションは確認しません。主な仕様については、[Grafanaの設定](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)と[AWS ASCP](https://github.com/aws/secrets-store-csi-driver-provider-aws/blob/main/README.md)を参照してください。
 
-リポジトリのルートから、前提条件を整えたうえで一度インストールします。
+リポジトリのルートから、前提条件を準備した後、一度だけインストールしてください。
 
 ```sh
 PROFILE=examples/observability/secret-profiles
@@ -449,15 +445,13 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
   --wait --timeout 15m
 ```
 
-CRD の確立、Operator の健全性、PVC のバインド、実際のターゲットを確認してください。選択したアプリケーションのモニター／ルールは、それらの CRD が確立された後にのみ適用してください。
+CRDの確立、Operatorの健全性、PVCのバインド、実際のターゲットを確認してください。選択したアプリケーションのMonitor／ルールは、CRDが確立した後にのみ適用してください。
 
-チャートの CRD アップグレードの扱いはバージョン固有です。すべての CRD 移行が単純な Helm アップグレードでカバーされると想定せず、アップグレードノートを読んでください。チャート 90 では Grafana の依存関係もコミュニティリポジトリに変更されます。アップグレード時は既存の認証／プロビジョニングの values を検証し、データベース／PVC のバックアップを保持してください。
+ChartのCRDアップグレード処理はバージョンによって異なります。すべてのCRD移行が通常のHelmアップグレードで処理されると想定せず、アップグレードノートを確認してください。Chart 90では、Grafanaの依存関係もcommunityリポジトリに変更されています。既存の認証／プロビジョニング設定を検証し、アップグレード時はデータベース／PVCのバックアップを保持してください。
 
-<span id="rules-and-alertmanager"></span>
+## ルールとAlertmanager {#rules-and-alertmanager}
 
-## ルールと Alertmanager
-
-以下で選択している PrometheusRule には、alert と recording の例が含まれます。CPU の recording は `rate` と比率の単位を一貫して使用します。エラーの式はパーセンテージなので、しきい値は 1 であり、アノテーションはパーセンテージを出力します。
+以下で選択するPrometheusRuleには、アラートと記録ルールの例が含まれています。CPUの記録ルールでは`rate`と比率の単位を一貫して使用します。エラーの式はパーセンテージなので、しきい値は1であり、アノテーションにはパーセンテージが表示されます。
 
 ```yaml
 # prometheusrule.yaml
@@ -521,13 +515,13 @@ spec:
       expr: max by (instance) ((1 - node_memory_MemAvailable_bytes{job="node-exporter"} / node_memory_MemTotal_bytes{job="node-exporter"}))
 ```
 
-`for` は、発火する前に同じアラートラベルセットが評価を通じて式を満たし続けなければならないことを意味します。データの欠損やラベルの変化は pending 状態を中断させることがあります。これは Alertmanager の通知遅延や再送間隔ではありません。予測に基づくアラートは見通しを表すもので、障害の確定を示すものではありません。
+`for`は、発火するまでの評価期間にわたり、同じアラートラベルセットが式の条件を満たし続けることを意味します。データの欠損やラベルの変化によって、Pending状態が中断される場合があります。これはAlertmanagerの通知遅延や繰り返し間隔ではありません。予測アラートが表すのは予測であり、障害を保証するものではありません。
 
-### AlertmanagerConfig と Namespace の境界
+### AlertmanagerConfigとNamespaceの境界
 
-Operator 0.93.1 に同梱される AlertmanagerConfig CRD は **v1alpha1** を提供します。この例では、管理者が所有する **グローバル設定** として使用します。参照される Secret は `monitoring` に存在しなければなりません。配信を有効にする前に、アドレス、チャンネル、プロバイダーの宛先を置き換え／承認してください。
+Operator 0.93.1のパッケージ済みAlertmanagerConfig CRDが提供するAPIバージョンは**v1alpha1**です。以下の例では、管理者が所有する**グローバル設定**として使用します。参照するSecretは`monitoring`に存在している必要があります。通知を有効にする前に、アドレス、チャンネル、プロバイダーの送信先を置き換えるか承認してください。
 
-Operator の API は `alertmanagerConfiguration` を experimental としています。バージョンの境界を維持し、アップグレードをテストしてください。通常の選択された Namespace 付き AlertmanagerConfig には、通常 Namespace のマッチャーが付与されます。`monitoring` にある設定が、すべての Namespace のアプリケーションアラートを自動的に受け取るわけではありません。グローバル設定は意図的に、より広い管理境界を持ちます。
+Operator APIでは`alertmanagerConfiguration`はexperimentalとしてマークされています。バージョンの境界を維持し、アップグレードをテストしてください。通常の、選択対象となるNamespaceスコープのAlertmanagerConfigには、通常Namespaceマッチャーが追加されます。`monitoring`内の設定が、すべてのNamespaceからのアプリケーションアラートを自動的に受け取るわけではありません。グローバル設定では、意図的により広い管理境界を使用します。
 
 ```yaml
 # alertmanagerconfig.yaml
@@ -615,11 +609,11 @@ spec:
       sendResolved: true
 ```
 
-デフォルトでは、同階層のルートは最初にマッチした時点で停止します。critical のルートが先に来ます。backend のルートは一般的な warning のルートより前にあるため、到達可能です。複数の配信を意図する場合にのみ、`continue` を意図的に設定してください。抑止はアラート名だけでなくリソースの識別情報にも一致します。あるサービス／ノードの critical アラートが、無関係な warning を抑止してはいけません。アラートのファミリーに対して意味のある equal ラベルのフィールドを選んでください。両方のアラートに存在しないラベルは、等しいとみなされます。
+デフォルトでは、兄弟ルートは最初に一致したルートで処理を停止します。Criticalルートを先頭に置き、backendルートを一般的なwarningルートの前に置いているため、backendルートにも到達できます。複数の通知を意図する場合にのみ、`continue`を慎重に設定してください。抑制では、アラート名だけでなくリソースIDも照合します。あるサービス／ノードのcriticalアラートが、無関係なwarningを抑制してはなりません。アラートファミリーにとって意味のある一致ラベル項目を選んでください。両方のアラートでラベルが欠損している場合は、一致とみなされます。
 
-CR の `groupBy` は、ネイティブな Alertmanager 設定では `group_by` になります。グルーピングは通知のバッチを制御するもので、同一アラートの重複排除と同じではありません。`groupWait`、`groupInterval`、`repeatInterval` は、PrometheusRule の `for` とは別に通知のタイミングを制御します。
+CRの`groupBy`は、ネイティブのAlertmanager設定では`group_by`になります。グループ化が制御するのは通知バッチであり、同一のアラートの重複排除とは異なります。`groupWait`、`groupInterval`、`repeatInterval`は、PrometheusRuleの`for`とは別に通知タイミングを制御します。
 
-参照される Secret と AlertmanagerConfig を作成した後、この追加の values ファイルを **同じ** 固定リリースにマージします。
+参照するSecretとAlertmanagerConfigを作成した後、追加のvaluesファイルを同じ固定バージョンのreleaseにマージしてください。
 
 ```yaml
 # alerting-values.yaml
@@ -635,17 +629,15 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
   -f values.yaml -f alerting-values.yaml --wait --timeout 15m
 ```
 
-ネイティブなルーティングの確認では、通知を送信せずにレシーバー名を使用しました。Secret の取得、プロバイダーの認証、実際の通知配信は、依然として管理された検証が必要です。
+ネイティブのルーティング確認では、通知を送信せずにレシーバー名を確認しました。Secretの取得、プロバイダーの認証、実際の通知配信については、引き続き管理された検証が必要です。
 
-<span id="remote-write-and-amp"></span>
+## Remote writeとAMP {#remote-write-and-amp}
 
-## Remote write と AMP
+Remote writeは、サンプルを非同期に設定済みのバックエンドへ転送します。アラートを配信したり、無制限のバッファリングを保証したり、バックアップの代わりになったりするものではありません。バックログ、再試行、レシーバーの上限を監視してください。審査済みの集約／破棄ポリシーによる影響が明らかでない限り、ヒストグラム分布全体を保持してください。
 
-remote write は、設定されたバックエンドへサンプルを非同期に転送します。アラートを配信するものではなく、無制限のバッファリングを保証するものでも、バックアップの代わりになるものでもありません。バックログ、リトライ、レシーバーの上限を監視してください。レビュー済みの集約／破棄ポリシーによってその影響が明確になっていない限り、ヒストグラムの分布は完全な形で保持してください。
+### スコープを限定したAMPへの取り込み
 
-### 権限を限定した AMP への取り込み
-
-以下のアカウントとワークスペースの識別子は **架空のプレースホルダー** です。エンドポイント、IAM リソース、ロールのアノテーションで、承認済みの Region／アカウント／ワークスペースに一貫して置き換えてください。取り込み用ロールに必要なのは、そのワークスペースに対する `aps:RemoteWrite` のみです。クエリ権限は適切なクエリクライアントに属するもので、コレクターに自動的に与えられるものではありません。
+以下のアカウントとワークスペースの識別子は、**架空のプレースホルダー**です。承認されたRegion／アカウント／ワークスペースを、エンドポイント、IAMリソース、ロールアノテーションで一貫して使用してください。取り込みロールには、そのワークスペースに対する`aps:RemoteWrite`のみが必要です。クエリ権限は適切なクエリクライアントに付与し、コレクターに自動的に付与しないでください。
 
 ```json
 {
@@ -660,9 +652,9 @@ remote write は、設定されたバックエンドへサンプルを非同期�
 }
 ```
 
-ロールは、環境の既存の IaC のオーナーを通じて作成／管理してください。IRSA の例では、その信頼関係が対象クラスターの IAM OIDC プロバイダーを参照し、audience `sts.amazonaws.com` と subject `system:serviceaccount:monitoring:metrics-demo-prometheus` の両方を要求する必要があります。OIDC の issuer URL だけでは、IAM プロバイダー／信頼関係が存在することの証明にはなりません。
+環境の既存IaC所有者を通じてロールを作成／管理してください。IRSAの例では、信頼ポリシーに対象クラスターのIAM OIDCプロバイダーを指定し、audience `sts.amazonaws.com`とsubject `system:serviceaccount:monitoring:metrics-demo-prometheus`の両方を必須にする必要があります。OIDC発行者URLがあるだけでは、IAMプロバイダー／信頼ポリシーの存在は証明されません。
 
-このプロファイルの ServiceAccount とアノテーションは Helm が所有します。同じ ServiceAccount を別のオーナーからも作成しないでください。既存のアカウントを再利用する場合は、所有関係とチャートの `create` 設定を整合させてください。EKS Pod Identity は別の認証情報配布の設計です。互換性のない前提を混在させるのではなく、個別に設定・検証してください。
+このプロファイルのServiceAccountとアノテーションはHelmが管理します。同じServiceAccountを別の所有者が作成することも避けてください。既存のアカウントを再利用する場合は、所有権とChartの`create`設定を調整してください。EKS Pod Identityは別の認証情報配信方式です。互換性のない前提を混在させず、個別に設定／検証してください。
 
 ```yaml
 # amp-values.yaml
@@ -690,29 +682,27 @@ prometheus:
         maxShards: 10
 ```
 
-アイデンティティ／ワークスペースの検証後、オプションの AMP ファイルを同じリリースでベースの values とマージしてください。ノードに対する hard な anti-affinity を持つ 2 レプリカには、少なくとも 2 つの適切なノードと、レプリカごとに機能する PVC が必要です。
+ID／ワークスペースを確認した後、同じreleaseでベースのvaluesにオプションのAMPファイルをマージしてください。ハードなノード間アンチアフィニティを指定して2つのレプリカを配置するには、条件を満たすノードが少なくとも2つあり、レプリカごとにPVCが機能している必要があります。
 
-AMP の HA 重複排除は `cluster` と `__replica__` を前提とします。Operator の `replicaExternalLabelName` は、サポートされた Pod 単位の識別情報を提供します。手書きの追加レプリカラベルは代替になりません。既存のメトリクスラベルと HA ラベルの衝突を確認してください。
+AMPのHA重複排除では、`cluster`と`__replica__`が想定されています。Operatorの`replicaExternalLabelName`が、サポート対象のPodごとのIDを付与します。手作業で追加したレプリカラベルでは代替できません。既存のメトリクスラベルとHAラベルの衝突を確認してください。
 
-この例では意図的に `shards: 1` を使用しています。シャーディングはターゲットの集合を分割し、レプリケーションはターゲット集合を複製します。シャーディングを導入する場合、各シャードの HA レプリカグループには個別の重複排除の識別情報と、完全なクエリを行える設計が必要です。独立したシャードを 1 つの HA 識別情報の下で送信し、データが欠落しないと想定してはいけません。
+この例では意図的に`shards: 1`を使用しています。シャーディングはターゲットセットを分割し、レプリケーションはターゲットセットのコピーを作成します。シャーディングを導入する場合、各シャードのHAレプリカグループには、重複排除用の個別のIDと、完全なクエリを実現する設計が必要です。独立したシャードを同一のHA IDで送信し、データが破棄されないと想定してはいけません。
 
-これらのクエリはローカルクラスターを対象としています。クラスターをまたぐ中央／AMP のクエリでは、意図したクラスターのスコープを含めるか、明示的に集約する必要があります。
+これらのクエリの対象はローカルクラスターです。クラスター横断でAMPをクエリする場合は、対象クラスターのスコープを含めるか、明示的に集約してください。
 
-### その他のレシーバー
+### ほかのレシーバー
 
-VictoriaMetrics のシングルノードは、一般的に設定された HTTP ポートで `/api/v1/write` を受け付けます。クラスターの vminsert エンドポイントは `/insert/<tenant>/prometheus/api/v1/write` を使用します。vmauth または他の承認されたアクセス層が、意図したルーティング／認証を提供しなければなりません。テナント ID は認証情報ではありません。Mimir やその他のレシーバーには、独自の URL、アイデンティティ、HA の契約があります。
+VictoriaMetricsの単一ノードでは、通常、設定済みのHTTPポート上の`/api/v1/write`を受け付けます。クラスターのvminsertエンドポイントでは`/insert/<tenant>/prometheus/api/v1/write`を使用します。vmauthまたは別の承認済みアクセスレイヤーで、意図したルーティング／認証を提供する必要があります。テナントIDは認証情報ではありません。Mimirなどのほかのレシーバーには、それぞれ独自のURL、ID、HA仕様があります。
 
-サブ秒のヒストグラムバケットすべてや、コントロールプレーンのレイテンシファミリー全体を破棄する古いルールを、その結果として生じる分位点／SLO の損失を評価せずにコピーしないでください。キューのデフォルト値は出発点であり、計測に基づく本番環境の最適値ではありません。
+1秒未満のヒストグラムバケットをすべて破棄したり、制御プレーン全体のレイテンシー系メトリクスを評価せずに削除したりする古いルールをコピーしないでください。失われる分位点／SLOへの影響を評価してください。キューのデフォルト値は出発点であり、本番環境で最適であると測定済みの値ではありません。
 
-<span id="performance-ha-and-troubleshooting"></span>
+## パフォーマンス、HA、トラブルシューティング {#performance-ha-and-troubleshooting}
 
-## パフォーマンス、HA、トラブルシューティング
+### 測定結果に基づく調整
 
-### 計測に基づくチューニング
+headのシリーズ／チャンク、カーディナリティの変化、スクレイプ負荷、同時クエリはメモリに影響します。履歴の保持期間を短くすることが、アクティブなheadやクエリによるOOMの普遍的な解決策になるわけではありません。制限を変更する前に、実際の使用量とクエリのワークロードを調べてください。
 
-head の系列／chunk、カーディナリティのチャーン、スクレイプ負荷、同時クエリ数がメモリに影響します。履歴の保持期間を短縮することは、アクティブな head やクエリによる OOM の万能な解決策ではありません。上限を変更する前に、実際の使用状況とクエリのワークロードを確認してください。
-
-以下のオプションの values 断片はクエリの上限を示すもので、サイジングの推奨ではありません。
+この任意のvalues断片は、サイズの推奨ではなく、クエリ制限の例です。
 
 ```yaml
 # tuning-values.yaml
@@ -724,9 +714,9 @@ prometheus:
       timeout: 2m
 ```
 
-タイムアウトを長くしたり `maxSamples` を大きくすると、リソースへの露出が増える可能性があります。両方の上限を引き上げる前に、コストの高い式、範囲、集約、recording ルールを確認してください。
+タイムアウトを延ばしたり`maxSamples`を増やしたりすると、リソースへの負荷が高まる可能性があります。両方の制限を引き上げる前に、負荷の高い式、範囲、集約、記録ルールを確認してください。
 
-**スタンドアロン** のスクレイプ設定では、次の例が 1 つのジョブに制限を設け、レビュー済みのデバッグ用ファミリー 1 つを破棄します。
+**単独の**スクレイプ設定では、以下の例のように1つのジョブを制限し、審査済みのデバッグ系メトリクスを1つ削除できます。
 
 ```yaml
 # scrape-limits.yaml
@@ -745,25 +735,25 @@ scrape_configs:
     action: drop
 ```
 
-`sample_limit` は、メトリクスのリラベル後に適用されるスクレイプ受け入れの上限です。超過するとスクレイプは失敗します。エンドポイントを 10,000 サンプルにきれいに切り詰めるものではありません。間隔を長くすると解像度が下がり検知が遅くなります。また `go_.*`／`process_.*` のメトリクスをすべて削除すると、ランタイムの診断情報が失われます。
+`sample_limit`は、メトリクスの再ラベル付け後に適用される、スクレイプデータの受け入れ上限です。これを超えるとスクレイプ全体が失敗します。エンドポイントのサンプル数が1万件にきれいに切り詰められるわけではありません。スクレイプ間隔を延ばすと解像度が下がり、検知が遅くなります。また、すべての`go_.*`／`process_.*`メトリクスを削除すると、ランタイム診断情報が失われます。
 
-`labeldrop` は、それまで区別されていたサンプルを同一の系列に潰してしまうことがあります。それらを合計するわけではありません。一意性を保ち、識別ラベルを削除する前にレシーバーやカーディナリティへの影響を評価してください。カーディナリティのクエリは意図したジョブにスコープしてください。
+`labeldrop`を使うと、以前は異なっていたサンプルが同じシリーズにまとまる場合がありますが、合計されるわけではありません。IDラベルを削除する前に、一意性を維持し、レシーバー／カーディナリティへの影響を評価してください。カーディナリティクエリの対象は、意図したジョブに限定します。
 
 ```promql
 topk(10, count by (__name__) ({job="example-app"}))
 ```
 
-サポートされていない TSDB のフラグや、文字列形式の `additionalArgs` を Operator の CR にコピーしないでください。その `additionalArgs` は名前付きの引数オブジェクトを使用し、CR のスキーマが妥当であることは、選択した Prometheus バイナリにそのフラグが存在することの証明にはなりません。バージョン固有の裏付けなしに、内部のブロック／chunk の挙動を上書きすることは避けてください。
+サポートされていないTSDBフラグや、文字列形式の`additionalArgs`をOperator CRにコピーしないでください。`additionalArgs`は名前付き引数オブジェクトを使用します。また、CRスキーマが有効であることは、選択したPrometheusバイナリーにそのフラグが存在する証明にはなりません。バージョン固有の根拠なしに、内部のブロック／チャンク動作を上書きすることは避けてください。
 
-### HA の境界
+### HAの境界
 
-Prometheus の `replicas` と `shards` は Pod 数を増やしますが、解決する問題は異なります。anti-affinity には十分な数のノードが必要です。ゾーン耐性には、適切な配置とストレージも必要です。1 つのシャードにクエリしても、すべてのターゲットのデータが得られるわけではありません。
+Prometheusの`replicas`と`shards`はPod数を増やしますが、解決する問題は異なります。アンチアフィニティには十分な数のノードが必要であり、ゾーン障害への耐性には適切な配置とストレージも必要です。1つのシャードをクエリしても、すべてのターゲットのデータが得られるわけではありません。
 
-コレクターの HA は、Alertmanager、Grafana、PVC、リモートストレージを自動的に高可用にはしません。Alertmanager のレプリカには、機能するピア接続と独立した配置／ストレージが必要です。Grafana の HA には、適切な共有データベース／認証の設計が必要です。レシーバー固有の重複排除ラベルとアラートの識別情報は一貫させてください。
+コレクターのHAによって、Alertmanager、Grafana、PVC、リモートストレージまで自動的に高可用性になるわけではありません。Alertmanagerのレプリカには、機能するピア接続と独立した配置／ストレージが必要です。GrafanaのHAには、適切な共有データベース／認証設計が必要です。レシーバー固有の重複排除ラベルとアラートIDは、一貫性を保ってください。
 
-### 自分が所有するリリースでのトラブルシューティング
+### 所有対象のreleaseに基づくトラブルシューティング
 
-コンテキスト、リリースの識別情報、生成されるリソース名を検証してください。以下の名前は例の `fullnameOverride: metrics-demo` に対応するもので、すべてのチャートインストールに当てはまるものではありません。
+コンテキスト、releaseのID、生成されたリソース名を確認してください。以下の名前は、例の`fullnameOverride: metrics-demo`に対応するものであり、すべてのChartインストールに当てはまるわけではありません。
 
 ```sh
 kubectl config current-context
@@ -775,9 +765,9 @@ kubectl get pods --namespace monitoring -l app.kubernetes.io/name=prometheus -o 
 kubectl top pod --namespace monitoring
 ```
 
-`kubectl top` には機能する Resource Metrics API が必要です。これは Prometheus のメモリ圧迫のあらゆる原因を測定するものではありません。
+`kubectl top`には、動作するResource Metrics APIが必要です。これはPrometheusのメモリ圧迫のあらゆる原因を測定するものではありません。
 
-プライベートな API を確認する場合は、port-forward をループバックにバインドし、そのプロセスを別のターミナルで実行し続けてください。
+プライベートAPIを確認する場合は、ポートフォワードをloopbackにバインドし、別のターミナルでそのプロセスを実行し続けてください。
 
 ```sh
 kubectl port-forward --namespace monitoring --address 127.0.0.1 \
@@ -797,21 +787,21 @@ curl --fail --silent --show-error --max-time 10 http://127.0.0.1:9090/api/v1/ale
 
 | 症状 | リソースを変更する前に確認すること |
 |---|---|
-| OOMKilled | コンテナの limit、head の系列／チャーン、クエリの同時実行数／範囲、サンプル数、ワークロードのピーク |
-| PVC Pending | 実際の StorageClass／CSI の可用性、アクセスモード、容量、ゾーンのスケジューリング |
-| ターゲットが見つからない | 両方のモニターセレクター、Namespace の選択、Service のラベル／ポート、Pod のラベル、Operator の調整 |
-| ターゲットが down | ターゲット URL、CA/SAN/認証、RBAC／ネットワーク経路、エンドポイントの応答。エラーは不在の証拠ではない |
-| 通知が来ない | ルールの状態、ラベルの安定性、選択された／グローバルな設定、Namespace の強制、ルートの順序／抑止、Secret、プロバイダーの状態 |
-| リモートのバックログ | 認証情報／Region／ワークスペース、レシーバーのエラー／クォータ、キュー／WAL の容量、重複ラベルの契約 |
+| OOMKilled | コンテナの制限、headシリーズ／変化、クエリの同時実行数／範囲、サンプル数、ワークロードのピーク |
+| PVC Pending | 実際のStorageClass／CSIの可用性、アクセスモード、容量、ゾーンのスケジューリング |
+| ターゲットが見つからない | 2つのMonitorセレクター、Namespaceの選択、Serviceラベル／ポート、Podラベル、Operatorの調整 |
+| ターゲットが停止 | ターゲットURL、CA／SAN／認証、RBAC／ネットワーク経路、エンドポイント応答。エラーは存在しないことの証拠ではない |
+| 通知がない | ルールの状態、ラベルの安定性、選択された／グローバル設定、Namespaceの適用、ルート順序／抑制、Secret、プロバイダーの状態 |
+| Remoteのバックログ | 認証情報／Region／ワークスペース、レシーバーのエラー／クォータ、キュー／WAL容量、重複ラベルの仕様 |
 
-distroless の Prometheus イメージにシェルや `wget`、`curl` が含まれることは保証されません。`kubectl exec ... wget` が動作すると想定しないでください。Pod のネットワークコンテキストからテストする場合は、承認された診断ツールを使用してください。設定／ターゲット／ログの出力は運用データとして扱い、機密性の高いエンドポイントや認証情報を公開しないでください。
+distrolessのPrometheusイメージには、シェル、`wget`、`curl`が必ず含まれているとは限りません。`kubectl exec ... wget`が動作すると想定しないでください。Podのネットワークコンテキストからテストする場合は、承認済みの診断ツールを使用してください。設定／ターゲット／ログの出力は運用データとして扱い、機密性のあるエンドポイントや認証情報を公開しないようにしてください。
 
-## 検証と参考資料
+## 検証と参照先
 
-ローカル監査では、固定バージョンの Helm のベース／アラート／AMP プロファイルをレンダリングし、リリース済み CRD の構造を検証し、主要な PromQL／ルールを合成サンプルで評価し、ネイティブな Alertmanager のルーティングを確認しました。ディスカバリ、admission/CEL、ストレージのバインド、IAM の強制、外部シークレット、通知配信は実行していません。実験的なスムージングはパーサーのみの検証でした。フィーチャーフラグを指定しても、その値のフィクスチャはリリース済みの promtool テストエンジンで受け入れられませんでした。
+ローカル監査では、固定バージョンのHelmベース／alerting／AMPプロファイルをレンダリングし、リリース済みCRDの構造を検証し、合成サンプル上で主要なPromQL／ルールを評価し、ネイティブのAlertmanagerルーティングを確認しました。ディスカバリー、Admission／CEL、ストレージのバインド、IAMの適用、外部シークレット、通知配信は実行していません。実験的な平滑化についてはパーサーのみで検証しました。有効な機能フラグを指定しても、値のテスト用フィクスチャはリリース済みpromtoolテストエンジンに受け付けられませんでした。
 
-- [チャート 90.0.0 のリリース](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-90.0.0)と[バージョン別のアップグレードノート](https://github.com/prometheus-community/helm-charts/blob/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/README.md)
-- [Operator 0.93.1 の API リファレンス](https://github.com/prometheus-operator/prometheus-operator/blob/v0.93.1/Documentation/api-reference/api.md)
-- [Prometheus 3.14 の設定](https://github.com/prometheus/prometheus/blob/v3.14.0/docs/configuration/configuration.md)、[関数](https://github.com/prometheus/prometheus/blob/v3.14.0/docs/querying/functions.md)、[ストレージ](https://github.com/prometheus/prometheus/blob/v3.14.0/docs/storage.md)
-- [AMP への取り込み](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-ingest-metrics-existing-Prometheus.html)、[HA 重複排除](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-ingest-dedupe.html)、[クォータ](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP_quotas.html)
-- [メトリクス概要](README.md)と[Prometheus クイズ](../../quizzes/observability/metrics/01-prometheus-quiz.md)
+- [Chart 90.0.0のリリース](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-90.0.0)と[バージョン別アップグレードノート](https://github.com/prometheus-community/helm-charts/blob/kube-prometheus-stack-90.0.0/charts/kube-prometheus-stack/README.md)
+- [Operator 0.93.1 APIリファレンス](https://github.com/prometheus-operator/prometheus-operator/blob/v0.93.1/Documentation/api-reference/api.md)
+- [Prometheus 3.14の設定](https://github.com/prometheus/prometheus/blob/v3.14.0/docs/configuration/configuration.md)、[関数](https://github.com/prometheus/prometheus/blob/v3.14.0/docs/querying/functions.md)、[ストレージ](https://github.com/prometheus/prometheus/blob/v3.14.0/docs/storage.md)
+- [AMPへの取り込み](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-ingest-metrics-existing-Prometheus.html)、[HA重複排除](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-ingest-dedupe.html)、[クォータ](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP_quotas.html)
+- [メトリクスの概要](README.md)と[Prometheusクイズ](../../quizzes/observability/metrics/01-prometheus-quiz.md)

@@ -81,7 +81,7 @@ Las variantes VMware compatibles de Bottlerocket usan su propia ruta de iniciali
 - **Compatibilidad con hosts:** Revise conjuntamente el sistema operativo, la arquitectura, el CNI y el kernel. AL2023 está destinado a entornos virtualizados locales, no es una recomendación genérica para bare metal.
 - **Cargos:** Los cargos de Hybrid Nodes se calculan según las horas de vCPU notificadas mientras los nodos están conectados. Los núcleos bare metal con hyperthreading pueden notificar dos vCPU. Las cargas de trabajo inactivas no detienen automáticamente los cargos de los nodos; los cargos del clúster y de otros servicios se cobran por separado.
 
-## Proveedores de credenciales
+## Proveedores de credenciales {#credential-providers}
 
 Ambos proveedores necesitan acceso a los puntos de conexión de servicios de AWS para renovar las credenciales. Una CA local no permite que IAM Roles Anywhere emita credenciales de AWS sin conexión. A menos que exista una razón revisada para combinarlos, es preferible usar un solo proveedor de manera uniforme en toda la flota.
 

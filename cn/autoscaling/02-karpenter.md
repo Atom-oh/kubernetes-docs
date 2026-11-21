@@ -16,7 +16,7 @@
 - [故障排除](#troubleshooting)
 - [结论](#conclusion)
 
-## 简介
+## 简介 {#introduction}
 
 Karpenter 是一个开源节点自动伸缩器。本章使用其 AWS 提供商，为兼容的 Kubernetes 工作负载预置 EC2 容量。可用性和效率取决于约束、云容量、节点初始化和应用程序设计。
 
@@ -44,7 +44,7 @@ Karpenter 是一个开源节点自动伸缩器。本章使用其 AWS 提供商�
 
 > **注意**：EKS 于2026年4月8日为托管节点组增加了暖池支持。预初始化实例可以减少重复的初始化工作；Stopped 和 Running 模式的转换时间和成本不同，缩容时是否复用实例为可选项。根据 AWS 的说明，Cluster Autoscaler 集成无需额外配置。恢复实例、节点就绪和应用程序启动仍需时间。这是 EKS 托管节点组/Auto Scaling 功能，不是由 Karpenter 管理的池。
 
-## 架构
+## 架构 {#architecture}
 
 Karpenter 作为 Kubernetes 控制器运行，检测无法调度的 Pod 并预置合适的节点。
 
@@ -77,7 +77,7 @@ Karpenter 作为 Kubernetes 控制器运行，检测无法调度的 Pod 并预�
 5. 节点注册并变为就绪状态；随后 Kubernetes 调度器可以绑定符合条件的 Pod。Karpenter 不会取代 kube-scheduler。
 6. 整合、漂移、到期、手动删除和云中断各有不同的触发条件和防护措施；它们并非都是 SQS 中断事件。
 
-## 安装和配置
+## 安装和配置 {#installation-and-configuration}
 
 没有 apiVersion/kind 的 YAML 代码块是针对所讨论的 NodePool 或 EC2NodeClass spec 的配置片段；它们不是可独立通过 kubectl apply 应用的文档。
 
@@ -375,7 +375,7 @@ AWS 于2026年7月22日宣布，为 Karpenter/EKS Auto Mode 增加 EFA 网络接
 
 [v1.15.2](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.2) 于2026年11月12日发布，仅更新 DRA 实例类型元数据；除非启用了 alpha 功能门控 `settings.awsFeatureGates.draNVIDIAGPU` 或 `settings.awsFeatureGates.draEFA`（或启用了 `settings.enableDRA`），否则不会产生任何变化。该版本为 `g7` 和 `g7e` 添加了 NVIDIA GPU DRA 元数据，并更新了现有 GPU 实例类型的 GPU 内存属性；而分数 GPU 类型 `g6f` 和 `gr6f` 不再携带 NVIDIA DRA 元数据，因此 Karpenter 不会为 `gpu.nvidia.com` 声明选择这些实例类型。EFA DRA 元数据现覆盖 302 种实例类型，高于之前的 29 种；新添加的条目仅设置 `dra.net/pciDevice`、`dra.net/pciVendor` 和 `dra.net/rdma`。从源代码构建现在需要 Go 1.26.11 或更高版本。
 
-## 节点类
+## 节点类 {#node-classes}
 
 节点类定义 Karpenter 预置节点的配置。在 AWS 上，它使用 EC2NodeClass CRD。
 
@@ -500,7 +500,7 @@ userData: |
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-2.html)
 
-## 中断处理
+## 中断处理 {#interruption-handling}
 
 已配置的中断处理会尝试在容量丢失前作出响应。处理结果取决于通知、替换容量、关闭时限和应用程序恢复情况；不保证服务不中断。
 
@@ -603,7 +603,7 @@ spec:
       app: my-app
 ```
 
-## 集成
+## 集成 {#integration}
 
 Karpenter 可与各种 Kubernetes 和云服务集成。
 
@@ -858,7 +858,7 @@ spec:
     httpPutResponseHopLimit: 1
     httpTokens: required
 ```
-## 与 Amazon EKS 集成
+## 与 Amazon EKS 集成 {#integration-with-amazon-eks}
 
 配置好身份、网络、节点访问权限和引导后，Karpenter 的 AWS 提供商可以与 EKS 管理的计算资源并行预置 EC2 容量。
 
@@ -1161,7 +1161,7 @@ spec:
     consolidateAfter: 1m
 ```
 
-## 最佳实践
+## 最佳实践 {#best-practices}
 
 ![四组并列列表，按类别列出 Karpenter 最佳实践：性能优化、成本优化、提升可用性和强化安全性。](../.gitbook/assets/en-autoscaling-02-karpenter-5.png)
 
@@ -1272,7 +1272,7 @@ spec:
     consolidateAfter: 60s
 ```
 
-## 故障排除
+## 故障排除 {#troubleshooting}
 
 ### 常见问题
 
@@ -1360,7 +1360,7 @@ helm get values karpenter --namespace karpenter
 kubectl get nodeclaims -o wide
 ```
 
-## 结论
+## 结论 {#conclusion}
 
 Karpenter 会根据工作负载和基础设施约束自动预置节点并管理其生命周期。它可以改进容量管理，但可用性、性能和成本方面的结果仍需根据具体工作负载进行验证。
 

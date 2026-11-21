@@ -329,7 +329,7 @@ Bottlerocket 以外の Hybrid DaemonSet では、アドオンの設定に以下�
 
 Bottlerocket では、選択したバージョン向けに文書化された `hybrid-bottlerocket` 設定を使用します。既存の設定を調べてマージしてください。アドオンが存在しない場合にのみ作成します。既存のアドオンは、create や OVERWRITE を無条件に使用するのではなく、レビュー済みの競合処理で更新してください。Agent と認証情報ファイルだけでは、すべてのアプリケーションの Pod Identity 関連付けは作成されません。namespace、ServiceAccount、IAM ロールの信頼関係／権限、SDK の認証情報解決、認可の成功を確認してください。
 
-## 混在モードでの Webhook 運用
+## 混在モードでの Webhook 運用 {#mixed-mode-webhook-operations}
 
 AWS がサポートする混在モードのパターンでは、VPC CNI はクラウドノード上で、Cilium/Calico は Hybrid Nodes 上で動作します。このパターンでは、AWS は webhook をクラウドノードに配置することを推奨しています。Hybrid 上で動作する webhook には、ルーティング可能なリモート Pod CIDR とコントロールプレーンからの到達性も必要です。すべての webhook がどこでも実行できる、または実行しなければならないと想定せず、実際のエンドポイントを確認してください。
 

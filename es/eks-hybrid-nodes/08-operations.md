@@ -329,7 +329,7 @@ Para el DaemonSet de Hybrid que no es Bottlerocket, la configuración del comple
 
 Para Bottlerocket, usa la configuración documentada `hybrid-bottlerocket` para la versión seleccionada. Inspecciona y combina los ajustes existentes. Crea un complemento solo si no existe; actualiza uno existente con una gestión de conflictos revisada, en lugar de usar create u OVERWRITE a ciegas. El agente y el archivo de credenciales no crean la asociación de Pod Identity de cada aplicación: verifica el espacio de nombres, el ServiceAccount, la confianza/permisos del rol IAM, la resolución de credenciales del SDK y la autorización correcta.
 
-## Operaciones de webhooks en modo mixto
+## Operaciones de webhooks en modo mixto {#mixed-mode-webhook-operations}
 
 En el patrón de modo mixto compatible con AWS, VPC CNI se ejecuta en nodos de la nube y Cilium/Calico en Hybrid Nodes. AWS recomienda ubicar los webhooks en la nube en ese patrón. Un webhook alojado en Hybrid también necesita un CIDR de Pod remoto enrutable y conectividad con el plano de control; inspecciona el endpoint real en vez de dar por hecho que todos los webhooks deben o pueden ejecutarse en cualquier lugar.
 
