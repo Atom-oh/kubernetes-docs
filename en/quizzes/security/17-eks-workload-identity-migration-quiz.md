@@ -1,30 +1,165 @@
 # EKS workload IAM migration quiz
 
-1. After removing the node's S3 read policy, `GetCallerIdentity` succeeds from the legacy Pod and `GetObject` is denied. What happened?
+> **Last Updated**: November 21, 2026
 
-   <details>
-   <summary>Show Answer</summary>
+[Read the workbook and live demo](../../security/17-eks-workload-identity-migration.md)
 
-   The credentials obtained through IMDSv2 still identify the node role. S3 denies the read because the role lost permission to access the object.
+### 1. What is the main problem with attaching an app's S3 permission to the node IAM role?
 
-   </details>
+- A) S3 requests get slower
+- B) Every Pod on that node that can reach IMDS uses the same permission
+- C) The node can no longer join the cluster
+- D) The S3 bucket becomes public
 
-2. Which paths deliver temporary role credentials for IRSA and Pod Identity?
+<details>
+<summary>Show Answer</summary>
 
-   <details>
-   <summary>Show Answer</summary>
+**Answer: B) Every Pod on that node that can reach IMDS uses the same permission**
 
-   IRSA exchanges the projected ServiceAccount token with STS using `AssumeRoleWithWebIdentity`. The Pod Identity SDK sends a token to the node's Agent, which retrieves role credentials through EKS Auth and returns them to the SDK.
+**Explanation:** The node role is attached to the whole node through the instance profile. With a hop limit of 2 or more, ordinary Pods can get node-role credentials through IMDSv2. CloudTrail records only the node instance session, so workloads are hard to tell apart.
 
-   </details>
+</details>
 
-3. What canary evidence do you need before removing application permissions from the node role?
+### 2. In the AWS SDK default credential chain, where do the IRSA and Pod Identity providers sit relative to IMDS?
 
-   <details>
-   <summary>Show Answer</summary>
+- A) IMDS comes first
+- B) IRSA (web identity) and Pod Identity (container provider) both come before IMDS
+- C) The order is random
+- D) Only Pod Identity comes before IMDS
 
-   Verify that a new Pod uses the expected workload role and succeeds on its required AWS APIs. Check other dependencies including scheduled jobs and controllers, credential refresh, and the IAM policy needed for rollback.
+<details>
+<summary>Show Answer</summary>
 
-   </details>
+**Answer: B) IRSA (web identity) and Pod Identity (container provider) both come before IMDS**
 
-[Migration guide and demo](../../security/17-eks-workload-identity-migration.md)
+**Explanation:** Environment keys, the web identity token and the container credential provider precede IMDS. A new Pod into which EKS injected the variables uses the new role without code changes; a Pod with nothing injected falls through to the node role from IMDS.
+
+</details>
+
+### 3. Why can STS trust the projected token in IRSA?
+
+- A) The token contains IAM access keys
+- B) The cluster issuer is registered as an IAM OIDC provider, and the role trust policy checks `aud` and `sub`
+- C) The Pod Identity Agent signs the token
+- D) The node role calls STS on the Pod's behalf
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) The cluster issuer is registered as an IAM OIDC provider, and the role trust policy checks `aud` and `sub`**
+
+**Explanation:** STS `AssumeRoleWithWebIdentity` verifies the token signature with the issuer keys registered through the OIDC provider and checks the trust conditions: `aud` is `sts.amazonaws.com` and `sub` is `system:serviceaccount:<namespace>:<serviceaccount>`.
+
+</details>
+
+### 4. With Pod Identity, which permission must stay on the node role?
+
+- A) The app's S3 read permission
+- B) `sts:AssumeRoleWithWebIdentity`
+- C) `eks-auth:AssumeRoleForPodIdentity` for the agent to call EKS Auth (part of `AmazonEKSWorkerNodePolicy`)
+- D) None at all
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C) `eks-auth:AssumeRoleForPodIdentity` for the agent to call EKS Auth (part of `AmazonEKSWorkerNodePolicy`)**
+
+**Explanation:** The Pod Identity Agent calls EKS Auth with this node-role permission. The app's business permission belongs on the Pod Identity role named in the association.
+
+</details>
+
+### 5. In the demo's `diff`, which claim distinguished the IRSA token from the Pod Identity token?
+
+- A) `iss`
+- B) `aud`
+- C) `exp`
+- D) They were identical
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) `aud`**
+
+**Explanation:** Both are ServiceAccount tokens signed by the same cluster issuer. The IRSA token's audience is `sts.amazonaws.com`; the Pod Identity token's is `pods.eks.amazonaws.com`. `sub` differs per ServiceAccount.
+
+</details>
+
+### 6. Which method lets one IAM role serve ten new clusters without trust policy changes?
+
+- A) IRSA
+- B) EKS Pod Identity
+- C) Neither needs changes
+- D) Both need per-cluster edits
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) EKS Pod Identity**
+
+**Explanation:** A Pod Identity role trusts only `pods.eks.amazonaws.com`; associations and session tags set the cluster scope. IRSA needs an OIDC provider and a trust statement per cluster, and the default 2,048-character trust policy typically fits about four bindings.
+
+</details>
+
+### 7. A Pod running on Fargate needs a workload role. Which method do you use?
+
+- A) EKS Pod Identity
+- B) IRSA
+- C) The node role
+- D) Neither works
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) IRSA**
+
+**Explanation:** EKS Pod Identity supports only Linux EC2 nodes in EKS. Use IRSA on Fargate, Windows EC2 nodes, Outposts and EKS Anywhere.
+
+</details>
+
+### 8. You created an association and rolled out immediately, but the new Pod still uses the node role. What is the most likely cause?
+
+- A) The bucket policy denied it
+- B) The association had not yet reached Pod admission, so nothing was injected
+- C) The Pod Identity Agent blocked IMDS
+- D) An IRSA annotation is also required
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) The association had not yet reached Pod admission, so nothing was injected**
+
+**Explanation:** Associations are eventually consistent and can take several seconds. In the demo, a rollout 7 seconds after creation got no injection. Check the Pod template with `kubectl create --dry-run=server` before rolling out.
+
+</details>
+
+### 9. A ServiceAccount has both an IRSA annotation and a Pod Identity association. What do common SDKs do?
+
+- A) Use Pod Identity first
+- B) Use IRSA (the web identity provider) first
+- C) Alternate per request
+- D) Fail to start
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) Use IRSA (the web identity provider) first**
+
+**Explanation:** The web identity provider comes before the container provider in the default chain. When switching methods, use separate ServiceAccounts or remove the old binding so the intended path is chosen.
+
+</details>
+
+### 10. Right after you remove the node role's S3 policy, the legacy Pod's read is denied. Can you declare the migration done?
+
+- A) Yes, a single denial is final
+- B) No, IAM changes are eventually consistent and results can mix for minutes, so keep watching
+- C) Yes, once the node restarts
+- D) No, you must delete the node role
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) No, IAM changes are eventually consistent and results can mix for minutes, so keep watching**
+
+**Explanation:** In the demo the legacy Pod was denied after 13 seconds, yet two more allowed reads appeared about 4.5 minutes later. Watch for several minutes including scheduled runs, and keep an exact copy of the policy for rollback.
+
+</details>
