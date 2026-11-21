@@ -169,7 +169,7 @@ export CLUSTER=<클러스터 이름> VPC_NAME=<클러스터 VPC의 Name 태그> 
 | 주입된 환경 변수 | `AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE`, `AWS_STS_REGIONAL_ENDPOINTS` | `AWS_CONTAINER_CREDENTIALS_FULL_URI`, `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`, `AWS_STS_REGIONAL_ENDPOINTS` |
 | 토큰 `aud` | `sts.amazonaws.com` | `pods.eks.amazonaws.com` |
 | 토큰 `sub` | `system:serviceaccount:wid-d1124:orders-irsa` | `system:serviceaccount:wid-d1124:orders-podid` |
-| 토큰 수명 | 86,400초 (24시간) | 약 24시간 |
+| 토큰 수명 | 86,400초 (24시간) | 약 22~24시간 (웹훅이 수명에 무작위 편차를 줌. 실측 79,636초와 86,171초) |
 | 역할 신뢰 principal | `Federated`: 클러스터 OIDC provider, 조건 `aud`·`sub` | `Service`: `pods.eks.amazonaws.com`, 조건 요청 태그 3개 |
 
 리허설에서 두 가지 eventual consistency를 확인했습니다. 첫째, 첫 리허설에서 association을 만든 직후 rollout한 Pod에는 Pod Identity 변수가 주입되지 않아 노드 역할을 계속 썼고, 이어서 노드 정책을 회수하자 이 복사본도 거부됐습니다. 그래서 `migrate-podid`는 Deployment의 Pod 템플릿을 `kubectl create --dry-run=server`로 보내 mutating 웹훅의 주입 결과를 확인한 뒤에 rollout합니다. 두 번째 리허설에서는 association을 만들고 5초가 지나서야 주입이 확인됐습니다. 둘째, 첫 리허설의 `revoke` 뒤 레거시 Pod는 13초 만에 거부됐지만 약 4분 30초 뒤에 허용 응답이 두 번 더 나왔습니다. 그 직후 다시 확인한 1분 동안(로그 11건)은 모두 거부였습니다. 운영에서 노드 정책을 회수한 뒤에는 수 분 이상 관찰하고 판단합니다.
