@@ -148,7 +148,7 @@ export CLUSTER=<클러스터 이름> VPC_NAME=<클러스터 VPC의 Name 태그> 
 ./demo.sh down d1124          # 정리
 ```
 
-스크립트가 만드는 리소스는 이름에 run ID가 들어가거나 `LabRun` 태그가 붙고, 스크립트는 그 이름이나 태그에 해당하는 리소스만 수정하고 삭제합니다. VPC·서브넷·보안 그룹·애드온·OIDC provider는 만들지 않고 있는지만 확인합니다.
+스크립트가 만드는 리소스는 이름에 run ID가 들어가거나 `LabRun` 태그가 붙고, 스크립트는 그 이름이나 태그에 해당하는 리소스만 수정하고 삭제합니다. VPC·서브넷·보안 그룹·애드온·OIDC provider는 만들지 않고 있는지만 확인합니다. 단계별 명령과 예상 출력, 확인 포인트는 [실습 가이드](../labs/security/17-eks-workload-identity-migration-lab.md)에 있습니다.
 
 ### 서울 리전 실측 결과
 

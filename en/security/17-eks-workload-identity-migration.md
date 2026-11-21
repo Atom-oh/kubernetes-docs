@@ -148,7 +148,7 @@ export CLUSTER=<cluster name> VPC_NAME=<Name tag of the cluster VPC> \
 ./demo.sh down d1124          # clean up
 ```
 
-Everything the script creates carries the run ID in its name or a `LabRun` tag, and the script changes or deletes only resources that match that name or tag. It creates no VPC, subnet, security group, add-on or OIDC provider; it only checks that they exist.
+Everything the script creates carries the run ID in its name or a `LabRun` tag, and the script changes or deletes only resources that match that name or tag. It creates no VPC, subnet, security group, add-on or OIDC provider; it only checks that they exist. The [hands-on lab](../labs/security/17-eks-workload-identity-migration-lab.md) walks through each step with commands, expected output and checkpoints.
 
 ### Measured in the Seoul Region
 
