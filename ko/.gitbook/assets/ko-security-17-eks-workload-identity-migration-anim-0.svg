@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" role="img" xml:lang="ko"
+  aria-labelledby="title desc">
+<title id="title">EKS Pod 자격 증명은 어디서 오는가</title>
+<desc id="desc">AWS SDK의 자격 증명 조회(파랑)와 임시 자격 증명 반환(초록). 각 Pod가 받은 자격 증명으로 S3 API 요청에 서명</desc>
+<style>
+  :root { --paper:#fffdf8; --card:#fff; --ink:#282419; --rule:#b2a792; --blue:#145c88; --green:#286342; }
+  @media (prefers-color-scheme:dark) {
+    :root { --paper:#21211f; --card:#2b2b29; --ink:#f6efdc; --rule:#918771; --blue:#86c8f1; --green:#99d5ac; }
+  }
+  @media (prefers-reduced-motion:reduce) { .pulse { display:none; } }
+  text { fill:var(--ink); font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif; }
+  .paper { fill:var(--paper); stroke:var(--rule); }
+  .card { fill:var(--card); stroke:var(--rule); stroke-width:1.4; }
+  .title { font-size:25px; font-weight:700; }
+  .heading { font-size:19px; font-weight:700; }
+  .card-label { font-size:14px; font-weight:700; }
+  .small { font-size:14px; }
+  .detail { font-size:12px; }
+  .link { fill:none; stroke-width:1.8; }
+  .link.request { stroke:var(--blue); }
+  .link.response { stroke:var(--green); stroke-dasharray:5 4; }
+  .pulse.request, .request-arrow { fill:var(--blue); }
+  .pulse.response, .response-arrow { fill:var(--green); }
+</style>
+<defs>
+  <marker id="request-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+    <path d="M0 0 L7 3.5 L0 7Z" class="request-arrow"/>
+  </marker>
+  <marker id="response-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+    <path d="M0 0 L7 3.5 L0 7Z" class="response-arrow"/>
+  </marker>
+</defs>
+<rect x="1" y="1" width="998" height="478" rx="15" class="paper"/>
+<text x="28" y="39" class="title" text-anchor="start">EKS Pod 자격 증명은 어디서 오는가</text>
+<text x="28" y="78" class="heading" text-anchor="start">노드 인스턴스 프로파일</text>
+<rect x="28" y="90" width="123" height="40" rx="9" class="card"/><text x="89.5" y="115" class="card-label" text-anchor="middle">Pod / AWS SDK</text>
+<path class="link request" marker-end="url(#request-arrow)" d="M155 110 Q276.0 118 397 110"/>
+<rect x="402" y="90" width="160" height="40" rx="9" class="card"/><text x="482.0" y="108" class="card-label" text-anchor="middle">EC2 IMDSv2</text><text x="482.0" y="123" class="detail" text-anchor="middle">169.254.169.254</text>
+<text x="276.5" y="101" class="detail" text-anchor="middle">노드 역할 자격 증명 조회</text>
+<text x="579" y="109" class="card-label" text-anchor="start">노드 역할</text>
+<path class="link response" marker-end="url(#response-arrow)" d="M550 150 Q321.0 142 92 150"/>
+<circle r="5" class="pulse request" opacity="0"><animate attributeName="opacity" values="1;1;0;0" keyTimes="0;.1;.55;1" dur="5.5s" repeatCount="indefinite"/><animateMotion dur="5.5s" path="M154 110 Q353.0 118 552 110" keyPoints="0;0;1;1" keyTimes="0;.1;.55;1" calcMode="linear" repeatCount="indefinite"/></circle>
+<circle r="5" class="pulse response" opacity="0"><animate attributeName="opacity" values="0;0;1;0" keyTimes="0;.5;.65;1" dur="5.5s" repeatCount="indefinite"/><animateMotion dur="5.5s" path="M550 150 Q321.0 142 92 150" keyPoints="0;0;0;1" keyTimes="0;.5;.65;1" calcMode="linear" repeatCount="indefinite"/></circle><text x="28" y="193" class="heading" text-anchor="start">IRSA</text>
+<rect x="28" y="205" width="123" height="40" rx="9" class="card"/><text x="89.5" y="230" class="card-label" text-anchor="middle">Pod / AWS SDK</text>
+<path class="link request" marker-end="url(#request-arrow)" d="M155 225 Q276.0 233 397 225"/>
+<rect x="402" y="205" width="188" height="40" rx="9" class="card"/><text x="496.0" y="223" class="card-label" text-anchor="middle">AWS STS</text><text x="496.0" y="238" class="detail" text-anchor="middle">AssumeRoleWithWebIdentity</text>
+<text x="276.5" y="216" class="detail" text-anchor="middle">Projected token</text>
+<text x="607" y="224" class="card-label" text-anchor="start">IRSA 역할</text>
+<path class="link response" marker-end="url(#response-arrow)" d="M578 265 Q335.0 257 92 265"/>
+<circle r="5" class="pulse request" opacity="0"><animate attributeName="opacity" values="1;1;0;0" keyTimes="0;.1;.55;1" dur="5.5s" repeatCount="indefinite"/><animateMotion dur="5.5s" path="M154 225 Q367.0 233 580 225" keyPoints="0;0;1;1" keyTimes="0;.1;.55;1" calcMode="linear" repeatCount="indefinite"/></circle>
+<circle r="5" class="pulse response" opacity="0"><animate attributeName="opacity" values="0;0;1;0" keyTimes="0;.5;.65;1" dur="5.5s" repeatCount="indefinite"/><animateMotion dur="5.5s" path="M578 265 Q335.0 257 92 265" keyPoints="0;0;0;1" keyTimes="0;.5;.65;1" calcMode="linear" repeatCount="indefinite"/></circle>
+<text x="607" y="240" class="detail" text-anchor="start">IAM OIDC 신뢰 · aud / sub</text><text x="28" y="308" class="heading" text-anchor="start">EKS Pod Identity</text>
+<rect x="28" y="320" width="123" height="40" rx="9" class="card"/><text x="89.5" y="345" class="card-label" text-anchor="middle">Pod / AWS SDK</text>
+<path class="link request" marker-end="url(#request-arrow)" d="M155 340 Q226.0 348 297 340"/>
+<rect x="302" y="320" width="149" height="40" rx="9" class="card"/><text x="376.5" y="338" class="card-label" text-anchor="middle">Pod Identity Agent</text><text x="376.5" y="353" class="detail" text-anchor="middle">169.254.170.23</text>
+<path class="link request" marker-end="url(#request-arrow)" d="M455 340 Q467.0 348 479 340"/>
+<rect x="484" y="320" width="171" height="40" rx="9" class="card"/><text x="569.5" y="338" class="card-label" text-anchor="middle">EKS Auth</text><text x="569.5" y="353" class="detail" text-anchor="middle">AssumeRoleForPodIdentity</text>
+<path class="link request" marker-end="url(#request-arrow)" d="M659 340 Q670.0 348 681 340"/>
+<rect x="686" y="320" width="87" height="40" rx="9" class="card"/><text x="729.5" y="338" class="card-label" text-anchor="middle">STS</text><text x="729.5" y="353" class="detail" text-anchor="middle">AssumeRole</text>
+<text x="226.5" y="331" class="detail" text-anchor="middle">Projected token</text>
+<text x="790" y="339" class="card-label" text-anchor="start">Pod Identity 역할</text>
+<path class="link response" marker-end="url(#response-arrow)" d="M761 380 Q426.5 372 92 380"/>
+<circle r="5" class="pulse request" opacity="0"><animate attributeName="opacity" values="1;1;0;0" keyTimes="0;.1;.55;1" dur="5.5s" repeatCount="indefinite"/><animateMotion dur="5.5s" path="M154 340 Q458.5 348 763 340" keyPoints="0;0;1;1" keyTimes="0;.1;.55;1" calcMode="linear" repeatCount="indefinite"/></circle>
+<circle r="5" class="pulse response" opacity="0"><animate attributeName="opacity" values="0;0;1;0" keyTimes="0;.5;.65;1" dur="5.5s" repeatCount="indefinite"/><animateMotion dur="5.5s" path="M761 380 Q426.5 372 92 380" keyPoints="0;0;0;1" keyTimes="0;.5;.65;1" calcMode="linear" repeatCount="indefinite"/></circle>
+<text x="790" y="355" class="detail" text-anchor="start">EKS association · 요청 태그</text>
+<text x="420" y="372" class="detail" text-anchor="middle">EKS Auth와 Agent를 거쳐 반환</text>
+<text x="503" y="409" class="small" text-anchor="middle">임시 역할 자격 증명이 SDK로 반환</text>
+<path d="M28 426 Q500 429 972 426" fill="none" class="link response"/>
+<text x="500" y="454" class="heading" text-anchor="middle">각 Pod가 받은 자격 증명으로 S3 API 요청에 서명</text>
+</svg>
