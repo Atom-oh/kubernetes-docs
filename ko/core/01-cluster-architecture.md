@@ -1,7 +1,7 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.35, 1.36, 1.37
-> **마지막 업데이트**: 2026년 11월 19일
+> **마지막 업데이트**: 2026년 11월 21일
 
 버전 헤더는 업스트림 Kubernetes 기준입니다. Kubernetes 프로젝트는 최신 세 마이너 버전(1.35–1.37)의 릴리스 브랜치를 유지합니다. upstream 1.34는 유지 관리 모드로 **2026년 10월 27일** 지원 종료(EOL) 전까지 패치 릴리스를 계속 받으며, 이는 EKS의 AWS 지원 종료일과 별도입니다.
 
@@ -1560,6 +1560,10 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 - **[Memory QoS Beta 승격](https://kubernetes.io/blog/2026/09/14/kubernetes-v1-37-memory-qos-graduates-to-beta/)**: `MemoryQoS` 기능 게이트가 Beta로 승격되어 v1.37 kubelet에서 기본 활성화됩니다. cgroup v2 Linux 노드에서 메모리 컨트롤러를 통해 커널에 컨테이너 메모리 처리 힌트를 제공합니다. 다만 기본 kubelet 설정은 `memory.high`/`memory.min`/`memory.low` 값을 쓰지 않으므로, `memoryThrottlingFactor` 등을 명시적으로 설정하기 전까지 동작 변화는 없습니다.
 - **[파드 수준 리소스 매니저 Beta 승격](https://kubernetes.io/blog/2026/09/15/kubernetes-v1-37-pod-level-resource-managers-beta/)** (기본 비활성화): kubelet의 Topology Manager, CPU Manager, Memory Manager가 파드 수준 리소스 선언(`.spec.resources`)을 직접 사용해 NUMA 정렬 배치를 결정합니다. 주 컨테이너에는 전용 코어를 할당하면서 경량 사이드카는 파드 격리 풀에 배치하는 하이브리드 할당이 가능해집니다.
 - **[컨테이너 스토리지 보안 강화](https://kubernetes.io/blog/2026/09/16/kubernetes-v1-37-hardening-container-storage/)**: `emptyDir` 권한 모드와 바인드 마운트 옵션(`noexec`, `nosuid`, `nodev`)이 도입되어, 쓰기 가능한 볼륨에서 임의 바이너리 실행을 금지하는 등의 보안 정책을 우회 수단 없이 Kubernetes에서 직접 구현할 수 있습니다.
+
+### 2026년 10월 업데이트: v1.37.2 등 정기 패치 릴리스
+
+2026년 10월 28일 지원 중인 전체 마이너 버전에 대한 패치 릴리스 [v1.37.2](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.2), v1.36.6, v1.35.10, v1.34.13이 공개되었습니다. v1.37.2는 유출된 eMudhra 중간 CA 인증서를 더 이상 신뢰하지 않는 Go 1.26.10 빌드로 전환했으며, `NoExecute` 디바이스 테인트(DeviceTaintRule)가 DRA 확장 리소스를 사용하는 파드를 축출하지 못하던 버그, 최근 삭제된 Job과 같은 이름으로 재생성된 Job이 조정(reconcile)되지 않을 수 있던 문제, kube-proxy가 이미 충분히 큰 `nf_conntrack_max` sysctl 값을 낮추려 하던 1.36 회귀를 수정하고, kube-apiserver가 요청 헤더 값을 최대 16384개까지 수용하도록 해 그룹이 약 500개 이상인 가장(impersonation)·프록시 사용자가 HTTP 431로 거부되는 문제를 예방했습니다. v1.34.13은 2026년 10월 27일 지원 종료(EOL)된 1.34 라인의 마지막 패치입니다.
 
 ### 2026년 11월 업데이트: v1.38.0-beta.0 공개
 
