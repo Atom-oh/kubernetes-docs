@@ -8,6 +8,8 @@ caption layout, packet tags, ko/en COPY, anim()/win()/move() on one shared
 SMIL clock with the keyTimes self-check. Denied is vermilion, drawn as gen 09
 draws "blocked". CSS only handles palette (light/dark) and the reduced-motion
 static view.
+A tracking camera on the same clock follows the request in the motion
+layer; the static view stays the unmoved overview (see the camera section).
 
 Three copies of one app (orders-legacy, orders-irsa, orders-podid) on one node
 read one S3 object (invoices/2026-11.txt, the object demo.sh creates).
@@ -106,7 +108,7 @@ T = {
     "s1": 0.3, "s1_go": 0.8, "s1_in": 2.6, "s1_end": 4.2,
     "s2": 4.6, "s2_roll": 5.0, "s2_swap": 5.9, "s2_go": 6.6, "s2_in": 8.0, "s2_end": 9.0,
     "s3": 9.4, "s3_roll": 9.8, "s3_swap": 10.7, "s3_go": 11.4, "s3_in": 12.8, "s3_end": 13.8,
-    "s4": 14.2, "strike": 14.6, "s4_go": 15.4, "s4_in": 16.8, "s4_end": 20.0,
+    "s4": 14.2, "strike": 14.6, "s4_go": 16.0, "s4_in": 17.4, "s4_end": 20.0,
     "hold": 20.4,
 }
 kt = lambda s: f"{s / DUR:.4f}"
@@ -177,6 +179,105 @@ def tw(s, size, bold=False):
 def fits(s, size, room, bold=False):
     assert tw(s, size, bold) <= room, (s, round(tw(s, size, bold)), room)
 
+
+# ---------- camera ------------------------------------------------------------
+# The view follows the request. The motion layer holds its own copy of the
+# diagram inside a camera <g> that moves on the shared SMIL clock: translate +
+# scale (additive="sum"), calcMode="spline", eased in and out. Paper bands
+# outside VIEW mask the zoomed diagram (no clip-path: only url(#pen) is
+# allowed, and a nested <svg> would get its own SMIL clock); the title,
+# captions, hint and badges are drawn after them and never move. The static
+# (reduced-motion) layer keeps an unmoved copy, so no camera exists there.
+VIEW = (0, 46, 960, 324)             # camera viewport: x, y, w, h (title above, captions below)
+OV = (VIEW[0] + VIEW[2] / 2, VIEW[1] + VIEW[3] / 2, 1.0)  # overview = identity
+CAMS = []                            # every camera animation, validated before writing
+
+
+def shot(x0, y0, x1, y1, zmax=1.8, pad=8):
+    """Shot (cx, cy, zoom) framing the box plus pad, kept inside VIEW."""
+    vx, vy, vw, vh = VIEW
+    z = max(1.0, min(zmax, vw / (x1 - x0 + 2 * pad), vh / (y1 - y0 + 2 * pad)))
+    hw, hh = vw / z / 2, vh / z / 2
+    cx = min(max((x0 + x1) / 2, vx + hw), vx + vw - hw)
+    cy = min(max((y0 + y1) / 2, vy + hh), vy + vh - hh)
+    wx0, wy0, wx1, wy1 = cx - hw, cy - hh, cx + hw, cy + hh
+    assert wx0 <= x0 and wy0 <= y0 and x1 <= wx1 and y1 <= wy1, ("box not in shot", (x0, y0, x1, y1))
+    return (round(cx, 2), round(cy, 2), round(z, 4))
+
+
+def camera(keys):
+    """keys: [(seconds, shot[, "via"]), ...] from 0 to DUR. Equal neighbours hold; a move
+    eases in and out, except through a "via" key, which it passes without stopping."""
+    vx, vy, vw, vh = VIEW
+    mx, my = vx + vw / 2, vy + vh / 2
+    stop = [len(k) == 2 for k in keys]
+    keys = [k[:2] for k in keys]
+    ts = ";".join(kt(t) for t, _ in keys)
+    num = lambda v: f"{v:.2f}".replace("-0.00", "0.00")
+    tr = ";".join(f"{num(mx - z * cx)} {num(my - z * cy)}" for _, (cx, cy, z) in keys)
+    sc = ";".join(f"{z:.4f}" for _, (cx, cy, z) in keys)
+    ks = ";".join("0 0 1 1" if a == b else f"{0.42 if s0 else 0} 0 {0.58 if s1 else 1} 1"
+                  for (_, a), (_, b), s0, s1 in zip(keys, keys[1:], stop, stop[1:]))
+    CAMS.append((ts, tr, sc, ks, keys, stop))
+    common = (f'dur="{DUR}s" repeatCount="indefinite" calcMode="spline" '
+              f'keyTimes="{ts}" keySplines="{ks}"')
+    return (f'<animateTransform attributeName="transform" type="translate" {common} values="{tr}"/>'
+            f'<animateTransform attributeName="transform" type="scale" additive="sum" {common} values="{sc}"/>')
+
+
+def check_camera():
+    assert CAMS, "no camera"
+    for ts, tr, sc, ks, keys, stop in CAMS:
+        t = [float(x) for x in ts.split(";")]
+        assert t[0] == 0 and t[-1] == 1 and all(0 <= x <= 1 for x in t), ts
+        assert all(b > a for a, b in zip(t, t[1:])), ("camera keyTimes not monotonic", ts)
+        trs, scs = tr.split(";"), sc.split(";")
+        assert len(trs) == len(scs) == len(t) == len(ks.split(";")) + 1, ts
+        assert keys[0][1] == keys[-1][1] == OV, "camera must start and end on the overview"
+        assert trs[0] == trs[-1] == "0.00 0.00" and float(scs[0]) == float(scs[-1]) == 1.0, (trs[0], scs[0])
+        assert all(1.0 <= z <= 2.0 for _, (_, _, z) in keys), "zoom out of range"
+        assert stop[0] and stop[-1], "the loop starts and ends on a stop"
+        segs = list(zip(keys, keys[1:]))
+        move0 = None
+        for i, ((t0, a), (t1, b)) in enumerate(segs):
+            if a != b:  # a move runs from one stop to the next, maybe through "via" keys
+                move0 = t0 if stop[i] else move0
+                if stop[i + 1]:
+                    assert 0.8 - 1e-6 <= t1 - move0 <= 1.5 + 1e-6, ("camera move must take 0.8-1.5 s", move0, t1)
+            else:
+                assert stop[i] and stop[i + 1], ("a hold cannot touch a via key", t0)
+                if 0 < i < len(segs) - 1:
+                    assert t1 - t0 >= 0.6 - 1e-6, ("camera hold must last at least 0.6 s", t0, t1)
+        seam = (segs[0][1][0] - segs[0][0][0]) + (segs[-1][1][0] - segs[-1][0][0])
+        assert segs[0][0][1] == segs[0][1][1] == segs[-1][0][1] and seam >= 1.0, "overview beat across the seam"
+
+
+BANDS = (f'<rect class="paper" width="{W}" height="{VIEW[1]}"/>'
+         f'<rect class="paper" y="{VIEW[1] + VIEW[3]}" width="{W}" height="{H - VIEW[1] - VIEW[3]}"/>')
+
+
+# Camera script: scene 1 plays on the overview (all three rows move at once);
+# scenes 2 and 3 push in on the row that rolls out and follow its read to the
+# bucket; scene 4 frames the struck node role policy, pulls back for the three
+# verdicts, then returns to read AccessDenied beside the struck policy.
+# Vertical edges are placed in the gaps between card text lines, and the
+# bucket-side shots start right of the card text, so held frames cut no text.
+CAM_S2A = shot(0, 125, 518, 300, 2.0, pad=0)     # row 2: rollout at the Pod, card swap
+CAM_S2B = shot(480, 125, 960, 287, 2.0, pad=0)   # row 2: read reaches the bucket
+CAM_S3A = shot(0, 195, 518, 370, 2.0, pad=0)     # row 3: rollout at the Pod, card swap
+CAM_S3B = shot(480, 190, 960, 352, 2.0, pad=0)   # row 3: read reaches the bucket
+CAM_S4 = shot(480, 58, 960, 220, 2.0, pad=0)     # struck policy, row 1 denied, row 2 allowed
+CAM_KEYS = [
+    (0, OV), (4.6, OV),                  # up: all three read through the node role
+    (5.6, CAM_S2A), (6.8, CAM_S2A),      # migrate-irsa rollout
+    (7.8, CAM_S2B), (9.0, CAM_S2B),      # its read is allowed
+    (10.2, CAM_S3A), (11.6, CAM_S3A),    # migrate-podid rollout
+    (12.6, CAM_S3B), (13.4, CAM_S3B),    # its read is allowed
+    (14.4, CAM_S4), (15.0, CAM_S4),      # revoke strikes the node role policy
+    (16.0, OV), (18.0, OV),              # three reads: one denied, two allowed
+    (19.0, CAM_S4), (19.8, CAM_S4),      # AccessDenied next to the struck policy
+    (20.8, OV), (DUR, OV),               # overview beat
+]
 
 # ---------- copy --------------------------------------------------------------
 COPY = {
@@ -339,6 +440,7 @@ def src_text(lines, y):
 
 def build(lang):
     ANIMS.clear()
+    CAMS.clear()
     k = COPY[lang]
     steps_t = [(T["s1"], T["s1_end"]), (T["s2"], T["s2_end"]), (T["s3"], T["s3_end"]), (T["s4"], T["s4_end"] - 0.2)]
     o = []
@@ -366,26 +468,26 @@ def build(lang):
     px, py, pw, ph = POLICY
     g.append(f'<path class="thin" d="M{px} {py} l{pw} 0 l0 {ph} l-{pw} 0 z"/>')
     g.append('</g>')
-    o.extend(g)
+    dia = list(g)  # the diagram: drawn once in the camera, once in the static view
 
     # labels
     nx, ny, nw, nh = NODE_BOX
-    o.append(f'<text class="s" x="{nx+12}" y="{ny+nh-10}" font-weight="700">{esc(k["node"])}</text>')
-    o.append(f'<text class="s" x="{SRC_L}" y="{RY[0]-34}" font-weight="700">{esc(k["col"])}</text>')
+    dia.append(f'<text class="s" x="{nx+12}" y="{ny+nh-10}" font-weight="700">{esc(k["node"])}</text>')
+    dia.append(f'<text class="s" x="{SRC_L}" y="{RY[0]-34}" font-weight="700">{esc(k["col"])}</text>')
     for i, y in enumerate(RY):
-        o.append(f'<text class="s" x="{POD_X}" y="{y+33}" text-anchor="middle" font-weight="700">{esc(k["pods"][i])}</text>')
-    o.append(src_text(k["node_src"], RY[0]))
+        dia.append(f'<text class="s" x="{POD_X}" y="{y+33}" text-anchor="middle" font-weight="700">{esc(k["pods"][i])}</text>')
+    dia.append(src_text(k["node_src"], RY[0]))
     bx, by = BUCKET
-    o.append(f'<text class="t" x="{bx}" y="{by+50}" text-anchor="middle" font-weight="600" style="font-size:14px">{esc(k["bucket"][0])}</text>')
-    o.append(f'<text class="s" x="{bx}" y="{by+67}" text-anchor="middle">{esc(k["bucket"][1])}</text>')
+    dia.append(f'<text class="t" x="{bx}" y="{by+50}" text-anchor="middle" font-weight="600" style="font-size:14px">{esc(k["bucket"][0])}</text>')
+    dia.append(f'<text class="s" x="{bx}" y="{by+67}" text-anchor="middle">{esc(k["bucket"][1])}</text>')
     fits(k["policy"], 13.5, pw - 20)
-    o.append(f'<text class="row" x="{px+12}" y="{py+23}">{esc(k["policy"])}</text>')
+    dia.append(f'<text class="row" x="{px+12}" y="{py+23}">{esc(k["policy"])}</text>')
     strike_w = round(tw(k["policy"], 13.5) * k["strike"])
     strike = (f'<path class="pkl" style="stroke-width:2.4px" d="M{px+8} {py+18} L{px+16+strike_w} {py+19}"/>'
               f'<text class="tag halo acc" x="{px+pw-4}" y="{py+ph+16}" text-anchor="end">{esc(k["revoked"])}</text>')
 
     # --- motion layer ---
-    m = ['<g class="motion">']
+    m = ['<g class="motion">', '<g>', camera(CAM_KEYS)] + dia
 
     def hl(d, start, end, cls="trunk", after=None):
         return (f'<g opacity="0">{win(start, end, fade=0.2, after=after)}'
@@ -395,15 +497,13 @@ def build(lang):
         return f"M{POD_X-27} {y-21} l54 0 l0 42 l-54 0 z"
 
     card = [box_d(SRC[0], y, SRC[1], CARD_H) for y in RY]
-    # scene badge, top right
-    scene_t = [(T["s1"], T["s2"] - 0.2), (T["s2"], T["s3"] - 0.2), (T["s3"], T["s4"] - 0.2), (T["s4"], T["hold"])]
-    for name, (s0, s1) in zip(k["scenes"], scene_t):
-        m.append(f'<g opacity="0">{win(s0, s1, fade=0.2)}'
-                 f'<text class="h bl" x="{W-32}" y="40" text-anchor="end">{esc(name)}</text></g>')
     # rows 2 and 3: card text swaps from node role to the new role at rollout
     for i, (swap, new) in ((1, (T["s2_swap"], k["irsa_src"])), (2, (T["s3_swap"], k["podid_src"]))):
-        m.append(f'<g opacity="0">{vis([(0.002, swap - 0.15), (T["hold"] + 0.3, DUR - 0.01)])}'
-                 f'{src_text(k["node_src"], RY[i])}</g>')
+        # node role text: shown across the loop seam (no blink at t=0), hidden from the swap to the reset
+        m.append(f'<g opacity="0">'
+                 + anim("opacity", [0, swap - 0.15, swap - 0.03, T["hold"] + 0.18, T["hold"] + 0.3, DUR],
+                        [1, 1, 0, 0, 1, 1])
+                 + f'{src_text(k["node_src"], RY[i])}</g>')
         m.append(f'<g opacity="0">{win(swap + 0.1, T["hold"], fade=0.2)}{src_text(new, RY[i])}</g>')
     roll = [(1, T["s2_roll"], T["s2_swap"], T["s2_go"], k["irsa_do"]), (2, T["s3_roll"], T["s3_swap"], T["s3_go"], k["podid_do"])]
     for i, r0, swap, go, label in roll:
@@ -434,6 +534,16 @@ def build(lang):
     for i in range(3):
         m.append(read(i, T["s4_go"] + 0.15 * i, T["s4_in"] + 0.15 * i, i != 0, T["hold"]))
 
+    m.append('</g>' + BANDS)  # end of camera; scene badge, captions and hint stay fixed
+    # the bands cover the root title in this layer, so it is drawn again on top
+    m.append(f'<text class="h halo" x="32" y="40">{esc(k["title"])}</text>')
+
+    # scene badge, top right (fixed, outside the camera)
+    scene_t = [(T["s1"], T["s2"] - 0.2), (T["s2"], T["s3"] - 0.2), (T["s3"], T["s4"] - 0.2), (T["s4"], T["hold"])]
+    for name, (s0, s1) in zip(k["scenes"], scene_t):
+        m.append(f'<g opacity="0">{win(s0, s1, fade=0.2)}'
+                 f'<text class="h bl" x="{W-32}" y="40" text-anchor="end">{esc(name)}</text></g>')
+
     # captions
     cy0 = 384
     for i, (txt, (s0, s1)) in enumerate(zip(k["steps"], steps_t)):
@@ -449,7 +559,7 @@ def build(lang):
     o.extend(m)
 
     # --- static (reduced motion) layer: end state after revoke ---
-    st = ['<g class="static">', strike, src_text(k["irsa_src"], RY[1]), src_text(k["podid_src"], RY[2])]
+    st = ['<g class="static">'] + dia + [strike, src_text(k["irsa_src"], RY[1]), src_text(k["podid_src"], RY[2])]
     st.append(f'<path class="pkl" style="stroke-width:3px" d="{card[0]}"/>')
     st.append(f'<path class="trunk" style="stroke-width:3px" d="{card[1]}"/><path class="trunk" style="stroke-width:3px" d="{card[2]}"/>')
     st.append(deny_mark(*MARKS[0], k["deny"], MARK_DY[0]) + ok_mark(*MARKS[1], k["ok"], MARK_DY[1])
@@ -462,6 +572,7 @@ def build(lang):
     o.extend(st)
     o.append('</svg>')
     check_anims()
+    check_camera()
     return "\n".join(o)
 
 
