@@ -30,7 +30,7 @@ RUN_ID=d1124
 ./demo.sh down    "$RUN_ID"   # after the talk
 ```
 
-`app.sh` is the loop inside each copy: every 3 seconds it calls `sts get-caller-identity` and `s3api get-object` with the AWS CLI's default credential chain and prints one JSON line (`src`, `role`, `s3`). It prints no credentials or tokens. `watch` reads the newest Pod of each copy. Commands echo what they run, with the account ID and OIDC issuer ID masked.
+`app.sh` is the loop inside each copy: every 3 seconds it calls `sts get-caller-identity` and `s3api get-object` with the AWS CLI's default credential chain and prints one JSON line (`src`, `role`, `s3`). It prints no credentials or tokens. `watch` reads the newest Pod of each copy. Commands echo what they run. Output masks the account ID, OIDC issuer ID, cluster name and launch template IDs so the screen is safe to project; set `MASK_CLUSTER=0` to show the cluster name and launch template IDs.
 
 ## Presenter runbook
 

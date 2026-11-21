@@ -89,7 +89,15 @@ partition=$(jq -r '.Arn | split(":")[1]' <<< "$caller")
 bucket="${prefix}-${account}-${AWS_REGION}"
 
 # Public repos and screens: hide the account ID and the OIDC issuer ID.
-mask() { sed -E -e "s/${account}/<ACCOUNT_ID>/g" -e 's#(/id/)[0-9A-F]{32}#\1<OIDC_ID>#g'; }
+# On a projector, also hide the cluster name and launch template IDs (MASK_CLUSTER=0 to show them).
+mask() {
+  if [[ "${MASK_CLUSTER:-1}" == 1 ]]; then
+    sed -E -e "s/${account}/<ACCOUNT_ID>/g" -e 's#(/id/)[0-9A-F]{32}#\1<OIDC_ID>#g' \
+      -e "s/${cluster}/<CLUSTER>/g" -e 's/lt-[0-9a-f]{8,17}/<LAUNCH_TEMPLATE_ID>/g'
+  else
+    sed -E -e "s/${account}/<ACCOUNT_ID>/g" -e 's#(/id/)[0-9A-F]{32}#\1<OIDC_ID>#g'
+  fi
+}
 
 # Print a command the audience should see, then run it.
 show() {
@@ -394,7 +402,7 @@ cmd_watch() {
   local t pod line src role s3 at label colour
   while :; do
     {
-      printf '%s%s EKS workload identity — %s/%s  %s%s\n\n' "$B" "$(date +%H:%M:%S)" "$cluster" "$namespace" "(Ctrl-C to stop)" "$N"
+      printf '%s%s EKS workload identity — %s/%s  %s%s\n\n' "$B" "$(date +%H:%M:%S)" "$(mask <<< "$cluster")" "$namespace" "(Ctrl-C to stop)" "$N"
       printf '%s%-15s %-14s %-30s %-9s %s%s\n' "$B" COPY CREDENTIALS ROLE S3 AT "$N"
       for t in "${tracks[@]}"; do
         pod=$(newest_pod "$t")
@@ -556,7 +564,7 @@ cmd_restore() {
 
 cmd_status() {
   load_cluster
-  printf 'cluster    %s (%s)\n' "$cluster" "$(jq -r .version <<< "$cluster_info")"
+  printf 'cluster    %s (%s)\n' "$(mask <<< "$cluster")" "$(jq -r .version <<< "$cluster_info")"
   printf 'nodegroup  %s\n' "$(nodegroup_json | jq -r '"\(.status) \(.instanceTypes|join(",")) lt-version=\(.launchTemplate.version)"' 2>/dev/null || echo absent)"
   local r
   for r in "$node_role" "$irsa_role" "$podid_role"; do
