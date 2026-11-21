@@ -148,14 +148,14 @@ cd examples/security/eks-workload-identity
 
 ### 서울 리전 실측 결과
 
-2026년 11월 21일, 서울 리전(`ap-northeast-2`)의 EKS 1.36 클러스터에서 Pod 안의 AWS CLI 2.35.11로 실행했습니다.
+2026년 11월 21일, 서울 리전(`ap-northeast-2`)의 EKS 1.36 클러스터에서 Pod 안의 AWS CLI 2.35.11로 두 번 리허설했습니다. 걸린 시간은 두 번의 범위입니다.
 
 | 단계 | orders-legacy | orders-irsa | orders-podid | 걸린 시간 |
 | --- | --- | --- | --- | --- |
 | 시작 | IMDS · 노드 역할 · 읽기 성공 | IMDS · 노드 역할 · 읽기 성공 | IMDS · 노드 역할 · 읽기 성공 | — |
-| `migrate-irsa` | 변화 없음 | STS · IRSA 역할 · 읽기 성공 | 변화 없음 | 5초 |
-| `migrate-podid` | 변화 없음 | 변화 없음 | Agent · Pod Identity 역할 · 읽기 성공 | 7초 |
-| `revoke` | 노드 역할 · **읽기 거부** | 읽기 성공 | 읽기 성공 | 13초 후 거부 |
+| `migrate-irsa` | 변화 없음 | STS · IRSA 역할 · 읽기 성공 | 변화 없음 | 5–6초 |
+| `migrate-podid` | 변화 없음 | 변화 없음 | Agent · Pod Identity 역할 · 읽기 성공 | 7–11초 (주입 확인 1–5초 포함) |
+| `revoke` | 노드 역할 · **읽기 거부** | 읽기 성공 | 읽기 성공 | 두 번 모두 13초 후 거부 |
 | `harden` (선택) | **자격 증명 없음** (IMDS 응답 차단) | 읽기 성공 | 읽기 성공 | 노드 교체 878초 |
 
 `diff`로 본 두 방식의 차이는 다음과 같습니다. 같은 클러스터 issuer가 서명한 ServiceAccount 토큰이지만 대상(audience)과 받는 쪽이 다릅니다.
@@ -168,7 +168,7 @@ cd examples/security/eks-workload-identity
 | 토큰 수명 | 86,400초 (24시간) | 약 24시간 |
 | 역할 신뢰 principal | `Federated`: 클러스터 OIDC provider, 조건 `aud`·`sub` | `Service`: `pods.eks.amazonaws.com`, 조건 요청 태그 3개 |
 
-리허설에서 두 가지 eventual consistency를 확인했습니다. 첫째, association을 만들고 7초 뒤에 rollout한 Pod에는 Pod Identity 변수가 주입되지 않아 노드 역할을 계속 썼습니다. 그래서 `migrate-podid`는 Deployment의 Pod 템플릿을 `kubectl create --dry-run=server`로 보내 mutating 웹훅의 주입 결과를 확인한 뒤에 rollout합니다. 둘째, `revoke` 뒤 레거시 Pod는 13초 만에 거부됐지만 약 4분 30초 뒤에 허용 응답이 두 번 더 나온 뒤에야 거부로 고정됐습니다. 운영에서 노드 정책을 회수한 뒤에는 수 분 동안 관찰하고 판단합니다.
+리허설에서 두 가지 eventual consistency를 확인했습니다. 첫째, association을 만들고 7초 뒤에 rollout한 Pod에는 Pod Identity 변수가 주입되지 않아 노드 역할을 계속 썼습니다. 그래서 `migrate-podid`는 Deployment의 Pod 템플릿을 `kubectl create --dry-run=server`로 보내 mutating 웹훅의 주입 결과를 확인한 뒤에 rollout합니다. 두 번째 리허설에서는 association 생성 후 5초가 지나서야 주입이 확인됐습니다. 둘째, `revoke` 뒤 레거시 Pod는 13초 만에 거부됐지만 약 4분 30초 뒤에 허용 응답이 두 번 더 나온 뒤에야 거부로 고정됐습니다. 운영에서 노드 정책을 회수한 뒤에는 수 분 동안 관찰하고 판단합니다.
 
 ## 문제 해결
 

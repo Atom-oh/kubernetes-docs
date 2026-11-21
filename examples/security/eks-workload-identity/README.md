@@ -36,8 +36,8 @@ RUN_ID=d1124
 | Step | Say | Run | Expect on the watch screen |
 | --- | --- | --- | --- |
 | 0 | "Today the app's S3 permission lives on the node role." | (watch already running) | All three rows: `node (IMDS)`, `wid-<run>-node ← node`, `allowed` |
-| 1 | "IRSA: annotate the ServiceAccount, restart." | `migrate-irsa` (~5 s) | `orders-irsa` → `IRSA (STS)`, `wid-<run>-irsa`, `allowed` |
-| 2 | "Pod Identity: one EKS API call, no annotation." | `migrate-podid` (~7 s) | `orders-podid` → `Pod Identity`, `wid-<run>-podid`, `allowed` |
+| 1 | "IRSA: annotate the ServiceAccount, restart." | `migrate-irsa` (5–6 s) | `orders-irsa` → `IRSA (STS)`, `wid-<run>-irsa`, `allowed` |
+| 2 | "Pod Identity: one EKS API call, no annotation." | `migrate-podid` (7–11 s) | `orders-podid` → `Pod Identity`, `wid-<run>-podid`, `allowed` |
 | 3 | "Same outcome, different wiring." | `diff` | Injected env vars, token `aud` (`sts.amazonaws.com` vs `pods.eks.amazonaws.com`), trust principals |
 | 4 | "Now remove the permission from the node." | `revoke` (~15 s) | `orders-legacy` → `denied`; the other two stay `allowed` |
 | 5 (optional) | "Close the IMDS path for Pods." | run `harden` **before** the talk, show the result | `orders-legacy` → `no-credentials` / `no-creds`; the other two stay `allowed` |
@@ -51,4 +51,23 @@ Notes from rehearsals:
 
 ## Measured run
 
-<!-- DEMO-MEASURED -->
+Two rehearsals on November 21, 2026 (EKS 1.36, ap-northeast-2, AWS CLI 2.35.11 in the Pods):
+
+| Step | Time | Result |
+| --- | --- | --- |
+| `up` | about 5 min | three copies on the node role, all `allowed` |
+| `migrate-irsa` | 5–6 s | IRSA copy on `wid-<run>-irsa`, token `aud sts.amazonaws.com`, lifetime 86,400 s |
+| `migrate-podid` | 7–11 s | Pod Identity copy on `wid-<run>-podid`, token `aud pods.eks.amazonaws.com`; association visible to admission after 1–5 s |
+| `revoke` | 13 s to first `denied` (both runs) | legacy `denied`, the other two `allowed` |
+| `harden` | 878 s | legacy `no-credentials`, the other two `allowed` |
+| `restore` without `harden` | 15 s | back to the start |
+| `restore` after `harden` | 578 s | back to the start |
+
+The final watch screen after `revoke`:
+
+```text
+COPY            CREDENTIALS    ROLE                           S3        AT
+orders-legacy   node (IMDS)    wid-d1124-node  ← node       denied    04:12:56
+orders-irsa     IRSA (STS)     wid-d1124-irsa                 allowed   04:12:58
+orders-podid    Pod Identity   wid-d1124-podid                allowed   04:12:58
+```

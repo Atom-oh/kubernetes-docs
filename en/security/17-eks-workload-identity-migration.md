@@ -148,14 +148,14 @@ The script tags only what it creates with `LabRun` and checks that tag before an
 
 ### Measured in the Seoul Region
 
-Run on November 21, 2026 on an EKS 1.36 cluster in `ap-northeast-2`, with AWS CLI 2.35.11 inside the Pods.
+Rehearsed twice on November 21, 2026 on an EKS 1.36 cluster in `ap-northeast-2`, with AWS CLI 2.35.11 inside the Pods. Times are the range over both runs.
 
 | Step | orders-legacy | orders-irsa | orders-podid | Time |
 | --- | --- | --- | --- | --- |
 | Start | IMDS · node role · read allowed | IMDS · node role · read allowed | IMDS · node role · read allowed | — |
-| `migrate-irsa` | unchanged | STS · IRSA role · read allowed | unchanged | 5 s |
-| `migrate-podid` | unchanged | unchanged | Agent · Pod Identity role · read allowed | 7 s |
-| `revoke` | node role · **read denied** | read allowed | read allowed | denied after 13 s |
+| `migrate-irsa` | unchanged | STS · IRSA role · read allowed | unchanged | 5–6 s |
+| `migrate-podid` | unchanged | unchanged | Agent · Pod Identity role · read allowed | 7–11 s (including a 1–5 s injection check) |
+| `revoke` | node role · **read denied** | read allowed | read allowed | denied after 13 s in both runs |
 | `harden` (optional) | **no credentials** (IMDS response blocked) | read allowed | read allowed | node roll 878 s |
 
 `diff` shows how the two differ. Both tokens are ServiceAccount tokens signed by the same cluster issuer, but the audience and the receiver differ.
@@ -168,7 +168,7 @@ Run on November 21, 2026 on an EKS 1.36 cluster in `ap-northeast-2`, with AWS CL
 | Token lifetime | 86,400 s (24 h) | about 24 h |
 | Role trust principal | `Federated`: cluster OIDC provider, conditions `aud` and `sub` | `Service`: `pods.eks.amazonaws.com`, three request-tag conditions |
 
-Rehearsals exposed two eventual-consistency effects. First, a Pod rolled out 7 seconds after the association was created had no Pod Identity variables and kept using the node role. `migrate-podid` therefore sends the Deployment's Pod template through `kubectl create --dry-run=server` to see what the mutating webhooks inject, and rolls out only after that. Second, after `revoke` the legacy Pod was denied within 13 seconds, but two more allowed reads appeared about 4.5 minutes later before denial settled. In production, keep watching for several minutes after removing a node policy before you conclude.
+Rehearsals exposed two eventual-consistency effects. First, a Pod rolled out 7 seconds after the association was created had no Pod Identity variables and kept using the node role. `migrate-podid` therefore sends the Deployment's Pod template through `kubectl create --dry-run=server` to see what the mutating webhooks inject, and rolls out only after that. In the second rehearsal, injection became visible 5 seconds after the association was created. Second, after `revoke` the legacy Pod was denied within 13 seconds, but two more allowed reads appeared about 4.5 minutes later before denial settled. In production, keep watching for several minutes after removing a node policy before you conclude.
 
 ## Troubleshooting
 
