@@ -128,23 +128,23 @@
 
 **정답: B) association이 아직 Pod 생성(admission)에 반영되지 않아 변수가 주입되지 않았다**
 
-**설명:** association은 eventual consistency로 몇 초 늦게 반영될 수 있습니다. 데모에서도 7초 뒤의 rollout은 주입되지 않았습니다. `kubectl create --dry-run=server`로 Pod 템플릿의 주입 결과를 확인하고 rollout합니다.
+**설명:** association은 eventual consistency로 몇 초 늦게 반영될 수 있습니다. 데모의 첫 리허설에서도 association을 만든 직후 rollout한 Pod에는 주입되지 않았고, 두 번째 리허설에서는 주입이 보이기까지 5초가 걸렸습니다. `kubectl create --dry-run=server`로 Pod 템플릿의 주입 결과를 확인하고 rollout합니다.
 
 </details>
 
-### 9. 한 ServiceAccount에 IRSA 주석과 Pod Identity association이 모두 있으면 일반적인 SDK는?
+### 9. IRSA 주석이 붙은 ServiceAccount에 Pod Identity association을 추가하고 Pod를 새로 만들었다. 새 Pod는 어떤 자격 증명을 쓰는가?
 
-- A) Pod Identity를 먼저 쓴다
-- B) IRSA(웹 ID 공급자)를 먼저 쓴다
+- A) Pod Identity. 웹훅이 Pod Identity 변수만 주입한다
+- B) IRSA. 기본 체인에서 웹 ID 공급자가 먼저다
 - C) 요청마다 번갈아 쓴다
-- D) 오류로 시작하지 않는다
+- D) 두 설정이 충돌해 Pod가 시작하지 않는다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) IRSA(웹 ID 공급자)를 먼저 쓴다**
+**정답: A) Pod Identity. 웹훅이 Pod Identity 변수만 주입한다**
 
-**설명:** 기본 체인에서 웹 ID 공급자가 컨테이너 공급자보다 앞에 있습니다. 방식을 바꿀 때는 ServiceAccount를 분리하거나 이전 설정을 지워 의도한 경로가 선택되게 합니다.
+**설명:** association이 있으면 EKS 웹훅은 새 Pod에 `AWS_CONTAINER_CREDENTIALS_FULL_URI`와 `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`만 넣고 IRSA 변수는 넣지 않습니다. 데모 클러스터의 dry-run에서도 그렇게 주입됐습니다. 체인 순서(B)는 두 변수가 모두 있을 때의 이야기이고, association을 추가하기 전에 만든 Pod는 다시 만들기 전까지 IRSA를 계속 씁니다.
 
 </details>
 

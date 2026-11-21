@@ -128,23 +128,23 @@
 
 **Answer: B) The association had not yet reached Pod admission, so nothing was injected**
 
-**Explanation:** Associations are eventually consistent and can take several seconds. In the demo, a rollout 7 seconds after creation got no injection. Check the Pod template with `kubectl create --dry-run=server` before rolling out.
+**Explanation:** Associations are eventually consistent and can take several seconds. In the demo's first rehearsal a rollout right after creation got no injection; in the second, injection took 5 seconds to appear. Check the Pod template with `kubectl create --dry-run=server` before rolling out.
 
 </details>
 
-### 9. A ServiceAccount has both an IRSA annotation and a Pod Identity association. What do common SDKs do?
+### 9. You add a Pod Identity association to a ServiceAccount that already has an IRSA annotation, then create a new Pod. Which credentials does the new Pod use?
 
-- A) Use Pod Identity first
-- B) Use IRSA (the web identity provider) first
-- C) Alternate per request
-- D) Fail to start
+- A) Pod Identity: the webhook injects only the Pod Identity variables
+- B) IRSA: the web identity provider comes first in the chain
+- C) They alternate per request
+- D) The Pod fails to start because of the conflict
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Use IRSA (the web identity provider) first**
+**Answer: A) Pod Identity: the webhook injects only the Pod Identity variables**
 
-**Explanation:** The web identity provider comes before the container provider in the default chain. When switching methods, use separate ServiceAccounts or remove the old binding so the intended path is chosen.
+**Explanation:** With an association, the EKS webhook injects only `AWS_CONTAINER_CREDENTIALS_FULL_URI` and `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE` into new Pods, not the IRSA variables, as the dry-run on the demo cluster showed. Chain order (B) only matters when both sets are present; Pods created before the association keep using IRSA until recreated.
 
 </details>
 

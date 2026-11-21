@@ -2,12 +2,12 @@
 
 A live demo for [security/17](../../../ko/security/17-eks-workload-identity-migration.md): three copies of one "orders" app read the same S3 object. All three start on the node instance profile. On stage you move one copy to IRSA and one to EKS Pod Identity, then remove the S3 permission from the node role and watch only the legacy copy lose access.
 
-The script runs on an **existing** EKS cluster. It adds one tainted managed node group with its own node role, two workload roles, a private S3 bucket and a namespace, all tagged `Lab=eks-workload-identity-demo` and `LabRun=<RUN_ID>`. Every change and every deletion checks those tags first. It never creates a VPC, subnet, security group, cluster, add-on or IAM OIDC provider, opens no inbound ports and touches no other node group or Pod Identity association.
+The script runs on an **existing** EKS cluster. It adds one tainted managed node group with its own node role, two workload roles, a private S3 bucket and a namespace, each named after the run ID or tagged `Lab=eks-workload-identity-demo` and `LabRun=<RUN_ID>`. The script changes or deletes only resources that match that name or tag; IAM roles, the bucket and the node group are checked for both tags before any change. It never creates a VPC, subnet, security group, cluster, add-on or IAM OIDC provider, opens no inbound ports and touches no other node group or Pod Identity association.
 
 ## Requirements
 
 - An EKS cluster (tested on 1.36) with the `eks-pod-identity-agent` add-on and an IAM OIDC provider already registered for its issuer.
-- Private subnets in the cluster's VPC, found by Name tag (`VPC_NAME`, `SUBNET_NAMES`). Nodes pull `public.ecr.aws/aws-cli/aws-cli` through the VPC's existing NAT path.
+- Private subnets in the cluster's VPC, found by Name tag. Set `CLUSTER`, `VPC_NAME` and `SUBNET_NAMES` (no defaults), or put them in `~/.local/state/eks-workload-identity-demo/env`, which the script sources. Nodes pull `public.ecr.aws/aws-cli/aws-cli` through the VPC's existing NAT path.
 - AWS CLI v2, kubectl, jq and bash on the presenter's machine; an identity with EKS, EC2 (launch templates), IAM and S3 permissions plus cluster-admin access to the cluster.
 - Cost while it is up: one t3.medium On-Demand instance with a 20 GiB gp3 volume (about US$1.3 per day in Seoul at US$0.052 per hour), plus negligible S3 and API calls.
 
@@ -15,7 +15,8 @@ The script runs on an **existing** EKS cluster. It adds one tainted managed node
 
 ```bash
 cd examples/security/eks-workload-identity
-export AWS_REGION=ap-northeast-2          # CLUSTER=fsi-demo-cluster VPC_NAME=fsi-demo-vpc by default
+export AWS_REGION=ap-northeast-2
+export CLUSTER=<cluster> VPC_NAME=<vpc-name-tag> SUBNET_NAMES=<private-subnet-tag-1>,<private-subnet-tag-2>
 RUN_ID=d1124
 
 ./demo.sh up      "$RUN_ID"   # before the talk, ~5 min
@@ -25,7 +26,7 @@ RUN_ID=d1124
 ./demo.sh diff    "$RUN_ID"
 ./demo.sh revoke  "$RUN_ID"
 ./demo.sh harden  "$RUN_ID"   # optional, rolls the node group (~15 min)
-./demo.sh restore "$RUN_ID"   # back to the start (~15 min more if harden ran)
+./demo.sh restore "$RUN_ID"   # back to the start (15 s; ~10 min if harden ran)
 ./demo.sh down    "$RUN_ID"   # after the talk
 ```
 
@@ -36,8 +37,8 @@ RUN_ID=d1124
 | Step | Say | Run | Expect on the watch screen |
 | --- | --- | --- | --- |
 | 0 | "Today the app's S3 permission lives on the node role." | (watch already running) | All three rows: `node (IMDS)`, `wid-<run>-node ← node`, `allowed` |
-| 1 | "IRSA: annotate the ServiceAccount, restart." | `migrate-irsa` (5–6 s) | `orders-irsa` → `IRSA (STS)`, `wid-<run>-irsa`, `allowed` |
-| 2 | "Pod Identity: one EKS API call, no annotation." | `migrate-podid` (7–11 s) | `orders-podid` → `Pod Identity`, `wid-<run>-podid`, `allowed` |
+| 1 | "IRSA: annotate the ServiceAccount, restart." | `migrate-irsa` (~6 s) | `orders-irsa` → `IRSA (STS)`, `wid-<run>-irsa`, `allowed` |
+| 2 | "Pod Identity: one EKS API call, no annotation." | `migrate-podid` (~11 s) | `orders-podid` → `Pod Identity`, `wid-<run>-podid`, `allowed` |
 | 3 | "Same outcome, different wiring." | `diff` | Injected env vars, token `aud` (`sts.amazonaws.com` vs `pods.eks.amazonaws.com`), trust principals |
 | 4 | "Now remove the permission from the node." | `revoke` (~15 s) | `orders-legacy` → `denied`; the other two stay `allowed` |
 | 5 (optional) | "Close the IMDS path for Pods." | run `harden` **before** the talk, show the result | `orders-legacy` → `no-credentials` / `no-creds`; the other two stay `allowed` |
@@ -51,14 +52,14 @@ Notes from rehearsals:
 
 ## Measured run
 
-Two rehearsals on November 21, 2026 (EKS 1.36, ap-northeast-2, AWS CLI 2.35.11 in the Pods):
+Second rehearsal on November 21, 2026, run end to end with the current script (EKS 1.36, ap-northeast-2, AWS CLI 2.35.11 in the Pods). `harden` and `restore` after `harden` come from the first rehearsal.
 
 | Step | Time | Result |
 | --- | --- | --- |
 | `up` | about 5 min | three copies on the node role, all `allowed` |
-| `migrate-irsa` | 5–6 s | IRSA copy on `wid-<run>-irsa`, token `aud sts.amazonaws.com`, lifetime 86,400 s |
-| `migrate-podid` | 7–11 s | Pod Identity copy on `wid-<run>-podid`, token `aud pods.eks.amazonaws.com`; association visible to admission after 1–5 s |
-| `revoke` | 13 s to first `denied` (both runs) | legacy `denied`, the other two `allowed` |
+| `migrate-irsa` | 6 s | IRSA copy on `wid-<run>-irsa`, token `aud sts.amazonaws.com`, lifetime 86,400 s |
+| `migrate-podid` | 11 s | Pod Identity copy on `wid-<run>-podid`, token `aud pods.eks.amazonaws.com`; the new association became visible to admission after 5 s |
+| `revoke` | 13 s to first `denied` (same in the first rehearsal) | legacy `denied`, the other two `allowed` |
 | `harden` | 878 s | legacy `no-credentials`, the other two `allowed` |
 | `restore` without `harden` | 15 s | back to the start |
 | `restore` after `harden` | 578 s | back to the start |

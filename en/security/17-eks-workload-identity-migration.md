@@ -15,7 +15,7 @@ The AWS SDKs and the AWS CLI inside a Pod walk the [default credential provider 
 | Path | Injected into the Pod | SDK calls | Resulting role |
 | --- | --- | --- | --- |
 | Node instance profile | Nothing | IMDSv2 `169.254.169.254` | Node IAM role (shared by every Pod on the node) |
-| IRSA | `AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE`, token volume | Regional STS `AssumeRoleWithWebIdentity` | Role in the ServiceAccount annotation |
+| IRSA | `AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE`, token volume | Regional STS (Security Token Service) `AssumeRoleWithWebIdentity` | Role in the ServiceAccount annotation |
 | EKS Pod Identity | `AWS_CONTAINER_CREDENTIALS_FULL_URI`, `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`, token volume | Pod Identity Agent on the same node, `169.254.170.23` | Role in the association |
 
 With an IMDS response hop limit of 2 or more, an ordinary Pod without host networking can obtain an IMDSv2 token and the node role's credentials. Managed node group launch templates often set this value to 2. That is why the last migration step lowers the hop limit to 1.
@@ -25,7 +25,7 @@ With an IMDS response hop limit of 2 or more, an ordinary Pod without host netwo
 
 ![IRSA flow. A webhook sees the ServiceAccount annotation and injects environment variables and a projected token (aud sts.amazonaws.com). The SDK sends the token to STS AssumeRoleWithWebIdentity; STS verifies the signature through the IAM OIDC provider, checks aud and sub in the trust policy and returns temporary credentials.](../.gitbook/assets/en-security-17-eks-workload-identity-migration-anim-1.svg)
 
-1. **Trust setup.** Each cluster has an OIDC issuer URL. Register that issuer once as an IAM OIDC provider in the account. The role's trust policy names the provider as its `Federated` principal and conditions on `aud` (`sts.amazonaws.com`) and `sub` (`system:serviceaccount:<namespace>:<serviceaccount>`).
+1. **Trust setup.** Each cluster has an OIDC (OpenID Connect) issuer URL. Register that issuer once as an IAM OIDC provider in the account. The role's trust policy names the provider as its `Federated` principal and conditions on `aud` (`sts.amazonaws.com`) and `sub` (`system:serviceaccount:<namespace>:<serviceaccount>`).
 2. **Injection at Pod creation.** When the ServiceAccount carries `eks.amazonaws.com/role-arn`, an EKS mutating webhook adds `AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE` and a projected token volume at `/var/run/secrets/eks.amazonaws.com/serviceaccount/token` to every new Pod. Running Pods do not change, so a rollout is required.
 3. **Token issue and refresh.** The kubelet requests a ServiceAccount token for the audience `sts.amazonaws.com`, writes it to the file and refreshes it before it expires.
 4. **Token exchange.** The SDK sends the token to regional STS `AssumeRoleWithWebIdentity`. STS verifies its signature with the issuer keys registered through the IAM OIDC provider, checks the `aud` and `sub` conditions and returns temporary credentials. The Pod talks to STS directly, so it needs a network path to STS. [AWS IRSA documentation](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
@@ -51,12 +51,12 @@ AWS recommends EKS Pod Identity whenever possible. IRSA still fits some runtimes
 | Trust policy | `Federated` OIDC provider with `aud`/`sub` conditions; one more statement per cluster | One principal, `pods.eks.amazonaws.com`; unchanged for new clusters |
 | Scale limits | 100 OIDC providers per account by default; the default 2,048-character trust policy typically fits about four bindings per role | 5,000 associations per cluster; the role trust policy does not grow |
 | Credential path | Pod → regional STS (the Pod uses STS API quota) | Pod → node agent → EKS Auth (the Pod does not call STS) |
-| Session information | Role session name; no session tags | Cluster, namespace and ServiceAccount session tags enable ABAC |
+| Session information | Role session name; no session tags | Cluster, namespace and ServiceAccount session tags enable ABAC (attribute-based access control) |
 | Runtimes | EKS on EC2 and Fargate, EKS Anywhere, ROSA, self-managed Kubernetes on EC2 | Linux EC2 nodes in EKS only; no Fargate, Windows, Outposts or EKS Anywhere |
 | Cross-account | Target-account role trusts this cluster's OIDC provider | Association role is in the cluster's account; delegate with a target role or role chaining |
 | Separation of duties | IAM admins create the OIDC provider; cluster operators annotate | IAM manages roles only; bindings live in the EKS API |
 
-In short, Pod Identity is simpler and scales better for new EKS workloads on EC2. Use IRSA for Fargate or Windows nodes, or when the same setup must also run on Kubernetes outside EKS. Both can run in one cluster. If one ServiceAccount has both, common SDKs pick the web identity provider (IRSA) first, so use separate ServiceAccounts or remove the old binding when you switch.
+In short, Pod Identity is simpler and scales better for new EKS workloads on EC2. Use IRSA for Fargate or Windows nodes, or when the same setup must also run on Kubernetes outside EKS. Both can run in one cluster. When one ServiceAccount has both an IRSA annotation and an association, the EKS webhook injects only the Pod Identity variables into new Pods, not the IRSA ones. On the demo cluster, a `kubectl create --dry-run=server` check returned `AWS_ROLE_ARN` and `AWS_WEB_IDENTITY_TOKEN_FILE` with only the annotation, and only `AWS_CONTAINER_CREDENTIALS_FULL_URI` and `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE` once the association was added. Running Pods keep their IRSA variables until they are recreated, so switch with a rollout and remove the unused annotation.
 
 In private clusters, secure a path to regional STS for IRSA Pods and to EKS Auth (`eks-auth`) for the Pod Identity Agent. Without an internet path, check the corresponding VPC interface endpoints, DNS and security groups. Behind a proxy, add `169.254.170.23` and `[fd00:ec2::23]` to `NO_PROXY`. [Pod Identity considerations](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html) · [Private cluster requirements](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html)
 
@@ -66,7 +66,7 @@ In private clusters, secure a path to regional STS for IRSA Pods and to EKS Auth
 2. **Create a scoped IAM role and a dedicated ServiceAccount per workload.** For IRSA, register the cluster issuer as an IAM OIDC provider, create a role that checks the exact audience and subject, and annotate the ServiceAccount with `eks.amazonaws.com/role-arn`. For Pod Identity, check Agent readiness and the node's EKS Auth permission, then create the association with a role scoped by request tags. Confirm compute and SDK support. [IRSA SDK versions](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-minimum-sdk.html) · [Pod Identity SDK versions](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-minimum-sdk.html)
 3. **Create canary Pods.** Change `serviceAccountName` in the Pod template or roll out new Pods, then check the injected variable names, the caller ARN of the running process and the AWS APIs it needs. Never log tokens or keys. Explicit credentials or an earlier provider in the default chain can take precedence. [Default credential provider chain](https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html)
 4. **Switch workloads one at a time.** Watch error rates, `AccessDenied`, token and credential refresh, and scheduled runs. Once a workload no longer relies on the node role's business permission, remove only that policy statement. Keep the previous Pod template and an exact copy of the node policy for the rollback window. To roll back after removing the permission, restore that minimal policy first, confirm propagation, then deploy the previous Pods.
-5. **Restrict node credential access.** Starting with node groups whose compatibility you have tested, enforce IMDSv2 and restrict regular Pod access to IMDS. On a managed node group with a custom launch template, set `HttpTokens=required` and `HttpPutResponseHopLimit=1` in a new template version and roll the nodes. Karpenter uses `EC2NodeClass.spec.metadataOptions`; EKS Auto Mode enforces IMDSv2 and a hop limit of 1 by default. `hostNetwork` Pods reach IMDS regardless of the hop limit, so control them separately. [Managed node group launch templates](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html) · [EKS IAM best practices](https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html)
+5. **Restrict node credential access.** Starting with node groups whose compatibility you have tested, enforce IMDSv2 and restrict regular Pod access to IMDS. On a managed node group with a custom launch template, set `HttpTokens=required` and `HttpPutResponseHopLimit=1` in a new template version and roll the nodes. Karpenter uses `EC2NodeClass.spec.metadataOptions`; EKS Auto Mode enforces IMDSv2 and a hop limit of 1 by default. `hostNetwork` Pods reach IMDS regardless of the hop limit, so control them separately. Do not turn IMDS off (`HttpEndpoint=disabled`): the Pod Identity Agent itself runs on the host network and gets the node role's credentials from IMDS to call EKS Auth. [Managed node group launch templates](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html) · [EKS IAM best practices](https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html)
 
 <details>
 <summary>Trust policies and canary commands</summary>
@@ -116,6 +116,7 @@ aws eks create-pod-identity-association --region "$AWS_REGION" --cluster-name "$
   --namespace "$NAMESPACE" --service-account "$POD_IDENTITY_SA" --role-arn "$POD_IDENTITY_ROLE_ARN"
 
 # Roll out the canary with the ServiceAccount chosen above
+SA="$IRSA_SA"   # or "$POD_IDENTITY_SA"
 kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" set serviceaccount \
   deployment "$CANARY_DEPLOYMENT" "$SA"
 kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" rollout status \
@@ -133,10 +134,13 @@ The demo adds one dedicated managed node group (t3.medium, private subnets, tain
 
 ```bash
 cd examples/security/eks-workload-identity
+export AWS_REGION=ap-northeast-2
+export CLUSTER=<cluster name> VPC_NAME=<Name tag of the cluster VPC> \
+  SUBNET_NAMES=<private subnet Name tag 1>,<private subnet Name tag 2>
 ./demo.sh up d1124            # before the talk: node group, roles, bucket, three copies
 ./demo.sh watch d1124         # second terminal: live table
 ./demo.sh migrate-irsa d1124  # ServiceAccount annotation + rollout
-./demo.sh migrate-podid d1124 # association + rollout
+./demo.sh migrate-podid d1124 # association + injection check + rollout
 ./demo.sh diff d1124          # compare injected variables, tokens, trust policies
 ./demo.sh revoke d1124        # remove the S3 permission from the node role
 ./demo.sh harden d1124        # (optional, ~15 min) roll the nodes to hop limit 1
@@ -144,19 +148,19 @@ cd examples/security/eks-workload-identity
 ./demo.sh down d1124          # clean up
 ```
 
-The script tags only what it creates with `LabRun` and checks that tag before any change or deletion. It creates no VPC, subnet, security group, add-on or OIDC provider; it only checks that the existing ones are there.
+Everything the script creates carries the run ID in its name or a `LabRun` tag, and the script changes or deletes only resources that match that name or tag. It creates no VPC, subnet, security group, add-on or OIDC provider; it only checks that they exist.
 
 ### Measured in the Seoul Region
 
-Rehearsed twice on November 21, 2026 on an EKS 1.36 cluster in `ap-northeast-2`, with AWS CLI 2.35.11 inside the Pods. Times are the range over both runs.
+We rehearsed twice on November 21, 2026 on an EKS 1.36 cluster in `ap-northeast-2`, with AWS CLI 2.35.11 inside the Pods. Pod Identity injection failed in the first rehearsal (see below), so the script was fixed; the table shows the second rehearsal, run end to end with the fixed script. Only `harden` comes from the first rehearsal.
 
 | Step | orders-legacy | orders-irsa | orders-podid | Time |
 | --- | --- | --- | --- | --- |
 | Start | IMDS · node role · read allowed | IMDS · node role · read allowed | IMDS · node role · read allowed | — |
-| `migrate-irsa` | unchanged | STS · IRSA role · read allowed | unchanged | 5–6 s |
-| `migrate-podid` | unchanged | unchanged | Agent · Pod Identity role · read allowed | 7–11 s (including a 1–5 s injection check) |
-| `revoke` | node role · **read denied** | read allowed | read allowed | denied after 13 s in both runs |
-| `harden` (optional) | **no credentials** (IMDS response blocked) | read allowed | read allowed | node roll 878 s |
+| `migrate-irsa` | unchanged | STS · IRSA role · read allowed | unchanged | 6 s |
+| `migrate-podid` | unchanged | unchanged | Agent · Pod Identity role · read allowed | 11 s (including 5 s until injection was visible after creating the association) |
+| `revoke` | node role · **read denied** | read allowed | read allowed | denied after 13 s |
+| `harden` (optional, first rehearsal) | **no credentials** (IMDS response blocked) | read allowed | read allowed | node roll 878 s |
 
 `diff` shows how the two differ. Both tokens are ServiceAccount tokens signed by the same cluster issuer, but the audience and the receiver differ.
 
@@ -168,7 +172,7 @@ Rehearsed twice on November 21, 2026 on an EKS 1.36 cluster in `ap-northeast-2`,
 | Token lifetime | 86,400 s (24 h) | about 24 h |
 | Role trust principal | `Federated`: cluster OIDC provider, conditions `aud` and `sub` | `Service`: `pods.eks.amazonaws.com`, three request-tag conditions |
 
-Rehearsals exposed two eventual-consistency effects. First, a Pod rolled out 7 seconds after the association was created had no Pod Identity variables and kept using the node role. `migrate-podid` therefore sends the Deployment's Pod template through `kubectl create --dry-run=server` to see what the mutating webhooks inject, and rolls out only after that. In the second rehearsal, injection became visible 5 seconds after the association was created. Second, after `revoke` the legacy Pod was denied within 13 seconds, but two more allowed reads appeared about 4.5 minutes later before denial settled. In production, keep watching for several minutes after removing a node policy before you conclude.
+Rehearsals exposed two eventual-consistency effects. First, in the first rehearsal a Pod rolled out right after the association was created had no Pod Identity variables and kept using the node role, so it was denied too once the node policy was removed. `migrate-podid` therefore sends the Deployment's Pod template through `kubectl create --dry-run=server` to see what the mutating webhooks inject, and rolls out only after that. In the second rehearsal, injection became visible 5 seconds after the association was created. Second, after `revoke` in the first rehearsal the legacy Pod was denied within 13 seconds, but two more allowed reads appeared about 4.5 minutes later; it then stayed denied for the roughly 1.5 minutes until `harden` started. In production, keep watching for several minutes after removing a node policy before you conclude.
 
 ## Troubleshooting
 

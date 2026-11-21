@@ -10,7 +10,7 @@ shared SMIL clock with the keyTimes self-check. CSS only handles palette
 
 Story:
 a. A Pod is created with a ServiceAccount annotated eks.amazonaws.com/role-arn.
-   The EKS Pod Identity webhook (mutating admission) injects env AWS_ROLE_ARN,
+   The EKS mutating webhook (amazon-eks-pod-identity-webhook) injects env AWS_ROLE_ARN,
    AWS_WEB_IDENTITY_TOKEN_FILE and a projected ServiceAccount token volume at
    /var/run/secrets/eks.amazonaws.com/serviceaccount/token.
 b. kubelet issues and refreshes that token: audience sts.amazonaws.com, issuer
@@ -225,7 +225,7 @@ COPY = {
         "cluster": "EKS 클러스터",
         "aws": "AWS",
         "sa": ["ServiceAccount", "eks.amazonaws.com/role-arn"],
-        "hook": ["EKS Pod Identity webhook", "mutating admission"],
+        "hook": ["EKS mutating 웹훅", "IRSA 변수 주입"],
         "kubelet": ["kubelet", "토큰 발급 · 갱신"],
         "pod": "Pod · AWS SDK",
         "sts": ["AWS STS (리전)", "AssumeRoleWithWebIdentity"],
@@ -264,7 +264,7 @@ COPY = {
         "cluster": "EKS cluster",
         "aws": "AWS",
         "sa": ["ServiceAccount", "eks.amazonaws.com/role-arn"],
-        "hook": ["EKS Pod Identity webhook", "mutating admission"],
+        "hook": ["EKS mutating webhook", "injects IRSA env"],
         "kubelet": ["kubelet", "issues · refreshes"],
         "pod": "Pod · AWS SDK",
         "sts": ["AWS STS (regional)", "AssumeRoleWithWebIdentity"],

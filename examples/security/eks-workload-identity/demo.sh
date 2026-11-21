@@ -27,8 +27,10 @@ Live steps (seconds each):
   restore        Return to the starting state (another ~15 min if harden ran)
 
 RUN_ID: 4–12 lowercase letters or digits.
-Environment: AWS_REGION (ap-northeast-2), CLUSTER (fsi-demo-cluster),
-VPC_NAME (fsi-demo-vpc), SUBNET_NAMES (comma-separated private subnet Name tags).
+Required environment: CLUSTER (existing EKS cluster), VPC_NAME (Name tag of its
+VPC), SUBNET_NAMES (comma-separated Name tags of private subnets in that VPC).
+Optional: AWS_REGION (ap-northeast-2). Values may also live in
+~/.local/state/eks-workload-identity-demo/env (sourced if present).
 USAGE
 }
 
@@ -39,11 +41,17 @@ fi
 
 action=$1
 run_id=$2
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/eks-workload-identity-demo"
+# shellcheck source=/dev/null
+[[ -f "$state_dir/env" ]] && source "$state_dir/env"
 export AWS_REGION=${AWS_REGION:-ap-northeast-2}
 export AWS_PAGER=""
-cluster=${CLUSTER:-fsi-demo-cluster}
-vpc_name=${VPC_NAME:-fsi-demo-vpc}
-subnet_names=${SUBNET_NAMES:-FsiDemoNetworkStack/FsiDemoVpc/PrivateSubnet1,FsiDemoNetworkStack/FsiDemoVpc/PrivateSubnet2}
+: "${CLUSTER:?set CLUSTER to an existing EKS cluster name}"
+: "${VPC_NAME:?set VPC_NAME to the Name tag of the cluster VPC}"
+: "${SUBNET_NAMES:?set SUBNET_NAMES to comma-separated private subnet Name tags}"
+cluster=$CLUSTER
+vpc_name=$VPC_NAME
+subnet_names=$SUBNET_NAMES
 
 owner=eks-workload-identity-demo
 prefix="wid-${run_id}"
@@ -58,7 +66,6 @@ object=invoices/2026-11.txt
 image=public.ecr.aws/aws-cli/aws-cli:2.35.11
 tracks=(legacy irsa podid)
 
-state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/eks-workload-identity-demo"
 mkdir -p "$state_dir"
 export KUBECONFIG="$state_dir/kubeconfig-${run_id}"
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
@@ -425,28 +432,33 @@ cmd_migrate_podid() {
       --service-account orders-podid --role-arn "arn:${partition}:iam::${account}:role/${podid_role}" \
       --tags "Lab=$owner,LabRun=$run_id" --query association.associationId --output text >/dev/null
   fi
-  wait_for_injection
+  wait_for_injection yes
   rollout podid
 }
 
 # Associations are eventually consistent. A server-side dry run goes through the
 # same mutating admission as a real Pod, so poll it until EKS injects the
 # container-credentials variables, then restart the copy.
-wait_for_injection() {
-  log "waiting for the association to reach Pod admission (eventually consistent)"
-  local start=$SECONDS
+podid_injected() {
+  k get deployment orders-podid -o json |
+    jq --arg n "probe-${run_id}" '{apiVersion:"v1",kind:"Pod",metadata:{name:$n},spec:.spec.template.spec}' |
+    k create --dry-run=server -o json -f - |
+    jq -e '.spec.containers[0].env // [] | any(.name == "AWS_CONTAINER_CREDENTIALS_FULL_URI")' >/dev/null
+}
+
+wait_for_injection() { # want: yes|no
+  local want=${1:-yes} start=$SECONDS now
+  log "waiting for the association change to reach Pod admission (eventually consistent)"
   while (( SECONDS - start < 120 )); do
-    if k get deployment orders-podid -o json |
-        jq --arg n "probe-${run_id}" '{apiVersion:"v1",kind:"Pod",metadata:{name:$n},spec:.spec.template.spec}' |
-        k create --dry-run=server -o json -f - 2>/dev/null |
-        jq -e '.spec.containers[0].env // [] | any(.name == "AWS_CONTAINER_CREDENTIALS_FULL_URI")' >/dev/null; then
-      printf '  injected after %ss\n' "$((SECONDS - start))" >&2
+    if podid_injected 2>/dev/null; then now=yes; else now=no; fi
+    if [[ "$now" == "$want" ]]; then
+      printf '  %s after %ss\n' "$([[ $want == yes ]] && echo injected || echo 'no longer injected')" "$((SECONDS - start))" >&2
       return
     fi
     printf '\r  %3ss  not yet ' "$((SECONDS - start))" >&2
     sleep 2
   done
-  die "association not visible to admission within 120s"
+  die "association change not visible to admission within 120s"
 }
 
 jwt_claims() { # pod path
@@ -494,7 +506,13 @@ cmd_revoke() {
     line=$(k logs "$pod" --tail=1 2>/dev/null || true)
     jq -e . <<< "$line" >/dev/null 2>&1 || line='{}'
     if [[ "$(jq -r '.s3 // ""' <<< "$line")" == denied ]]; then
-      printf '%s  legacy denied after %ss — IRSA and Pod Identity copies keep reading%s\n' "$G" "$((SECONDS - start))" "$N" >&2
+      printf '%s  legacy denied after %ss%s\n' "$G" "$((SECONDS - start))" "$N" >&2
+      local t l
+      for t in irsa podid; do
+        l=$(k logs "$(newest_pod "$t")" --tail=1 2>/dev/null || true)
+        jq -e . <<< "$l" >/dev/null 2>&1 || l='{}'
+        printf '  orders-%-6s %s via %s\n' "$t" "$(jq -r '.s3 // "-"' <<< "$l")" "$(jq -r '.role // "-"' <<< "$l")" >&2
+      done
       return
     fi
     printf '\r  %3ss  legacy still: %s ' "$((SECONDS - start))" "$(jq -r '.s3 // "-"' <<< "$line")" >&2
@@ -518,9 +536,13 @@ cmd_restore() {
   put_read_policy "$node_role"
   k annotate serviceaccount orders-irsa eks.amazonaws.com/role-arn- >/dev/null 2>&1 || true
   local id
+  local deleted=no
   for id in $(association_ids); do
     aws eks delete-pod-identity-association --cluster-name "$cluster" --association-id "$id" >/dev/null
+    deleted=yes
   done
+  # Restarting before admission stops injecting would leave orders-podid on Pod Identity.
+  [[ "$deleted" == no ]] || wait_for_injection no
   local hop
   hop=$(aws ec2 describe-launch-template-versions --launch-template-id "$(lt_id)" \
     --versions "$(nodegroup_json | jq -r .launchTemplate.version)" \

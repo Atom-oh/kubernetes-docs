@@ -59,8 +59,8 @@
 <text class="s" x="926" y="348" text-anchor="end" font-weight="700">AWS</text>
 <text class="t" x="134" y="97" text-anchor="middle" font-weight="600" style="font-size:13.5px">ServiceAccount</text>
 <text class="s" x="134" y="114" text-anchor="middle">eks.amazonaws.com/role-arn</text>
-<text class="t" x="134" y="187" text-anchor="middle" font-weight="600" style="font-size:13.5px">EKS Pod Identity webhook</text>
-<text class="s" x="134" y="204" text-anchor="middle">mutating admission</text>
+<text class="t" x="134" y="187" text-anchor="middle" font-weight="600" style="font-size:13.5px">EKS mutating webhook</text>
+<text class="s" x="134" y="204" text-anchor="middle">injects IRSA env</text>
 <text class="t" x="330" y="303" text-anchor="middle" font-weight="600" style="font-size:13.5px">kubelet</text>
 <text class="s" x="330" y="320" text-anchor="middle">issues · refreshes</text>
 <text class="t" x="690" y="187" text-anchor="middle" font-weight="600" style="font-size:13.5px">AWS STS (regional)</text>

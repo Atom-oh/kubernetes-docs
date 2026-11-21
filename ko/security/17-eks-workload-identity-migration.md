@@ -15,7 +15,7 @@ Pod 안의 AWS SDK와 AWS CLI는 [기본 자격 증명 공급자 체인](https:/
 | 경로 | Pod에 주입되는 것 | SDK가 호출하는 곳 | 결과 역할 |
 | --- | --- | --- | --- |
 | 노드 인스턴스 프로파일 | 없음 | IMDSv2 `169.254.169.254` | 노드 IAM 역할 (노드의 모든 Pod가 공유) |
-| IRSA | `AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE`, 토큰 볼륨 | 리전 STS `AssumeRoleWithWebIdentity` | ServiceAccount 주석의 역할 |
+| IRSA | `AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE`, 토큰 볼륨 | 리전 STS(Security Token Service) `AssumeRoleWithWebIdentity` | ServiceAccount 주석의 역할 |
 | EKS Pod Identity | `AWS_CONTAINER_CREDENTIALS_FULL_URI`, `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`, 토큰 볼륨 | 같은 노드의 Pod Identity Agent `169.254.170.23` | association에 지정한 역할 |
 
 IMDS 응답 hop limit이 2 이상이면 hostNetwork를 쓰지 않는 일반 Pod도 IMDSv2 토큰을 받아 노드 역할 자격 증명을 가져갈 수 있습니다. 관리형 노드 그룹의 launch template이 이 값을 2로 두는 경우가 많습니다. 이전을 마친 뒤 hop limit을 1로 내려 이 경로를 닫는 이유입니다.
@@ -25,7 +25,7 @@ IMDS 응답 hop limit이 2 이상이면 hostNetwork를 쓰지 않는 일반 Pod�
 
 ![IRSA 흐름. ServiceAccount 주석을 본 웹훅이 환경 변수와 projected 토큰(aud sts.amazonaws.com)을 Pod에 넣고, SDK가 토큰을 STS AssumeRoleWithWebIdentity로 보내면 STS가 IAM OIDC provider로 서명을 검증하고 신뢰 정책의 aud와 sub를 확인한 뒤 임시 자격 증명을 돌려준다.](../.gitbook/assets/ko-security-17-eks-workload-identity-migration-anim-1.svg)
 
-1. **신뢰 준비.** 클러스터마다 OIDC issuer URL이 있습니다. 이 issuer를 계정의 IAM OIDC provider로 한 번 등록합니다. 역할의 신뢰 정책은 이 provider를 `Federated` principal로 두고 `aud`(`sts.amazonaws.com`)와 `sub`(`system:serviceaccount:<namespace>:<serviceaccount>`)를 조건으로 겁니다.
+1. **신뢰 준비.** 클러스터마다 OIDC(OpenID Connect) issuer URL이 있습니다. 이 issuer를 계정의 IAM OIDC provider로 한 번 등록합니다. 역할의 신뢰 정책은 이 provider를 `Federated` principal로 두고 `aud`(`sts.amazonaws.com`)와 `sub`(`system:serviceaccount:<namespace>:<serviceaccount>`)를 조건으로 겁니다.
 2. **Pod 생성 시 주입.** ServiceAccount에 `eks.amazonaws.com/role-arn` 주석이 있으면 EKS의 mutating 웹훅이 새 Pod에 `AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE`과 `/var/run/secrets/eks.amazonaws.com/serviceaccount/token` projected 토큰 볼륨을 추가합니다. 이미 실행 중인 Pod는 바뀌지 않으므로 rollout이 필요합니다.
 3. **토큰 발급과 갱신.** kubelet이 대상(audience) `sts.amazonaws.com`으로 ServiceAccount 토큰을 발급받아 파일로 두고 만료 전에 갱신합니다.
 4. **토큰 교환.** SDK가 토큰을 리전 STS `AssumeRoleWithWebIdentity`로 보냅니다. STS는 IAM OIDC provider에 등록된 issuer의 공개 키로 서명을 검증하고, 신뢰 정책의 `aud`·`sub` 조건을 확인한 뒤 임시 자격 증명을 돌려줍니다. Pod가 STS와 직접 통신하므로 Pod에서 STS로 가는 경로가 필요합니다. [AWS IRSA 문서](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
@@ -51,12 +51,12 @@ AWS는 가능한 경우 EKS Pod Identity를 권장합니다. 다만 실행 환�
 | 신뢰 정책 | `Federated` OIDC provider + `aud`/`sub` 조건. 클러스터마다 문장 추가 | `pods.eks.amazonaws.com` 하나. 새 클러스터에서도 수정 없음 |
 | 확장 한도 | 계정당 OIDC provider 기본 100개. 신뢰 정책 기본 2,048자라 보통 역할당 4개 안팎의 연결 | 클러스터당 association 5,000개. 역할 신뢰 정책은 늘지 않음 |
 | 자격 증명 경로 | Pod → 리전 STS (Pod가 STS API 할당량 사용) | Pod → 노드 에이전트 → EKS Auth (Pod가 STS를 직접 호출하지 않음) |
-| 세션 정보 | 역할 세션 이름. 세션 태그 없음 | 클러스터·namespace·ServiceAccount 세션 태그로 ABAC 가능 |
+| 세션 정보 | 역할 세션 이름. 세션 태그 없음 | 클러스터·namespace·ServiceAccount 세션 태그로 ABAC(속성 기반 접근 제어) 가능 |
 | 실행 환경 | EKS의 EC2·Fargate, EKS Anywhere, ROSA, EC2의 자체 관리 Kubernetes | EKS의 Linux EC2 노드만. Fargate, Windows, Outposts, EKS Anywhere 미지원 |
 | 교차 계정 | 대상 계정 역할이 이 클러스터의 OIDC provider를 신뢰 | association 역할은 클러스터와 같은 계정. 대상 역할을 지정하거나 역할 체이닝으로 위임 |
 | 권한 분리 | OIDC provider 생성은 IAM 관리자, 주석은 클러스터 운영자 | IAM은 역할만, 연결은 EKS API에서. 팀 간 책임 분리가 명확 |
 
-정리하면 신규 EKS EC2 워크로드에는 Pod Identity가 단순하고 확장에 유리합니다. Fargate나 Windows 노드, EKS 밖의 Kubernetes와 같은 구성을 공유해야 하는 워크로드에는 IRSA를 씁니다. 두 방식은 한 클러스터에서 함께 쓸 수 있습니다. 같은 ServiceAccount에 둘 다 설정하면 일반적인 SDK는 웹 ID 공급자(IRSA)를 먼저 선택하므로, 방식을 바꿀 때는 ServiceAccount를 분리하거나 이전 설정을 지웁니다.
+정리하면 신규 EKS EC2 워크로드에는 Pod Identity가 단순하고 확장에 유리합니다. Fargate나 Windows 노드, EKS 밖의 Kubernetes와 같은 구성을 공유해야 하는 워크로드에는 IRSA를 씁니다. 두 방식은 한 클러스터에서 함께 쓸 수 있습니다. 같은 ServiceAccount에 IRSA 주석과 association이 모두 있으면 EKS 웹훅은 새 Pod에 Pod Identity 변수만 넣고 IRSA 변수는 넣지 않습니다. 데모 클러스터에서 `kubectl create --dry-run=server`로 확인해 보니, 주석만 있을 때는 `AWS_ROLE_ARN`·`AWS_WEB_IDENTITY_TOKEN_FILE`이, association을 더하자 `AWS_CONTAINER_CREDENTIALS_FULL_URI`·`AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`만 주입됐습니다. 이미 실행 중인 Pod는 다시 만들기 전까지 IRSA 변수를 그대로 갖고 있으므로, 방식을 바꿀 때는 rollout으로 Pod를 새로 만들고 쓰지 않는 주석은 지웁니다.
 
 프라이빗 클러스터에서는 IRSA Pod가 쓰는 리전 STS와 Pod Identity Agent가 쓰는 EKS Auth(`eks-auth`)의 경로를 각각 확보합니다. 인터넷 경로가 없으면 해당 VPC 인터페이스 엔드포인트와 DNS, 보안 그룹을 확인합니다. 프록시를 쓰면 `169.254.170.23`과 `[fd00:ec2::23]`을 `NO_PROXY`에 넣습니다. [Pod Identity 고려 사항](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html) · [프라이빗 클러스터 요구 사항](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html)
 
@@ -66,7 +66,7 @@ AWS는 가능한 경우 EKS Pod Identity를 권장합니다. 다만 실행 환�
 2. **워크로드별 역할과 전용 ServiceAccount를 준비합니다.** 리소스 단위로 IAM 권한을 제한합니다. IRSA는 클러스터 issuer를 IAM OIDC provider로 등록하고 `aud`와 정확한 `sub`가 포함된 역할을 만든 뒤 `eks.amazonaws.com/role-arn`을 붙입니다. Pod Identity는 Agent 준비 상태와 노드의 EKS Auth 권한을 확인한 뒤, 요청 태그를 제한한 역할로 association을 생성합니다. 배포 플랫폼과 AWS SDK 지원 버전도 확인합니다. [IRSA 최소 SDK 버전](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-minimum-sdk.html) · [Pod Identity 최소 SDK 버전](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-minimum-sdk.html)
 3. **카나리 Pod를 새로 생성합니다.** Pod 템플릿의 `serviceAccountName`을 변경하거나 rollout으로 Pod를 새로 만들고, 새 Pod에서 주입된 환경 변수의 이름, 실행 프로세스의 AWS 호출자 ARN, 필요한 AWS API의 성공 여부를 확인합니다. 토큰이나 키를 로그에 출력하지 않습니다. SDK의 기본 체인에서 명시적 자격 증명이나 이전 공급자가 우선할 수 있습니다. [기본 자격 증명 공급자 체인](https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html)
 4. **워크로드를 순차적으로 전환합니다.** 오류율, `AccessDenied`, 토큰 및 임시 자격 증명 갱신, 크론 실행까지 관찰합니다. 워크로드가 노드 역할의 업무 권한에 의존하지 않는 것을 확인한 뒤, 해당 정책 문장만 회수합니다. 롤백 창에는 이전 Pod 템플릿과 노드 정책의 정확한 복원본을 준비합니다. 권한 회수 후 원복이 필요하면 해당 최소 정책을 먼저 복구하고 전파를 확인한 뒤 이전 Pod를 배포합니다.
-5. **노드 자격 증명 접근을 제한합니다.** 호환성을 검증한 노드 그룹부터 IMDSv2를 강제하고 일반 Pod의 IMDS 접근을 제한합니다. 사용자 지정 launch template을 쓰는 관리형 노드 그룹은 새 버전에 `HttpTokens=required`, `HttpPutResponseHopLimit=1`을 지정하고 롤링 교체합니다. Karpenter는 `EC2NodeClass.spec.metadataOptions`에서 정하며 EKS Auto Mode는 IMDSv2와 hop limit 1을 기본 적용합니다. `hostNetwork` Pod는 hop limit과 관계없이 IMDS에 접근하므로 별도로 통제합니다. [관리형 노드 그룹 launch template](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html) · [EKS IAM 보안 모범 사례](https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html)
+5. **노드 자격 증명 접근을 제한합니다.** 호환성을 검증한 노드 그룹부터 IMDSv2를 강제하고 일반 Pod의 IMDS 접근을 제한합니다. 사용자 지정 launch template을 쓰는 관리형 노드 그룹은 새 버전에 `HttpTokens=required`, `HttpPutResponseHopLimit=1`을 지정하고 롤링 교체합니다. Karpenter는 `EC2NodeClass.spec.metadataOptions`에서 정하며 EKS Auto Mode는 IMDSv2와 hop limit 1을 기본 적용합니다. `hostNetwork` Pod는 hop limit과 관계없이 IMDS에 접근하므로 별도로 통제합니다. IMDS 자체를 끄지는(`HttpEndpoint=disabled`) 않습니다. Pod Identity Agent도 hostNetwork에서 IMDS로 노드 역할 자격 증명을 받아 EKS Auth를 호출하기 때문입니다. [관리형 노드 그룹 launch template](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html) · [EKS IAM 보안 모범 사례](https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html)
 
 <details>
 <summary>신뢰 정책과 카나리 전환 명령</summary>
@@ -116,6 +116,7 @@ aws eks create-pod-identity-association --region "$AWS_REGION" --cluster-name "$
   --namespace "$NAMESPACE" --service-account "$POD_IDENTITY_SA" --role-arn "$POD_IDENTITY_ROLE_ARN"
 
 # 위에서 선택한 ServiceAccount로 카나리를 새로 배포
+SA="$IRSA_SA"   # 또는 "$POD_IDENTITY_SA"
 kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" set serviceaccount \
   deployment "$CANARY_DEPLOYMENT" "$SA"
 kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" rollout status \
@@ -133,10 +134,13 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" rollout status \
 
 ```bash
 cd examples/security/eks-workload-identity
+export AWS_REGION=ap-northeast-2
+export CLUSTER=<클러스터 이름> VPC_NAME=<클러스터 VPC의 Name 태그> \
+  SUBNET_NAMES=<Private 서브넷 Name 태그 1>,<Private 서브넷 Name 태그 2>
 ./demo.sh up d1124            # 발표 전: 노드 그룹, 역할, 버킷, 앱 세 벌
 ./demo.sh watch d1124         # 두 번째 터미널: 실시간 표
 ./demo.sh migrate-irsa d1124  # ServiceAccount 주석 + rollout
-./demo.sh migrate-podid d1124 # association 생성 + rollout
+./demo.sh migrate-podid d1124 # association 생성 + 주입 확인 + rollout
 ./demo.sh diff d1124          # 주입 변수·토큰·신뢰 정책 비교
 ./demo.sh revoke d1124        # 노드 역할에서 S3 권한 삭제
 ./demo.sh harden d1124        # (선택, 약 15분) hop limit 1로 노드 교체
@@ -144,19 +148,19 @@ cd examples/security/eks-workload-identity
 ./demo.sh down d1124          # 정리
 ```
 
-스크립트는 자신이 만든 리소스에만 `LabRun` 태그를 붙이고, 수정과 삭제 전에 태그를 확인합니다. VPC·서브넷·보안 그룹·애드온·OIDC provider는 만들지 않고 기존 것을 확인만 합니다.
+스크립트가 만드는 리소스는 이름에 run ID가 들어가거나 `LabRun` 태그가 붙고, 스크립트는 그 이름이나 태그에 해당하는 리소스만 수정하고 삭제합니다. VPC·서브넷·보안 그룹·애드온·OIDC provider는 만들지 않고 있는지만 확인합니다.
 
 ### 서울 리전 실측 결과
 
-2026년 11월 21일, 서울 리전(`ap-northeast-2`)의 EKS 1.36 클러스터에서 Pod 안의 AWS CLI 2.35.11로 두 번 리허설했습니다. 걸린 시간은 두 번의 범위입니다.
+2026년 11월 21일, 서울 리전(`ap-northeast-2`)의 EKS 1.36 클러스터에서 Pod 안의 AWS CLI 2.35.11로 두 번 리허설했습니다. 첫 리허설에서 Pod Identity 주입이 실패해(아래 참고) 스크립트를 고쳤고, 표는 고친 스크립트로 처음부터 끝까지 이어서 실행한 두 번째 리허설의 값입니다. `harden`만 첫 리허설에서 측정했습니다.
 
 | 단계 | orders-legacy | orders-irsa | orders-podid | 걸린 시간 |
 | --- | --- | --- | --- | --- |
 | 시작 | IMDS · 노드 역할 · 읽기 성공 | IMDS · 노드 역할 · 읽기 성공 | IMDS · 노드 역할 · 읽기 성공 | — |
-| `migrate-irsa` | 변화 없음 | STS · IRSA 역할 · 읽기 성공 | 변화 없음 | 5–6초 |
-| `migrate-podid` | 변화 없음 | 변화 없음 | Agent · Pod Identity 역할 · 읽기 성공 | 7–11초 (주입 확인 1–5초 포함) |
-| `revoke` | 노드 역할 · **읽기 거부** | 읽기 성공 | 읽기 성공 | 두 번 모두 13초 후 거부 |
-| `harden` (선택) | **자격 증명 없음** (IMDS 응답 차단) | 읽기 성공 | 읽기 성공 | 노드 교체 878초 |
+| `migrate-irsa` | 변화 없음 | STS · IRSA 역할 · 읽기 성공 | 변화 없음 | 6초 |
+| `migrate-podid` | 변화 없음 | 변화 없음 | Agent · Pod Identity 역할 · 읽기 성공 | 11초 (association 생성 후 주입 확인까지 5초 포함) |
+| `revoke` | 노드 역할 · **읽기 거부** | 읽기 성공 | 읽기 성공 | 13초 후 거부 |
+| `harden` (선택, 첫 리허설) | **자격 증명 없음** (IMDS 응답 차단) | 읽기 성공 | 읽기 성공 | 노드 교체 878초 |
 
 `diff`로 본 두 방식의 차이는 다음과 같습니다. 같은 클러스터 issuer가 서명한 ServiceAccount 토큰이지만 대상(audience)과 받는 쪽이 다릅니다.
 
@@ -168,7 +172,7 @@ cd examples/security/eks-workload-identity
 | 토큰 수명 | 86,400초 (24시간) | 약 24시간 |
 | 역할 신뢰 principal | `Federated`: 클러스터 OIDC provider, 조건 `aud`·`sub` | `Service`: `pods.eks.amazonaws.com`, 조건 요청 태그 3개 |
 
-리허설에서 두 가지 eventual consistency를 확인했습니다. 첫째, association을 만들고 7초 뒤에 rollout한 Pod에는 Pod Identity 변수가 주입되지 않아 노드 역할을 계속 썼습니다. 그래서 `migrate-podid`는 Deployment의 Pod 템플릿을 `kubectl create --dry-run=server`로 보내 mutating 웹훅의 주입 결과를 확인한 뒤에 rollout합니다. 두 번째 리허설에서는 association 생성 후 5초가 지나서야 주입이 확인됐습니다. 둘째, `revoke` 뒤 레거시 Pod는 13초 만에 거부됐지만 약 4분 30초 뒤에 허용 응답이 두 번 더 나온 뒤에야 거부로 고정됐습니다. 운영에서 노드 정책을 회수한 뒤에는 수 분 동안 관찰하고 판단합니다.
+리허설에서 두 가지 eventual consistency를 확인했습니다. 첫째, 첫 리허설에서 association을 만든 직후 rollout한 Pod에는 Pod Identity 변수가 주입되지 않아 노드 역할을 계속 썼고, 이어서 노드 정책을 회수하자 이 복사본도 거부됐습니다. 그래서 `migrate-podid`는 Deployment의 Pod 템플릿을 `kubectl create --dry-run=server`로 보내 mutating 웹훅의 주입 결과를 확인한 뒤에 rollout합니다. 두 번째 리허설에서는 association을 만들고 5초가 지나서야 주입이 확인됐습니다. 둘째, 첫 리허설의 `revoke` 뒤 레거시 Pod는 13초 만에 거부됐지만 약 4분 30초 뒤에 허용 응답이 두 번 더 나왔습니다. 그 뒤 `harden`을 시작할 때까지 약 1분 30초 동안은 계속 거부였습니다. 운영에서 노드 정책을 회수한 뒤에는 수 분 이상 관찰하고 판단합니다.
 
 ## 문제 해결
 
