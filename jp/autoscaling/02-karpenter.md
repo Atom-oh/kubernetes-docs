@@ -16,7 +16,7 @@
 - [トラブルシューティング](#troubleshooting)
 - [まとめ](#conclusion)
 
-## はじめに
+## はじめに {#introduction}
 
 Karpenter はオープンソースのノードオートスケーラーです。この章では、互換性のある Kubernetes ワークロード向けに EC2 キャパシティをプロビジョニングする AWS プロバイダーを使用します。可用性と効率は、制約、クラウドのキャパシティ、ノードの初期化、アプリケーションの設計によって左右されます。
 
@@ -44,7 +44,7 @@ Karpenter はオープンソースのノードオートスケーラーです。�
 
 > **注**: EKS は2026年4月8日に Managed Node Group のウォームプールサポートを追加しました。初期化済みのインスタンスを使うと、初期化作業の繰り返しを減らせます。Stopped モードと Running モードでは、状態遷移にかかる時間とコストが異なり、スケールイン時の再利用は任意です。AWS によると、Cluster Autoscaler との統合に追加の構成は必要ありません。再開、ノードの準備完了、アプリケーションの起動には、引き続き時間がかかります。これは EKS Managed Node Group/Auto Scaling の機能であり、Karpenter が管理するプールではありません。
 
-## アーキテクチャ
+## アーキテクチャ {#architecture}
 
 Karpenter は Kubernetes コントローラーとして動作し、スケジュールできない Pod を検出して、適切なノードをプロビジョニングします。
 
@@ -77,7 +77,7 @@ Karpenter は Kubernetes コントローラーとして動作し、スケジュ�
 5. ノードが登録されて準備完了になると、Kubernetes スケジューラーは条件を満たす Pod をバインドできます。Karpenter は kube-scheduler を置き換えるものではありません。
 6. Consolidation、drift、expiration、手動削除、クラウド中断にはそれぞれ異なるトリガーと保護策があります。これらすべてが SQS の中断イベントというわけではありません。
 
-## インストールと構成
+## インストールと構成 {#installation-and-configuration}
 
 apiVersion/kind のない YAML ブロックは、説明対象の NodePool または EC2NodeClass の spec に対する構成断片です。単独で kubectl apply できるドキュメントではありません。
 
@@ -375,7 +375,7 @@ v1.14 系列で最初のパッチとなる [v1.14.1](https://github.com/aws/karp
 
 2026年11月12日に公開された [v1.15.2](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.2) は、DRA インスタンスタイプのメタデータのみを更新します。alpha の `settings.awsFeatureGates.draNVIDIAGPU` または `settings.awsFeatureGates.draEFA` gate（または `settings.enableDRA`）が有効でなければ、変更の影響はありません。`g7` と `g7e` の NVIDIA GPU DRA メタデータを追加し、既存の GPU インスタンスタイプの GPU メモリ属性を更新する一方、分数 GPU の `g6f` と `gr6f` タイプには NVIDIA DRA メタデータが付かなくなりました。そのため、Karpenter はこれらを `gpu.nvidia.com` claim の候補に選びません。EFA DRA メタデータの対象は 29 タイプから 302 タイプに増えました。新たに追加されたエントリーで設定されるのは `dra.net/pciDevice`、`dra.net/pciVendor`、`dra.net/rdma` のみです。ソースからビルドするには Go 1.26.11 以降が必要になりました。
 
-## Node Class
+## Node Class {#node-classes}
 
 Node Class は、Karpenter がプロビジョニングするノードの構成を定義します。AWS では EC2NodeClass CRD を使用します。
 
@@ -500,7 +500,7 @@ userData: |
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-autoscaling-02-karpenter-2.html)
 
-## 中断への対応
+## 中断への対応 {#interruption-handling}
 
 構成された中断処理は、キャパシティが失われる前に対応しようとします。結果は、通知、置き換えキャパシティ、シャットダウン期限、アプリケーションの復旧によって決まります。途切れない可用性は保証されません。
 
@@ -603,7 +603,7 @@ spec:
       app: my-app
 ```
 
-## 統合
+## 統合 {#integration}
 
 Karpenter は、さまざまな Kubernetes サービスやクラウドサービスと統合されます。
 
@@ -858,7 +858,7 @@ spec:
     httpPutResponseHopLimit: 1
     httpTokens: required
 ```
-## Amazon EKS との統合
+## Amazon EKS との統合 {#integration-with-amazon-eks}
 
 Karpenter の AWS プロバイダーは、ID、ネットワーク、ノードアクセス、ブートストラップを構成すれば、EKS 管理のコンピューティングと並行して EC2 キャパシティをプロビジョニングできます。
 
@@ -1161,7 +1161,7 @@ spec:
     consolidateAfter: 1m
 ```
 
-## ベストプラクティス
+## ベストプラクティス {#best-practices}
 
 ![パフォーマンス最適化、コスト最適化、可用性向上、セキュリティ強化のカテゴリ別に、Karpenter のベストプラクティスを4つの並列リストで示す図。](../.gitbook/assets/en-autoscaling-02-karpenter-5.png)
 
@@ -1272,7 +1272,7 @@ spec:
     consolidateAfter: 60s
 ```
 
-## トラブルシューティング
+## トラブルシューティング {#troubleshooting}
 
 ### よくある問題
 
@@ -1360,7 +1360,7 @@ helm get values karpenter --namespace karpenter
 kubectl get nodeclaims -o wide
 ```
 
-## まとめ
+## まとめ {#conclusion}
 
 Karpenter は、ワークロードとインフラストラクチャの制約に従って、ノードのプロビジョニングとライフサイクルを自動化します。キャパシティ管理を改善できますが、可用性、パフォーマンス、コストの成果を得るには、ワークロードに応じた検証が必要です。
 

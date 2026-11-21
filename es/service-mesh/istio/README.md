@@ -64,7 +64,7 @@ Una malla de servicios es una capa de infraestructura que gestiona la comunicaci
 
 Estos diagramas de Bookinfo ilustran el modo sidecar. La inyección automática añade Envoy solo a los Pods recién creados en espacios de nombres o cargas de trabajo que la habilitan; el modo ambient no inyecta un sidecar.
 
-## ¿Realmente necesitas una malla de servicios?
+## ¿Realmente necesitas una malla de servicios? {#do-you-really-need-a-service-mesh}
 
 Los umbrales de número de servicios y las puntuaciones de la lista de verificación que aparecen a continuación son elementos para iniciar un debate, no requisitos de Istio. Una malla pequeña también puede justificarse por necesidades de seguridad. Los diagramas de decisión utilizan los mismos umbrales ilustrativos.
 
