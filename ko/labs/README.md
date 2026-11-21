@@ -1,7 +1,7 @@
 # 실습 가이드
 
 
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 11월 21일
 
 이 섹션에서는 Kubernetes와 관련 기술을 직접 실습해볼 수 있는 가이드를 제공합니다. 각 실습은 단계별 지침과 검증 방법을 포함하고 있어, 이론으로 배운 내용을 실제 환경에서 확인할 수 있습니다.
 
@@ -24,6 +24,7 @@
 | 13 | [Observability E2E: 부하 테스트 및 스케일링](observability/04-load-testing-scaling-lab.md) | 중급 | Part 3 완료 |
 | 14 | [Observability E2E: 알림 및 AIOps](observability/05-alerting-aiops-lab.md) | 고급 | Part 4 완료 |
 | 15 | [Observability E2E: 분산 추적 분석](observability/06-distributed-tracing-lab.md) | 고급 | Part 5 완료 |
+| 16 | [EKS 워크로드 IAM 이전 실습](security/17-eks-workload-identity-migration-lab.md) | 고급 | 기존 EKS 클러스터, AWS CLI, kubectl, jq |
 
 ## 권장 학습 순서
 
@@ -31,6 +32,7 @@
 2. **핵심 실습** (4→7→5→6): Kubernetes 핵심 리소스 다루기
 3. **EKS 실습** (8): 실제 클라우드 환경에서 클러스터 운영
 4. **Observability 실습** (9→10→11→12→13→14→15): End-to-End 관측성 스택 구축 및 운영
+5. **보안 실습** (16): EKS 워크로드 IAM을 노드 역할에서 IRSA와 Pod Identity로 이전
 
 ## 실습 환경 준비
 

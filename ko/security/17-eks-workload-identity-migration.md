@@ -148,7 +148,9 @@ export CLUSTER=<클러스터 이름> VPC_NAME=<클러스터 VPC의 Name 태그> 
 ./demo.sh down d1124          # 정리
 ```
 
-스크립트가 만드는 리소스는 이름에 run ID가 들어가거나 `LabRun` 태그가 붙고, 스크립트는 그 이름이나 태그에 해당하는 리소스만 수정하고 삭제합니다. VPC·서브넷·보안 그룹·애드온·OIDC provider는 만들지 않고 있는지만 확인합니다.
+청중에게는 `page-up`으로 읽기 전용 실시간 페이지를 공유할 수 있습니다. 경로는 CloudFront → VPC origin → internal ALB → 대시보드 Pod이고, ALB 보안 그룹은 CloudFront VPC origin만 받습니다. 대시보드 Pod에는 IAM 역할이 없고, 이 namespace의 Pod와 로그를 읽는 Role만 있습니다. 데모 노드는 hop limit 2라서 NetworkPolicy로 이 Pod가 IMDS와 Pod Identity Agent에 닿지 못하게 막습니다. 이 격리는 VPC CNI 네트워크 정책(`enableNetworkPolicy`)이 켜져 있어야 동작하므로 `page-up`이 먼저 확인합니다.
+
+스크립트가 만드는 리소스는 이름에 run ID가 들어가거나 `LabRun` 태그가 붙고, 스크립트는 그 이름이나 태그에 해당하는 리소스만 수정하고 삭제합니다. VPC·서브넷·애드온·OIDC provider는 만들지 않고 있는지만 확인합니다. 보안 그룹은 선택 단계인 `page-up`이 internal ALB용으로 하나만 만듭니다. 단계별 명령과 예상 출력, 확인 포인트는 [실습 가이드](../labs/security/17-eks-workload-identity-migration-lab.md)에 있습니다.
 
 ### 서울 리전 실측 결과
 

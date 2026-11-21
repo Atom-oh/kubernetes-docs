@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EKS 워크로드 IAM 라이브 데모</title>
+<style>
+  :root {
+    --paper:#f7f3ea; --card:#fffdf8; --ink:#2b2620; --muted:#7a7064; --rule:#b9ad98;
+    --blue:#1f5f8b; --green:#2b8a3e; --red:#c2410c; --amber:#a16207; --chip:#efe8da;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#1f1e1c; --card:#2a2927; --ink:#f3ecdc; --muted:#b0a796; --rule:#6f6656;
+            --blue:#86c8f1; --green:#8ce99a; --red:#ff8a65; --amber:#f2c66d; --chip:#36342f; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink);
+         font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo",system-ui,sans-serif; }
+  main { max-width:1180px; margin:0 auto; padding:28px 20px 40px; }
+  header { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:8px 24px;
+           border-bottom:1.5px solid var(--rule); padding-bottom:14px; }
+  h1 { font-size:clamp(22px,3.2vw,32px); margin:0; letter-spacing:-.01em; }
+  .meta { color:var(--muted); font-size:14px; }
+  .step { margin:22px 0 6px; font-size:clamp(18px,2.4vw,24px); font-weight:700; }
+  .step small { display:block; font-weight:400; color:var(--muted); font-size:15px; margin-top:4px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; margin-top:18px; }
+  .card { background:var(--card); border:1.6px solid var(--rule); border-radius:14px; padding:18px 18px 16px;
+          box-shadow:2px 3px 0 var(--rule); transition:border-color .4s; }
+  .card.denied { border-color:var(--red); box-shadow:2px 3px 0 var(--red); }
+  .card h2 { font-size:18px; margin:0 0 2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .pod { color:var(--muted); font-size:14px; font-family:ui-monospace,monospace; word-break:break-all; }
+  .src { margin:14px 0 4px; font-size:24px; font-weight:800; }
+  .src.imds { color:var(--amber); } .src.irsa, .src.pod-identity { color:var(--blue); }
+  .path { font-size:15px; color:var(--muted); min-height:2.6em; }
+  .row { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:12px; }
+  .role { font-family:ui-monospace,monospace; font-size:14px; word-break:break-all; }
+  .badge { font-size:13px; padding:2px 7px; border-radius:999px; background:var(--chip); color:var(--amber);
+           border:1px solid var(--amber); margin-left:6px; white-space:nowrap; }
+  .s3 { font-weight:800; font-size:18px; padding:4px 12px; border-radius:10px; border:1.6px solid currentColor; }
+  .s3.allowed { color:var(--green); } .s3.denied { color:var(--red); } .s3.no-creds, .s3.error, .s3.unknown { color:var(--amber); }
+  .env { margin-top:14px; font-size:14px; font-family:ui-monospace,monospace; color:var(--muted); }
+  .env b { color:var(--ink); font-weight:600; display:block; margin-bottom:4px; font-family:inherit; }
+  .env span { display:inline-block; background:var(--chip); border-radius:6px; padding:2px 6px; margin:2px 4px 2px 0; }
+  .dots { display:flex; flex-wrap:wrap; gap:3px; margin-top:14px; }
+  .dot { width:9px; height:9px; border-radius:50%; background:var(--rule); }
+  .dot.allowed { background:var(--green); } .dot.denied { background:var(--red); } .dot.no-creds, .dot.error { background:var(--amber); }
+  .legend { color:var(--muted); font-size:15px; margin-top:22px; line-height:1.7; }
+  .err { color:var(--red); font-size:13px; }
+  @media (prefers-reduced-motion: reduce) { .card { transition:none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>EKS 워크로드 IAM 라이브 데모</h1>
+    <div class="meta">같은 orders 앱 세 벌 · 3초마다 STS 호출자 확인 + S3 객체 읽기 · <span id="updated">연결 중…</span> UTC</div>
+  </header>
+  <div class="step" id="step">상태를 불러오는 중…<small></small></div>
+  <div class="grid" id="grid"></div>
+  <p class="legend">
+    <b>노드 (IMDS)</b>: 아무것도 주입되지 않아 SDK 체인 끝의 IMDS에서 노드 IAM 역할을 받습니다.<br>
+    <b>IRSA</b>: ServiceAccount 주석 → 웹훅이 토큰(aud sts.amazonaws.com)을 주입 → Pod가 STS AssumeRoleWithWebIdentity를 호출합니다.<br>
+    <b>Pod Identity</b>: EKS API association → 웹훅이 토큰(aud pods.eks.amazonaws.com)을 주입 → 같은 노드의 Agent가 EKS Auth에서 역할을 받아 옵니다.<br>
+    점은 최근 읽기 결과입니다(초록 허용 · 빨강 거부 · 노랑 자격 증명 없음). 이 페이지는 읽기 전용입니다.
+  </p>
+  <p class="err" id="err"></p>
+</main>
+<script>
+const COPIES = [["legacy","orders-legacy"],["irsa","orders-irsa"],["podid","orders-podid"]];
+const SRC = {"imds":["노드 (IMDS)","Pod → IMDSv2 169.254.169.254 → 노드 역할"],
+             "irsa":["IRSA","Pod → STS AssumeRoleWithWebIdentity → IRSA 역할"],
+             "pod-identity":["Pod Identity","Pod → Agent 169.254.170.23 → EKS Auth → Pod Identity 역할"]};
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function stepOf(c){
+  const l=c.legacy||{}, i=c.irsa||{}, p=c.podid||{};
+  if (l.s3==="no-creds") return ["5 · IMDS 차단 (harden)","레거시는 자격 증명 자체를 받지 못합니다. IRSA와 Pod Identity는 IMDS를 거치지 않으므로 그대로입니다."];
+  if (l.s3==="denied") return ["4 · 노드 역할에서 권한 회수 (revoke)","노드 역할에 기대던 레거시만 거부됩니다. 옮긴 두 벌은 자기 역할로 계속 읽습니다."];
+  if (p.src==="pod-identity") return ["2 · Pod Identity로 이전 (migrate-podid)","association 하나로 연결했습니다. ServiceAccount 주석은 없습니다."];
+  if (i.src==="irsa") return ["1 · IRSA로 이전 (migrate-irsa)","ServiceAccount에 역할 ARN 주석을 달고 Pod를 새로 만들었습니다."];
+  if (l.src) return ["0 · 시작: 세 벌 모두 노드 역할","앱 권한이 노드 인스턴스 프로파일에 붙어 있어, 노드의 모든 Pod가 같은 권한을 씁니다."];
+  return ["준비 중",""];
+}
+function card(key, title, c){
+  if (!c || !c.pod) return `<section class="card"><h2>${title}</h2><div class="pod">Pod 재시작 중…</div></section>`;
+  const src = SRC[c.src] || [c.src || "-", ""];
+  const s3 = c.s3 || "unknown";
+  const node = (c.role||"").endsWith("-node") ? '<span class="badge">노드 역할</span>' : "";
+  const env = (c.env||[]).length ? c.env.map(e=>`<span>${esc(e)}</span>`).join("") : "<span>(없음)</span>";
+  const hist = c.history||[];
+  const dots = hist.map(h=>`<i class="dot ${esc(h.s3)}" title="${esc(h.at)} ${esc(h.s3)}"></i>`).join("");
+  const nDenied = hist.filter(h=>h.s3==="denied").length, nNo = hist.filter(h=>h.s3==="no-creds").length;
+  const summary = `최근 ${hist.length}회 중 허용 ${hist.length-nDenied-nNo}회, 거부 ${nDenied}회, 자격 증명 없음 ${nNo}회`;
+  return `<section class="card ${s3==="denied"?"denied":""}">
+    <h2>${title}</h2><div class="pod">${esc(c.pod)}</div>
+    <div class="src ${esc(c.src)}">${esc(src[0])}</div><div class="path">${esc(src[1])}</div>
+    <div class="row"><div class="role">${esc(c.role||"-")}${node}</div><div class="s3 ${esc(s3)}">${esc(s3)}</div></div>
+    <div class="env"><b>EKS가 주입한 AWS 변수</b>${env}</div>
+    <div class="dots" role="img" aria-label="${esc(summary)}" title="${esc(summary)}">${dots}</div>
+  </section>`;
+}
+async function tick(){
+  try {
+    const r = await fetch("/api/state", {cache:"no-store"});
+    const s = await r.json();
+    const c = s.copies || {};
+    const [title, sub] = stepOf(c);
+    document.getElementById("step").innerHTML = `${esc(title)}<small>${esc(sub)}</small>`;
+    document.getElementById("grid").innerHTML = COPIES.map(([k,t]) => card(k, t, c[k])).join("");
+    document.getElementById("updated").textContent = s.updated || "-";
+    document.getElementById("err").textContent = s.error ? `상태 갱신 오류: ${s.error} (마지막 정상 상태 표시 중)` : "";
+  } catch (e) {
+    document.getElementById("err").textContent = "연결이 잠시 끊겼습니다. 다시 시도합니다.";
+  }
+}
+tick(); setInterval(tick, 2000);
+</script>
+</body>
+</html>

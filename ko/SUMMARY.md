@@ -457,6 +457,7 @@
   * [ConfigMap과 Secret 실습](labs/core/05-configuration-secrets-lab.md)
   * [스케줄러 스코어링 전략 실습](labs/core/08-scheduling-preemption-eviction-lab.md)
   * [EKS 클러스터 생성 실습](labs/eks/01-eks-cluster-creation-lab.md)
+  * [EKS 워크로드 IAM 이전 실습](labs/security/17-eks-workload-identity-migration-lab.md)
   * [Observability End-to-End 실습](lab-guides/labs/observability-end-to-end/README.md)
     * [실습 시리즈 소개](labs/observability/README.md)
     * [Part 1: 인프라 구성](labs/observability/01-infrastructure-setup-lab.md)

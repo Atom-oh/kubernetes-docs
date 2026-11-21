@@ -2,7 +2,7 @@
 
 A live demo for [security/17](../../../ko/security/17-eks-workload-identity-migration.md): three copies of one "orders" app read the same S3 object. All three start on the node instance profile. On stage you move one copy to IRSA and one to EKS Pod Identity, then remove the S3 permission from the node role and watch only the legacy copy lose access.
 
-The script runs on an **existing** EKS cluster. It adds one tainted managed node group with its own node role, two workload roles, a private S3 bucket and a namespace, each named after the run ID or tagged `Lab=eks-workload-identity-demo` and `LabRun=<RUN_ID>`. The script changes or deletes only resources that match that name or tag; IAM roles, the bucket and the node group are checked for both tags before any change. It never creates a VPC, subnet, security group, cluster, add-on or IAM OIDC provider, opens no inbound ports and touches no other node group or Pod Identity association.
+The script runs on an **existing** EKS cluster. It adds one tainted managed node group with its own node role, two workload roles, a private S3 bucket and a namespace, each named after the run ID or tagged `Lab=eks-workload-identity-demo` and `LabRun=<RUN_ID>`. The script changes or deletes only resources that match that name or tag; IAM roles, the bucket and the node group are checked for both tags before any change. It never creates a VPC, subnet, cluster, add-on or IAM OIDC provider and touches no other node group or Pod Identity association. The core demo creates no security group and opens no inbound ports; only the optional `page-up` adds one security group (port 80 from CloudFront's VPC origin only) and DNS records for `PAGE_DOMAIN`.
 
 ## Requirements
 
@@ -27,16 +27,26 @@ RUN_ID=d1124
 ./demo.sh revoke  "$RUN_ID"
 ./demo.sh harden  "$RUN_ID"   # optional, rolls the node group (~15 min)
 ./demo.sh restore "$RUN_ID"   # back to the start (15 s; ~10 min if harden ran)
+./demo.sh page-up   "$RUN_ID" # optional public read-only page for the audience (~8 min)
+./demo.sh page-down "$RUN_ID" # remove it (down also does this)
 ./demo.sh down    "$RUN_ID"   # after the talk
 ```
 
 `app.sh` is the loop inside each copy: every 3 seconds it calls `sts get-caller-identity` and `s3api get-object` with the AWS CLI's default credential chain and prints one JSON line (`src`, `role`, `s3`). It prints no credentials or tokens. `watch` reads the newest Pod of each copy. Commands echo what they run. Output masks the account ID, OIDC issuer ID, cluster name and launch template IDs so the screen is safe to project; set `MASK_CLUSTER=0` to show the cluster name and launch template IDs.
 
+## Public read-only page (optional)
+
+`page-up` gives the audience a live page in their own browsers. `dashboard.py` (stdlib only) and `dashboard.html` run as one Pod in the demo namespace. A background thread polls the Kubernetes API every 2 seconds for the newest Pod of each copy: its last `app.sh` line and the names of the injected `AWS_*` variables. Requests are served from memory with `Cache-Control: max-age=1`, so viewers never trigger API calls. The Pod's ServiceAccount has no IAM role; its Role can only list Pods and read their logs in this namespace. Because the demo node uses hop limit 2, a NetworkPolicy limits the Pod's egress to DNS and TCP 443 so it cannot reach IMDS or the Pod Identity Agent (verified: requests to both time out).
+
+Traffic path: viewer → CloudFront (HTTPS on `PAGE_DOMAIN`, GET/HEAD only, HTTP redirects to HTTPS) → CloudFront VPC origin → **internal** ALB (HTTP 80) → dashboard Pod. The ALB security group admits only the `CloudFront-VPCOrigins-Service-SG` of the VPC, or the CloudFront origin-facing managed prefix list if that group does not exist yet. There is no internet-facing load balancer and no public CIDR rule. Requires the AWS Load Balancer Controller and VPC CNI network policy enforcement (`enableNetworkPolicy`), which the IMDS isolation depends on; `page-up` checks it. Set `PAGE_DOMAIN`, `PAGE_CERT_ARN` (ACM in us-east-1) and `PAGE_ZONE_ID` (public hosted zone) in the env file. Extra cost while up: about US$0.55 per day for the ALB, plus negligible CloudFront requests.
+
+Measured on November 21, 2026: `page-up` 446 s and `page-down` 546 s, most of it the VPC origin and distribution deployments. Screenshots at each step showed the page following the demo: baseline (three `node (IMDS)` cards), IRSA, Pod Identity, then `revoke` with only the legacy card turning `denied`. After a `page-down`/`page-up` cycle, resolvers that queried the name in between can cache NXDOMAIN for up to 15 minutes (SOA negative TTL), so do not recreate the page right before a talk.
+
 ## Presenter runbook
 
 | Step | Say | Run | Expect on the watch screen |
 | --- | --- | --- | --- |
-| 0 | "Today the app's S3 permission lives on the node role." | (watch already running) | All three rows: `node (IMDS)`, `wid-<run>-node ← node`, `allowed` |
+| 0 | "Today the app's S3 permission lives on the node role." Share the page URL. | (watch and the public page already running) | All three rows: `node (IMDS)`, `wid-<run>-node ← node`, `allowed` |
 | 1 | "IRSA: annotate the ServiceAccount, restart." | `migrate-irsa` (~6 s) | `orders-irsa` → `IRSA (STS)`, `wid-<run>-irsa`, `allowed` |
 | 2 | "Pod Identity: one EKS API call, no annotation." | `migrate-podid` (~11 s) | `orders-podid` → `Pod Identity`, `wid-<run>-podid`, `allowed` |
 | 3 | "Same outcome, different wiring." | `diff` | Injected env vars, token `aud` (`sts.amazonaws.com` vs `pods.eks.amazonaws.com`), trust principals |

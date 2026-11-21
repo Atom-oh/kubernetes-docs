@@ -457,6 +457,7 @@
   * [ConfigMap and Secret Lab](labs/core/05-configuration-secrets-lab.md)
   * [Scheduler Scoring Strategy Lab](labs/core/08-scheduling-preemption-eviction-lab.md)
   * [EKS Cluster Creation Lab](labs/eks/01-eks-cluster-creation-lab.md)
+  * [EKS Workload IAM Migration Lab](labs/security/17-eks-workload-identity-migration-lab.md)
   * [Observability End-to-End Labs](lab-guides/labs/observability-end-to-end/README.md)
     * [Lab Series Introduction](labs/observability/README.md)
     * [Part 1: Infrastructure Setup](labs/observability/01-infrastructure-setup-lab.md)

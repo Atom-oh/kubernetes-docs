@@ -1,7 +1,7 @@
 # Lab Guide
 
 
-> **Last Updated**: September 13, 2026
+> **Last Updated**: November 21, 2026
 
 This section provides hands-on lab guides for practicing Kubernetes and related technologies. Each lab includes step-by-step instructions and verification methods, allowing you to confirm what you learned in theory in a real environment.
 
@@ -24,6 +24,7 @@ This section provides hands-on lab guides for practicing Kubernetes and related 
 | 13 | [Observability E2E: Load Testing and Autoscaling](observability/04-load-testing-scaling-lab.md) | Intermediate | Part 3 completed |
 | 14 | [Observability E2E: Alerting and AIOps](observability/05-alerting-aiops-lab.md) | Advanced | Part 4 completed |
 | 15 | [Observability E2E: Distributed Tracing Analysis](observability/06-distributed-tracing-lab.md) | Advanced | Part 5 completed |
+| 16 | [EKS Workload IAM Migration Lab](security/17-eks-workload-identity-migration-lab.md) | Advanced | Existing EKS cluster, AWS CLI, kubectl, jq |
 
 ## Recommended Learning Path
 
@@ -31,6 +32,7 @@ This section provides hands-on lab guides for practicing Kubernetes and related 
 2. **Core Labs** (4→7→5→6): Work with Kubernetes core resources
 3. **EKS Labs** (8): Operate clusters in a real cloud environment
 4. **Observability Labs** (9→10→11→12→13→14→15): Build and operate an end-to-end observability stack
+5. **Security Labs** (16): Move EKS workload IAM from the node role to IRSA and Pod Identity
 
 ## Lab Environment Setup
 

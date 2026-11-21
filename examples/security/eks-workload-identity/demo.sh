@@ -3,9 +3,10 @@
 # onto IRSA and EKS Pod Identity, side by side, on an existing cluster.
 #
 # Everything this script creates carries the tags Lab=eks-workload-identity-demo
-# and LabRun=<RUN_ID>; every mutation and deletion checks those tags first.
-# It never creates a VPC, subnet, security group, cluster, add-on or OIDC
-# provider, and never touches other node groups or Pod Identity associations.
+# and LabRun=<RUN_ID> (or the run ID in its name); mutations and deletions check them first.
+# It never creates a VPC, subnet, cluster, add-on or OIDC provider, and never touches
+# other node groups or Pod Identity associations. Only the optional page-up creates a
+# security group (CloudFront VPC origin -> internal ALB, port 80) and PAGE_DOMAIN records.
 set -euo pipefail
 
 usage() {
@@ -26,10 +27,16 @@ Live steps (seconds each):
   harden         (optional, ~15 min) IMDS hop limit 1 on the demo node group
   restore        Return to the starting state (another ~15 min if harden ran)
 
+Optional public, read-only status page (CloudFront VPC origin -> internal ALB):
+  page-up        Deploy the dashboard, internal ALB, VPC origin, distribution, DNS (~10 min)
+  page-down      Remove all of it (~10 min); `down` runs it first
+
 RUN_ID: 4–12 lowercase letters or digits.
 Required environment: CLUSTER (existing EKS cluster), VPC_NAME (Name tag of its
 VPC), SUBNET_NAMES (comma-separated Name tags of private subnets in that VPC).
-Optional: AWS_REGION (ap-northeast-2). Values may also live in
+Optional: AWS_REGION (ap-northeast-2). page-up also needs PAGE_DOMAIN (host name),
+PAGE_CERT_ARN (ACM certificate in us-east-1 covering it) and PAGE_ZONE_ID (public
+Route 53 hosted zone). Values may also live in
 ~/.local/state/eks-workload-identity-demo/env (sourced if present).
 USAGE
 }
@@ -64,6 +71,7 @@ launch_template="${prefix}-node"
 policy_name=OrdersReadInvoices
 object=invoices/2026-11.txt
 image=public.ecr.aws/aws-cli/aws-cli:2.35.11
+dashboard_image=public.ecr.aws/docker/library/python:3.12-slim
 tracks=(legacy irsa podid)
 
 mkdir -p "$state_dir"
@@ -240,7 +248,7 @@ delete_role() {
 # --- S3 -----------------------------------------------------------------------
 
 setup_bucket() {
-  if aws s3api head-bucket --bucket "$bucket" --expected-bucket-owner "$account" 2>/dev/null; then
+  if aws s3api head-bucket --bucket "$bucket" --expected-bucket-owner "$account" >/dev/null 2>&1; then
     log "bucket exists"; return
   fi
   local args=(--bucket "$bucket" --object-ownership BucketOwnerEnforced)
@@ -255,7 +263,7 @@ setup_bucket() {
 }
 
 delete_bucket() {
-  aws s3api head-bucket --bucket "$bucket" --expected-bucket-owner "$account" 2>/dev/null || return 0
+  aws s3api head-bucket --bucket "$bucket" --expected-bucket-owner "$account" >/dev/null 2>&1 || return 0
   aws s3api get-bucket-tagging --bucket "$bucket" --expected-bucket-owner "$account" | has_run_tags \
     || die "bucket is not tagged for run $run_id"
   aws s3 rm "s3://$bucket" --recursive >/dev/null
@@ -380,6 +388,252 @@ rollout() { # track
 association_ids() {
   aws eks list-pod-identity-associations --cluster-name "$cluster" --namespace "$namespace" \
     --service-account orders-podid --query 'associations[].associationId' --output text | sed 's/^None$//'
+}
+
+
+# --- public read-only page -------------------------------------------------------
+# Viewer -> CloudFront (HTTPS, PAGE_DOMAIN) -> VPC origin -> internal ALB (HTTP 80,
+# security group admits only CloudFront's VPC-origin SG or its managed prefix list)
+# -> dashboard Pod. No internet-facing load balancer, no public CIDR anywhere.
+
+page_name="${prefix}-page"
+
+require_page_env() {
+  : "${PAGE_DOMAIN:?set PAGE_DOMAIN for page-up}"
+  : "${PAGE_CERT_ARN:?set PAGE_CERT_ARN (ACM, us-east-1) for page-up}"
+  : "${PAGE_ZONE_ID:?set PAGE_ZONE_ID (public hosted zone) for page-up}"
+}
+
+page_sg_id() {
+  aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$(jq -r .resourcesVpcConfig.vpcId <<< "$cluster_info")" \
+    "Name=group-name,Values=$page_name" "Name=tag:LabRun,Values=$run_id" \
+    --query 'SecurityGroups[0].GroupId' --output text
+}
+
+setup_page_sg() {
+  local vpc id cf pl
+  vpc=$(jq -r .resourcesVpcConfig.vpcId <<< "$cluster_info")
+  id=$(page_sg_id)
+  if [[ "$id" == None ]]; then
+    id=$(aws ec2 create-security-group --group-name "$page_name" --vpc-id "$vpc" \
+      --description "wid demo page ALB: CloudFront VPC origin only" \
+      --tag-specifications "ResourceType=security-group,Tags=[{Key=Lab,Value=$owner},{Key=LabRun,Value=$run_id},{Key=Name,Value=$page_name}]" \
+      --query GroupId --output text)
+    cf=$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$vpc" "Name=group-name,Values=CloudFront-VPCOrigins-Service-SG" \
+      --query 'SecurityGroups[0].GroupId' --output text)
+    if [[ "$cf" != None ]]; then
+      aws ec2 authorize-security-group-ingress --group-id "$id" \
+        --ip-permissions "IpProtocol=tcp,FromPort=80,ToPort=80,UserIdGroupPairs=[{GroupId=$cf,Description=CloudFront VPC origin}]" >/dev/null
+    else
+      pl=$(aws ec2 describe-managed-prefix-lists --filters "Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing" \
+        --query 'PrefixLists[0].PrefixListId' --output text)
+      aws ec2 authorize-security-group-ingress --group-id "$id" \
+        --ip-permissions "IpProtocol=tcp,FromPort=80,ToPort=80,PrefixListIds=[{PrefixListId=$pl,Description=CloudFront origin-facing}]" >/dev/null
+    fi
+  fi
+  echo "$id"
+}
+
+dashboard_manifests() { # sg-id
+  local sg=$1 subnet_csv vpc_cidr
+  subnet_csv=$(IFS=,; echo "${subnets[*]}")
+  vpc_cidr=$(aws ec2 describe-vpcs --vpc-ids "$(jq -r .resourcesVpcConfig.vpcId <<< "$cluster_info")" \
+    --query 'Vpcs[0].CidrBlock' --output text)
+  kubectl -n "$namespace" create configmap wid-dashboard --from-file="$script_dir/dashboard.py" \
+    --from-file="$script_dir/dashboard.html" --dry-run=client -o json
+  jq -n --arg ns "$namespace" '{apiVersion:"v1",kind:"ServiceAccount",metadata:{name:"wid-dashboard",namespace:$ns},
+    automountServiceAccountToken:true}'
+  jq -n --arg ns "$namespace" '{apiVersion:"rbac.authorization.k8s.io/v1",kind:"Role",metadata:{name:"wid-dashboard",namespace:$ns},
+    rules:[{apiGroups:[""],resources:["pods"],verbs:["get","list"]},{apiGroups:[""],resources:["pods/log"],verbs:["get"]}]}'
+  jq -n --arg ns "$namespace" '{apiVersion:"rbac.authorization.k8s.io/v1",kind:"RoleBinding",metadata:{name:"wid-dashboard",namespace:$ns},
+    roleRef:{apiGroup:"rbac.authorization.k8s.io",kind:"Role",name:"wid-dashboard"},
+    subjects:[{kind:"ServiceAccount",name:"wid-dashboard",namespace:$ns}]}'
+  jq -n --arg ns "$namespace" --arg run "$run_id" --arg image "$dashboard_image" \
+     --arg cfg "$(cat "$script_dir/dashboard.py" "$script_dir/dashboard.html" | sha256sum | cut -c1-16)" '
+    {apiVersion:"apps/v1",kind:"Deployment",metadata:{name:"wid-dashboard",namespace:$ns},
+     spec:{replicas:1,selector:{matchLabels:{app:"wid-dashboard"}},template:{metadata:{labels:{app:"wid-dashboard"},
+       annotations:{"wid-demo/config":$cfg}},spec:{
+       serviceAccountName:"wid-dashboard",nodeSelector:{"wid-demo":$run},
+       tolerations:[{key:"wid-demo",operator:"Equal",value:$run,effect:"NoSchedule"}],
+       securityContext:{runAsNonRoot:true,runAsUser:1000,runAsGroup:1000,seccompProfile:{type:"RuntimeDefault"}},
+       containers:[{name:"dashboard",image:$image,command:["python3","-B","/app/dashboard.py"],
+         ports:[{containerPort:8080}],
+         readinessProbe:{httpGet:{path:"/healthz",port:8080},periodSeconds:5},
+         resources:{requests:{cpu:"20m",memory:"48Mi"},limits:{memory:"128Mi"}},
+         securityContext:{allowPrivilegeEscalation:false,readOnlyRootFilesystem:true,capabilities:{drop:["ALL"]}},
+         volumeMounts:[{name:"app",mountPath:"/app",readOnly:true}]}],
+       volumes:[{name:"app",configMap:{name:"wid-dashboard"}}]}}}}'
+  # Internet-facing through CloudFront, so the Pod must not reach IMDS or the Pod Identity
+  # Agent: egress is DNS and TCP 443 only (Kubernetes API), ingress is port 8080 from the VPC.
+  jq -n --arg ns "$namespace" --arg vpc "$vpc_cidr" '{apiVersion:"networking.k8s.io/v1",kind:"NetworkPolicy",
+    metadata:{name:"wid-dashboard",namespace:$ns},spec:{podSelector:{matchLabels:{app:"wid-dashboard"}},
+    policyTypes:["Ingress","Egress"],
+    ingress:[{from:[{ipBlock:{cidr:$vpc}}],ports:[{protocol:"TCP",port:8080}]}],
+    egress:[
+      {to:[{namespaceSelector:{matchLabels:{"kubernetes.io/metadata.name":"kube-system"}},podSelector:{matchLabels:{"k8s-app":"kube-dns"}}}],
+       ports:[{protocol:"UDP",port:53},{protocol:"TCP",port:53}]},
+      {to:[{ipBlock:{cidr:"0.0.0.0/0",except:["169.254.0.0/16"]}}],ports:[{protocol:"TCP",port:443}]}]}}'
+  jq -n --arg ns "$namespace" '{apiVersion:"v1",kind:"Service",metadata:{name:"wid-dashboard",namespace:$ns},
+    spec:{selector:{app:"wid-dashboard"},ports:[{port:80,targetPort:8080}]}}'
+  jq -n --arg ns "$namespace" --arg name "$page_name" --arg sg "$sg" --arg subnets "$subnet_csv" \
+     --arg tags "Lab=$owner,LabRun=$run_id" '
+    {apiVersion:"networking.k8s.io/v1",kind:"Ingress",metadata:{name:"wid-dashboard",namespace:$ns,annotations:{
+       "alb.ingress.kubernetes.io/scheme":"internal",
+       "alb.ingress.kubernetes.io/target-type":"ip",
+       "alb.ingress.kubernetes.io/load-balancer-name":$name,
+       "alb.ingress.kubernetes.io/subnets":$subnets,
+       "alb.ingress.kubernetes.io/security-groups":$sg,
+       "alb.ingress.kubernetes.io/manage-backend-security-group-rules":"true",
+       "alb.ingress.kubernetes.io/listen-ports":"[{\"HTTP\":80}]",
+       "alb.ingress.kubernetes.io/healthcheck-path":"/healthz",
+       "alb.ingress.kubernetes.io/tags":$tags}},
+     spec:{ingressClassName:"alb",rules:[{http:{paths:[{path:"/",pathType:"Prefix",
+       backend:{service:{name:"wid-dashboard",port:{number:80}}}}]}}]}}'
+}
+
+alb_arn() {
+  aws elbv2 describe-load-balancers --names "$page_name" --query 'LoadBalancers[0].LoadBalancerArn' --output text 2>/dev/null || echo None
+}
+
+vpc_origin_id() {
+  aws cloudfront list-vpc-origins --query "VpcOriginList.Items[?Name=='$page_name'].Id | [0]" --output text
+}
+
+distribution_id() {
+  aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='$page_name'].Id | [0]" --output text
+}
+
+require_owned_cf() { # arn
+  aws cloudfront list-tags-for-resource --resource "$1" --query Tags --output json |
+    jq -e --arg o "$owner" --arg r "$run_id" '([.Items[]? | {(.Key): .Value}] | add // {}) | (.Lab == $o and .LabRun == $r)' >/dev/null \
+    || die "$1 is not tagged for run $run_id"
+}
+
+# Refuse to touch PAGE_DOMAIN unless it is absent or already aliases this run's distribution.
+check_dns_owner() { # distribution-domain
+  local existing
+  existing=$(aws route53 list-resource-record-sets --hosted-zone-id "$PAGE_ZONE_ID" \
+    --query "ResourceRecordSets[?Name=='${PAGE_DOMAIN%.}.' && (Type=='A' || Type=='AAAA' || Type=='CNAME')]" --output json)
+  jq -e --arg d "${1%.}." 'all(.[]; .AliasTarget.DNSName == $d)' <<< "$existing" >/dev/null \
+    || die "$PAGE_DOMAIN already has records that do not point at this run's distribution; refusing to change DNS"
+}
+
+dns_change() { # UPSERT|DELETE distribution-domain
+  local batch
+  batch=$(jq -n --arg a "$1" --arg n "$PAGE_DOMAIN" --arg d "$2" '{Changes:[
+    {Action:$a,ResourceRecordSet:{Name:$n,Type:"A",AliasTarget:{HostedZoneId:"Z2FDTNDATAQYW2",DNSName:$d,EvaluateTargetHealth:false}}},
+    {Action:$a,ResourceRecordSet:{Name:$n,Type:"AAAA",AliasTarget:{HostedZoneId:"Z2FDTNDATAQYW2",DNSName:$d,EvaluateTargetHealth:false}}}]}')
+  aws route53 change-resource-record-sets --hosted-zone-id "$PAGE_ZONE_ID" --change-batch "$batch" >/dev/null
+}
+
+cmd_page_up() {
+  require_page_env
+  preflight
+  # The dashboard's IMDS isolation is a NetworkPolicy; refuse to expose it where policies are not enforced.
+  aws eks describe-addon --cluster-name "$cluster" --addon-name vpc-cni --query addon.configurationValues --output text |
+    jq -e '(.enableNetworkPolicy // "false") | tostring == "true"' >/dev/null 2>&1 \
+    || die "vpc-cni network policy is not enabled; the public page would let its Pod reach IMDS"
+  log "security group for the internal ALB (CloudFront VPC origin only)"
+  local sg alb vo dist dns
+  sg=$(setup_page_sg)
+  log "dashboard Pod, Service and Ingress (internal ALB)"
+  dashboard_manifests "$sg" | kubectl apply -f - >/dev/null
+  k rollout status deployment/wid-dashboard --timeout=180s >&2
+  local start=$SECONDS
+  until [[ "$(alb_arn)" != None ]]; do (( SECONDS - start < 300 )) || die "ALB not created"; sleep 10; done
+  alb=$(alb_arn)
+  aws elbv2 wait load-balancer-available --load-balancer-arns "$alb"
+  [[ "$(aws elbv2 describe-load-balancers --load-balancer-arns "$alb" --query 'LoadBalancers[0].Scheme' --output text)" == internal ]] \
+    || die "ALB is not internal"
+  vo=$(vpc_origin_id)
+  if [[ "$vo" == None ]]; then
+    log "CloudFront VPC origin (a few minutes)"
+    vo=$(aws cloudfront create-vpc-origin --vpc-origin-endpoint-config \
+      "Name=$page_name,Arn=$alb,HTTPPort=80,HTTPSPort=443,OriginProtocolPolicy=http-only,OriginSslProtocols={Quantity=1,Items=[TLSv1.2]}" \
+      --tags "Items=[{Key=Lab,Value=$owner},{Key=LabRun,Value=$run_id}]" --query VpcOrigin.Id --output text)
+  fi
+  until [[ "$(aws cloudfront get-vpc-origin --id "$vo" --query VpcOrigin.Status --output text)" == Deployed ]]; do
+    printf '.' >&2; sleep 15
+  done
+  printf '\n' >&2
+  dist=$(distribution_id)
+  if [[ "$dist" == None ]]; then
+    log "CloudFront distribution for $PAGE_DOMAIN (a few minutes)"
+    dns=$(aws elbv2 describe-load-balancers --load-balancer-arns "$alb" --query 'LoadBalancers[0].DNSName' --output text)
+    jq -n --arg ref "$page_name-$(date +%s)" --arg c "$page_name" --arg dom "$PAGE_DOMAIN" --arg cert "$PAGE_CERT_ARN" \
+      --arg origin "$dns" --arg vo "$vo" --arg o "$owner" --arg r "$run_id" '
+      {DistributionConfig:{CallerReference:$ref,Comment:$c,Enabled:true,HttpVersion:"http2and3",IsIPV6Enabled:true,
+        PriceClass:"PriceClass_200",Aliases:{Quantity:1,Items:[$dom]},
+        Origins:{Quantity:1,Items:[{Id:"dashboard",DomainName:$origin,
+          VpcOriginConfig:{VpcOriginId:$vo,OriginReadTimeout:10,OriginKeepaliveTimeout:5}}]},
+        DefaultCacheBehavior:{TargetOriginId:"dashboard",ViewerProtocolPolicy:"redirect-to-https",Compress:true,
+          CachePolicyId:"83da9c7e-98b4-4e11-a168-04f0df8e2c65",
+          AllowedMethods:{Quantity:2,Items:["GET","HEAD"],CachedMethods:{Quantity:2,Items:["GET","HEAD"]}}},
+        ViewerCertificate:{ACMCertificateArn:$cert,SSLSupportMethod:"sni-only",MinimumProtocolVersion:"TLSv1.2_2021"}},
+       Tags:{Items:[{Key:"Lab",Value:$o},{Key:"LabRun",Value:$r}]}}' > "$scratch/dist.json"
+    dist=$(aws cloudfront create-distribution-with-tags --distribution-config-with-tags "file://$scratch/dist.json" \
+      --query Distribution.Id --output text)
+  fi
+  aws cloudfront wait distribution-deployed --id "$dist"
+  log "DNS $PAGE_DOMAIN -> CloudFront"
+  local cfdomain
+  cfdomain=$(aws cloudfront get-distribution --id "$dist" --query Distribution.DomainName --output text)
+  check_dns_owner "$cfdomain"
+  dns_change UPSERT "$cfdomain"
+  log "ready: https://$PAGE_DOMAIN/ (read-only; DNS may take a minute)"
+}
+
+cmd_page_down() {
+  load_cluster
+  local dist vo arn etag alb sg start
+  dist=$(distribution_id)
+  if [[ "$dist" != None ]]; then
+    arn=$(aws cloudfront get-distribution --id "$dist" --query Distribution.ARN --output text)
+    require_owned_cf "$arn"
+    if [[ -n "${PAGE_ZONE_ID:-}" && -n "${PAGE_DOMAIN:-}" ]]; then
+      dns_change DELETE "$(aws cloudfront get-distribution --id "$dist" --query Distribution.DomainName --output text)" 2>/dev/null \
+        && log "deleted DNS records" || true
+    fi
+    aws cloudfront get-distribution-config --id "$dist" --output json > "$scratch/dc.json"
+    if [[ "$(jq -r .DistributionConfig.Enabled "$scratch/dc.json")" == true ]]; then
+      log "disabling the distribution (a few minutes)"
+      jq '.DistributionConfig.Enabled=false | .DistributionConfig' "$scratch/dc.json" > "$scratch/dc-off.json"
+      aws cloudfront update-distribution --id "$dist" --if-match "$(jq -r .ETag "$scratch/dc.json")" \
+        --distribution-config "file://$scratch/dc-off.json" >/dev/null
+    fi
+    aws cloudfront wait distribution-deployed --id "$dist"
+    etag=$(aws cloudfront get-distribution --id "$dist" --query ETag --output text)
+    aws cloudfront delete-distribution --id "$dist" --if-match "$etag"
+    log "deleted distribution"
+  fi
+  vo=$(vpc_origin_id)
+  if [[ "$vo" != None ]]; then
+    require_owned_cf "$(aws cloudfront get-vpc-origin --id "$vo" --query VpcOrigin.Arn --output text)"
+    start=$SECONDS
+    until etag=$(aws cloudfront get-vpc-origin --id "$vo" --query ETag --output text) &&
+          aws cloudfront delete-vpc-origin --id "$vo" --if-match "$etag" >/dev/null 2>&1; do
+      (( SECONDS - start < 900 )) || die "VPC origin $vo could not be deleted"; printf '.' >&2; sleep 20
+    done
+    printf '\n' >&2
+    until [[ "$(vpc_origin_id)" == None ]]; do printf '.' >&2; sleep 20; done
+    printf '\n' >&2; log "deleted VPC origin"
+  fi
+  if k get ingress wid-dashboard >/dev/null 2>&1; then
+    k delete ingress wid-dashboard --wait=true >/dev/null
+    start=$SECONDS
+    until [[ "$(alb_arn)" == None ]]; do (( SECONDS - start < 600 )) || die "ALB still present"; sleep 10; done
+    log "deleted internal ALB"
+  fi
+  k delete deployment/wid-dashboard service/wid-dashboard configmap/wid-dashboard serviceaccount/wid-dashboard \
+    role/wid-dashboard rolebinding/wid-dashboard --ignore-not-found >/dev/null 2>&1 || true
+  sg=$(page_sg_id)
+  if [[ "$sg" != None ]]; then
+    start=$SECONDS
+    until aws ec2 delete-security-group --group-id "$sg" 2>/dev/null; do
+      (( SECONDS - start < 600 )) || die "security group $sg still in use"; sleep 15
+    done
+    log "deleted page security group"
+  fi
 }
 
 # --- commands -------------------------------------------------------------------
@@ -572,6 +826,8 @@ cmd_status() {
   done
   printf 'bucket     %s\n' "$(aws s3api head-bucket --bucket "$bucket" --expected-bucket-owner "$account" >/dev/null 2>&1 && echo present || echo absent)"
   printf 'pod-id     %s association(s)\n' "$(association_ids | wc -w | tr -d ' ')"
+  local dist; dist=$(distribution_id 2>/dev/null || echo None)
+  printf 'page       %s\n' "$([[ "$dist" == None ]] && echo absent || echo "https://${PAGE_DOMAIN:-<PAGE_DOMAIN>}/ ($(aws cloudfront get-distribution --id "$dist" --query Distribution.Status --output text))")"
   local ann
   ann=$(k get sa orders-irsa -o jsonpath='{.metadata.annotations.eks\.amazonaws\.com/role-arn}' 2>/dev/null | mask || true)
   printf 'irsa SA    %s\n' "${ann:-(not annotated)}"
@@ -580,6 +836,10 @@ cmd_status() {
 
 cmd_down() {
   load_cluster
+  # A separate process keeps set -e in force inside page-down, and its failure from aborting core cleanup.
+  if ! "$script_dir/demo.sh" page-down "$run_id"; then
+    printf '%swarning:%s page cleanup failed; fix it and run ./demo.sh page-down %s\n' "$Y" "$N" "$run_id" >&2
+  fi
   local id
   for id in $(association_ids 2>/dev/null); do
     aws eks delete-pod-identity-association --cluster-name "$cluster" --association-id "$id" >/dev/null
@@ -619,5 +879,7 @@ case "$action" in
   revoke) cmd_revoke ;;
   harden) cmd_harden ;;
   restore) cmd_restore ;;
+  page-up) cmd_page_up ;;
+  page-down) cmd_page_down ;;
   *) usage >&2; exit 2 ;;
 esac
