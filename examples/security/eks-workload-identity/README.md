@@ -24,8 +24,8 @@ RUN_ID=d1124
 ./demo.sh migrate-podid "$RUN_ID"
 ./demo.sh diff    "$RUN_ID"
 ./demo.sh revoke  "$RUN_ID"
-./demo.sh harden  "$RUN_ID"   # optional, rolls the node (minutes)
-./demo.sh restore "$RUN_ID"   # back to the start for another rehearsal
+./demo.sh harden  "$RUN_ID"   # optional, rolls the node group (~15 min)
+./demo.sh restore "$RUN_ID"   # back to the start (~15 min more if harden ran)
 ./demo.sh down    "$RUN_ID"   # after the talk
 ```
 
@@ -40,14 +40,14 @@ RUN_ID=d1124
 | 2 | "Pod Identity: one EKS API call, no annotation." | `migrate-podid` (~7 s) | `orders-podid` → `Pod Identity`, `wid-<run>-podid`, `allowed` |
 | 3 | "Same outcome, different wiring." | `diff` | Injected env vars, token `aud` (`sts.amazonaws.com` vs `pods.eks.amazonaws.com`), trust principals |
 | 4 | "Now remove the permission from the node." | `revoke` (~15 s) | `orders-legacy` → `denied`; the other two stay `allowed` |
-| 5 (optional) | "Close the IMDS path for Pods." | `harden` | `orders-legacy` → `no-credentials` / `no-creds` |
+| 5 (optional) | "Close the IMDS path for Pods." | run `harden` **before** the talk, show the result | `orders-legacy` → `no-credentials` / `no-creds`; the other two stay `allowed` |
 | after | — | `restore` | Back to step 0 |
 
 Notes from rehearsals:
 
 - **Pod Identity associations are eventually consistent.** `migrate-podid` dry-runs the Deployment's Pod template against the API server (`--dry-run=server`, which runs the mutating webhooks) until EKS injects the Pod Identity variables, and only then restarts the copy. Restarting too early yields a Pod that still uses the node role.
 - **IAM removal is eventually consistent too.** `revoke` returns at the first `denied`. In rehearsals the legacy copy was denied after about 13 seconds, and a couple of `allowed` reads could still appear a few minutes later before it settled. Say so on stage.
-- **Rehearse `harden` before the talk if you plan to show it.** It creates a launch template version with hop limit 1 and rolls the node group; the copies are rescheduled onto the new node.
+- **`harden` is too slow to run live.** It creates a launch template version with hop limit 1 and rolls the managed node group (surge node, drain, terminate): 878 seconds in rehearsal. Run it before the talk, or after the live steps while you move on, and `restore` afterwards (another roll back to hop limit 2).
 
 ## Measured run
 

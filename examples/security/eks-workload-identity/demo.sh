@@ -23,8 +23,8 @@ Live steps (seconds each):
   migrate-podid  Create a Pod Identity association and roll out
   diff           Compare what IRSA and Pod Identity inject and trust
   revoke         Remove the S3 policy from the node role, wait for propagation
-  harden         (optional, ~5 min) IMDS hop limit 1 on the demo node group
-  restore        Return to the starting state for another rehearsal
+  harden         (optional, ~15 min) IMDS hop limit 1 on the demo node group
+  restore        Return to the starting state (another ~15 min if harden ran)
 
 RUN_ID: 4–12 lowercase letters or digits.
 Environment: AWS_REGION (ap-northeast-2), CLUSTER (fsi-demo-cluster),
@@ -305,7 +305,7 @@ update_hop_limit() { # 1|2
     --launch-template-data "$(lt_data "$1")" --query LaunchTemplateVersion.VersionNumber --output text)
   update=$(show aws eks update-nodegroup-version --cluster-name "$cluster" --nodegroup-name "$nodegroup" \
     --launch-template "id=$id,version=$version" --query update.id --output text)
-  log "rolling the node to hop limit $1 (about 5 min)"
+  log "rolling the node group to hop limit $1 (about 15 min: new node, drain, terminate)"
   local s
   while :; do
     s=$(aws eks describe-update --name "$cluster" --nodegroup-name "$nodegroup" --update-id "$update" \

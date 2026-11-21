@@ -139,6 +139,7 @@ cd examples/security/eks-workload-identity
 ./demo.sh migrate-podid d1124 # association 생성 + rollout
 ./demo.sh diff d1124          # 주입 변수·토큰·신뢰 정책 비교
 ./demo.sh revoke d1124        # 노드 역할에서 S3 권한 삭제
+./demo.sh harden d1124        # (선택, 약 15분) hop limit 1로 노드 교체
 ./demo.sh restore d1124       # 처음 상태로 (리허설 반복)
 ./demo.sh down d1124          # 정리
 ```
@@ -155,7 +156,7 @@ cd examples/security/eks-workload-identity
 | `migrate-irsa` | 변화 없음 | STS · IRSA 역할 · 읽기 성공 | 변화 없음 | 5초 |
 | `migrate-podid` | 변화 없음 | 변화 없음 | Agent · Pod Identity 역할 · 읽기 성공 | 7초 |
 | `revoke` | 노드 역할 · **읽기 거부** | 읽기 성공 | 읽기 성공 | 13초 후 거부 |
-<!-- HARDEN-ROW -->
+| `harden` (선택) | **자격 증명 없음** (IMDS 응답 차단) | 읽기 성공 | 읽기 성공 | 노드 교체 878초 |
 
 `diff`로 본 두 방식의 차이는 다음과 같습니다. 같은 클러스터 issuer가 서명한 ServiceAccount 토큰이지만 대상(audience)과 받는 쪽이 다릅니다.
 

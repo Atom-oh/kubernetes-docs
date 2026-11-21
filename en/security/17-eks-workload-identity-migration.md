@@ -139,6 +139,7 @@ cd examples/security/eks-workload-identity
 ./demo.sh migrate-podid d1124 # association + rollout
 ./demo.sh diff d1124          # compare injected variables, tokens, trust policies
 ./demo.sh revoke d1124        # remove the S3 permission from the node role
+./demo.sh harden d1124        # (optional, ~15 min) roll the nodes to hop limit 1
 ./demo.sh restore d1124       # back to the start (rehearse again)
 ./demo.sh down d1124          # clean up
 ```
@@ -155,7 +156,7 @@ Run on November 21, 2026 on an EKS 1.36 cluster in `ap-northeast-2`, with AWS CL
 | `migrate-irsa` | unchanged | STS · IRSA role · read allowed | unchanged | 5 s |
 | `migrate-podid` | unchanged | unchanged | Agent · Pod Identity role · read allowed | 7 s |
 | `revoke` | node role · **read denied** | read allowed | read allowed | denied after 13 s |
-<!-- HARDEN-ROW -->
+| `harden` (optional) | **no credentials** (IMDS response blocked) | read allowed | read allowed | node roll 878 s |
 
 `diff` shows how the two differ. Both tokens are ServiceAccount tokens signed by the same cluster issuer, but the audience and the receiver differ.
 
