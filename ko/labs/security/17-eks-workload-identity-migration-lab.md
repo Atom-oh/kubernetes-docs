@@ -28,11 +28,11 @@
 | `restore` | 15초, `harden` 뒤에는 578초 | 반복 실습용 |
 | `down` | 323초 (run `t1121`) | 노드 그룹 삭제가 대부분 |
 
-비용은 t3.medium On-Demand 인스턴스 한 대(서울 리전 시간당 US$0.052)와 20 GiB gp3 볼륨이 대부분입니다. 한 시간 실습하면 US$0.06 안팎이고, S3 요청과 API 호출 비용은 무시할 만합니다. 실습이 끝나면 반드시 `down`으로 정리합니다.
+비용은 t3.medium On-Demand 인스턴스 한 대(서울 리전 시간당 US$0.052)와 20 GiB gp3 볼륨이 대부분입니다. 한 시간 실습하면 US$0.06 안팎이고, S3 요청과 API 호출 비용은 무시할 만합니다. 선택 단계인 공개 데모 페이지를 띄우면 ALB 비용이 하루 약 US$0.55 더 듭니다. 실습이 끝나면 반드시 `down`으로 정리합니다.
 
 ## 사전 요구 사항
 
-- [ ] **기존 EKS 클러스터** (1.36에서 검증). 스크립트는 클러스터, VPC, 서브넷, 보안 그룹을 만들지 않습니다. 클러스터의 vpc-cni가 노드 역할로 동작하는 일반적인 구성을 가정합니다.
+- [ ] **기존 EKS 클러스터** (1.36에서 검증). 기본 데모는 클러스터, VPC, 서브넷, 보안 그룹을 만들지 않습니다(선택 단계인 `page-up`만 internal ALB용 보안 그룹 하나와 `PAGE_DOMAIN` DNS 레코드를 만듭니다). 클러스터의 vpc-cni가 노드 역할로 동작하는 일반적인 구성을 가정합니다.
 - [ ] **`eks-pod-identity-agent` 애드온**이 설치되어 있어야 합니다. 스크립트는 설치하지 않고 확인만 합니다.
 - [ ] 클러스터 issuer가 **IAM OIDC provider**로 등록되어 있어야 합니다. 이것도 스크립트가 만들지 않습니다.
 - [ ] 클러스터 VPC 안의 **Private 서브넷**과 그 Name 태그. `MapPublicIpOnLaunch=false`인 서브넷만 받아들이며, 노드는 VPC의 기존 NAT 경로로 `public.ecr.aws/aws-cli/aws-cli` 이미지를 받습니다.
@@ -404,8 +404,8 @@ injected() { # deployment 이름
 **7.2 기준선: 주석만 있는 ServiceAccount와 association만 있는 ServiceAccount**
 
 ```bash
-injected orders-irsa     # 실측: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE
-injected orders-podid    # 실측: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+injected orders-irsa     # 예상 (diff 출력과 coexistence.log 기준): AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE
+injected orders-podid    # 예상 (diff 출력과 coexistence.log 기준): AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
 ```
 
 **7.3 association이 있는 `orders-podid`에 IRSA 주석을 더한 뒤 다시 dry run**
@@ -413,7 +413,7 @@ injected orders-podid    # 실측: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTA
 ```bash
 kubectl -n "$NS" annotate sa orders-podid \
   "eks.amazonaws.com/role-arn=arn:aws:iam::${ACCOUNT_ID}:role/wid-${RUN_ID}-irsa"
-injected orders-podid    # 실측: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+injected orders-podid    # 예상 (diff 출력과 coexistence.log 기준): AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
 ```
 
 **7.4 정리: 주석을 지우고 rollout은 하지 않습니다**
@@ -429,9 +429,11 @@ kubectl -n "$NS" get sa orders-podid -o jsonpath='{.metadata.annotations}{"\n"}'
 
 ## 공개 데모 페이지 (선택)
 
-청중이 브라우저로 볼 수 있는 읽기 전용 상태 페이지를 띄울 수 있습니다. 페이지는 각 복사본의 자격 증명 출처, 역할, S3 결과만 보여 주며 변경 기능은 없습니다. 경로는 CloudFront → CloudFront VPC origin → **internal** ALB → 대시보드 Pod이고, ALB 보안 그룹은 CloudFront VPC origin 쪽만 받아들입니다. 인터넷에 직접 열린 로드 밸런서나 공인 IP는 만들지 않습니다. 클러스터에 AWS Load Balancer Controller가 있어야 하고, 같은 VPC에 다른 CloudFront VPC origin이 없으면 ALB 보안 그룹은 CloudFront managed prefix list(`com.amazonaws.global.cloudfront.origin-facing`)로 제한됩니다.
+청중이 각자 브라우저로 볼 수 있는 읽기 전용 실시간 페이지를 띄웁니다. 카드 세 장이 각 복사본의 자격 증명 출처, 역할, S3 결과, EKS가 주입한 `AWS_*` 변수 이름, 최근 읽기 기록을 보여 주며 바꾸는 기능은 없습니다. **URL을 아는 사람은 누구나 볼 수 있으므로** 역할 이름 외의 정보는 내보내지 않습니다.
 
-env 파일에 다음 세 값을 추가합니다.
+경로는 CloudFront(HTTPS, GET/HEAD만, HTTP는 HTTPS로 리다이렉트) → CloudFront VPC origin → **internal** ALB(HTTP 80) → 대시보드 Pod입니다. ALB 보안 그룹은 VPC의 `CloudFront-VPCOrigins-Service-SG`만 받아들이고, 그 보안 그룹이 아직 없으면 CloudFront managed prefix list(`com.amazonaws.global.cloudfront.origin-facing`)로 제한합니다. 인터넷에 직접 열린 로드 밸런서나 공인 IP, 공인 CIDR 규칙은 만들지 않습니다. 대시보드 Pod에는 IAM 역할이 없고, Role은 이 namespace의 Pod 목록과 로그 읽기만 허용합니다. 데모 노드는 hop limit 2라서 NetworkPolicy로 Pod의 egress를 DNS와 TCP 443(Kubernetes API)으로 제한해 IMDS와 Pod Identity Agent에 닿지 못하게 합니다.
+
+**추가 사전 요구 사항**: AWS Load Balancer Controller, VPC CNI 네트워크 정책 활성화(`enableNetworkPolicy`), CloudFront VPC origin을 지원하는 최신 AWS CLI v2, CloudFront·ELB·Route 53·ACM 읽기 권한. env 파일에 다음 세 값을 추가합니다.
 
 ```bash
 export PAGE_DOMAIN=<페이지 호스트 이름>
@@ -439,9 +441,35 @@ export PAGE_CERT_ARN=<us-east-1의 ACM 인증서 ARN, PAGE_DOMAIN 포함>
 export PAGE_ZONE_ID=<PAGE_DOMAIN의 공개 호스팅 영역 ID>
 ```
 
+**명령**
+
 ```bash
-./demo.sh page-up "$RUN_ID"     # 약 10분
-./demo.sh page-down "$RUN_ID"   # 약 10분. down을 실행하면 이것부터 실행됨
+./demo.sh page-up "$RUN_ID"     # <!-- PAGE-UP-TIME -->
+./demo.sh status "$RUN_ID"      # page https://<PAGE_DOMAIN>/ (Deployed)
+```
+
+`PAGE_DOMAIN`에 이 run의 배포를 가리키지 않는 기존 레코드가 있으면 스크립트는 DNS를 건드리지 않고 멈춥니다.
+
+**예상 화면** (실측, run `d1124`): 제목 줄의 단계가 데모 진행에 따라 바뀝니다. 시작에는 "0 · 시작: 세 벌 모두 노드 역할"과 노드 (IMDS) 카드 세 장, `migrate-irsa` 뒤에는 orders-irsa 카드가 IRSA로, `migrate-podid` 뒤에는 orders-podid 카드가 Pod Identity로 바뀌고 주입된 변수 이름이 나타납니다. `revoke` 뒤에는 orders-legacy 카드만 빨간 테두리와 `denied`가 됩니다.
+
+**확인 포인트.** 카드의 상태는 터미널 `watch`와 같아야 하고, 페이지 상단의 UTC 시각이 2초마다 바뀌어야 합니다. 대시보드 Pod에서 IMDS가 막혔는지는 다음으로 확인합니다.
+
+```bash
+P=$(kubectl -n "wid-$RUN_ID" get pod -l app=wid-dashboard -o name | head -1)
+kubectl -n "wid-$RUN_ID" exec "$P" -- python3 -c "import urllib.request as u; u.urlopen(u.Request('http://169.254.169.254/latest/api/token', method='PUT', headers={'X-aws-ec2-metadata-token-ttl-seconds':'60'}), timeout=3)"
+# 실측: urllib.error.URLError (timed out) — 막혀 있음
+```
+
+**왜 그렇게 되나.** 대시보드는 2초마다 Kubernetes API에서 상태를 모아 메모리에 두고, 응답에 `Cache-Control: max-age=1`을 붙입니다. CloudFront가 이 헤더를 따라 캐시하므로 청중이 많아도 클러스터 API 호출은 늘지 않습니다.
+
+**비용과 정리.** 띄워 둔 동안 ALB 비용이 하루 약 US$0.55 더 듭니다. `./demo.sh page-down "$RUN_ID"`(<!-- PAGE-DOWN-TIME -->)로 지우며, `down`도 먼저 이것을 실행합니다. 남은 것이 없는지는 다음으로 확인합니다.
+
+```bash
+aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='wid-$RUN_ID-page'].Id" --output text   # 빈 출력
+aws cloudfront list-vpc-origins --query "VpcOriginList.Items[?Name=='wid-$RUN_ID-page'].Id" --output text         # 빈 출력
+aws elbv2 describe-load-balancers --names "wid-$RUN_ID-page" 2>&1 | grep -c LoadBalancerNotFound                   # 1
+aws route53 list-resource-record-sets --hosted-zone-id "$PAGE_ZONE_ID" \
+  --query "ResourceRecordSets[?Name=='$PAGE_DOMAIN.'].Type" --output text                                          # 빈 출력
 ```
 
 ## 정리 (`down`)
@@ -463,16 +491,9 @@ export PAGE_ZONE_ID=<PAGE_DOMAIN의 공개 호스팅 영역 ID>
 ==> deleted role wid-t1121-node
 ==> deleted role wid-t1121-irsa
 ==> deleted role wid-t1121-podid
-{
-    "BucketArn": "arn:aws:s3:::wid-t1121-<ACCOUNT_ID>-ap-northeast-2",
-    "BucketRegion": "ap-northeast-2",
-    "AccessPointAlias": false
-}
 ==> deleted bucket
 ==> done
 ```
-
-중간의 JSON은 버킷 확인 명령의 출력입니다. 이 줄은 화면 마스킹을 거치지 않으므로 실제 계정 ID가 보입니다. 화면을 공유 중이라면 주의하세요.
 
 **남은 리소스 확인.** `down`은 전용 kubeconfig를 지우므로 AWS CLI로 확인합니다.
 

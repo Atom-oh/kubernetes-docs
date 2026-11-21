@@ -10,8 +10,10 @@ requests are served from memory only, so viewers never trigger API calls:
   GET /api/state   JSON state (Cache-Control: max-age=1)
   GET /healthz     200
 
-The ServiceAccount has no AWS permissions; its Role can only list Pods and
-read their logs in this namespace. Nothing secret is exposed: role names and
+The ServiceAccount has no IAM role and its Role can only list Pods and read
+their logs in this namespace. Because the page is reachable from the internet,
+a NetworkPolicy (demo.sh) limits egress to DNS and TCP 443, so the Pod cannot
+reach IMDS or the Pod Identity Agent and get the node role's credentials. Nothing secret is exposed: role names and
 results come from app.sh output, which never prints credentials or tokens.
 """
 import json

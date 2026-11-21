@@ -3,9 +3,10 @@
 # onto IRSA and EKS Pod Identity, side by side, on an existing cluster.
 #
 # Everything this script creates carries the tags Lab=eks-workload-identity-demo
-# and LabRun=<RUN_ID>; every mutation and deletion checks those tags first.
-# It never creates a VPC, subnet, security group, cluster, add-on or OIDC
-# provider, and never touches other node groups or Pod Identity associations.
+# and LabRun=<RUN_ID> (or the run ID in its name); mutations and deletions check them first.
+# It never creates a VPC, subnet, cluster, add-on or OIDC provider, and never touches
+# other node groups or Pod Identity associations. Only the optional page-up creates a
+# security group (CloudFront VPC origin -> internal ALB, port 80) and PAGE_DOMAIN records.
 set -euo pipefail
 
 usage() {
@@ -434,8 +435,10 @@ setup_page_sg() {
 }
 
 dashboard_manifests() { # sg-id
-  local sg=$1 subnet_csv
+  local sg=$1 subnet_csv vpc_cidr
   subnet_csv=$(IFS=,; echo "${subnets[*]}")
+  vpc_cidr=$(aws ec2 describe-vpcs --vpc-ids "$(jq -r .resourcesVpcConfig.vpcId <<< "$cluster_info")" \
+    --query 'Vpcs[0].CidrBlock' --output text)
   kubectl -n "$namespace" create configmap wid-dashboard --from-file="$script_dir/dashboard.py" \
     --from-file="$script_dir/dashboard.html" --dry-run=client -o json
   jq -n --arg ns "$namespace" '{apiVersion:"v1",kind:"ServiceAccount",metadata:{name:"wid-dashboard",namespace:$ns},
@@ -445,10 +448,11 @@ dashboard_manifests() { # sg-id
   jq -n --arg ns "$namespace" '{apiVersion:"rbac.authorization.k8s.io/v1",kind:"RoleBinding",metadata:{name:"wid-dashboard",namespace:$ns},
     roleRef:{apiGroup:"rbac.authorization.k8s.io",kind:"Role",name:"wid-dashboard"},
     subjects:[{kind:"ServiceAccount",name:"wid-dashboard",namespace:$ns}]}'
-  jq -n --arg ns "$namespace" --arg run "$run_id" --arg image "$dashboard_image" '
+  jq -n --arg ns "$namespace" --arg run "$run_id" --arg image "$dashboard_image" \
+     --arg cfg "$(cat "$script_dir/dashboard.py" "$script_dir/dashboard.html" | sha256sum | cut -c1-16)" '
     {apiVersion:"apps/v1",kind:"Deployment",metadata:{name:"wid-dashboard",namespace:$ns},
      spec:{replicas:1,selector:{matchLabels:{app:"wid-dashboard"}},template:{metadata:{labels:{app:"wid-dashboard"},
-       annotations:{"wid-demo/config":"v1"}},spec:{
+       annotations:{"wid-demo/config":$cfg}},spec:{
        serviceAccountName:"wid-dashboard",nodeSelector:{"wid-demo":$run},
        tolerations:[{key:"wid-demo",operator:"Equal",value:$run,effect:"NoSchedule"}],
        securityContext:{runAsNonRoot:true,runAsUser:1000,runAsGroup:1000,seccompProfile:{type:"RuntimeDefault"}},
@@ -459,6 +463,16 @@ dashboard_manifests() { # sg-id
          securityContext:{allowPrivilegeEscalation:false,readOnlyRootFilesystem:true,capabilities:{drop:["ALL"]}},
          volumeMounts:[{name:"app",mountPath:"/app",readOnly:true}]}],
        volumes:[{name:"app",configMap:{name:"wid-dashboard"}}]}}}}'
+  # Internet-facing through CloudFront, so the Pod must not reach IMDS or the Pod Identity
+  # Agent: egress is DNS and TCP 443 only (Kubernetes API), ingress is port 8080 from the VPC.
+  jq -n --arg ns "$namespace" --arg vpc "$vpc_cidr" '{apiVersion:"networking.k8s.io/v1",kind:"NetworkPolicy",
+    metadata:{name:"wid-dashboard",namespace:$ns},spec:{podSelector:{matchLabels:{app:"wid-dashboard"}},
+    policyTypes:["Ingress","Egress"],
+    ingress:[{from:[{ipBlock:{cidr:$vpc}}],ports:[{protocol:"TCP",port:8080}]}],
+    egress:[
+      {to:[{namespaceSelector:{matchLabels:{"kubernetes.io/metadata.name":"kube-system"}},podSelector:{matchLabels:{"k8s-app":"kube-dns"}}}],
+       ports:[{protocol:"UDP",port:53},{protocol:"TCP",port:53}]},
+      {to:[{ipBlock:{cidr:"0.0.0.0/0",except:["169.254.0.0/16"]}}],ports:[{protocol:"TCP",port:443}]}]}}'
   jq -n --arg ns "$namespace" '{apiVersion:"v1",kind:"Service",metadata:{name:"wid-dashboard",namespace:$ns},
     spec:{selector:{app:"wid-dashboard"},ports:[{port:80,targetPort:8080}]}}'
   jq -n --arg ns "$namespace" --arg name "$page_name" --arg sg "$sg" --arg subnets "$subnet_csv" \
@@ -493,6 +507,15 @@ require_owned_cf() { # arn
   aws cloudfront list-tags-for-resource --resource "$1" --query Tags --output json |
     jq -e --arg o "$owner" --arg r "$run_id" '([.Items[]? | {(.Key): .Value}] | add // {}) | (.Lab == $o and .LabRun == $r)' >/dev/null \
     || die "$1 is not tagged for run $run_id"
+}
+
+# Refuse to touch PAGE_DOMAIN unless it is absent or already aliases this run's distribution.
+check_dns_owner() { # distribution-domain
+  local existing
+  existing=$(aws route53 list-resource-record-sets --hosted-zone-id "$PAGE_ZONE_ID" \
+    --query "ResourceRecordSets[?Name=='${PAGE_DOMAIN%.}.' && (Type=='A' || Type=='AAAA' || Type=='CNAME')]" --output json)
+  jq -e --arg d "${1%.}." 'all(.[]; .AliasTarget.DNSName == $d)' <<< "$existing" >/dev/null \
+    || die "$PAGE_DOMAIN already has records that do not point at this run's distribution; refusing to change DNS"
 }
 
 dns_change() { # UPSERT|DELETE distribution-domain
@@ -549,7 +572,10 @@ cmd_page_up() {
   fi
   aws cloudfront wait distribution-deployed --id "$dist"
   log "DNS $PAGE_DOMAIN -> CloudFront"
-  dns_change UPSERT "$(aws cloudfront get-distribution --id "$dist" --query Distribution.DomainName --output text)"
+  local cfdomain
+  cfdomain=$(aws cloudfront get-distribution --id "$dist" --query Distribution.DomainName --output text)
+  check_dns_owner "$cfdomain"
+  dns_change UPSERT "$cfdomain"
   log "ready: https://$PAGE_DOMAIN/ (read-only; DNS may take a minute)"
 }
 
@@ -796,7 +822,7 @@ cmd_status() {
   done
   printf 'bucket     %s\n' "$(aws s3api head-bucket --bucket "$bucket" --expected-bucket-owner "$account" >/dev/null 2>&1 && echo present || echo absent)"
   printf 'pod-id     %s association(s)\n' "$(association_ids | wc -w | tr -d ' ')"
-  local dist; dist=$(distribution_id)
+  local dist; dist=$(distribution_id 2>/dev/null || echo None)
   printf 'page       %s\n' "$([[ "$dist" == None ]] && echo absent || echo "https://${PAGE_DOMAIN:-<PAGE_DOMAIN>}/ ($(aws cloudfront get-distribution --id "$dist" --query Distribution.Status --output text))")"
   local ann
   ann=$(k get sa orders-irsa -o jsonpath='{.metadata.annotations.eks\.amazonaws\.com/role-arn}' 2>/dev/null | mask || true)
@@ -806,7 +832,10 @@ cmd_status() {
 
 cmd_down() {
   load_cluster
-  cmd_page_down
+  # A subshell keeps a page-down failure (e.g. no CloudFront permission) from aborting the core cleanup.
+  if ! ( cmd_page_down ); then
+    printf '%swarning:%s page cleanup failed; fix it and run ./demo.sh page-down %s\n' "$Y" "$N" "$run_id" >&2
+  fi
   local id
   for id in $(association_ids 2>/dev/null); do
     aws eks delete-pod-identity-association --cluster-name "$cluster" --association-id "$id" >/dev/null

@@ -28,11 +28,11 @@ This lab walks step by step through the [live demo](../../security/17-eks-worklo
 | `restore` | 15 s; 578 s after `harden` | For repeated practice |
 | `down` | 323 s (run `t1121`) | Mostly node group deletion |
 
-The cost is mostly one t3.medium On-Demand instance (US$0.052 per hour in Seoul) and a 20 GiB gp3 volume. An hour of lab time costs about US$0.06; S3 requests and API calls are negligible. Always clean up with `down` when you finish.
+The cost is mostly one t3.medium On-Demand instance (US$0.052 per hour in Seoul) and a 20 GiB gp3 volume. An hour of lab time costs about US$0.06; S3 requests and API calls are negligible. The optional public demo page adds about US$0.55 per day for the ALB. Always clean up with `down` when you finish.
 
 ## Prerequisites
 
-- [ ] **An existing EKS cluster** (verified on 1.36). The script creates no cluster, VPC, subnet or security group. It assumes the common setup where the cluster's vpc-cni runs on the node role.
+- [ ] **An existing EKS cluster** (verified on 1.36). The core demo creates no cluster, VPC, subnet or security group (only the optional `page-up` creates one security group for the internal ALB and DNS records for `PAGE_DOMAIN`). It assumes the common setup where the cluster's vpc-cni runs on the node role.
 - [ ] **The `eks-pod-identity-agent` add-on** installed. The script only checks for it; it does not install it.
 - [ ] The cluster issuer registered as an **IAM OIDC provider**. The script does not create this either.
 - [ ] **Private subnets** in the cluster VPC and their Name tags. Only subnets with `MapPublicIpOnLaunch=false` are accepted; nodes pull `public.ecr.aws/aws-cli/aws-cli` through the VPC's existing NAT path.
@@ -404,8 +404,8 @@ injected() { # deployment name
 **7.2 Baseline: a ServiceAccount with only the annotation, and one with only the association**
 
 ```bash
-injected orders-irsa     # measured: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE
-injected orders-podid    # measured: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+injected orders-irsa     # expected (from diff output and coexistence.log): AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE
+injected orders-podid    # expected (from diff output and coexistence.log): AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
 ```
 
 **7.3 Add an IRSA annotation to `orders-podid`, which has the association, and dry-run again**
@@ -413,7 +413,7 @@ injected orders-podid    # measured: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CON
 ```bash
 kubectl -n "$NS" annotate sa orders-podid \
   "eks.amazonaws.com/role-arn=arn:aws:iam::${ACCOUNT_ID}:role/wid-${RUN_ID}-irsa"
-injected orders-podid    # measured: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+injected orders-podid    # expected (from diff output and coexistence.log): AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
 ```
 
 **7.4 Clean up: remove the annotation and do not roll out**
@@ -429,9 +429,11 @@ kubectl -n "$NS" get sa orders-podid -o jsonpath='{.metadata.annotations}{"\n"}'
 
 ## Public Demo Page (Optional)
 
-You can bring up a read-only status page the audience can open in a browser. It shows only each copy's credential source, role and S3 result, and has no controls that change anything. The path is CloudFront → CloudFront VPC origin → **internal** ALB → dashboard Pod, and the ALB security group admits only the CloudFront VPC-origin side. No internet-facing load balancer or public IP is created. The cluster needs the AWS Load Balancer Controller; if the VPC has no other CloudFront VPC origin yet, the ALB security group is restricted to the CloudFront managed prefix list (`com.amazonaws.global.cloudfront.origin-facing`) instead.
+This brings up a read-only live page the audience can open in their own browsers. Three cards show each copy's credential source, role, S3 result, the names of the `AWS_*` variables EKS injected, and recent reads; nothing on the page changes anything. **Anyone with the URL can see it**, so it exposes nothing beyond role names.
 
-Add three values to the env file:
+The path is CloudFront (HTTPS, GET/HEAD only, HTTP redirected to HTTPS) → CloudFront VPC origin → **internal** ALB (HTTP 80) → dashboard Pod. The ALB security group admits only the VPC's `CloudFront-VPCOrigins-Service-SG`, or the CloudFront managed prefix list (`com.amazonaws.global.cloudfront.origin-facing`) if that group does not exist yet. No internet-facing load balancer, public IP or public CIDR rule is created. The dashboard Pod has no IAM role, and its Role only lists Pods and reads their logs in this namespace. Because the demo node uses hop limit 2, a NetworkPolicy limits the Pod's egress to DNS and TCP 443 (Kubernetes API), so it cannot reach IMDS or the Pod Identity Agent.
+
+**Extra prerequisites**: the AWS Load Balancer Controller, VPC CNI network policy enabled (`enableNetworkPolicy`), a current AWS CLI v2 that supports CloudFront VPC origins, and CloudFront, ELB, Route 53 and ACM permissions. Add three values to the env file:
 
 ```bash
 export PAGE_DOMAIN=<page host name>
@@ -439,9 +441,35 @@ export PAGE_CERT_ARN=<ACM certificate ARN in us-east-1 covering PAGE_DOMAIN>
 export PAGE_ZONE_ID=<public hosted zone ID for PAGE_DOMAIN>
 ```
 
+**Commands**
+
 ```bash
-./demo.sh page-up "$RUN_ID"     # about 10 min
-./demo.sh page-down "$RUN_ID"   # about 10 min; down runs this first
+./demo.sh page-up "$RUN_ID"     # <!-- PAGE-UP-TIME -->
+./demo.sh status "$RUN_ID"      # page https://<PAGE_DOMAIN>/ (Deployed)
+```
+
+If `PAGE_DOMAIN` already has records that do not point at this run's distribution, the script stops without touching DNS.
+
+**Expected screen** (measured, run `d1124`): the step in the title line follows the demo. At the start it reads "0 · 시작: 세 벌 모두 노드 역할" with three node (IMDS) cards; after `migrate-irsa` the orders-irsa card switches to IRSA, after `migrate-podid` the orders-podid card switches to Pod Identity and lists the injected variable names; after `revoke` only the orders-legacy card turns red with `denied`.
+
+**What to check.** The cards should match the terminal `watch`, and the UTC time at the top should change every 2 seconds. To confirm IMDS is blocked from the dashboard Pod:
+
+```bash
+P=$(kubectl -n "wid-$RUN_ID" get pod -l app=wid-dashboard -o name | head -1)
+kubectl -n "wid-$RUN_ID" exec "$P" -- python3 -c "import urllib.request as u; u.urlopen(u.Request('http://169.254.169.254/latest/api/token', method='PUT', headers={'X-aws-ec2-metadata-token-ttl-seconds':'60'}), timeout=3)"
+# measured: urllib.error.URLError (timed out) — blocked
+```
+
+**Why.** The dashboard collects state from the Kubernetes API every 2 seconds into memory and answers with `Cache-Control: max-age=1`. CloudFront caches by that header, so a large audience does not add cluster API calls.
+
+**Cost and cleanup.** While it is up, the ALB adds about US$0.55 per day. Remove it with `./demo.sh page-down "$RUN_ID"` (<!-- PAGE-DOWN-TIME -->); `down` runs it first. To check nothing is left:
+
+```bash
+aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='wid-$RUN_ID-page'].Id" --output text   # empty
+aws cloudfront list-vpc-origins --query "VpcOriginList.Items[?Name=='wid-$RUN_ID-page'].Id" --output text         # empty
+aws elbv2 describe-load-balancers --names "wid-$RUN_ID-page" 2>&1 | grep -c LoadBalancerNotFound                   # 1
+aws route53 list-resource-record-sets --hosted-zone-id "$PAGE_ZONE_ID" \
+  --query "ResourceRecordSets[?Name=='$PAGE_DOMAIN.'].Type" --output text                                          # empty
 ```
 
 ## Cleanup (`down`)
@@ -463,16 +491,9 @@ If you ran `harden`, first make sure the node group is `ACTIVE`. To practice aga
 ==> deleted role wid-t1121-node
 ==> deleted role wid-t1121-irsa
 ==> deleted role wid-t1121-podid
-{
-    "BucketArn": "arn:aws:s3:::wid-t1121-<ACCOUNT_ID>-ap-northeast-2",
-    "BucketRegion": "ap-northeast-2",
-    "AccessPointAlias": false
-}
 ==> deleted bucket
 ==> done
 ```
-
-The JSON in the middle is the output of the bucket check. It does not go through the screen masking, so your real account ID appears there; take care if you are sharing your screen.
 
 **Check for leftovers.** `down` deletes the dedicated kubeconfig, so use the AWS CLI.
 
