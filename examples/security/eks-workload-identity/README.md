@@ -1,32 +1,54 @@
 # EKS workload identity migration demo
 
-Run on a disposable commercial AWS account or lab environment. The script creates a dedicated EKS 1.35 cluster, one Amazon Linux 2023 EC2 managed node, a VPC and network address translation (NAT) gateway, the Pod Identity Agent, an IAM OpenID Connect (OIDC) provider, two workload IAM roles, and a private S3 bucket with one text object. EKS, EC2, Amazon Elastic Block Store (EBS), NAT and public IPv4 charges accrue until cleanup.
+A live demo for [security/17](../../../ko/security/17-eks-workload-identity-migration.md): three copies of one "orders" app read the same S3 object. All three start on the node instance profile. On stage you move one copy to IRSA and one to EKS Pod Identity, then remove the S3 permission from the node role and watch only the legacy copy lose access.
 
-Requirements include AWS CLI v2, current eksctl, kubectl compatible with EKS 1.35, curl, jq, Python 3 and ripgrep. Use an AWS identity authorized to provision the lab through EKS, CloudFormation, EC2, IAM and S3, including `iam:PassRole` for roles passed to EKS. Use the same AWS account, region and run ID for every step. The EKS public API accepts the creating host's single IPv4 address. Its nodes use private subnets with NAT.
+The script runs on an **existing** EKS cluster. It adds one tainted managed node group with its own node role, two workload roles, a private S3 bucket and a namespace, all tagged `Lab=eks-workload-identity-demo` and `LabRun=<RUN_ID>`. Every change and every deletion checks those tags first. It never creates a VPC, subnet, security group, cluster, add-on or IAM OIDC provider, opens no inbound ports and touches no other node group or Pod Identity association.
+
+## Requirements
+
+- An EKS cluster (tested on 1.36) with the `eks-pod-identity-agent` add-on and an IAM OIDC provider already registered for its issuer.
+- Private subnets in the cluster's VPC, found by Name tag (`VPC_NAME`, `SUBNET_NAMES`). Nodes pull `public.ecr.aws/aws-cli/aws-cli` through the VPC's existing NAT path.
+- AWS CLI v2, kubectl, jq and bash on the presenter's machine; an identity with EKS, EC2 (launch templates), IAM and S3 permissions plus cluster-admin access to the cluster.
+- Cost while it is up: one t3.medium On-Demand instance with a 20 GiB gp3 volume (about US$1.3 per day in Seoul at US$0.052 per hour), plus negligible S3 and API calls.
+
+## Commands
 
 ```bash
 cd examples/security/eks-workload-identity
-export AWS_REGION=ap-northeast-2
-RUN_ID="$(date -u +%y%m%d%H%M%S)"
-# Optional if the automatic public IP lookup is unsuitable:
-# export API_CIDR=203.0.113.42/32
-./demo.sh config "$RUN_ID" | eksctl create cluster --dry-run -f -
-./demo.sh create "$RUN_ID"
-./demo.sh compare "$RUN_ID"
-./demo.sh delete "$RUN_ID"
+export AWS_REGION=ap-northeast-2          # CLUSTER=fsi-demo-cluster VPC_NAME=fsi-demo-vpc by default
+RUN_ID=d1124
+
+./demo.sh up      "$RUN_ID"   # before the talk, ~5 min
+./demo.sh watch   "$RUN_ID"   # terminal 2: live table, refreshes every 2 s
+./demo.sh migrate-irsa  "$RUN_ID"
+./demo.sh migrate-podid "$RUN_ID"
+./demo.sh diff    "$RUN_ID"
+./demo.sh revoke  "$RUN_ID"
+./demo.sh harden  "$RUN_ID"   # optional, rolls the node (minutes)
+./demo.sh restore "$RUN_ID"   # back to the start for another rehearsal
+./demo.sh down    "$RUN_ID"   # after the talk
 ```
 
-Record the run ID before provisioning. If creation or comparison fails, execute `delete` with that ID before starting a fresh run. The comparison creates one-shot Job names, ServiceAccounts and tagged IAM roles. The script verifies cluster ownership tags before mutating node permissions. If cleanup reports an error, address it and rerun `delete`.
+`app.sh` is the loop inside each copy: every 3 seconds it calls `sts get-caller-identity` and `s3api get-object` with the AWS CLI's default credential chain and prints one JSON line (`src`, `role`, `s3`). It prints no credentials or tokens. `watch` reads the newest Pod of each copy. Commands echo what they run, with the account ID and OIDC issuer ID masked.
 
-## Verified comparison
+## Presenter runbook
 
-Measured on November 20, 2026 on EKS 1.35 in the Seoul Region, using AWS CLI 2.35.11.
-
-| Stage | Legacy | IRSA | Pod Identity |
+| Step | Say | Run | Expect on the watch screen |
 | --- | --- | --- | --- |
-| Before node permission removal | Node role / allowed | IRSA role / allowed | Pod Identity role / allowed |
-| After node permission removal | Node role / denied | IRSA role / allowed | Pod Identity role / allowed |
+| 0 | "Today the app's S3 permission lives on the node role." | (watch already running) | All three rows: `node (IMDS)`, `wid-<run>-node ← node`, `allowed` |
+| 1 | "IRSA: annotate the ServiceAccount, restart." | `migrate-irsa` (~5 s) | `orders-irsa` → `IRSA (STS)`, `wid-<run>-irsa`, `allowed` |
+| 2 | "Pod Identity: one EKS API call, no annotation." | `migrate-podid` (~7 s) | `orders-podid` → `Pod Identity`, `wid-<run>-podid`, `allowed` |
+| 3 | "Same outcome, different wiring." | `diff` | Injected env vars, token `aud` (`sts.amazonaws.com` vs `pods.eks.amazonaws.com`), trust principals |
+| 4 | "Now remove the permission from the node." | `revoke` (~15 s) | `orders-legacy` → `denied`; the other two stay `allowed` |
+| 5 (optional) | "Close the IMDS path for Pods." | `harden` | `orders-legacy` → `no-credentials` / `no-creds` |
+| after | — | `restore` | Back to step 0 |
 
-All Jobs issue `sts:GetCallerIdentity` and `s3:GetObject` for the same fixture. The legacy Job uses host networking to reach IMDSv2 intentionally. The workload Jobs use regular pod networking and disable SDK fallback to IMDS. The IAM policy grants access to the one object ARN. Cleanup removes the lab bucket and its fixture along with the cluster and its supporting resources.
+Notes from rehearsals:
 
-The Job output prints the caller ARN within the cluster. The comparison script checks it against the expected account and IAM role and prints a role label and the S3 result. It treats networking or credential acquisition errors as failures. The demonstration assumes there are no additional account policies granting or restricting access to the fixture.
+- **Pod Identity associations are eventually consistent.** `migrate-podid` dry-runs the Deployment's Pod template against the API server (`--dry-run=server`, which runs the mutating webhooks) until EKS injects the Pod Identity variables, and only then restarts the copy. Restarting too early yields a Pod that still uses the node role.
+- **IAM removal is eventually consistent too.** `revoke` returns at the first `denied`. In rehearsals the legacy copy was denied after about 13 seconds, and a couple of `allowed` reads could still appear a few minutes later before it settled. Say so on stage.
+- **Rehearse `harden` before the talk if you plan to show it.** It creates a launch template version with hop limit 1 and rolls the node group; the copies are rescheduled onto the new node.
+
+## Measured run
+
+<!-- DEMO-MEASURED -->
