@@ -41,14 +41,14 @@ RUN_ID=d1124
 | 2 | "Pod Identity: one EKS API call, no annotation." | `migrate-podid` (~11 s) | `orders-podid` → `Pod Identity`, `wid-<run>-podid`, `allowed` |
 | 3 | "Same outcome, different wiring." | `diff` | Injected env vars, token `aud` (`sts.amazonaws.com` vs `pods.eks.amazonaws.com`), trust principals |
 | 4 | "Now remove the permission from the node." | `revoke` (~15 s) | `orders-legacy` → `denied`; the other two stay `allowed` |
-| 5 (optional) | "Close the IMDS path for Pods." | run `harden` **before** the talk, show the result | `orders-legacy` → `no-credentials` / `no-creds`; the other two stay `allowed` |
+| 5 (optional) | "Close the IMDS path for Pods." | start `harden` right after step 4, show `status` → `UPDATING`, explain the result from the rehearsal | after ~15 min: `orders-legacy` → `no-credentials` / `no-creds`; the other two stay `allowed` |
 | after | — | `restore` | Back to step 0 |
 
 Notes from rehearsals:
 
 - **Pod Identity associations are eventually consistent.** `migrate-podid` dry-runs the Deployment's Pod template against the API server (`--dry-run=server`, which runs the mutating webhooks) until EKS injects the Pod Identity variables, and only then restarts the copy. Restarting too early yields a Pod that still uses the node role.
 - **IAM removal is eventually consistent too.** `revoke` returns at the first `denied`. In rehearsals the legacy copy was denied after about 13 seconds; in the first rehearsal two `allowed` reads still appeared about 4.5 minutes later. Say so on stage.
-- **`harden` is too slow to run live.** It creates a launch template version with hop limit 1 and rolls the managed node group (surge node, drain, terminate): 878 seconds in rehearsal. Run it before the talk, or after the live steps while you move on, and `restore` afterwards (another roll back to hop limit 2).
+- **`harden` is too slow to run live.** It creates a launch template version with hop limit 1 and rolls the managed node group (surge node, drain, terminate): 878 seconds in rehearsal. Never run it before the talk on the live RUN_ID (step 0 would already show `no-credentials`). Start it right after `revoke`, move on, and check the watch screen at the end if time allows. Wait for the node group to be `ACTIVE` again before `restore` (another roll back to hop limit 2) or `down`.
 
 ## Measured run
 
