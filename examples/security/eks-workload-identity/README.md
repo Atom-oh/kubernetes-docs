@@ -27,7 +27,7 @@ RUN_ID=d1124
 ./demo.sh revoke  "$RUN_ID"
 ./demo.sh harden  "$RUN_ID"   # optional, rolls the node group (~15 min)
 ./demo.sh restore "$RUN_ID"   # back to the start (15 s; ~10 min if harden ran)
-./demo.sh page-up   "$RUN_ID" # optional public read-only page for the audience (~10 min)
+./demo.sh page-up   "$RUN_ID" # optional public read-only page for the audience (~8 min)
 ./demo.sh page-down "$RUN_ID" # remove it (down also does this)
 ./demo.sh down    "$RUN_ID"   # after the talk
 ```
@@ -40,7 +40,7 @@ RUN_ID=d1124
 
 Traffic path: viewer → CloudFront (HTTPS on `PAGE_DOMAIN`, GET/HEAD only, HTTP redirects to HTTPS) → CloudFront VPC origin → **internal** ALB (HTTP 80) → dashboard Pod. The ALB security group admits only the `CloudFront-VPCOrigins-Service-SG` of the VPC, or the CloudFront origin-facing managed prefix list if that group does not exist yet. There is no internet-facing load balancer and no public CIDR rule. Requires the AWS Load Balancer Controller. Set `PAGE_DOMAIN`, `PAGE_CERT_ARN` (ACM in us-east-1) and `PAGE_ZONE_ID` (public hosted zone) in the env file. Extra cost while up: about US$0.55 per day for the ALB, plus negligible CloudFront requests.
 
-Measured on November 21, 2026: `page-up` took about 10 minutes (most of it the VPC origin and distribution deployments). The page followed every step: baseline (three `node (IMDS)` cards), IRSA, Pod Identity, then `revoke` with only the legacy card turning `denied`.
+Measured on November 21, 2026: `page-up` 446 s and `page-down` 546 s, most of it the VPC origin and distribution deployments. Screenshots at each step showed the page following the demo: baseline (three `node (IMDS)` cards), IRSA, Pod Identity, then `revoke` with only the legacy card turning `denied`. After a `page-down`/`page-up` cycle, resolvers that queried the name in between can cache NXDOMAIN for up to 15 minutes (SOA negative TTL), so do not recreate the page right before a talk.
 
 ## Presenter runbook
 

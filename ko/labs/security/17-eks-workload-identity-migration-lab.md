@@ -444,13 +444,13 @@ export PAGE_ZONE_ID=<PAGE_DOMAIN의 공개 호스팅 영역 ID>
 **명령**
 
 ```bash
-./demo.sh page-up "$RUN_ID"     # <!-- PAGE-UP-TIME -->
+./demo.sh page-up "$RUN_ID"     # 실측 446초 (VPC origin과 배포 반영이 대부분)
 ./demo.sh status "$RUN_ID"      # page https://<PAGE_DOMAIN>/ (Deployed)
 ```
 
-`PAGE_DOMAIN`에 이 run의 배포를 가리키지 않는 기존 레코드가 있으면 스크립트는 DNS를 건드리지 않고 멈춥니다.
+`PAGE_DOMAIN`에 이 run의 배포를 가리키지 않는 기존 레코드가 있으면 스크립트는 DNS를 건드리지 않고 멈춥니다. `page-down` 뒤에 다시 `page-up`하면, 그 사이에 주소를 조회한 리졸버가 "없음" 응답을 최대 15분(호스팅 영역 SOA의 negative TTL) 동안 캐시할 수 있습니다. 실측에서도 다시 만든 직후 이 서버의 VPC 리졸버만 NXDOMAIN을 돌려줬고, 권한 서버와 공용 리졸버는 정상이었습니다. 발표 직전에는 페이지를 다시 만들지 않습니다.
 
-**예상 화면** (실측, run `d1124`): 제목 줄의 단계가 데모 진행에 따라 바뀝니다. 시작에는 "0 · 시작: 세 벌 모두 노드 역할"과 노드 (IMDS) 카드 세 장, `migrate-irsa` 뒤에는 orders-irsa 카드가 IRSA로, `migrate-podid` 뒤에는 orders-podid 카드가 Pod Identity로 바뀌고 주입된 변수 이름이 나타납니다. `revoke` 뒤에는 orders-legacy 카드만 빨간 테두리와 `denied`가 됩니다.
+**예상 화면** (실측, run `d1124`, 단계마다 캡처로 확인): 제목 줄의 단계가 데모 진행에 따라 바뀝니다. 시작에는 "0 · 시작: 세 벌 모두 노드 역할"과 노드 (IMDS) 카드 세 장, `migrate-irsa` 뒤에는 orders-irsa 카드가 IRSA로, `migrate-podid` 뒤에는 orders-podid 카드가 Pod Identity로 바뀌고 주입된 변수 이름이 나타납니다. `revoke` 뒤에는 orders-legacy 카드만 빨간 테두리와 `denied`가 됩니다.
 
 **확인 포인트.** 카드의 상태는 터미널 `watch`와 같아야 하고, 페이지 상단의 UTC 시각이 2초마다 바뀌어야 합니다. 대시보드 Pod에서 IMDS가 막혔는지는 다음으로 확인합니다.
 
@@ -462,7 +462,7 @@ kubectl -n "wid-$RUN_ID" exec "$P" -- python3 -c "import urllib.request as u; u.
 
 **왜 그렇게 되나.** 대시보드는 2초마다 Kubernetes API에서 상태를 모아 메모리에 두고, 응답에 `Cache-Control: max-age=1`을 붙입니다. CloudFront가 이 헤더를 따라 캐시하므로 청중이 많아도 클러스터 API 호출은 늘지 않습니다.
 
-**비용과 정리.** 띄워 둔 동안 ALB 비용이 하루 약 US$0.55 더 듭니다. `./demo.sh page-down "$RUN_ID"`(<!-- PAGE-DOWN-TIME -->)로 지우며, `down`도 먼저 이것을 실행합니다. 남은 것이 없는지는 다음으로 확인합니다.
+**비용과 정리.** 띄워 둔 동안 ALB 비용이 하루 약 US$0.55 더 듭니다. `./demo.sh page-down "$RUN_ID"`(실측 546초)로 지우며, `down`도 먼저 이것을 실행합니다. 남은 것이 없는지는 다음으로 확인합니다.
 
 ```bash
 aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='wid-$RUN_ID-page'].Id" --output text   # 빈 출력

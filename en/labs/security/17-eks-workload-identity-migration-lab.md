@@ -444,13 +444,13 @@ export PAGE_ZONE_ID=<public hosted zone ID for PAGE_DOMAIN>
 **Commands**
 
 ```bash
-./demo.sh page-up "$RUN_ID"     # <!-- PAGE-UP-TIME -->
+./demo.sh page-up "$RUN_ID"     # measured 446 s (mostly the VPC origin and distribution deployments)
 ./demo.sh status "$RUN_ID"      # page https://<PAGE_DOMAIN>/ (Deployed)
 ```
 
-If `PAGE_DOMAIN` already has records that do not point at this run's distribution, the script stops without touching DNS.
+If `PAGE_DOMAIN` already has records that do not point at this run's distribution, the script stops without touching DNS. After `page-down` followed by `page-up`, resolvers that looked the name up in between can cache the "no such name" answer for up to 15 minutes (the hosted zone's SOA negative TTL). In our run, right after recreation only this host's VPC resolver returned NXDOMAIN while the authoritative servers and a public resolver answered correctly. Do not recreate the page right before a talk.
 
-**Expected screen** (measured, run `d1124`): the step in the title line follows the demo. At the start it reads "0 · 시작: 세 벌 모두 노드 역할" with three node (IMDS) cards; after `migrate-irsa` the orders-irsa card switches to IRSA, after `migrate-podid` the orders-podid card switches to Pod Identity and lists the injected variable names; after `revoke` only the orders-legacy card turns red with `denied`.
+**Expected screen** (measured, run `d1124`, checked with a screenshot at each step): the step in the title line follows the demo. At the start it reads "0 · 시작: 세 벌 모두 노드 역할" with three node (IMDS) cards; after `migrate-irsa` the orders-irsa card switches to IRSA, after `migrate-podid` the orders-podid card switches to Pod Identity and lists the injected variable names; after `revoke` only the orders-legacy card turns red with `denied`.
 
 **What to check.** The cards should match the terminal `watch`, and the UTC time at the top should change every 2 seconds. To confirm IMDS is blocked from the dashboard Pod:
 
@@ -462,7 +462,7 @@ kubectl -n "wid-$RUN_ID" exec "$P" -- python3 -c "import urllib.request as u; u.
 
 **Why.** The dashboard collects state from the Kubernetes API every 2 seconds into memory and answers with `Cache-Control: max-age=1`. CloudFront caches by that header, so a large audience does not add cluster API calls.
 
-**Cost and cleanup.** While it is up, the ALB adds about US$0.55 per day. Remove it with `./demo.sh page-down "$RUN_ID"` (<!-- PAGE-DOWN-TIME -->); `down` runs it first. To check nothing is left:
+**Cost and cleanup.** While it is up, the ALB adds about US$0.55 per day. Remove it with `./demo.sh page-down "$RUN_ID"` (measured 546 s); `down` runs it first. To check nothing is left:
 
 ```bash
 aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='wid-$RUN_ID-page'].Id" --output text   # empty
