@@ -47,7 +47,7 @@ RUN_ID=d1124
 Notes from rehearsals:
 
 - **Pod Identity associations are eventually consistent.** `migrate-podid` dry-runs the Deployment's Pod template against the API server (`--dry-run=server`, which runs the mutating webhooks) until EKS injects the Pod Identity variables, and only then restarts the copy. Restarting too early yields a Pod that still uses the node role.
-- **IAM removal is eventually consistent too.** `revoke` returns at the first `denied`. In rehearsals the legacy copy was denied after about 13 seconds, and a couple of `allowed` reads could still appear a few minutes later before it settled. Say so on stage.
+- **IAM removal is eventually consistent too.** `revoke` returns at the first `denied`. In rehearsals the legacy copy was denied after about 13 seconds; in the first rehearsal two `allowed` reads still appeared about 4.5 minutes later. Say so on stage.
 - **`harden` is too slow to run live.** It creates a launch template version with hop limit 1 and rolls the managed node group (surge node, drain, terminate): 878 seconds in rehearsal. Run it before the talk, or after the live steps while you move on, and `restore` afterwards (another roll back to hop limit 2).
 
 ## Measured run

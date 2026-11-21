@@ -214,8 +214,8 @@ def fits(s, size, room, bold=False):
 COPY = {
     "ko": {
         "title": "IRSA: projected 토큰을 STS에서 IRSA 역할 자격 증명으로 바꾸기",
-        "desc": ("ServiceAccount에 eks.amazonaws.com/role-arn 주석이 있는 상태에서 Pod가 생성된다. EKS Pod Identity "
-                 "webhook(mutating admission)이 env AWS_ROLE_ARN과 AWS_WEB_IDENTITY_TOKEN_FILE, 그리고 "
+        "desc": ("ServiceAccount에 eks.amazonaws.com/role-arn 주석이 있는 상태에서 Pod가 생성된다. EKS mutating "
+                 "웹훅(amazon-eks-pod-identity-webhook)이 env AWS_ROLE_ARN과 AWS_WEB_IDENTITY_TOKEN_FILE, 그리고 "
                  "/var/run/secrets/eks.amazonaws.com/serviceaccount/token 경로의 projected ServiceAccount 토큰 볼륨을 "
                  "주입한다. kubelet은 이 토큰을 발급하고 갱신하며, 토큰의 audience는 sts.amazonaws.com, issuer는 클러스터 "
                  "OIDC issuer, sub는 system:serviceaccount:<namespace>:<serviceaccount>이다. SDK는 aud와 sub를 담은 토큰을 "
@@ -252,8 +252,8 @@ COPY = {
     },
     "en": {
         "title": "IRSA: trading the projected token for IRSA role credentials at STS",
-        "desc": ("A Pod is created with a ServiceAccount annotated eks.amazonaws.com/role-arn. The EKS Pod Identity "
-                 "webhook (mutating admission) injects the env vars AWS_ROLE_ARN and AWS_WEB_IDENTITY_TOKEN_FILE and a "
+        "desc": ("A Pod is created with a ServiceAccount annotated eks.amazonaws.com/role-arn. The EKS mutating "
+                 "webhook (amazon-eks-pod-identity-webhook) injects the env vars AWS_ROLE_ARN and AWS_WEB_IDENTITY_TOKEN_FILE and a "
                  "projected ServiceAccount token volume at /var/run/secrets/eks.amazonaws.com/serviceaccount/token. "
                  "kubelet issues and refreshes the token; its audience is sts.amazonaws.com, its issuer is the cluster "
                  "OIDC issuer, and its sub is system:serviceaccount:<namespace>:<serviceaccount>. The SDK sends the "
