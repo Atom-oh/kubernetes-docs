@@ -27,16 +27,26 @@ RUN_ID=d1124
 ./demo.sh revoke  "$RUN_ID"
 ./demo.sh harden  "$RUN_ID"   # optional, rolls the node group (~15 min)
 ./demo.sh restore "$RUN_ID"   # back to the start (15 s; ~10 min if harden ran)
+./demo.sh page-up   "$RUN_ID" # optional public read-only page for the audience (~10 min)
+./demo.sh page-down "$RUN_ID" # remove it (down also does this)
 ./demo.sh down    "$RUN_ID"   # after the talk
 ```
 
 `app.sh` is the loop inside each copy: every 3 seconds it calls `sts get-caller-identity` and `s3api get-object` with the AWS CLI's default credential chain and prints one JSON line (`src`, `role`, `s3`). It prints no credentials or tokens. `watch` reads the newest Pod of each copy. Commands echo what they run. Output masks the account ID, OIDC issuer ID, cluster name and launch template IDs so the screen is safe to project; set `MASK_CLUSTER=0` to show the cluster name and launch template IDs.
 
+## Public read-only page (optional)
+
+`page-up` gives the audience a live page in their own browsers. `dashboard.py` (stdlib only) and `dashboard.html` run as one Pod in the demo namespace. A background thread polls the Kubernetes API every 2 seconds for the newest Pod of each copy: its last `app.sh` line and the names of the injected `AWS_*` variables. Requests are served from memory with `Cache-Control: max-age=1`, so viewers never trigger API calls. The Pod's ServiceAccount has no AWS permissions; its Role can only list Pods and read their logs in this namespace.
+
+Traffic path: viewer → CloudFront (HTTPS on `PAGE_DOMAIN`, GET/HEAD only, HTTP redirects to HTTPS) → CloudFront VPC origin → **internal** ALB (HTTP 80) → dashboard Pod. The ALB security group admits only the `CloudFront-VPCOrigins-Service-SG` of the VPC, or the CloudFront origin-facing managed prefix list if that group does not exist yet. There is no internet-facing load balancer and no public CIDR rule. Requires the AWS Load Balancer Controller. Set `PAGE_DOMAIN`, `PAGE_CERT_ARN` (ACM in us-east-1) and `PAGE_ZONE_ID` (public hosted zone) in the env file. Extra cost while up: about US$0.55 per day for the ALB, plus negligible CloudFront requests.
+
+Measured on November 21, 2026: `page-up` took about 10 minutes (most of it the VPC origin and distribution deployments). The page followed every step: baseline (three `node (IMDS)` cards), IRSA, Pod Identity, then `revoke` with only the legacy card turning `denied`.
+
 ## Presenter runbook
 
 | Step | Say | Run | Expect on the watch screen |
 | --- | --- | --- | --- |
-| 0 | "Today the app's S3 permission lives on the node role." | (watch already running) | All three rows: `node (IMDS)`, `wid-<run>-node ← node`, `allowed` |
+| 0 | "Today the app's S3 permission lives on the node role." Share the page URL. | (watch and the public page already running) | All three rows: `node (IMDS)`, `wid-<run>-node ← node`, `allowed` |
 | 1 | "IRSA: annotate the ServiceAccount, restart." | `migrate-irsa` (~6 s) | `orders-irsa` → `IRSA (STS)`, `wid-<run>-irsa`, `allowed` |
 | 2 | "Pod Identity: one EKS API call, no annotation." | `migrate-podid` (~11 s) | `orders-podid` → `Pod Identity`, `wid-<run>-podid`, `allowed` |
 | 3 | "Same outcome, different wiring." | `diff` | Injected env vars, token `aud` (`sts.amazonaws.com` vs `pods.eks.amazonaws.com`), trust principals |

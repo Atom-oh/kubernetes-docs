@@ -404,8 +404,8 @@ injected() { # deployment 이름
 **7.2 기준선: 주석만 있는 ServiceAccount와 association만 있는 ServiceAccount**
 
 ```bash
-injected orders-irsa     # 예상: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE
-injected orders-podid    # 예상: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+injected orders-irsa     # 실측: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE
+injected orders-podid    # 실측: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
 ```
 
 **7.3 association이 있는 `orders-podid`에 IRSA 주석을 더한 뒤 다시 dry run**
@@ -413,7 +413,7 @@ injected orders-podid    # 예상: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTA
 ```bash
 kubectl -n "$NS" annotate sa orders-podid \
   "eks.amazonaws.com/role-arn=arn:aws:iam::${ACCOUNT_ID}:role/wid-${RUN_ID}-irsa"
-injected orders-podid    # 예상: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+injected orders-podid    # 실측: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
 ```
 
 **7.4 정리: 주석을 지우고 rollout은 하지 않습니다**
@@ -423,16 +423,13 @@ kubectl -n "$NS" annotate sa orders-podid eks.amazonaws.com/role-arn-
 kubectl -n "$NS" get sa orders-podid -o jsonpath='{.metadata.annotations}{"\n"}'   # 비어 있어야 함
 ```
 
-**확인 포인트.** 7.3에서 `AWS_ROLE_ARN`이 나오지 않고 Pod Identity 변수만 나오면 워크북의 설명과 같습니다. 이 결과는 워크북 작성 중 데모 클러스터에서 확인한 내용이며, 저장된 출력 로그는 없으므로 위의 값은 예상값입니다. 여러분의 클러스터에서 나온 결과를 기록해 두세요. dry run은 Pod를 만들지 않으므로 실행 중인 `orders-podid`에는 영향이 없습니다.
+**확인 포인트.** 7.3에서 `AWS_ROLE_ARN`이 나오지 않고 Pod Identity 변수만 나오면 워크북의 설명과 같습니다. 2026년 11월 21일 run `d1124`에서 측정한 결과는 주석만 있을 때 `AWS_ROLE_ARN`·`AWS_WEB_IDENTITY_TOKEN_FILE`, association을 더하고 5초 뒤부터 `AWS_CONTAINER_CREDENTIALS_FULL_URI`·`AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`만, 둘 다 지우고 2초 뒤에는 아무것도 주입되지 않았습니다. dry run은 Pod를 만들지 않으므로 실행 중인 `orders-podid`에는 영향이 없습니다.
 
 **왜 그렇게 되나.** EKS의 웹훅은 association이 있는 ServiceAccount라면 IRSA 주석이 있어도 Pod Identity 변수를 우선하고 IRSA 변수는 넣지 않습니다. 반대로 association을 나중에 추가해도 **이미 실행 중인** Pod는 다시 만들기 전까지 IRSA 변수를 그대로 갖고 있습니다. 그래서 방식을 바꿀 때는 rollout으로 Pod를 새로 만들고, 쓰지 않는 주석은 지워 두 설정이 섞이지 않게 합니다.
 
-<!-- COORDINATOR: page-up/page-down are being added to demo.sh by a parallel change. Adjust command names, timings and prerequisites below once that change lands. -->
 ## 공개 데모 페이지 (선택)
 
-> 이 절은 `demo.sh`에 추가되는 중인 기능을 기준으로 썼습니다. 여러분이 받은 스크립트의 `./demo.sh` 도움말에 `page-up`이 없으면 건너뛰세요.
-
-청중이 브라우저로 볼 수 있는 읽기 전용 상태 페이지를 띄울 수 있습니다. 페이지는 각 복사본의 자격 증명 출처, 역할, S3 결과만 보여 주며 변경 기능은 없습니다. 경로는 CloudFront → CloudFront VPC origin → **internal** ALB → 대시보드 Pod이고, ALB 보안 그룹은 CloudFront VPC origin 쪽만 받아들입니다. 인터넷에 직접 열린 로드 밸런서나 공인 IP는 만들지 않습니다.
+청중이 브라우저로 볼 수 있는 읽기 전용 상태 페이지를 띄울 수 있습니다. 페이지는 각 복사본의 자격 증명 출처, 역할, S3 결과만 보여 주며 변경 기능은 없습니다. 경로는 CloudFront → CloudFront VPC origin → **internal** ALB → 대시보드 Pod이고, ALB 보안 그룹은 CloudFront VPC origin 쪽만 받아들입니다. 인터넷에 직접 열린 로드 밸런서나 공인 IP는 만들지 않습니다. 클러스터에 AWS Load Balancer Controller가 있어야 하고, 같은 VPC에 다른 CloudFront VPC origin이 없으면 ALB 보안 그룹은 CloudFront managed prefix list(`com.amazonaws.global.cloudfront.origin-facing`)로 제한됩니다.
 
 env 파일에 다음 세 값을 추가합니다.
 

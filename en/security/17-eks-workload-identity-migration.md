@@ -148,6 +148,8 @@ export CLUSTER=<cluster name> VPC_NAME=<Name tag of the cluster VPC> \
 ./demo.sh down d1124          # clean up
 ```
 
+With `page-up` you can share a read-only live page with the audience. The path is CloudFront → VPC origin → internal ALB → dashboard Pod, and the ALB security group admits only the CloudFront VPC origin. The dashboard Pod has no AWS permissions, only a Role that reads Pods and logs in this namespace.
+
 Everything the script creates carries the run ID in its name or a `LabRun` tag, and the script changes or deletes only resources that match that name or tag. It creates no VPC, subnet, security group, add-on or OIDC provider; it only checks that they exist. The [hands-on lab](../labs/security/17-eks-workload-identity-migration-lab.md) walks through each step with commands, expected output and checkpoints.
 
 ### Measured in the Seoul Region

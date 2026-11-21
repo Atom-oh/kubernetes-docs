@@ -404,8 +404,8 @@ injected() { # deployment name
 **7.2 Baseline: a ServiceAccount with only the annotation, and one with only the association**
 
 ```bash
-injected orders-irsa     # expected: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE
-injected orders-podid    # expected: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+injected orders-irsa     # measured: AWS_ROLE_ARN, AWS_WEB_IDENTITY_TOKEN_FILE
+injected orders-podid    # measured: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
 ```
 
 **7.3 Add an IRSA annotation to `orders-podid`, which has the association, and dry-run again**
@@ -413,7 +413,7 @@ injected orders-podid    # expected: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CON
 ```bash
 kubectl -n "$NS" annotate sa orders-podid \
   "eks.amazonaws.com/role-arn=arn:aws:iam::${ACCOUNT_ID}:role/wid-${RUN_ID}-irsa"
-injected orders-podid    # expected: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+injected orders-podid    # measured: AWS_CONTAINER_CREDENTIALS_FULL_URI, AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
 ```
 
 **7.4 Clean up: remove the annotation and do not roll out**
@@ -423,16 +423,13 @@ kubectl -n "$NS" annotate sa orders-podid eks.amazonaws.com/role-arn-
 kubectl -n "$NS" get sa orders-podid -o jsonpath='{.metadata.annotations}{"\n"}'   # should be empty
 ```
 
-**What to check.** If 7.3 shows only the Pod Identity variables and no `AWS_ROLE_ARN`, the result matches the workbook. The workbook's result was checked on the demo cluster while writing it, but no output log was saved, so the values above are expected values. Record what your cluster returns. A dry run creates no Pod, so the running `orders-podid` is not affected.
+**What to check.** If 7.3 shows only the Pod Identity variables and no `AWS_ROLE_ARN`, the result matches the workbook. Measured on run `d1124` on November 21, 2026: with only the annotation, `AWS_ROLE_ARN` and `AWS_WEB_IDENTITY_TOKEN_FILE`; 5 seconds after adding the association, only `AWS_CONTAINER_CREDENTIALS_FULL_URI` and `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`; 2 seconds after removing both, nothing. A dry run creates no Pod, so the running `orders-podid` is not affected.
 
 **Why.** For a ServiceAccount that has an association, the EKS webhook prefers the Pod Identity variables even when an IRSA annotation is present, and injects no IRSA variables. Conversely, if you add an association later, Pods that are **already running** keep their IRSA variables until they are recreated. So when you switch methods, recreate the Pods with a rollout and remove the unused annotation so the two configurations do not mix.
 
-<!-- COORDINATOR: page-up/page-down are being added to demo.sh by a parallel change. Adjust command names, timings and prerequisites below once that change lands. -->
 ## Public Demo Page (Optional)
 
-> This section describes a feature that is being added to `demo.sh`. If `page-up` is not in your script's `./demo.sh` help, skip it.
-
-You can bring up a read-only status page the audience can open in a browser. It shows only each copy's credential source, role and S3 result, and has no controls that change anything. The path is CloudFront → CloudFront VPC origin → **internal** ALB → dashboard Pod, and the ALB security group admits only the CloudFront VPC-origin side. No internet-facing load balancer or public IP is created.
+You can bring up a read-only status page the audience can open in a browser. It shows only each copy's credential source, role and S3 result, and has no controls that change anything. The path is CloudFront → CloudFront VPC origin → **internal** ALB → dashboard Pod, and the ALB security group admits only the CloudFront VPC-origin side. No internet-facing load balancer or public IP is created. The cluster needs the AWS Load Balancer Controller; if the VPC has no other CloudFront VPC origin yet, the ALB security group is restricted to the CloudFront managed prefix list (`com.amazonaws.global.cloudfront.origin-facing`) instead.
 
 Add three values to the env file:
 
