@@ -3,27 +3,27 @@
 # Kubernetes 和 Amazon EKS 培训内容
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
 
-本仓库是一份全面的云技术指南，涵盖 Linux 和容器基础知识、Kubernetes 和 Amazon EKS、网络、服务网格、存储、数据库、数据管道、AI/ML 以及安全与运维。除了学习资料外，还提供在真实 AWS 环境中测量的基准数据、各主题测验以及精选的动手实验。
+本仓库是一份全面的云计算指南，涵盖 Linux 和容器基础知识、Kubernetes 和 Amazon EKS、网络、服务网格、存储、数据库、数据管道、AI/ML 以及安全与运维。除了学习资料外，还提供在真实 AWS 环境中测得的基准数据、各主题测验以及精选的动手实验。
 
 ## 学习资料和测验
 
-本培训内容为每个主题提供学习资料和配套测验。你可以通过测验检验并巩固所学内容。每份测验都采用切换式答案，答案默认隐藏，让你先尝试回答问题，再查看答案。
+本培训内容为每个主题提供配套测验和学习资料。你可以通过测验检验并巩固所学内容。每份测验都采用可切换显示答案的形式，答案默认隐藏，因此你可以先尝试答题，再揭晓答案。
 
-- [学习资料目录](#table-of-contents) - 按主题分类的学习资料
-- [测验合集](./quizzes/README.md) - 按主题分类的测验
+- [学习资料目录](#table-of-contents) - 按主题划分的学习资料
+- [测验合集](./quizzes/README.md) - 按主题划分的测验
 - [指南路线图](./roadmap.md) - 完整的学习地图和推荐学习路径 | [测验](./quizzes/roadmap-quiz.md)
-- [借助 LLM 阅读](./llm-guide.md) - 通过 llms.txt、清单和 MCP 查找并阅读源材料 | [测验](./quizzes/llm-guide-quiz.md)
+- [使用 LLM 阅读](./llm-guide.md) - 通过 llms.txt、清单和 MCP 查找并阅读源材料 | [测验](./quizzes/llm-guide-quiz.md)
 
-## 目录 {#table-of-contents}
+## 目录
 
 ### 新闻
-- [每周新闻](./news/README.md) - 最新 Kubernetes/EKS 生态系统新闻摘要
+- [每周新闻](./news/README.md) - Kubernetes/EKS 生态系统最新新闻摘要
 
 ### Linux 和容器
 1. [Linux 基础知识](./basics/01-linux-basics.md) | [测验](./quizzes/basics/01-linux-basics-quiz.md) | [实验](./labs/basics/01-linux-basics-lab.md)
 2. [Linux 运维技能](./basics/02-linux-advanced.md) | [测验](./quizzes/basics/02-linux-advanced-quiz.md) | [实验](./labs/basics/02-linux-advanced-lab.md)
 3. [容器技术](./basics/03-container-technology.md) | [测验](./quizzes/basics/03-container-technology-quiz.md) | [实验](./labs/basics/03-container-technology-lab.md)
-4. [eBPF 基础知识与实践应用](./basics/05-ebpf-fundamentals.md) | [测验](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
+4. [eBPF 基础知识与实际应用](./basics/05-ebpf-fundamentals.md) | [测验](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
 ### Linux 内核
 1. [Linux 内核概览](./kernel/README.md)
@@ -48,7 +48,7 @@
    - [第 1 部分：自定义调度器基础知识](./scheduling/01-custom-scheduler-part1.md) | [测验](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
    - [第 2 部分：调度器扩展和框架](./scheduling/02-custom-scheduler-part2.md) | [测验](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [第 3 部分：自定义调度器实现示例和监控](./scheduling/03-custom-scheduler-part3.md) | [测验](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
-14. 自动扩缩容
+14. 自动扩缩
    - [KEDA](./autoscaling/01-keda.md) | [测验](./quizzes/autoscaling/05-keda-quiz.md)
    - [Karpenter](./autoscaling/02-karpenter.md) | [测验](./quizzes/autoscaling/06-karpenter-quiz.md)
    - [Knative](./autoscaling/03-knative.md) | [测验](./quizzes/autoscaling/03-knative-quiz.md)
@@ -70,6 +70,9 @@
    - [第 2 部分：FSx for Lustre、S3、快照、卷扩展和性能优化](./eks/04-eks-storage-part2.md) | [测验](./quizzes/eks/04-eks-storage-part2-quiz.md)
    - [第 3 部分：监控、故障排查、成本优化和安全](./eks/04-eks-storage-part3.md) | [测验](./quizzes/eks/04-eks-storage-part3-quiz.md)
 5. [EKS 安全](./eks/05-eks-security.md) | [测验](./quizzes/eks/05-eks-security-quiz.md)
+   - [集群访问身份验证：IAM 和访问条目](./eks/05-eks-security-cluster-access.md) | [测验](./quizzes/eks/05-eks-security-cluster-access-quiz.md)
+   - [IRSA 和 OIDC 提供商](./eks/05-eks-security-irsa-oidc.md) | [测验](./quizzes/eks/05-eks-security-irsa-oidc-quiz.md)
+   - [EKS Pod Identity](./eks/05-eks-security-pod-identity.md) | [测验](./quizzes/eks/05-eks-security-pod-identity-quiz.md)
 6. [EKS 监控和日志记录](./eks/06-eks-monitoring-logging.md) | [测验](./quizzes/eks/06-eks-monitoring-logging-quiz.md)
 7. [EKS 成本优化](./eks/07-eks-cost-optimization.md) | [测验](./quizzes/eks/07-eks-cost-optimization-quiz.md)
 8. [EKS 升级](./eks/08-eks-upgrades.md) | [测验](./quizzes/eks/08-eks-upgrades-quiz.md)
@@ -89,16 +92,16 @@
 7. [工作负载放置策略](./eks-hybrid-nodes/06-workload-placement.md) | [测验](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
 8. [节点生命周期管理](./eks-hybrid-nodes/07-node-lifecycle.md) | [测验](./quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md)
 9. [运维和维护](./eks-hybrid-nodes/08-operations.md) | [测验](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
-10. [裸机操作系统设置](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [测验](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
+10. [裸金属操作系统设置](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [测验](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 11. [混合节点网关](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [测验](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
 12. [网络隔离安全审查](./eks-hybrid-nodes/11-network-separation-security.md) | [测验](./quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
-13. [不使用 SNAT 和 PrivateLink 实现 Pod 连通性](./eks-hybrid-nodes/12-connectivity-validation.md) | [测验](./quizzes/eks-hybrid-nodes/12-connectivity-validation-quiz.md)
+13. [无 SNAT 和 PrivateLink 的 Pod 连通性](./eks-hybrid-nodes/12-connectivity-validation.md) | [测验](./quizzes/eks-hybrid-nodes/12-connectivity-validation-quiz.md)
 
 ### EKS Auto Mode
 1. [EKS Auto Mode 简介](./eks-auto-mode/README.md)
-2. [入门指南](./eks-auto-mode/01-getting-started.md) | [测验](./quizzes/eks-auto-mode/01-getting-started-quiz.md)
+2. [入门](./eks-auto-mode/01-getting-started.md) | [测验](./quizzes/eks-auto-mode/01-getting-started-quiz.md)
 3. [NodePool 配置](./eks-auto-mode/02-nodepool-configuration.md) | [测验](./quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
-4. [扩缩容行为](./eks-auto-mode/03-scaling-behavior.md) | [测验](./quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
+4. [扩缩行为](./eks-auto-mode/03-scaling-behavior.md) | [测验](./quizzes/eks-auto-mode/03-scaling-behavior-quiz.md)
 5. [Spot 实例策略](./eks-auto-mode/04-spot-strategies.md) | [测验](./quizzes/eks-auto-mode/04-spot-strategies-quiz.md)
 6. [运维和管理](./eks-auto-mode/05-operations.md) | [测验](./quizzes/eks-auto-mode/05-operations-quiz.md)
 7. [成本管理](./eks-auto-mode/06-cost-management.md) | [测验](./quizzes/eks-auto-mode/06-cost-management-quiz.md)
@@ -108,7 +111,7 @@
 
 ### 网络
 
-1. [从头学习 Linux 网络](./networking/beginner/README.md)
+1. [从头开始学习 Linux 网络](./networking/beginner/README.md)
    - [1. Linux 和 CLI](./networking/beginner/01-linux-cli.md) | [测验](./quizzes/networking/beginner/01-linux-cli-quiz.md)
    - [2. 地址和接口](./networking/beginner/02-addressing-interfaces.md) | [测验](./quizzes/networking/beginner/02-addressing-interfaces-quiz.md)
    - [3. 持久化网络配置](./networking/beginner/03-persistent-configuration.md) | [测验](./quizzes/networking/beginner/03-persistent-configuration-quiz.md)
@@ -126,7 +129,7 @@
    - [6. 自动化和最终评估](./networking/expert/06-automation-capstone.md) | [测验](./quizzes/networking/expert/06-automation-capstone-quiz.md)
    - [7. WAN 和混合连接设计](./networking/expert/07-wan-hybrid-connectivity.md) | [测验](./quizzes/networking/expert/07-wan-hybrid-connectivity-quiz.md)
    - [8. CDN 和边缘交付设计](./networking/expert/08-cdn-edge-delivery.md) | [测验](./quizzes/networking/expert/08-cdn-edge-delivery-quiz.md)
-   - [9. 边缘安全：WAF 和 DDoS 防护](./networking/expert/09-edge-security-waf-ddos.md) | [测验](./quizzes/networking/expert/09-edge-security-waf-ddos-quiz.md)
+   - [9. 边缘安全：WAF 和 DDoS 防御](./networking/expert/09-edge-security-waf-ddos.md) | [测验](./quizzes/networking/expert/09-edge-security-waf-ddos-quiz.md)
 3. [Kubernetes 网络概览](./networking/README.md) | [测验](./quizzes/networking/00-networking-overview-quiz.md)
 4. [网络基础知识：25 种协议](./basics/06-network-fundamentals-part1.md)
    - [第 1 部分：分层模型、链路层和路由层](./basics/06-network-fundamentals-part1.md) | [测验](./quizzes/basics/06-network-fundamentals-part1-quiz.md)
@@ -136,7 +139,7 @@
    - [第 5 部分：网络设备、LAN 和 WAN 基础知识](./basics/06-network-fundamentals-part5.md) | [测验](./quizzes/basics/06-network-fundamentals-part5-quiz.md)
 5. [Linux 网络诊断实践](./networking/07-linux-network-diagnostics.md) | [测验](./quizzes/networking/07-linux-network-diagnostics-quiz.md)
 6. [VPC CNI](./networking/01-vpc-cni.md) | [测验](./quizzes/networking/01-vpc-cni-quiz.md)
-7. **Cilium 深入探讨**
+7. **深入了解 Cilium**
    - [Cilium 简介](./networking/cilium/README.md)
    - [第 1 部分：简介](./networking/cilium/01-introduction.md) | [测验](./quizzes/networking/cilium/01-introduction-quiz.md)
    - [第 2 部分：eBPF](./networking/cilium/02-ebpf.md) | [测验](./quizzes/networking/cilium/02-ebpf-quiz.md)
@@ -153,7 +156,7 @@
    - [第 13 部分：版本、安装/升级和 Cluster Mesh](./networking/cilium/13-clustermesh-install-upgrade.md) | [测验](./quizzes/networking/cilium/13-clustermesh-install-upgrade-quiz.md)
    - [网络概念](./networking/cilium/networking-concepts.md) | [测验](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [术语表](./networking/cilium/glossary.md) | [测验](./quizzes/networking/cilium/glossary-quiz.md)
-8. **Calico 深入探讨**
+8. **深入了解 Calico**
    - [Calico 简介](./networking/calico/README.md)
    - [第 1 部分：简介](./networking/calico/01-introduction.md) | [测验](./quizzes/networking/calico/01-introduction-quiz.md)
    - [第 2 部分：架构](./networking/calico/02-architecture.md) | [测验](./quizzes/networking/calico/02-architecture-quiz.md)
@@ -192,7 +195,7 @@
    - [最佳实践](./service-mesh/cilium-service-mesh/06-best-practices.md)
 
 4. **深入了解 VPC Lattice**
-   - [VPC Lattice 深入探讨概览](./service-mesh/vpc-lattice/README.md)
+   - [VPC Lattice 深入解析概览](./service-mesh/vpc-lattice/README.md)
    - [App Mesh 与 VPC Lattice 架构对比](./service-mesh/vpc-lattice/01-appmesh-vs-lattice.md) | [测验](./quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
    - [延迟影响分析](./service-mesh/vpc-lattice/02-latency.md) | [测验](./quizzes/service-mesh/vpc-lattice/02-latency-quiz.md)
    - [IAM 身份验证流程](./service-mesh/vpc-lattice/03-auth-flow.md) | [测验](./quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md)
@@ -207,7 +210,7 @@
 
 ### 数据库
 1. [Kubernetes 上的数据库概览](./database/README.md)
-2. [EKS 上 ClickHouse 的实测基准测试](./database/01-clickhouse-on-eks.md) | [测验](./quizzes/database/01-clickhouse-on-eks-quiz.md)
+2. [EKS 上 ClickHouse 实测基准测试](./database/01-clickhouse-on-eks.md) | [测验](./quizzes/database/01-clickhouse-on-eks-quiz.md)
 
 ### 区块链
 1. [区块链概览](./blockchain/README.md)
@@ -295,7 +298,7 @@
 2. [Kubernetes 身份验证和授权](./security/02-kubernetes-auth-authz.md) | [测验](./quizzes/security/02-kubernetes-auth-authz-quiz.md)
 3. [Pod 安全标准](./security/03-pod-security-standards.md) | [测验](./quizzes/security/03-pod-security-standards-quiz.md)
 4. [网络策略](./security/04-network-policies.md) | [测验](./quizzes/security/04-network-policies-quiz.md)
-5. [密钥管理](./security/05-secrets-management.md) | [测验](./quizzes/security/05-secrets-management-quiz.md)
+5. [Secret 管理](./security/05-secrets-management.md) | [测验](./quizzes/security/05-secrets-management-quiz.md)
 6. [EKS 安全最佳实践](./security/06-eks-security-best-practices.md) | [测验](./quizzes/security/06-eks-security-best-practices-quiz.md)
 7. [镜像安全](./security/07-image-security.md) | [测验](./quizzes/security/07-image-security-quiz.md)
 8. [运行时安全](./security/08-runtime-security.md) | [测验](./quizzes/security/08-runtime-security-quiz.md)
@@ -314,7 +317,7 @@
 2. **ArgoCD**
    - [ArgoCD 简介](./gitops/argocd/README.md) | [测验](./quizzes/gitops/01-argocd-quiz.md)
    - [安装](./gitops/argocd/01-installation.md) | [测验](./quizzes/gitops/argocd/01-installation-quiz.md)
-   - [应用程序](./gitops/argocd/02-applications.md) | [测验](./quizzes/gitops/argocd/02-applications-quiz.md)
+   - [应用](./gitops/argocd/02-applications.md) | [测验](./quizzes/gitops/argocd/02-applications-quiz.md)
    - [同步策略](./gitops/argocd/03-sync-strategies.md) | [测验](./quizzes/gitops/argocd/03-sync-strategies-quiz.md)
    - [ApplicationSets](./gitops/argocd/04-applicationsets.md) | [测验](./quizzes/gitops/argocd/04-applicationsets-quiz.md)
    - [流量管理](./gitops/argocd/05-traffic-management.md) | [测验](./quizzes/gitops/argocd/05-traffic-management-quiz.md)
@@ -324,7 +327,7 @@
    - [最佳实践](./gitops/argocd/09-best-practices.md) | [测验](./quizzes/gitops/argocd/09-best-practices-quiz.md)
    - [深入了解 Rollouts 实验](./gitops/argocd/10-rollouts-experiment.md) | [测验](./quizzes/gitops/argocd/10-rollouts-experiment-quiz.md)
 3. [FluxCD](./gitops/02-fluxcd.md) | [测验](./quizzes/gitops/02-fluxcd-quiz.md)
-4. [GitOps 工具比较](./gitops/03-gitops-comparison.md) | [测验](./quizzes/gitops/03-gitops-comparison-quiz.md)
+4. [GitOps 工具对比](./gitops/03-gitops-comparison.md) | [测验](./quizzes/gitops/03-gitops-comparison-quiz.md)
 5. [Flagger 渐进式交付](./gitops/04-flagger.md) | [测验](./quizzes/gitops/04-flagger-quiz.md)
 6. [功能标志和 OpenFeature](./gitops/05-feature-flags.md) | [测验](./quizzes/gitops/05-feature-flags-quiz.md)
 
@@ -340,8 +343,8 @@
 ### 平台工程
 0. [平台工程概览](./platform-engineering/00-platform-engineering-overview.md) | [测验](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
 1. [Helm](./platform-engineering/01-helm.md) | [测验](./quizzes/platform-engineering/01-helm-quiz.md)
-2. [Kubernetes 的 AWS Controllers（ACK）](./platform-engineering/02-ack.md) | [测验](./quizzes/platform-engineering/02-ack-quiz.md)
-3. [Kubernetes Resource Operator（KRO）](./platform-engineering/03-kro.md) | [测验](./quizzes/platform-engineering/03-kro-quiz.md)
+2. [Kubernetes 的 AWS 控制器 (ACK)](./platform-engineering/02-ack.md) | [测验](./quizzes/platform-engineering/02-ack-quiz.md)
+3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [测验](./quizzes/platform-engineering/03-kro-quiz.md)
 4. [Kubernetes 扩展机制](./platform-engineering/04-kubernetes-extensions.md) | [测验](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
 5. [ExampleCorp：ACK + KRO 集成示例](./platform-engineering/05-example-corp-app.md)
 6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [测验](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
@@ -370,7 +373,7 @@
    - [OpenSearch](./observability/logging/02-opensearch.md) | [测验](./quizzes/observability/logging/02-opensearch-quiz.md)
    - [CloudWatch Logs](./observability/logging/03-cloudwatch-logs.md) | [测验](./quizzes/observability/logging/03-cloudwatch-logs-quiz.md)
    - [ClickHouse](./observability/logging/04-clickhouse.md) | [测验](./quizzes/observability/logging/04-clickhouse-quiz.md)
-   - [日志收集器](./observability/logging/05-collectors.md) | [测验](./quizzes/observability/logging/05-collectors-quiz.md)
+   - [日志采集器](./observability/logging/05-collectors.md) | [测验](./quizzes/observability/logging/05-collectors-quiz.md)
 4. **追踪**
    - [追踪概览](./observability/tracing/README.md)
    - [Grafana Tempo](./observability/tracing/01-tempo.md) | [测验](./quizzes/observability/tracing/01-tempo-quiz.md)
@@ -387,18 +390,18 @@
 
 ### 运维指南
 1. [基础设施设置](./ops/01-infrastructure-setup.md) | [测验](./quizzes/ops/01-infrastructure-setup-quiz.md)
-2. [基础设施高级主题](./ops/02-infrastructure-advanced.md) | [测验](./quizzes/ops/02-infrastructure-advanced-quiz.md)
+2. [高级基础设施](./ops/02-infrastructure-advanced.md) | [测验](./quizzes/ops/02-infrastructure-advanced-quiz.md)
 3. [CI 管道](./ops/03-ci-pipelines.md) | [测验](./quizzes/ops/03-ci-pipelines-quiz.md)
 4. [GitOps 多集群](./ops/04-gitops-multi-cluster.md) | [测验](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
 5. [GitOps 自动化](./ops/05-gitops-automation.md) | [测验](./quizzes/ops/05-gitops-automation-quiz.md)
-6. [扩缩容策略](./ops/06-scaling-strategies.md) | [测验](./quizzes/ops/06-scaling-strategies-quiz.md)
+6. [扩缩策略](./ops/06-scaling-strategies.md) | [测验](./quizzes/ops/06-scaling-strategies-quiz.md)
 7. [可观测性告警](./ops/07-observability-alerts.md) | [测验](./quizzes/ops/07-observability-alerts-quiz.md)
 8. [可观测性分析](./ops/08-observability-analysis.md) | [测验](./quizzes/ops/08-observability-analysis-quiz.md)
 9. [可观测性技术栈](./ops/09-observability-stack.md) | [测验](./quizzes/ops/09-observability-stack-quiz.md)
 10. [资源优化](./ops/10-resource-optimization.md) | [测验](./quizzes/ops/10-resource-optimization-quiz.md)
 11. [升级运维](./ops/11-upgrade-operations.md) | [测验](./quizzes/ops/11-upgrade-operations-quiz.md)
-12. [事件容量规划手册](./ops/12-event-capacity-planning.md) | [测验](./quizzes/ops/12-event-capacity-planning-quiz.md)
-13. [FinOps 成本可视化平台](./ops/13-finops-cost-platform.md) | [测验](./quizzes/ops/13-finops-cost-platform-quiz.md)
+12. [活动容量规划手册](./ops/12-event-capacity-planning.md) | [测验](./quizzes/ops/12-event-capacity-planning-quiz.md)
+13. [FinOps 成本可见性平台](./ops/13-finops-cost-platform.md) | [测验](./quizzes/ops/13-finops-cost-platform-quiz.md)
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [测验](./quizzes/ops/14-tekton-pipelines-quiz.md)
 15. [可用区集群运维](./ops/15-zonal-operations-guide.md) | [测验](./quizzes/ops/15-zonal-operations-guide-quiz.md)
 16. [故障排查手册](./ops/16-troubleshooting-playbook.md) | [测验](./quizzes/ops/16-troubleshooting-playbook-quiz.md)
@@ -409,8 +412,8 @@
 我们提供动手实验指南，帮助你在学习理论后于真实环境中进行实践。
 
 - [实验指南列表](./labs/README.md)
-- 基础：Linux 基础、Linux 运维、容器实验
-- 核心：Pod、Service、存储、ConfigMap 实验
+- 基础知识：Linux 基础、Linux 运维、容器实验
+- 核心概念：Pod、Service、存储、ConfigMap 实验
 - EKS：集群创建实验
 
 ### 可观测性端到端实验
@@ -418,7 +421,7 @@
 2. [第 1 部分：基础设施设置](./labs/observability/01-infrastructure-setup-lab.md) | [测验](./quizzes/observability/labs/01-infrastructure-setup-quiz.md)
 3. [第 2 部分：可观测性技术栈](./labs/observability/02-observability-stack-lab.md) | [测验](./quizzes/observability/labs/02-observability-stack-quiz.md)
 4. [第 3 部分：MSA 部署和金丝雀发布](./labs/observability/03-msa-deployment-lab.md) | [测验](./quizzes/observability/labs/03-msa-deployment-quiz.md)
-5. [第 4 部分：负载测试和自动扩缩容](./labs/observability/04-load-testing-scaling-lab.md) | [测验](./quizzes/observability/labs/04-load-testing-scaling-quiz.md)
+5. [第 4 部分：负载测试和自动扩缩](./labs/observability/04-load-testing-scaling-lab.md) | [测验](./quizzes/observability/labs/04-load-testing-scaling-quiz.md)
 6. [第 5 部分：告警和 AIOps](./labs/observability/05-alerting-aiops-lab.md) | [测验](./quizzes/observability/labs/05-alerting-aiops-quiz.md)
 7. [第 6 部分：分布式追踪分析](./labs/observability/06-distributed-tracing-lab.md) | [测验](./quizzes/observability/labs/06-distributed-tracing-quiz.md)
 
@@ -426,26 +429,26 @@
 
 ### 初学者学习路径
 1. 按以下顺序学习：**Linux 和容器** -> **Kubernetes 核心概念** -> **Amazon EKS**
-2. 阅读每章后，完成对应的测验以检查理解程度
-3. 在练习环境中动手执行命令和示例代码
+2. 阅读每章后，完成相应测验以检查理解情况
+3. 在实践环境中亲自执行命令和示例代码
 
-### 进阶用户学习路径
+### 高级用户学习路径
 1. 按以下顺序学习：**Amazon EKS** -> **AI/ML** -> **服务网格** -> **安全与策略**
-2. 通过 **Cilium** 章节深入学习网络
-3. 选择特定工具或技术进行深入学习
+2. 通过 **Cilium** 部分深入学习网络
+3. 针对特定工具或技术开展深入学习
 
 ### 如何使用测验
-- 点击每份文档末尾的测验链接，检查学习效果
-- 先思考答案，再切换显示隐藏的答案
-- 回顾相应文档，查找答错的问题
+- 点击每份文档末尾的测验链接来检查学习情况
+- 在揭晓答案前，先思考可切换显示的答案
+- 对答错的问题，复习相应文档
 
 ## 贡献
 
-如果你希望为本项目作出贡献：
+如果你想为本项目做出贡献：
 1. 发现拼写错误或内容错误时，请提交 issue
-2. 提出新增主题或改进建议
-3. 提出新增或改进测验题目的建议
+2. 提出新主题或改进建议
+3. 提出测验题目的新增或改进建议
 
-## 许可证
+## 许可
 
 本培训材料可免费用于学习。

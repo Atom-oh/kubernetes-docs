@@ -1,58 +1,58 @@
 # Kubernetes/EKS トラブルシューティング・プレイブック: 症状 → 診断 → 原因 → 修正
 
-> **元の例に記録されたバージョン**: Amazon EKS 1.36 の元の出力例（コントロールプレーン v1.36.2-eks-bca9cf6、platform version eks.9、Karpenter 1.4、VPC CNI v1.21、CoreDNS v1.14）
-> **最終確認日**: 2026年9月11日
+> **元の例に記録されたバージョン**: Amazon EKS 1.36 の元の出力例（コントロールプレーン v1.36.2-eks-bca9cf6、プラットフォームバージョン eks.9、Karpenter 1.4、VPC CNI v1.21、CoreDNS v1.14）
+> **最終レビュー日**: 2026年9月11日
 
-< [前へ: Zonal Cluster Operations](15-zonal-operations-guide.md) | [目次](./README.md) >
+< [前へ: ゾーンクラスターの運用](15-zonal-operations-guide.md) | [目次](./README.md) >
 
 ***
 
-午前3時にページャーが鳴ってターミナルを開いたときに必要なのは、概念の解説ではなく「**今見えている状況で次に入力するコマンド**」です。このドキュメントは概念ではなく**症状**から始めます。各症状について、「見えているもの → 実行するもの → 出力例 → 最も一般的な原因と修正方法」を1つのまとまりにしています。
+午前3時にページャーが鳴り、ターミナルを開いたときに必要なのは、概念の説明ではなく、「**いま目の前に見えている状況に応じて、次に入力するコマンド**」です。このドキュメントは概念ではなく、**症状**を起点にしています。それぞれの症状について、「見えているもの → 実行するもの → 出力例 → よくある原因と修正方法」を1つのブロックにまとめています。
 
-以下の出力例は、元の2026年9月2日の文書に記録された環境を示すもので、公式資料の記述も含みます。このレビューでは、そのクラスターを再実行しておらず、元の取得ログも独立に検証していません。特に[Karpenter互換性表](https://karpenter.sh/docs/upgrading/compatibility/)によると、Kubernetes 1.36にはKarpenter 1.13以降が必要です。記録された1.4.0の組み合わせを、サポート対象のデプロイとして再利用しないでください。
+以下の出力例は、元の2026年9月2日のドキュメントに記録された環境と、公式ドキュメントの情報を示しています。このレビューでは、そのクラスターを再実行したり、元のキャプチャログを独自に検証したりしていません。特に、[Karpenter の互換性マトリックス](https://karpenter.sh/docs/upgrading/compatibility/)では、Kubernetes 1.36 に対して Karpenter 1.13 以降が必要です。記録された 1.4.0 の組み合わせを、サポート対象のデプロイとして再利用しないでください。
 
-根本原因の詳細分析（コントロールプレーンログ、CloudWatch Logs Insightsクエリ、ノード参加失敗の8つの原因など）は、[EKSトラブルシューティング](../eks/09-eks-troubleshooting.md)と[EKS高度なデバッグ](../eks/11-eks-advanced-debugging.md)にあります。このページはその手前に位置し、**30秒以内に次に開くページを決める**ことを目的としています。内容を重複させず、関連ページへ案内します。
+根本原因の詳しい分析（コントロールプレーンログ、CloudWatch Logs Insights のクエリ、ノード参加失敗の8つの原因など）は、すでに[EKS トラブルシューティング](../eks/09-eks-troubleshooting.md)と[EKS 高度なデバッグ](../eks/11-eks-advanced-debugging.md)にあります。このページはそれらの入口です。役割は、**30秒以内にどのページを開くか判断すること**なので、内容を繰り返すのではなく、該当ページへリンクしています。
 
 ## 目次
 
-1. [30秒サマリー: 症状 → 最初のコマンド → 最も一般的な原因](#30-second-summary-symptom--first-command--most-common-cause)
-2. [診断判断ツリー](#diagnostic-decision-tree)
+1. [30秒で確認: 症状 → 最初のコマンド → よくある原因](#30-second-summary-symptom--first-command--most-common-cause)
+2. [診断の決定木](#diagnostic-decision-tree)
 3. [症状別プレイブック](#playbook-by-symptom)
-4. [kubectl診断チートシート](#kubectl-diagnostic-cheat-sheet)
-5. [さらに調べる: 関連ドキュメント](#going-deeper-related-documents)
+4. [kubectl 診断チートシート](#kubectl-diagnostic-cheat-sheet)
+5. [さらに詳しく: 関連ドキュメント](#going-deeper-related-documents)
 6. [参考資料](#references)
 
 ***
 
 <span id="30-second-summary-symptom--first-command--most-common-cause"></span>
 
-## 30秒サマリー: 症状 → 最初のコマンド → 最も一般的な原因
+## 30秒で確認: 症状 → 最初のコマンド → よくある原因
 
-各症状のセルから、下にある対応するプレイブック節へ移動できます。
+各症状のセルから、以下のプレイブックの該当セクションに移動できます。
 
-| 症状（`kubectl get pods`/`nodes` の表示） | 最初のコマンド | 最も一般的な原因 |
+| 症状（`kubectl get pods`/`nodes` の表示） | 最初のコマンド | よくある原因 |
 |---|---|---|
-| [`Pending`](#1-pod-stuck-in-pending) | `kubectl describe pod <pod>` → Events内の`FailedScheduling`メッセージ | リソース不足（`Insufficient cpu/memory`）、toleration不足、nodeSelectorの不一致、未バインドのPVC |
-| [`ImagePullBackOff` / `ErrImagePull`](#2-imagepullbackoff--errimagepull) | `kubectl describe pod <pod>` → `Failed to pull image`の行 | tagの誤記、private registry認証（imagePullSecrets/node IAM）、ECRのregion/account不一致 |
-| [`CrashLoopBackOff`](#3-crashloopbackoff-exit-137-oomkilled-probe-failures-config-errors) | `kubectl logs <pod> --previous` + `lastState.terminated`を確認 | アプリの起動時失敗（exit 1）、`OOMKilled`（exit 137）、liveness probe失敗、ConfigMap/Secretの不足 |
-| [`Running`だがREADY `0/1`](#4-running-but-not-ready--empty-endpoints) | `kubectl describe pod <pod>` → `Readiness probe failed` | readinessのpath/port誤り、依存先待ち、sidecarがReadyでない |
-| [Serviceにリクエストが届かない](#5-service-is-unreachable) | `kubectl get endpointslices -l kubernetes.io/service-name=<svc>` | selector label不一致、誤った`targetPort`、NetworkPolicyによる遮断、CoreDNS障害 |
-| [Nodeが`NotReady`](#6-node-notready--kubelet-pressure-diskpressure-memorypressure-pidpressure) | `kubectl describe node <node>` → Conditions | kubelet停止/network partition、`DiskPressure`、`MemoryPressure`、`PIDPressure` |
-| [PVCが`Pending`](#7-pvc-stuck-in-pending) | `kubectl describe pvc <pvc>` → Events | `WaitForFirstConsumer`（正常な待機）、StorageClassの欠落/誤記、AZ不一致 |
-| [アプリログのAWS API `AccessDenied`](#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + 注入されたcredential-providerフィールド | IRSA（IAM Roles for Service Accounts）のannotation/trust policy誤り、Pod Identity association不足、Pod未再起動 |
-| [`ContainerCreating`で停止 + `failed to assign an IP address`](#9-eks-enivpc-cni-ip-exhaustion) | `kubectl describe pod <pod>` → `FailedCreatePodSandBox` | SubnetのIP枯渇、node max-pods到達、`aws-node`の不健全 |
-| [Karpenterがnodeを起動しない](#10-eks-karpenter-does-not-launch-a-node) | `kubectl get events -A --field-selector reason=FailedScheduling` | NodePoolの`limits`到達、requirements/taint不一致、instance type制限 |
-| [Service作成が`failed calling webhook`で拒否される](#11-no-service-can-be-created-failed-calling-webhook) | `kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service` | すべてのnamespaceに一致する`failurePolicy: Fail` webhookの背後でWebhook Deploymentが不健全（CrashLoop） |
+| [`Pending`](#1-pod-stuck-in-pending) | `kubectl describe pod <pod>` → Events の `FailedScheduling` メッセージ | リソース不足（`Insufficient cpu/memory`）、toleration の欠落、nodeSelector の不一致、未バインドの PVC |
+| [`ImagePullBackOff` / `ErrImagePull`](#2-imagepullbackoff--errimagepull) | `kubectl describe pod <pod>` → `Failed to pull image` の行 | タグの誤記、プライベートレジストリ認証（imagePullSecrets/ノード IAM）、ECR のリージョン/アカウント不一致 |
+| [`CrashLoopBackOff`](#3-crashloopbackoff-exit-137-oomkilled-probe-failures-config-errors) | `kubectl logs <pod> --previous` + `lastState.terminated` の確認 | 起動時にアプリが失敗（exit 1）、`OOMKilled`（exit 137）、liveness probe の失敗、ConfigMap/Secret の欠落 |
+| [`Running` だが READY が `0/1`](#4-running-but-not-ready--empty-endpoints) | `kubectl describe pod <pod>` → `Readiness probe failed` | readiness のパス/ポートが誤っている、依存先を待機中、sidecar が未 Ready |
+| [リクエストが Service に届かない](#5-service-is-unreachable) | `kubectl get endpointslices -l kubernetes.io/service-name=<svc>` | セレクターラベルの不一致、`targetPort` の誤り、NetworkPolicy による遮断、CoreDNS の停止 |
+| [ノードが `NotReady`](#6-node-notready--kubelet-pressure-diskpressure-memorypressure-pidpressure) | `kubectl describe node <node>` → Conditions | kubelet の停止/ネットワーク分断、`DiskPressure`、`MemoryPressure`、`PIDPressure` |
+| [PVC が `Pending`](#7-pvc-stuck-in-pending) | `kubectl describe pvc <pvc>` → Events | `WaitForFirstConsumer`（通常の待機）、StorageClass の欠落/誤記、AZ の不一致 |
+| [アプリログに `AccessDenied`（AWS API）](#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + 注入された認証情報プロバイダーのフィールド | IRSA（IAM Roles for Service Accounts）のアノテーション/信頼ポリシーの誤り、Pod Identity の関連付けの欠落、Pod が再起動されていない |
+| [`ContainerCreating` のまま `failed to assign an IP address` が発生](#9-eks-enivpc-cni-ip-exhaustion) | `kubectl describe pod <pod>` → `FailedCreatePodSandBox` | サブネットの IP 枯渇、ノードの max-pods 到達、`aws-node` の異常 |
+| [Karpenter がノードを起動しない](#10-eks-karpenter-does-not-launch-a-node) | `kubectl get events -A --field-selector reason=FailedScheduling` | NodePool の `limits` 到達、requirements/taint の不一致、インスタンスタイプの制限 |
+| [`failed calling webhook` により Service の作成が拒否される](#11-no-service-can-be-created-failed-calling-webhook) | `kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service` | すべての namespace に一致する `failurePolicy: Fail` の webhook の背後で、Webhook Deployment が異常（CrashLoop） |
 
 ***
 
-## 診断判断ツリー {#diagnostic-decision-tree}
+## 診断の決定木
 
-![ノード割り当て、イメージ取得とセットアップ待ち、繰り返し終了、Pod Ready条件、EndpointSliceとネットワークの診断を区別する判断ツリー。](../.gitbook/assets/en-ops-16-troubleshooting-playbook-0.png)
+![ノード割り当て、イメージとセットアップの待機、繰り返し発生する終了、Pod Ready 条件、EndpointSlice/ネットワーク診断を見分ける決定木。](../.gitbook/assets/en-ops-16-troubleshooting-playbook-0.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-16-troubleshooting-playbook-0.html)
 
-まずcontextとnamespaceを確認します。`<pod>`や`<ns>`などのplaceholderは実際の値に置き換えてください。Pod phaseとcontainer stateは異なります。`Running`のPodをすべて除外すると、一部のCrashLoopやreadiness失敗を見落とします。このクエリは完了済みPodを除外し、異常なphase、またはReady条件が欠落／falseのPodを含めます。
+まずコンテキストと namespace を確認します。`<pod>` や `<ns>` などのプレースホルダーは実際の値に置き換えてください。Pod のフェーズとコンテナの状態は異なります。すべての `Running` Pod を除外すると、一部の CrashLoop や readiness の失敗を見落とします。このクエリは完了済みの Pod を除外し、異常なフェーズ、または Ready 条件がない/false の Pod を含めます。
 
 ```bash
 # Inspect phase and Ready condition together
@@ -72,17 +72,15 @@ kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp | t
 
 ***
 
-<span id="playbook-by-symptom"></span>
-
 ## 症状別プレイブック
 
 <span id="1-pod-stuck-in-pending"></span>
 
-### 1. `Pending`で停止したPod
+### 1. Pod が `Pending` のまま
 
-**症状**: `Pending`には、スケジューリング待ちだけでなくイメージ取得やcontainer setup待ちも含まれます。まず`.spec.nodeName`と`PodScheduled` conditionを確認してください。未バインドPodではスケジューリングイベントを、バインド済みPodではcontainer、mount、CNIの状態を調べます。
+**症状**: `Pending` にはスケジューリング待ちと、イメージのダウンロード/コンテナのセットアップ待ちの両方が含まれます。まず `.spec.nodeName` と `PodScheduled` 条件を確認してください。未バインドの Pod ではスケジューリングイベントを調べ、バインド済みの Pod ではコンテナ、マウント、CNI の状態を確認します。
 
-**診断**: 未スケジュールPodでは`FailedScheduling`を調べます。このメッセージは失敗理由ごとのnode数を集計しており、各理由のグループは重複することがあります。
+**診断**: スケジュールされていない Pod では、`FailedScheduling` を確認します。これは失敗理由ごとにノード数を集計します。各グループの数は重複する場合があります。
 
 ```bash
 kubectl describe pod <pod> -n <ns> | sed -n '/^Events:/,$p'
@@ -95,26 +93,26 @@ Warning  FailedScheduling  default-scheduler  0/15 nodes are available: 1 Insuff
   1 No preemption victims found for incoming pod, 14 Preemption is not helpful for scheduling.
 ```
 
-この概要だけから、CPU不足とmemory不足が同じnodeで起きた、あるいは他のすべての制約を満たすnodeが正確に1台ある、と推定しないでください。[schedulerの集計コード](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/scheduler/framework/types.go)は、1つのnodeに複数の失敗理由を数えることがあります。実際のnode label、taint、割り当て状況を確認し、DRAメッセージはResourceClaimの利用状況に照らして解釈してください。
+この要約だけから、CPU とメモリの不足が必ず同じノードを指している、あるいは他のすべての制約を満たすノードがちょうど1つある、と推測しないでください。[スケジューラーの集計コード](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/scheduler/framework/types.go)では、1つのノードに対して複数の理由が数えられることがあります。実際のノードラベル、taint、割り当て状況を比較し、DRA のメッセージは ResourceClaim の使用状況を踏まえて解釈してください。
 
-**原因と修正**:
+**原因と修正方法**:
 
-| メッセージ断片 | 原因 | 修正 |
+| メッセージの一部 | 原因 | 修正方法 |
 |---|---|---|
-| `Insufficient cpu` / `Insufficient memory` | requestsがnodeの残りcapacityを超過 | requestsを適正化してautoscalerを確認（→ [10. Karpenter](#10-eks-karpenter-does-not-launch-a-node)）。`kubectl describe node`の`Allocated resources`も確認 |
-| `Too many pods` | 設定済みnode max-podsに到達。CNIのIP capacityは別に確認 | → [9. ENI/IP枯渇](#9-eks-enivpc-cni-ip-exhaustion) |
-| `node(s) had untolerated taint(s)` | node taintに対するtolerationがない | `kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints[*].key`でtaintを列挙し、tolerationを追加するかNodePoolを調整 |
-| `node(s) didn't match Pod's node affinity/selector` | nodeSelector/affinityのlabelを持つnodeがない | `kubectl get nodes --show-labels`を確認。KarpenterではNodePool template labelまたはrequirementsで供給されるwell-known keyと値を確認 |
-| `pod has unbound immediate PersistentVolumeClaims` | PVCが`Pending` | → [7. PVC Pending](#7-pvc-stuck-in-pending) |
-| `node(s) had volume node affinity conflict` | PV（EBS）が存在するAZにスケジュール可能なnodeがない | PVの`nodeAffinity` zoneを読み、そのAZにcapacityを用意 |
-| `node(s) didn't match pod topology spread constraints` / `pod anti-affinity rules` | spread制約を満たすnodeがない | 適切なnodeを追加。topology spreadでは可用性目標を検討した後に限りScheduleAnywayを検討。pod anti-affinityには別個のrequired/preferred規則がある |
-| eventがまったくない | scheduler障害、または`schedulerName`の誤記 | `kubectl get pod <pod> -o jsonpath='{.spec.schedulerName}'`を確認 |
+| `Insufficient cpu` / `Insufficient memory` | リクエストがノードの残り容量を超えている | リクエストを適正化し、オートスケーラーを確認（→ [10. Karpenter](#10-eks-karpenter-does-not-launch-a-node)）。`kubectl describe node` の `Allocated resources` を調べる |
+| `Too many pods` | 設定されたノードの max-pods に到達。CNI の IP 容量は別途確認する | → [9. ENI/IP 枯渇](#9-eks-enivpc-cni-ip-exhaustion) |
+| `node(s) had untolerated taint(s)` | ノードの taint に対する toleration がない | `kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints[*].key` で taint を一覧表示し、toleration を追加するか NodePool を調整する |
+| `node(s) didn't match Pod's node affinity/selector` | nodeSelector/affinity のラベルを持つノードがない | `kubectl get nodes --show-labels` を確認する。Karpenter の場合は、NodePool テンプレートのラベルまたは requirements で指定された既知のキーと値を確認する |
+| `pod has unbound immediate PersistentVolumeClaims` | PVC が `Pending` | → [7. PVC Pending](#7-pvc-stuck-in-pending) |
+| `node(s) had volume node affinity conflict` | PV（EBS）が存在する AZ にスケジュール可能なノードがない | PV の `nodeAffinity` の zone を確認し、その AZ に容量を用意する |
+| `node(s) didn't match pod topology spread constraints` / `pod anti-affinity rules` | 分散制約を満たすノードがない | 適切なノードを追加する。トポロジー分散では、可用性目標を確認したうえでのみ ScheduleAnyway を検討する。pod anti-affinity には別個の required/preferred ルールがある |
+| イベントがまったくない | Scheduler の問題、または `schedulerName` の誤記 | `kubectl get pod <pod> -o jsonpath='{.spec.schedulerName}'` を確認する |
 
 <span id="2-imagepullbackoff--errimagepull"></span>
 
 ### 2. `ImagePullBackOff` / `ErrImagePull`
 
-**症状**: STATUSは最初`ErrImagePull`となり、数回のretry後に`ImagePullBackOff`へ変わります。kubeletのpull back-offは最大5分まで増加します。
+**症状**: STATUS が最初は `ErrImagePull` で、数回再試行した後に `ImagePullBackOff` になります。kubelet の pull back-off は最大5分まで延びます。
 
 **診断**:
 
@@ -131,27 +129,27 @@ Normal   BackOff  kubelet  Back-off pulling image "123456789012.dkr.ecr.ap-north
 Warning  Failed   kubelet  Error: ImagePullBackOff
 ```
 
-正常なpullでは`Pulling image "..."` → `Successfully pulled image "..." in 4.501s ...`の組が残り、すでにcache済みのimageでは`Container image "..." already present on machine`と記録されます。pull成功はダウンロード成功を示しますが、image内容、architecture、entrypointの問題を否定するものではありません。
+正常に pull できた場合は、`Pulling image "..."` → `Successfully pulled image "..." in 4.501s ...` の2つが残ります。すでにキャッシュされているイメージでは、`Container image "..." already present on machine` と記録されます。pull の成功はダウンロードが成功したことを示しますが、イメージの内容、アーキテクチャ、エントリーポイントに問題がないことまでは示しません。
 
-**原因と修正**:
+**原因と修正方法**:
 
-| `Failed to pull image`に続く内容 | 原因 | 修正 |
+| `Failed to pull image` に続く内容 | 原因 | 修正方法 |
 |---|---|---|
-| `not found` / `manifest unknown` | tagの誤記、未pushのtag、repository誤り | `aws ecr describe-images --repository-name <repo> --image-ids imageTag=<tag>`で確認 |
-| `401 Unauthorized` / `no basic auth credentials` | private registryの認証失敗 | ECRではnode IAM roleに`AmazonEC2ContainerRegistryPullOnly`（または`ReadOnly`）が必要。外部registryでは`imagePullSecrets`を確認 |
-| 別のECR Region/accountからpullできない | 異なるaddress自体は誤りとは限らない。cross-account policyとregional endpoint accessを確認 | pullするprincipalをECR repository policyに追加 |
-| `dial tcp ... i/o timeout` | NAT/VPC endpointのないprivate subnet | `com.amazonaws.<region>.ecr.api`、`ecr.dkr`、S3 gateway endpointを確認 |
-| `toomanyrequests` | Docker Hubのrate limit | ECR pull-through cache経由でmirror |
+| `not found` / `manifest unknown` | タグの誤記、まだ push されていないタグ、リポジトリの誤り | `aws ecr describe-images --repository-name <repo> --image-ids imageTag=<tag>` で確認する |
+| `401 Unauthorized` / `no basic auth credentials` | プライベートレジストリの認証に失敗 | ECR の場合、ノード IAM ロールに `AmazonEC2ContainerRegistryPullOnly`（または `ReadOnly`）が必要。外部レジストリの場合は `imagePullSecrets` を確認する |
+| 別の ECR リージョン/アカウントからの pull に失敗 | 別のアドレスであること自体は問題ではない。クロスアカウントポリシーとリージョナルエンドポイントへのアクセスを確認する | pull する主体を ECR リポジトリポリシーに追加する |
+| `dial tcp ... i/o timeout` | NAT/VPC エンドポイントがないプライベートサブネット | `com.amazonaws.<region>.ecr.api`、`ecr.dkr`、S3 ゲートウェイエンドポイントを確認する |
+| `toomanyrequests` | Docker Hub のレート制限 | ECR pull through cache 経由でミラーする |
 
-nodeの診断では、まずkubelet event/logと、image pullに使われるcredential providerを確認してください。`crictl pull`はkubeletのECR credential providerやPodのimagePullSecretsを自動的に再利用しないため、同じ認証経路の再現にはなりません。Fargateのimage pullにはpod execution roleを使い、アプリケーションのIRSA roleとは分けます。
+ノードを診断する場合は、まず kubelet のイベント/ログと、イメージ pull に使用される認証情報プロバイダーを確認してください。`crictl pull` は kubelet の ECR 認証情報プロバイダーや Pod の imagePullSecrets を自動的に再利用しないため、同じ認証経路を再現しません。Fargate のイメージ pull では Pod 実行ロールを使用します。これはアプリケーションの IRSA ロールとは別です。
 
 <span id="3-crashloopbackoff-exit-137-oomkilled-probe-failures-config-errors"></span>
 
-### 3. `CrashLoopBackOff`（exit 137 `OOMKilled`、probe失敗、config誤り）
+### 3. `CrashLoopBackOff`（exit 137 `OOMKilled`、probe の失敗、設定エラー）
 
-**症状**: containerが繰り返し終了し、RESTARTSが増えます。通常のback-offは10秒から300秒まで倍増しますが、feature gateやkubelet設定により変わることがあります。restart policyは[Pod lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)を確認してください。
+**症状**: コンテナが繰り返し終了し、RESTARTS が増えていきます。通常の backoff は10秒から始まり、最大300秒まで倍増しますが、feature gate や kubelet の設定によって変わる場合があります。[Pod のライフサイクル](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)で restart policy を確認してください。
 
-**診断**: 次の3点を順に確認します: **termination reasonとexit code**、**直前のcontainerのlogs**、**Events**。
+**診断**: 次の3点を順番に確認します。**終了理由と exit code**、**前回のコンテナのログ**、**Events**。
 
 ```bash
 # (1) Why did it die: lastState.terminated
@@ -164,7 +162,7 @@ kubectl logs <pod> -n <ns> -c <container> --previous --tail=100
 kubectl describe pod <pod> -n <ns> | sed -n '/^Events:/,$p'
 ```
 
-元の文書に記録された、memory limit 128Miのcontainer出力例:
+メモリ上限が128Miのコンテナについて、元のドキュメントに記録された出力:
 
 ```
     Last State:     Terminated
@@ -175,46 +173,46 @@ kubectl describe pod <pod> -n <ns> | sed -n '/^Events:/,$p'
     Restart Count:  3
 ```
 
-約36時間稼働したことは、即時の起動失敗と区別する手掛かりですが、memory leakの証明ではありません。memory時系列とkernel/cgroup eventを使い、traffic急増、batch job、node OOM、limit変更も調べてください。
+約36時間稼働した後に終了していることは、即時の起動失敗とは異なりますが、メモリリークを証明するものではありません。メモリの時系列データやカーネル/cgroup イベントを使い、トラフィックの急増、バッチジョブ、ノードの OOM、上限の変更も調査してください。
 
-**exit codeの読み方**:
+**exit code の読み方**:
 
-| Exit Code | Reason | 意味 | 修正 |
+| Exit Code | 理由 | 意味 | 修正方法 |
 |---|---|---|---|
-| `0` | `Completed` | processは正常終了。Deploymentではアプリがforegroundで動作し続けていないことを意味する | 長時間動作するentrypointをforegroundで実行するか、Jobに切り替える |
-| `1` | `Error` | アプリ自身が終了（config誤り、依存先への接続失敗） | stack traceを`logs --previous`で確認 |
-| `126` | `Error` | shell entrypointでcommandは見つかったが実行不可。execute bit不足、またはshellが`cannot execute binary file: Exec format error`（architecture不一致）を報告 | Dockerfileで`chmod +x`。`kubectl get nodes -L kubernetes.io/arch`でarm64/amd64を確認し、multi-arch imageを使う |
-| `127` | `Error` | shell entrypointでcommandが見つからない。pathの誤記、またはbinaryが最終image stageにcopyされていない | `command`/`args`をimage内の実ファイル（`kubectl debug ... -- ls <path>`）と照合 |
-| `137` | `OOMKilled` | OOMによる終了。container limit超過とnode memory pressureを区別 | limitを上げるかleakを修正。JVMでは`-XX:MaxRAMPercentage`を確認 → [Resource Optimization](10-resource-optimization.md) |
-| `137` | `Error` | 別の理由によるSIGKILL: liveness失敗後、containerが`terminationGracePeriodSeconds`内に終了しなかった | preStop/graceful shutdownを見直す |
-| `143` | `Error` | SIGTERMで終了（通常のrollout/evictionの可能性もある） | 繰り返す場合、Eventsから終了させた主体を調べる |
+| `0` | `Completed` | プロセスは正常終了。Deployment では、アプリがフォアグラウンドで実行され続けていないことを意味する | 長時間実行するエントリーポイントをフォアグラウンドで動かすか、Job に切り替える |
+| `1` | `Error` | アプリが自ら終了した（設定エラー、依存先への接続失敗） | スタックトレースは `logs --previous` にある |
+| `126` | `Error` | shell のエントリーポイントからコマンドは見つかったが、実行できない。実行ビットがない、または shell が `cannot execute binary file: Exec format error`（アーキテクチャ不一致）を報告している | Dockerfile で `chmod +x` を実行する。`kubectl get nodes -L kubernetes.io/arch` で arm64/amd64 を確認し、マルチアーキテクチャイメージを使う |
+| `127` | `Error` | shell のエントリーポイントでコマンドが見つからない。パスの誤記、または最終イメージのステージにバイナリがコピーされていない | `command`/`args` と、イメージ内の実際の内容を比較する（`kubectl debug ... -- ls <path>`） |
+| `137` | `OOMKilled` | OOM による終了。コンテナ上限とノードのメモリプレッシャーを区別する | 上限を引き上げるか、リークを修正する。JVM では `-XX:MaxRAMPercentage` を確認 → [リソース最適化](10-resource-optimization.md) |
+| `137` | `Error` | 別の理由による SIGKILL: liveness の失敗後、`terminationGracePeriodSeconds` 以内にコンテナが終了しなかった | preStop/グレースフルシャットダウンを確認する |
+| `143` | `Error` | SIGTERM で終了した（通常のロールアウト/エビクションの場合もある） | 繰り返し発生する場合は、Events から終了させた主体を特定する |
 
-- imageがbinaryを直接execする（間にshellがない）場合、architecture不一致でもexit 126にはなりません。containerは起動せず、`lastState.terminated`のReasonは`StartError`、messageは`exec format error`になります。対処は同じくmulti-arch image、または`kubernetes.io/arch`のnodeSelectorです。
+- イメージがバイナリを直接 exec する場合（間に shell がない場合）、アーキテクチャの不一致で exit 126 が返ることはありません。コンテナは起動せず、`lastState.terminated` には Reason `StartError` が示され、メッセージに `exec format error` と記録されます。修正方法は同じです。マルチアーキテクチャイメージを使うか、`kubernetes.io/arch` の nodeSelector を指定します。
 
-**Probe失敗**: 次のeventはliveness失敗によるrestartを示します。原因はpath/port誤りだけでなく、実際のアプリ障害、過負荷、deadlockの場合もあります。probeを緩める前にresponseとアプリケーションを調べてください。
+**Probe の失敗**: これらのイベントは、liveness の失敗によって再起動がトリガーされたことを示しています。原因はパス/ポートの誤りだけでなく、アプリケーションの実際の障害、過負荷、デッドロックの場合もあります。probe を緩和する前に、応答とアプリケーションを調べてください。
 
 ```
 Warning  Unhealthy  kubelet  Liveness probe failed: HTTP probe failed with statuscode: 503
 Normal   Killing    kubelet  Container app failed liveness probe, will be restarted
 ```
 
-- アプリの起動が遅い場合、livenessの`initialDelaySeconds`**を増やすのではなく`startupProbe`を追加します**（startup probeが成功するまでlivenessは開始されません）。
-- `Readiness probe failed: dial tcp 10.0.2.45:8080: connect: connection refused`のようなTCP拒否では、まずcontainer portとprobe portが異ならないか確認してください。
+- アプリの起動に時間がかかる場合は、liveness の `initialDelaySeconds` を大きくするのではなく、**`startupProbe`** を追加してください（startup probe が成功するまで liveness は開始されません）。
+- `Readiness probe failed: dial tcp 10.0.2.45:8080: connect: connection refused` のような TCP 接続拒否がある場合は、まずコンテナのポートと probe のポートが異なっていないかを確認してください。
 
-**Configuration referenceの誤り**: 厳密にはcrash loopではありません。Podは`CreateContainerConfigError`で停止します。
+**設定参照エラー**: 厳密には CrashLoop ではありません。Pod は `CreateContainerConfigError` で停止します。
 
 ```
 Warning  Failed  kubelet  Error: configmap "app-config" not found
 Warning  Failed  kubelet  Error: secret "db-credentials" not found
 ```
 
-`kubectl get cm,secret -n <ns>`でnameとnamespaceを照合します。referenceがvolume mountの場合は、代わりに`FailedMount` event（`MountVolume.SetUp failed for volume "cfg" : configmap "app-config" not found`）として表示されます。
+`kubectl get cm,secret -n <ns>` で名前と namespace を照合すれば原因を特定できます。参照先がボリュームマウントの場合は、代わりに `FailedMount` イベントとして表示されます（`MountVolume.SetUp failed for volume "cfg" : configmap "app-config" not found`）。
 
 <span id="4-running-but-not-ready--empty-endpoints"></span>
 
-### 4. `Running`だがReadyでない / Endpointsが空
+### 4. `Running` だが Ready でない / Endpoints が空
 
-**症状**: STATUSは`Running`でもREADYは`0/1`（sidecarがあると`1/2`）です。通常のService routingではnot-ready endpointを除外します。`publishNotReadyAddresses`、terminating endpoint、LB fail-openなどの例外は別途確認してください。proxyに応じて、clientにはerrorやtimeoutが見える場合があります。
+**症状**: STATUS は `Running` ですが READY が `0/1` です（sidecar がある場合は `1/2`）。通常の Service ルーティングでは、not-ready のエンドポイントは除外されます。publishNotReadyAddresses、終了中のエンドポイント、LB の fail-open などの例外は個別に確認してください。プロキシによっては、クライアントにエラーやタイムアウトが発生することがあります。
 
 **診断**:
 
@@ -223,7 +221,7 @@ kubectl describe pod <pod> -n <ns> | grep -E "Ready|Readiness probe"
 kubectl get endpointslices -n <ns> -l kubernetes.io/service-name=<svc>
 ```
 
-**EndpointSliceのaddressとreadinessは別です。** 一致するnot-ready Podもaddressと`ready: false`を持って表示されることがあります。ENDPOINTS欄だけからreadinessを推測せず、`ready`、`serving`、`terminating`を調べてください。
+**EndpointSlice のアドレスと readiness は別々のものです。** 一致する not-ready Pod が、アドレスと `ready: false` を持つエンドポイントとして表示されることがあります。ENDPOINTS 列から readiness を推測せず、`ready`、`serving`、`terminating` を確認してください。
 
 ```bash
 kubectl get endpointslices -n <ns> -l kubernetes.io/service-name=<svc> -o json | jq -r '
@@ -232,24 +230,24 @@ kubectl get endpointslices -n <ns> -l kubernetes.io/service-name=<svc> -o json |
 '
 ```
 
-`ready`が未設定なら状態はunknownであり、consumer側ではreadyとして扱う必要があります。`publishNotReadyAddresses: true`はreadinessによるfilteringを変更します。proxyはtermination中のserving endpointも処理できます。selectorのないServiceでは手動管理のEndpointSliceを確認します。v1 Endpoints APIはKubernetes 1.33以降deprecatedです。新しい診断にはEndpointSliceを使ってください。
+`ready` が未設定の場合は状態不明であり、コンシューマーは ready として解釈する必要があります。`publishNotReadyAddresses: true` を設定すると readiness によるフィルタリングが変わります。プロキシは終了中の serving エンドポイントを処理する場合もあります。セレクターのない Service では、手動管理の EndpointSlice を確認してください。v1 Endpoints API は Kubernetes 1.33 以降非推奨です。新しい診断には EndpointSlice を使用してください。
 
-**原因と修正**:
+**原因と修正方法**:
 
-| 観測結果 | 原因 | 修正 |
+| 観察事項 | 原因 | 修正方法 |
 |---|---|---|
-| Eventsに`Readiness probe failed`が繰り返し出る | probe path/port誤り、またはアプリが依存先（DBなど）を待っている | probeをアプリの実health endpointに向ける。依存先待ちはlivenessではなくreadinessで扱う |
-| `ReadinessGatesNotReady` reasonでCondition `Ready False` | Pod readiness gateを待機中。通常はAWS Load Balancer Controllerの`target-health.elbv2.k8s.aws/*` gate | Target Group health checkが失敗する理由を調べる → [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) |
-| `1/2` RunningでアプリcontainerだけReady | sidecar（istio-proxyなど）がReadyでない、またはアプリ後にsidecarが起動して初期connectionに失敗 | sidecar logsを確認し、injector/versionがサポートする起動順序とreadinessを確認。native-sidecar化だけではreadinessは解決しない |
-| ReadyなのにEndpointSliceが空 | Service selectorがPod labelに一致しない | → [5. Service unreachable](#5-service-is-unreachable) |
+| Events に `Readiness probe failed` が繰り返し表示される | probe のパス/ポートが誤っているか、アプリが依存先（DB など）をまだ待っている | probe をアプリの実際のヘルスエンドポイントに向ける。依存先の待機は readiness に含め、liveness には含めない |
+| reason が `ReadinessGatesNotReady` で Condition が `Ready False` | Pod readiness gate を待機中。典型例は AWS Load Balancer Controller の `target-health.elbv2.k8s.aws/*` gate | Target Group のヘルスチェックが失敗する理由を調べる → [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) |
+| Running が `1/2` で、アプリコンテナだけが Ready | sidecar（istio-proxy など）が Ready でない、または sidecar がアプリの後に起動し、初期接続に失敗した | sidecar のログを確認する。インジェクター/バージョンでサポートされる起動順序と readiness を確認する。native-sidecar への変換だけでは readiness は修正されない |
+| Ready なのに EndpointSlice が空 | Service セレクターが Pod ラベルに一致しない | → [5. Service に到達できない](#5-service-is-unreachable) |
 
 <span id="5-service-is-unreachable"></span>
 
-### 5. Serviceに到達できない
+### 5. Service に到達できない
 
-**症状**: containerは`1/1 Running`ですが、`curl http://<svc>.<ns>.svc.cluster.local`がtimeoutまたはconnection refusedになる、あるいはname resolutionに失敗します。
+**症状**: コンテナは `1/1 Running` ですが、`curl http://<svc>.<ns>.svc.cluster.local` がタイムアウトする、接続拒否を返す、または名前解決に失敗します。
 
-**診断は3層に分けます**: (a) Service → Podのmapping、(b) network policy、(c) DNS。
+**診断を3つの層に分けます**。(a) Service → Pod のマッピング、(b) ネットワークポリシー、(c) DNS。
 
 ```bash
 # (a) Compare the selector with actual labels
@@ -267,28 +265,28 @@ kubectl logs -n kube-system -l k8s-app=kube-dns --tail=50
 kubectl get cm -n kube-system coredns -o jsonpath='{.data.Corefile}'
 ```
 
-**原因と修正**:
+**原因と修正方法**:
 
-| 観測結果 | 原因 | 修正 |
+| 観察事項 | 原因 | 修正方法 |
 |---|---|---|
-| selectorが`{"app":"api"}`だがPod labelが`app=api-server` | label不一致でEndpointSliceが空 | labelとselectorを統一。Helm chartでは`selectorLabels`と`podLabels`がずれることがよくある |
-| EndpointSliceにIPがあるのに`connection refused` | `targetPort`がcontainerの実待受portと異なる | `kubectl get pod <pod> -n <ns> -o jsonpath='{.spec.containers[*].ports}'`と照合。アプリが`127.0.0.1`だけにbindする場合も同じ症状 |
-| 特定namespaceからだけ失敗 | `default-deny` NetworkPolicyがありingress allow ruleがない | `podSelector`/`namespaceSelector`を確認。VPC CNI network policyでは`kubectl get policyendpoints -n <ns>`で実際のenforcementを確認 → [Network Policies](../security/04-network-policies.md) |
-| `nslookup <svc>`が`NXDOMAIN`を返す | 別namespaceからshort nameを使った、またはCoreDNS障害 | FQDN（`<svc>.<ns>.svc.cluster.local`）を使う。CoreDNS Podが`Running`で、`/etc/resolv.conf`の`nameserver`がkube-dns ClusterIP（このclusterでは`172.20.0.10`）か確認 |
-| 外部domainの解決が遅い | defaultの`ndots:5`では、dotが5個未満のnameはabsolute nameとしてqueryする前に各search domain（`<ns>.svc.cluster.local`、`svc.cluster.local`、`cluster.local`、nodeのVPC domain）で試される | 外部nameの末尾に`.`を付けるか、nameが`ndots`、string値が`"2"`のdnsConfig.options entryを検討 |
-| NodePort/LBが一部node経由だけで動作 | そのnodeにPodがない`externalTrafficPolicy: Local` | 意図された動作。client IP保持とnode間trafficを確認した後でのみClusterを検討 |
+| セレクターが `{"app":"api"}` だが、Pod のラベルが `app=api-server` | ラベルの不一致 → EndpointSlice が空 | ラベル/セレクターを統一する。Helm Chart では `selectorLabels` と `podLabels` の食い違いがよくある原因 |
+| EndpointSlice に IP があるが `connection refused` | `targetPort` とコンテナが実際に待ち受けているポートが異なる | `kubectl get pod <pod> -n <ns> -o jsonpath='{.spec.containers[*].ports}'` と比較する。アプリが `127.0.0.1` だけに bind している場合も同じ症状になる |
+| 特定の namespace からだけ失敗する | `default-deny` NetworkPolicy が存在し、ingress の許可ルールがない | `podSelector`/`namespaceSelector` を確認する。VPC CNI のネットワークポリシーを使用している場合、`kubectl get policyendpoints -n <ns>` で実際に適用されている内容を確認できる → [ネットワークポリシー](../security/04-network-policies.md) |
+| `nslookup <svc>` が `NXDOMAIN` を返す | 別の namespace から短縮名を使用している、または CoreDNS が停止している | FQDN（`<svc>.<ns>.svc.cluster.local`）を使う。CoreDNS Pod が `Running` であること、および `/etc/resolv.conf` の `nameserver` が kube-dns ClusterIP（このクラスターでは `172.20.0.10`）であることを確認する |
+| 外部ドメインの名前解決が遅い | デフォルトの `ndots:5` では、ドットが5個未満の名前は、絶対名として問い合わせる前にすべての search domain（`<ns>.svc.cluster.local`、`svc.cluster.local`、`cluster.local`、ノードの VPC ドメイン）に対して順に試行される | 外部名の末尾に `.` を付けるか、name が ndots、string value が "2" の dnsConfig.options エントリーを検討する |
+| NodePort/LB が一部のノード経由でしか動作しない | そのノードに Pod がない状態で `externalTrafficPolicy: Local` を使用している | これは想定された動作。クライアント IP の保持とノード間トラフィックを確認したうえで、Cluster を検討する |
 
-Pod視点のDNSを再現するには、使い捨てPodを起動します: `kubectl run -it --rm dns-test --image=busybox:1.36 --restart=Never -- nslookup kubernetes.default.svc.cluster.local`。CoreDNSの概念とCorefileは[Services and Networking](../core/03-services-networking.md#coredns)を参照してください。
+Pod から見た DNS を再現するには、一時的な Pod を起動します: `kubectl run -it --rm dns-test --image=busybox:1.36 --restart=Never -- nslookup kubernetes.default.svc.cluster.local`。CoreDNS の概念と Corefile については、[Service とネットワーキング](../core/03-services-networking.md#coredns)を参照してください。
 
-宛先側ingressと送信元側egressのNetworkPolicyを両方確認します。containerPortを宣言しても待受socketは作られません。アプリlogsまたはsocket状態を調べてください。NodeLocal DNSCacheを使う場合、resolv.confのnameserverがkube-dns ClusterIP以外でも正常なことがあります。
+宛先側の ingress と送信元側の egress、両方の NetworkPolicy を確認してください。containerPort を宣言しても、リッスンソケットは作成されません。アプリログまたはソケットの状態を確認してください。NodeLocal DNSCache を使用している場合、resolv.conf が kube-dns ClusterIP 以外の nameserver を正しく使用することがあります。
 
-**Auto ModeのDNS**: [現在のAuto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)ではCoreDNSはnode system serviceとして動作します。Auto Modeのみのclusterでkube-dns Pod/Serviceがないことだけでは障害を意味しません。混在clusterでは通常node用のCoreDNS Deploymentが必要です。上記Pod/ConfigMapコマンドはDeployment型DNSを調べます。Auto Modeでは実際のPod name resolution、node DNS logs、upstream resolverへの到達性を確認してください。
+**Auto Mode の DNS:** [現在の Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html) では、CoreDNS はノードのシステムサービスとして実行されます。Auto Mode のみのクラスターでは、kube-dns Pod/Service がないことだけで障害を示すわけではありません。混在クラスターでは、通常のノードに対して CoreDNS Deployment が必要です。上記の Pod/ConfigMap コマンドは Deployment ベースの DNS を調べます。Auto Mode では、実際の Pod の名前解決、ノードの DNS ログ、上流リゾルバーへの到達性を確認してください。
 
 <span id="6-node-notready--kubelet-pressure-diskpressure-memorypressure-pidpressure"></span>
 
-### 6. Node `NotReady` / kubelet pressure（`DiskPressure`、`MemoryPressure`、`PIDPressure`）
+### 6. ノードが `NotReady` / kubelet のプレッシャー（`DiskPressure`、`MemoryPressure`、`PIDPressure`）
 
-**症状**: `kubectl get nodes`で`NotReady`になるか、nodeが`Ready`でもPodが`Evicted`になる、または新しいPodが`node(s) had untolerated taint(s)`で避けられます。
+**症状**: `kubectl get nodes` が `NotReady` を示す、またはノードは `Ready` だが Pod が `Evicted` になる、あるいは新しい Pod が `node(s) had untolerated taint(s)` によってそのノードを避ける。
 
 **診断**:
 
@@ -303,7 +301,7 @@ kubectl get node <node> -o jsonpath='{range .status.conditions[*]}{.type}{"="}{.
 kubectl get node <node> -o jsonpath='{.spec.taints}'
 ```
 
-健全なnodeの出力です（EKS Node Monitoring Agentが入っていれば`ContainerRuntimeReady`/`NetworkingReady`/`KernelReady`/`StorageReady` conditionsも表示されます）。
+正常なノードの出力（EKS Node Monitoring Agent がインストールされている場合は、`ContainerRuntimeReady`/`NetworkingReady`/`KernelReady`/`StorageReady` の各条件も表示されます）:
 
 ```
 MemoryPressure=False (KubeletHasSufficientMemory)
@@ -316,17 +314,17 @@ KernelReady=True (KernelIsReady)
 StorageReady=True (DiskIsReady)
 ```
 
-**原因と修正**:
+**原因と修正方法**:
 
-| Condition / reason | 自動taint | 原因 | 修正 |
+| Condition / reason | 自動付与される taint | 原因 | 修正方法 |
 |---|---|---|---|
-| `Ready=Unknown`（`NodeStatusUnknown`、「Kubelet stopped posting node status.」） | `node.kubernetes.io/unreachable` | kubelet process停止、instance停止/network partition、API server認証失敗 | EC2 instance stateを確認。nodeが応答するならサポートされたlog取得方法を使う。kubelet停止中はdebug Podを起動できない場合がある |
-| `Ready=False` | `node.kubernetes.io/not-ready` | container runtime停止、CNI未初期化（`aws-node`不健全） | 該当nodeのaws-nodeは`kubectl get pods -n kube-system -l k8s-app=aws-node -o wide`で確認 |
-| `DiskPressure=True`（`KubeletHasDiskPressure`） | `node.kubernetes.io/disk-pressure` | image cache/container logがroot volumeを満たした | `crictl rmi --prune`、log rotation、root EBS拡張。Podは`The node was low on resource: ephemeral-storage`で`Evicted`される |
-| `MemoryPressure=True`（`KubeletHasInsufficientMemory`） | `node.kubernetes.io/memory-pressure` | 実使用量がreservationを超過、またはsystem reservation不足。requestのないlimitは、そのlimitをrequestのdefaultにする場合がある | requestsを強制（LimitRange）し、`kube-reserved`/`system-reserved`を確認 |
-| `PIDPressure=True`（`KubeletHasInsufficientPID`） | `node.kubernetes.io/pid-pressure` | fork storm（thread leak） | 問題のPodを特定してrestartし、`podPidsLimit`を設定 |
+| `Ready=Unknown`（`NodeStatusUnknown`、「Kubelet stopped posting node status.」） | `node.kubernetes.io/unreachable` | kubelet プロセスの停止、インスタンスの停止/ネットワーク分断、API server の認証失敗 | EC2 インスタンスの状態を確認する → ノードが応答する場合はサポート対象のログアクセス方法を使う。kubelet が停止していると、デバッグ Pod を起動できないことがある |
+| `Ready=False` | `node.kubernetes.io/not-ready` | コンテナランタイムの停止、CNI の未初期化（`aws-node` の異常） | `kubectl get pods -n kube-system -l k8s-app=aws-node -o wide` で、そのノードの aws-node を確認する |
+| `DiskPressure=True`（`KubeletHasDiskPressure`） | `node.kubernetes.io/disk-pressure` | イメージキャッシュ/コンテナログでルートボリュームがいっぱいになった | `crictl rmi --prune`、ログローテーション、ルート EBS の拡張を行う。Pod は `The node was low on resource: ephemeral-storage` で `Evicted` になる |
+| `MemoryPressure=True`（`KubeletHasInsufficientMemory`） | `node.kubernetes.io/memory-pressure` | 実際の使用量が予約量を超えている、またはシステム予約が不足している。request のない limit は、その limit を request としてデフォルト設定される場合がある | request を適用する（LimitRange）。`kube-reserved`/`system-reserved` を確認する |
+| `PIDPressure=True`（`KubeletHasInsufficientPID`） | `node.kubernetes.io/pid-pressure` | fork の急増（スレッドリーク） | 問題の Pod を特定して再起動し、`podPidsLimit` を設定する |
 
-以下は特権debug Podを作成し、host shell、journalctl、crictlを使える一般的なLinux workerを前提とします。immutableなBottlerocket/EKS Auto Mode hostで同じchroot手順が使えるとは限りません。[Auto Mode troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html)にあるdebug-containerとconsole-logの手順を使ってください。
+以下は特権付きのデバッグ Pod を作成します。一般的な Linux ワーカーにホストシェル、journalctl、crictl があることを前提としています。同じ chroot 手順が、変更不可の Bottlerocket/EKS Auto Mode ホストでも使えると想定しないでください。[Auto Mode のトラブルシューティング](https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html)に記載されている debug-container とコンソールログの手順を使用してください。
 
 ```bash
 kubectl debug node/<node> -it --image=busybox --profile=sysadmin -- chroot /host
@@ -336,13 +334,13 @@ df -h /var/lib/containerd
 crictl ps -a | head
 ```
 
-`kubectl get nodes`に**一度も表示されない**node（join failure: IAM role/access entry、subnet routing、security group、AMI mismatch）は別の問題です → [EKS高度なデバッグ: Node Join Failure Diagnosis](../eks/11-eks-advanced-debugging.md#node-join-diagnosis)、[EKSトラブルシューティング: Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues)。Karpenter nodeでは[section 10](#10-eks-karpenter-does-not-launch-a-node)のNodeClaim確認から始めます。
+`kubectl get nodes` に**一度も表示されない**ノード（参加失敗: IAM ロール/access entry、サブネットルーティング、セキュリティグループ、AMI の不一致）は別のトピックです → [EKS 高度なデバッグ: ノード参加失敗の診断](../eks/11-eks-advanced-debugging.md#node-join-diagnosis)、[EKS トラブルシューティング: ノードと Pod の問題](../eks/09-eks-troubleshooting.md#node-and-pod-issues)。Karpenter ノードの場合は、まず[セクション10](#10-eks-karpenter-does-not-launch-a-node)の NodeClaim チェックから始めてください。
 
 <span id="7-pvc-stuck-in-pending"></span>
 
-### 7. PVCが`Pending`で停止
+### 7. PVC が `Pending` のまま
 
-**症状**: `kubectl get pvc`は`Pending`を示し、それを使うPodも`pod has unbound immediate PersistentVolumeClaims`で`Pending`です。
+**症状**: `kubectl get pvc` が `Pending` を示し、その PVC を使用する Pod も `pod has unbound immediate PersistentVolumeClaims` で `Pending` になる。
 
 **診断**:
 
@@ -359,36 +357,36 @@ gp2    kubernetes.io/aws-ebs   Delete          WaitForFirstConsumer   false     
 gp3    ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   76d
 ```
 
-StorageClass一覧は環境例です。Auto Modeの`ebs.csi.eks.amazonaws.com`と、別途導入する`ebs.csi.aws.com` driverを区別してください。Auto Modeで通常のebs-csi-node DaemonSetがないことだけでは障害と判断できません。明示的な`storageClassName: ""`はdefault classを使わない指定であり、field自体を省略する場合とは異なります。
+StorageClass の一覧は環境例です。Auto Mode の ebs.csi.eks.amazonaws.com と、別途インストールされた ebs.csi.aws.com ドライバーを区別してください。Auto Mode で通常の ebs-csi-node DaemonSet がないことだけで、障害を示すわけではありません。明示的に storageClassName: "" を指定するとデフォルトクラスは使われません。フィールドを省略する場合とは異なります。
 
-**原因と修正**: `describe pvc`のEvents messageが診断になります。
+**原因と修正方法**: `describe pvc` の Events メッセージが診断の手掛かりです。
 
-| Events message | 原因 | 修正 |
+| Events メッセージ | 原因 | 修正方法 |
 |---|---|---|
-| `WaitForFirstConsumer: waiting for first consumer to be created before binding` | **正常。** `volumeBindingMode: WaitForFirstConsumer`はPodがscheduleされるまでvolume作成を遅らせる | 使用PodがまだなくPendingならそのまま待つ。PodもPendingならPodの`FailedScheduling`を読む |
-| `FailedBinding: no persistent volumes available for this claim and no storage class is set` | `storageClassName`がなくdefault StorageClassもない | PVCに`storageClassName: gp3`を設定するか、SCに`storageclass.kubernetes.io/is-default-class: "true"`をannotation |
-| `ProvisioningFailed: storageclass.storage.k8s.io "<name>" not found` | StorageClassの誤記、別clusterからmanifestをcopy | `kubectl get sc`で実際のnameを確認 |
-| `ProvisioningFailed: error generating accessibility requirements: no topology key found for node <node>` | Podが配置されたnodeにEBS CSI node pluginが登録されていない（`CSINode`にdriverがない） | `kubectl get csinode <node>`のDRIVERS列を確認し、`ebs-csi-node` DaemonSetがそのnodeで実行中か確認 |
-| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | EBS CSI controllerのIRSA/Pod Identityにpermission不足 | → [8. IRSA/Pod Identity](#8-eks-irsa--pod-identity-accessdenied)（subjectは`ebs-csi-controller-sa`） |
-| Pod側の`node(s) had volume node affinity conflict` | 既存PV（EBS）がAZ `ap-northeast-2a`にあり、schedule可能なnodeは別AZ | EBSはAZをまたげません。`kubectl get pv <pv> -o jsonpath='{.spec.nodeAffinity}'`でzoneを調べ、そこにcapacityを用意（NodePool zone requirementまたはnodeSelector） |
-| Pod側の`FailedAttachVolume: Multi-Attach error for volume` | RWO volumeが前のnodeにattachされたまま（node障害後にStatefulSetが再schedule） | `kubectl get volumeattachments`でstale attachmentを調べる。nodeを失った場合はcleanupを数分待つ |
+| `WaitForFirstConsumer: waiting for first consumer to be created before binding` | **正常な状態です。** `volumeBindingMode: WaitForFirstConsumer` により、Pod がスケジュールされるまでボリュームの作成が保留される | まだ Pod が使用していないために Pending なら、そのままにする。Pod も Pending なら、Pod の `FailedScheduling` を確認する |
+| `FailedBinding: no persistent volumes available for this claim and no storage class is set` | `storageClassName` がなく、デフォルト StorageClass もない | PVC に `storageClassName: gp3` を設定するか、SC に `storageclass.kubernetes.io/is-default-class: "true"` のアノテーションを付ける |
+| `ProvisioningFailed: storageclass.storage.k8s.io "<name>" not found` | StorageClass の誤記、別のクラスターからコピーしたマニフェスト | `kubectl get sc` で実際の名前を確認する |
+| `ProvisioningFailed: error generating accessibility requirements: no topology key found for node <node>` | Pod が配置されたノードで EBS CSI node plugin が登録されていない（`CSINode` にドライバーがない） | `kubectl get csinode <node>` の DRIVERS 列を確認し、そのノードで `ebs-csi-node` DaemonSet が動作していることを確認する |
+| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | EBS CSI controller の IRSA/Pod Identity に権限がない | → [8. IRSA/Pod Identity](#8-eks-irsa--pod-identity-accessdenied)（対象は `ebs-csi-controller-sa`） |
+| Pod 側の `node(s) had volume node affinity conflict` | 既存の PV（EBS）が AZ `ap-northeast-2a` にある一方、スケジュール可能なノードが別の AZ にある | EBS は AZ をまたげない。`kubectl get pv <pv> -o jsonpath='{.spec.nodeAffinity}'` で zone を確認し、その AZ に容量を用意する（NodePool の zone 要件または nodeSelector） |
+| Pod 側の `FailedAttachVolume: Multi-Attach error for volume` | RWO ボリュームがまだ以前のノードにアタッチされている（ノード障害後に StatefulSet が再スケジュールされた） | `kubectl get volumeattachments` で古いアタッチメントを確認する。ノードが消失した場合は、クリーンアップまで数分待つ |
 
-`WaitForFirstConsumer`、StorageClass、dynamic provisioningは[Storage](../core/04-storage.md#storage-classes)、EBS/EFS CSIのerror patternは[EKS高度なデバッグ: Storage Troubleshooting](../eks/11-eks-advanced-debugging.md#6-storage-troubleshooting)を参照してください。
+`WaitForFirstConsumer`、StorageClass、動的プロビジョニングの概念については[ストレージ](../core/04-storage.md#storage-classes)、EBS/EFS CSI のエラーパターンについては[EKS 高度なデバッグ: ストレージのトラブルシューティング](../eks/11-eks-advanced-debugging.md#6-storage-troubleshooting)を参照してください。
 
 <span id="8-eks-irsa--pod-identity-accessdenied"></span>
 
-### 8. EKS: IRSA / Pod Identityの`AccessDenied`
+### 8. EKS: IRSA / Pod Identity の `AccessDenied`
 
-**症状**: Podは`Running`ですが、アプリlogsにAWS SDK errorが出ます。
+**症状**: Pod は問題なく `Running` ですが、アプリログに AWS SDK のエラーが出ます。
 
 ```
 An error occurred (AccessDenied) when calling the AssumeRoleWithWebIdentity operation:
   Not authorized to perform sts:AssumeRoleWithWebIdentity
 ```
 
-またはS3/DynamoDB callが`... is not authorized to perform: s3:GetObject`で拒否され、拒否principalがservice account roleではなく**node IAM role**（`assumed-role/<node-role>/i-0abc...`）になっています。これはSDKがnode credentialsを選んだことを示します。IMDS accessが遮断されている場合、node roleへのfallbackは利用できません。credential injection、SDK version、provider precedence、明示credentialsを確認してください。
+または、S3/DynamoDB の呼び出し自体が `... is not authorized to perform: s3:GetObject` で拒否されます。この場合、拒否された主体はサービスアカウントのロールではなく、**ノード IAM ロール**（`assumed-role/<node-role>/i-0abc...`）です。これは SDK がノードの認証情報を選択したことを示します。IMDS アクセスがブロックされている場合は、ノードロールへのフォールバックは利用できません。注入状況、SDK のバージョン、プロバイダーの優先順位、明示的な認証情報を確認してください。
 
-**診断**: まず使用中のmechanismを特定します。Podのenvironment variableから確認できます。
+**診断**: まず、どの仕組みを使っているかを特定します。Pod の環境変数で判断できます。
 
 ```bash
 # Service account annotation (IRSA)
@@ -405,11 +403,11 @@ kubectl get pod <pod> -n <ns> -o json | jq -r '
 '
 ```
 
-| 注入されたenv | Mechanism | 意味 |
+| 注入された環境変数 | 仕組み | 意味 |
 |---|---|---|
-| `AWS_ROLE_ARN=arn:aws:iam::...:role/<role>` + `AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/token` | **IRSA** | pod-identity-webhookが注入。なければSA annotationがPod作成**後**に追加されたか、SA nameが異なる |
-| `AWS_CONTAINER_CREDENTIALS_FULL_URI` + `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE` | **EKS Pod Identity** | `eks-pod-identity-agent`が`169.254.170.23`でcredentialsを提供。associationがある場合だけ注入 |
-| どちらもない | 別providerまたはcredentialsなし | 下の表を参照 |
+| `AWS_ROLE_ARN=arn:aws:iam::...:role/<role>` + `AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/token` | **IRSA** | pod-identity-webhook によって注入されたもの。存在しない場合、Pod 作成**後**に SA のアノテーションが追加されたか、SA の名前が異なる |
+| `AWS_CONTAINER_CREDENTIALS_FULL_URI` + `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE` | **EKS Pod Identity** | `eks-pod-identity-agent` が `169.254.170.23` で認証情報を提供する。関連付けが存在する場合にのみ注入される |
+| どちらもない | 別のプロバイダー、または認証情報なし | 以下の表を参照 |
 
 ```bash
 # Pod Identity: agent and association
@@ -421,24 +419,24 @@ aws eks describe-cluster --name <cluster> --query 'cluster.identity.oidc.issuer'
 aws iam get-role --role-name <role> --query 'Role.AssumeRolePolicyDocument'
 ```
 
-**原因と修正**:
+**原因と修正方法**:
 
-| 観測結果 | 原因 | 修正 |
+| 観察事項 | 原因 | 修正方法 |
 |---|---|---|
-| envがないがSA annotationはある | 作成順序、実際のserviceAccountName、またはwebhook injection設定 | 設定を確認・修正し、影響を考慮して正しいnamespaceでPodを作り直す |
-| envもassociationもない | Pod Identity associationがない、または別のSA/namespace用に作成された | `aws eks create-pod-identity-association ...`を実行し、その後Podを再起動 |
-| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | IRSA trust policy: `Federated` OIDC provider ARN誤り、または`sub`（`system:serviceaccount:<ns>:<sa>`）/`aud`（`sts.amazonaws.com`）condition不一致 | trust policyを修正。clusterを再作成してOIDC issuerが変わった場合はproviderも再作成 |
-| Pod Identityだが`AssumeRole`が拒否 | trust policy principalが`pods.eks.amazonaws.com`ではない、または`sts:TagSession`不足 | trust policyで`sts:AssumeRole`と`sts:TagSession`の両方を許可 |
-| envは正常だが特定APIだけ`AccessDenied` | identity/resource policy、SCP、boundary、sessionまたはVPC endpoint policyによる拒否 | 呼び出し元とresource、明示的Denyを確認。関連するCloudTrail data eventにはlogging設定が必要な場合がある |
-| Pod Identity envはあるがSDKが`Unable to locate credentials`と表示 | SDKが古くcontainer credential provider（`FULL_URI`）をサポートしない | SDKをupgrade。最低対応versionはEKS docsを参照 |
+| 環境変数がないが、SA のアノテーションは存在する | 作成順序、実際の serviceAccountName、または webhook の注入設定 | 設定を確認/修正し、適切な namespace で Pod を再作成する。ロールアウトの影響も考慮する |
+| 環境変数も関連付けもない | Pod Identity の関連付けが作成されていない、または別の SA/namespace に対して作成されている | `aws eks create-pod-identity-association ...` を実行し、Pod を再起動する |
+| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | IRSA の信頼ポリシー: `Federated` OIDC プロバイダー ARN が誤っている、または `sub`（`system:serviceaccount:<ns>:<sa>`）/`aud`（`sts.amazonaws.com`）条件が一致しない | 信頼ポリシーを修正する。クラスターを再作成した場合は OIDC issuer が変わるため、プロバイダーも再作成する |
+| Pod Identity で `AssumeRole` が拒否される | 信頼ポリシーの principal が `pods.eks.amazonaws.com` ではない、または `sts:TagSession` がない | 信頼ポリシーで `sts:AssumeRole` と `sts:TagSession` の両方を許可する |
+| 環境変数は正常だが、特定の API だけが `AccessDenied` | identity/resource ポリシー、SCP、境界、セッション、VPC endpoint ポリシーによる拒否 | 呼び出し元/リソースと明示的な Deny を確認する。関連する CloudTrail データイベントにはログ設定が必要な場合がある |
+| Pod Identity の環境変数が存在するが、SDK が `Unable to locate credentials` と表示する | SDK が古く、コンテナ認証情報プロバイダー（`FULL_URI`）をサポートしていない | SDK を更新する（サポートされる最低バージョンは EKS ドキュメントに記載） |
 
-IRSAとPod Identityの仕組み・設定は[EKS Security Best Practices](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts)および[EKS Security](../eks/05-eks-security.md#eks-pod-identity)、token expiryとwebhook問題は[EKS高度なデバッグ: Control Plane Debugging](../eks/11-eks-advanced-debugging.md#2-control-plane-debugging)を参照してください。
+IRSA と Pod Identity の仕組みや設定方法については[EKS セキュリティのベストプラクティス](../security/06-eks-security-best-practices.md#irsa-iam-roles-for-service-accounts)と[EKS Pod Identity](../eks/05-eks-security-pod-identity.md)、トークンの有効期限切れや webhook の問題については[EKS 高度なデバッグ: コントロールプレーンのデバッグ](../eks/11-eks-advanced-debugging.md#2-control-plane-debugging)を参照してください。
 
 <span id="9-eks-enivpc-cni-ip-exhaustion"></span>
 
-### 9. EKS: ENI/VPC CNIのIP枯渇
+### 9. EKS: ENI/VPC CNI の IP 枯渇
 
-**症状**: PodがEventsの`FailedCreatePodSandBox`とともに`ContainerCreating`で停止します:
+**症状**: Pod が `ContainerCreating` のままになり、Events に `FailedCreatePodSandBox` が表示されます。
 
 ```
 Warning  FailedCreatePodSandBox  kubelet  Failed to create pod sandbox: rpc error: code = Unknown desc =
@@ -446,7 +444,7 @@ Warning  FailedCreatePodSandBox  kubelet  Failed to create pod sandbox: rpc erro
   add cmd: failed to assign an IP address to container
 ```
 
-スケジューリング時の`Too many pods`はkubeletのPod数上限に達したことを示します。IP capacityに関係する場合はありますが、IP枯渇の証明ではありません。CNIの`FailedCreatePodSandBox`はnode割り当て後に発生します。
+スケジューリング時の `Too many pods` は kubelet の Pod 数上限に到達したことを意味します。IP 容量が関係することはありますが、IP 枯渇の証拠ではありません。CNI の `FailedCreatePodSandBox` はノード割り当て後に発生します。
 
 **診断**:
 
@@ -463,24 +461,24 @@ kubectl get ds -n kube-system aws-node -o jsonpath='{range .spec.template.spec.c
 aws ec2 describe-subnets --subnet-ids <subnet-id> --query 'Subnets[].{id:SubnetId,az:AvailabilityZone,free:AvailableIpAddressCount}' --output table
 ```
 
-IPv4 secondary-IP modeでは、未使用ENI capacityのdefault targetは`WARM_ENI_TARGET=1`です。各ENIはprimary IPも1つ消費します。m5.xlargeではENIごとにIPv4 addressが15個あり、そのうち通常のPod用secondary addressは14個です。正の`WARM_IP_TARGET`/`MINIMUM_IP_TARGET`値はwarm-ENI規則に優先します。warm=3、minimum=6の場合、使用IPが1個なら合計6個を目標にして5個を余分に確保し、使用IPが5個なら合計8個を目標にして3個を余分に確保します。余剰capacityが常にちょうど3個とは限りません。IPAM reconciliation、ENI上限、prefix割当粒度が実数に影響します。
+IPv4 のセカンダリ IP モードでは、余分な ENI 容量の目標値として `WARM_ENI_TARGET=1` がデフォルトで設定されています。各 ENI はプライマリ IP も1つ消費します。m5.xlarge では ENI ごとに IPv4 アドレスが15個あり、そのうち14個が通常の Pod に割り当てるセカンダリアドレスです。WARM_IP_TARGET/MINIMUM_IP_TARGET に正の値を設定すると、warm-ENI のルールが上書きされます。warm が3、minimum が6の場合、使用中の IP が1つなら合計6個（予備5個）が必要になることがあります。使用中の IP が5つなら、合計8個（予備3個）が目標になります。予備容量が常にちょうど3つになるわけではありません。IPAM の調整、ENI の上限、プレフィックス割り当ての粒度が実際の数に影響します。
 
-**原因と修正**:
+**原因と修正方法**:
 
-| 観測結果 | 原因 | 修正 |
+| 観察事項 | 原因 | 修正方法 |
 |---|---|---|
-| Subnetの`AvailableIpAddressCount`が一桁 | warm poolがIPを事前確保し、subnet自体が枯渇 | 上記設定のように`WARM_IP_TARGET`/`MINIMUM_IP_TARGET`でwarm poolを縮小し、**custom networking**（`ENIConfig`）でsecondary CIDR（例: 100.64.0.0/16）を追加。長期的にはIPv6も検討 |
-| node上のPod数 = allocatable Pod数 | 設定済みPod数上限。IP capacityは別途確認 | 対応version/instanceと連続した/28 block、subnet capacityを確認してから**prefix delegation**（`ENABLE_PREFIX_DELEGATION=true`）を検討し、max-podsを再計算。または大きいinstanceを使う |
-| 該当nodeの`aws-node`が`CrashLoopBackOff` | CNI自体の障害（`AmazonEKS_CNI_Policy`不足、version不一致） | `kubectl logs -n kube-system <aws-node-pod> -c aws-node`とnode上の`/var/log/aws-routed-eni/ipamd.log`を確認 |
-| Security Groups for Podsを使い`vpc.amazonaws.com/pod-eni`が不足 | Branch ENI上限 | trunk ENI対応instanceへ移行し、`ENABLE_POD_ENI=true`を確認 |
+| サブネットの `AvailableIpAddressCount` が1桁 | サブネット自体が枯渇している。warm pool が IP を先行確保している | 前述の設定例のように `WARM_IP_TARGET`/`MINIMUM_IP_TARGET` で warm pool を小さくする。**custom networking**（`ENIConfig`）でセカンダリ CIDR（例: 100.64.0.0/16）を追加し、長期的には IPv6 を使う |
+| ノード上の Pod 数 = allocatable pods | 設定された Pod 数の上限。IP 容量は別途確認する | 対応状況とサブネット容量を確認したうえで**プレフィックス委任**（`ENABLE_PREFIX_DELEGATION=true`。/28 プレフィックスを割り当てるため、対応インスタンスと連続した /28 ブロックが必要）を使い、max-pods を再計算するか、より大きなインスタンスを使う |
+| そのノードで `aws-node` が `CrashLoopBackOff` | CNI 自体の障害（`AmazonEKS_CNI_Policy` の欠落、バージョン不一致） | `kubectl logs -n kube-system <aws-node-pod> -c aws-node` を実行し、ノード上の `/var/log/aws-routed-eni/ipamd.log` を確認する |
+| Security Groups for Pods を使用していて `vpc.amazonaws.com/pod-eni` が不足 | Branch ENI の上限 | trunk ENI に対応するインスタンスに移行し、`ENABLE_POD_ENI=true` を確認する |
 
-IPAM動作（warm pool、prefix delegation、custom networking）は[VPC CNI: IP Address Management](../networking/01-vpc-cni.md#ip-address-management)、段階的なIP枯渇対処は[EKS高度なデバッグ: Networking Diagnostics](../eks/11-eks-advanced-debugging.md#5-networking-diagnostics)と[EKSトラブルシューティング: VPC CNI Issues](../eks/09-eks-troubleshooting.md#networking-issues)を参照してください。
+IPAM の動作（warm pool、プレフィックス委任、custom networking）については[VPC CNI: IP アドレス管理](../networking/01-vpc-cni.md#ip-address-management)、IP 枯渇への対処手順については[EKS 高度なデバッグ: ネットワーク診断](../eks/11-eks-advanced-debugging.md#5-networking-diagnostics)と[EKS トラブルシューティング: VPC CNI の問題](../eks/09-eks-troubleshooting.md#networking-issues)を参照してください。
 
 <span id="10-eks-karpenter-does-not-launch-a-node"></span>
 
-### 10. EKS: Karpenterがnodeを起動しない
+### 10. EKS: Karpenter がノードを起動しない
 
-**症状**: Podが`Pending`で、新しいNodeClaimが`kubectl get nodeclaims`に現れません。default schedulerの`FailedScheduling`とは**別に**、Karpenterも同じPodに自身の理由をeventとして記録します。
+**症状**: Pod が `Pending` で、`kubectl get nodeclaims` に新しい NodeClaim が表示されません。デフォルトの scheduler が出す `FailedScheduling` とは**別に**、Karpenter は同じ Pod に対して独自の理由を Events として記録します。
 
 **診断**:
 
@@ -497,7 +495,7 @@ kubectl get nodeclaims -o custom-columns='NAME:.metadata.name,TYPE:.metadata.lab
 kubectl logs -n kube-system -l app.kubernetes.io/name=karpenter --tail=100
 ```
 
-元の文書に記録された、拒否されたNodePoolを列挙するKarpenter event:
+元のドキュメントに記録された Karpenter イベント。拒否された NodePool が列挙されています。
 
 ```
 FailedScheduling  karpenter  Failed to schedule pod, incompatible with nodepool "system",
@@ -509,35 +507,35 @@ FailedScheduling  karpenter  Failed to schedule pod, incompatible with nodepool 
   node.kubernetes.io/instance-type In [g6e.4xlarge] not in node.kubernetes.io/instance-type In [g6.2xlarge g6.4xlarge g6.xlarge]
 ```
 
-記録例ではCPU_LIMITが8、CPU_USEDが8ですが、`exceed limits`は現使用量が上限と同じ場合に限りません。候補instanceのすべてが残りheadroomを超えれば、上限未満でも発生します。`Nominated`はscheduler上のnominationであり、完了を意味しません。NodeClaimのLaunched、Registered、Initialized、Readyと、実際のPod割り当てを確認してください。
+記録された例では CPU_LIMIT が8、CPU_USED が8ですが、`exceed limits` が発生するのに現在の使用量が上限と等しい必要はありません。候補となるインスタンスがすべて残りの余裕を超える場合は、上限に達していなくても発生します。`Nominated` はスケジューリング上の指名であり、完了を意味しません。NodeClaim の Launched、Registered、Initialized、Ready と、実際の Pod 割り当てを確認してください。
 
-**原因と修正**:
+**原因と修正方法**:
 
-| メッセージ断片 | 原因 | 修正 |
+| メッセージの一部 | 原因 | 修正方法 |
 |---|---|---|
-| `all available instance types exceed limits for nodepool "<np>"` | 候補instanceを追加するとNodePool limitsを超える | limitを上げるか、consolidationがidle nodeを回収できているか確認 |
-| `label "<key>" does not have known values` | 要求されたcustom labelの値がNodePool template label/requirementsで供給されない | NodePoolの`spec.template.spec.requirements`に値の一覧とともにkeyを追加 |
-| `did not tolerate <key>=<value>:NoSchedule` | NodePool `taints`に対するtolerationがない | isolationが意図的なら別NodePoolを使い、それ以外はtolerationを追加 |
-| `key node.kubernetes.io/instance-type, ... In [X] not in ... In [Y Z]` | PodがNodePoolで許可されていないinstance typeを要求 | どちらかを揃える。通常、Pod側のrequirementが狭すぎる |
-| 大きな`daemonset overhead={...}`と`Insufficient` | DaemonSet reservationを差し引いた後のcapacity不足 | requirementsに大きいinstanceを含める |
-| NodeClaim `LAUNCHED=True, REGISTERED=False`が数分続く | EC2は起動したがnodeが参加できない（EC2NodeClassのsubnet/SG selector、node IAM role access entry、AMI） | `kubectl describe nodeclaim <name>`のConditions/EventsとEC2 console system logを確認 |
-| Karpenter logに`InsufficientInstanceCapacity` | そのAZ/instance typeでEC2 capacity不足（ICE: Insufficient Capacity Error） | instance type、AZ、capacity-type（spot/on-demand）を広げる |
-| eventがなくKarpenter logも静か | PodがKarpenter候補でない（`nodeSelector`がMNG labelを指定、またはKarpenterと無関係なschedule制約） | Pod specのnode関連制約をすべて再確認 |
+| `all available instance types exceed limits for nodepool "<np>"` | 候補インスタンスを追加すると NodePool の上限を超える | 上限を引き上げるか、consolidation によってアイドル状態のノードが解放されているかを確認する |
+| `label "<key>" does not have known values` | 要求されたカスタムラベルに対し、NodePool のテンプレートラベル/requirements で値が指定されていない | NodePool の `spec.template.spec.requirements` に、キーと値のリストを追加する |
+| `did not tolerate <key>=<value>:NoSchedule` | NodePool の `taints` に対する toleration がない | 隔離が意図したものであれば別の NodePool を使う。そうでなければ toleration を追加する |
+| `key node.kubernetes.io/instance-type, ... In [X] not in ... In [Y Z]` | Pod が NodePool で許可されていないインスタンスタイプを要求している | いずれか一方を調整する。通常は Pod 側の要件が狭すぎる |
+| `daemonset overhead={...}` が大きく `Insufficient` | DaemonSet の予約分を差し引いた後に容量が不足 | requirements により大きなインスタンスを含める |
+| NodeClaim が数分間 `LAUNCHED=True, REGISTERED=False` | EC2 は起動したが、ノードがクラスターに参加できない（EC2NodeClass の subnet/SG セレクター、ノード IAM ロールの access entry、AMI） | `kubectl describe nodeclaim <name>` の Conditions/Events と、EC2 コンソールのシステムログを確認する |
+| Karpenter のログに `InsufficientInstanceCapacity` | その AZ/インスタンスタイプに EC2 容量がない（ICE: Insufficient Capacity Error） | インスタンスタイプ、AZ、capacity-type（spot/on-demand）の範囲を広げる |
+| イベントがなく、Karpenter のログも静か | Pod が Karpenter の対象ではない（nodeSelector が MNG のラベルを指している、またはスケジューリング制約が Karpenter と無関係） | Pod spec のノード関連制約をすべて再確認する |
 
-NodePool/EC2NodeClassの構造と詳細なtroubleshootingは[Karpenter: Troubleshooting](../autoscaling/02-karpenter.md#troubleshooting)と[EKS高度なデバッグ: Karpenter Provisioning Issues](../eks/11-eks-advanced-debugging.md#karpenter-provisioning-issues)を参照してください。
+NodePool/EC2NodeClass の構造と詳しいトラブルシューティングについては、[Karpenter: トラブルシューティング](../autoscaling/02-karpenter.md#troubleshooting)と[EKS 高度なデバッグ: Karpenter のプロビジョニング問題](../eks/11-eks-advanced-debugging.md#karpenter-provisioning-issues)を参照してください。
 
 <span id="11-no-service-can-be-created-failed-calling-webhook"></span>
 
-### 11. Serviceを作成できない: failed calling webhook
+### 11. Service を作成できない: webhook の呼び出しに失敗
 
-**症状**: load balancerと無関係なnamespaceも含め、どのnamespaceからのService `kubectl apply`/`create`もAPI serverに拒否されます。Serviceを含むDeployment、Helm install、ArgoCD syncはその箇所で止まります。一方で**既存Serviceは動作し続ける**ため、Pod側には異常が見えません。
+**症状**: どの namespace でも、ロードバランサーに関係のない namespace を含めて、Service に対する `kubectl apply`/`create` が API server に拒否されます。Service を含む Deployment のデプロイ、Helm のインストール、ArgoCD の同期はそこで停止しますが、**既存の Service は引き続き動作する**ため、Pod レベルでは異常が見えません。
 
 ```
 Internal error occurred: failed calling webhook "mservice.elbv2.k8s.aws": failed to call webhook:
   ... no endpoints available for service "aws-load-balancer-webhook-service"
 ```
 
-**診断**: error messageはwebhookと、その背後にあるServiceを示しています。webhook configuration → webhook Serviceのendpoint → その背後のDeploymentの順に追ってください。
+**診断**: メッセージには webhook とその背後にある Service がすでに示されています。webhook configuration → webhook Service のエンドポイント → その背後にある Deployment の順に調べます。
 
 ```bash
 # (1) Which webhooks are registered, and what each does on failure (rules, namespaceSelector, objectSelector, failurePolicy)
@@ -552,7 +550,7 @@ kubectl -n kube-system get pods -l app.kubernetes.io/name=aws-load-balancer-cont
 kubectl -n kube-system logs deploy/aws-load-balancer-controller --previous
 ```
 
-元の文書には2026年9月2日のLBC v3.2.1の繰り返しrestartと下記logが記録されています。このレビューでは、過去のrestart回数や継続時間を独立検証していません。実行可能な根拠は、導入済みCRDとcontrollerが要求するAPI versionの不一致です。
+元のドキュメントには、2026年9月2日に LBC v3.2.1 が繰り返し再起動し、以下のログが記録されています。このレビューでは、過去の再起動回数や期間を独自に検証していないため、再現された結果としては示していません。対応に役立つ根拠は、インストール済み CRD と、controller が要求する API バージョンとの不一致です。
 
 ```
 {"ts":"2026-09-02T07:54:42Z","logger":"setup","msg":"Disabling NLBGatewayAPI: missing required Gateway API CRDs","missing":["TLSRoute","TCPRoute","UDPRoute"]}
@@ -560,20 +558,20 @@ kubectl -n kube-system logs deploy/aws-load-balancer-controller --previous
 {"ts":"2026-09-02T07:57:00Z","level":"error","logger":"setup","msg":"problem running manager","error":"failed to wait for gateway.k8s.aws/alb caches to sync kind source: *v1.ListenerSet: timed out waiting for cache to be synced for Kind *v1.ListenerSet"}
 ```
 
-このlogは`ListenerSet.gateway.networking.k8s.io/v1`が見つからず、cache同期が失敗していることを示します。**Gateway API 1.5.0のstandard channelにはListenerSetが含まれます。** version要件、standard CRD、LBC固有CRDを[LBC v3.2.1 guide](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.2.1/docs/guide/gateway/gateway.md)で確認してください。TCPRoute/UDPRouteなど追加APIが必要ならexperimental導入要件を確認します。影響は実際のwebhook rule、selector、failurePolicyによって異なります。target更新や新規resourceのreconcileが損なわれても、既存LBのdata pathは継続する場合があります。
+これらのログは、ListenerSet.gateway.networking.k8s.io/v1 が見つからず、キャッシュ同期に失敗していることを示します。**Gateway API 1.5.0 では、standard channel に ListenerSet が含まれています。** バージョン要件、standard CRD、LBC 固有の CRD を[LBC v3.2.1 ガイド](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.2.1/docs/guide/gateway/gateway.md)で確認してください。TCPRoute/UDPRoute などの追加 API が必要な場合は、experimental のインストール要件も確認してください。影響範囲は実際の webhook ルール、セレクター、failurePolicy によって異なります。ターゲットの更新や新しいリソースの調整が妨げられている間も、既存の LB データパスは動作し続ける場合があります。
 
-**原因と修正**:
+**原因と修正方法**:
 
-| 観測結果 | 原因 | 修正 |
+| 観察事項 | 原因 | 修正方法 |
 |---|---|---|
-| `no endpoints available for service "aws-load-balancer-webhook-service"` | webhook DeploymentにReady Podがない（CrashLoop、schedule不可、replica 0） | **まずcontrollerを正常化**（次の行）。EndpointSliceのaddressとready conditionを確認し、実際のwebhook requestを試す |
-| logに`no matches for kind "ListenerSet"` → `timed out waiting for cache to be synced` | controller versionが必要とするGateway API CRDがない | (a) controller versionが必要とするGateway API CRDを導入（ListenerSetはGateway API 1.5.0のstandard channelに含まれる）、(b) CRD導入までHelm feature-gate valueでGateway API機能を無効化（正確なgate名はそのversionの`values.yaml`で確認）、(c) 導入済みCRDに合うcontroller versionをpin |
-| endpointはあるが`connection refused` / `context deadline exceeded` / `x509` | webhook portへの経路が遮断（NetworkPolicy/security group）、証明書期限切れまたは不一致 | API server → Pod webhook portの経路、`clientConfig.caBundle`、証明書更新を確認 |
-| 今すぐServiceを作る必要がある | — | **影響範囲を理解した緊急措置としてのみ**: `mservice.elbv2.k8s.aws`の`failurePolicy`を`Ignore`へpatch。この間に作成したServiceにはcontrollerのmutation（default `loadBalancerClass`の注入）が行われません。**復旧後に`Fail`へ戻し**、その間に作成されたServiceをレビューしてください |
+| `no endpoints available for service "aws-load-balancer-webhook-service"` | webhook Deployment の Ready Pod が0個（CrashLoop、スケジュール不能、replicas が0） | まず**controller を正常な状態にする**（次の行を参照）。EndpointSlice のアドレスと ready 条件を確認し、実際の webhook リクエストをテストする |
+| ログに `no matches for kind "ListenerSet"` → `timed out waiting for cache to be synced` がある | この controller バージョンが必要とする Gateway API CRD がインストールされていない | (a) controller バージョンが必要とする Gateway API CRD をインストールする（ListenerSet は Gateway API 1.5.0 の standard channel に含まれる）、(b) CRD が揃うまで Helm の feature-gate 値で controller の Gateway API 機能を無効にする（そのバージョンの `values.yaml` で正確な gate 名を確認する）、(c) インストール済み CRD に合った controller バージョンを固定する |
+| エンドポイントは存在するが `connection refused` / `context deadline exceeded` / `x509` が発生する | webhook ポートへの経路が遮断されている（NetworkPolicy/セキュリティグループ）、証明書が期限切れまたは不一致 | API server → Pod の webhook ポートへの経路、`clientConfig.caBundle`、証明書の更新を確認する |
+| どうしても今すぐ Service を作成する必要がある | - | **影響範囲を理解したうえでの、意図的な緊急措置としてのみ**: `mservice.elbv2.k8s.aws` の `failurePolicy` を `Ignore` に変更する。その間に作成した Service には controller の mutation が適用されない（デフォルトの `loadBalancerClass` が注入されない）。復旧後は **`Fail` に戻し**、その間に作成した Service を確認する |
 
-やってはいけないこと: `objectSelector`を回避するためServiceに`app.kubernetes.io/name=aws-load-balancer-controller` labelを付けないでください。webhookは通過しますが、そのServiceにはmutationが適用されず、labelも実態と異なります。このselectorはcontroller自身のServiceを作成できるようにするためだけのものです。
+してはいけないこと: `objectSelector` を回避するため、Service に `app.kubernetes.io/name=aws-load-balancer-controller` のラベルを付けることです。webhook を通過しますが、その Service には**mutation が適用されず**、ラベルも実態を表さなくなります。このセレクターは、controller 自身の Service を作成できるようにするためだけのものです。
 
-未使用のGateway API機能を一時停止する場合、既存設定とマージしたv3.2.1 chart valueを用意してHelm diffをレビューしてください。まず既存Gateway resourceがそれらのcontrollerに依存するか確認します。
+未使用の Gateway API 機能を一時的に無効にする場合は、以下の v3.2.1 の chart 値を既存の設定にマージし、Helm の差分を確認してください。まず、既存の Gateway リソースがこれらの controller に依存していないか確認します。
 
 ```yaml
 controllerConfig:
@@ -582,7 +580,7 @@ controllerConfig:
     NLBGatewayAPI: false
 ```
 
-**予防**: webhook Deploymentのavailable replica数とCrashLoop状態を監視してください。例として、kube-state-metricsの次のexpressionに5分のholdを設定します。
+**予防策**: webhook Deployment の利用可能な replica 数と CrashLoop 状態に対してアラートを設定します。たとえば、次の kube-state-metrics 式に5分間の保留時間を設定します。
 
 ```promql
 kube_deployment_status_replicas_available{
@@ -590,17 +588,15 @@ kube_deployment_status_replicas_available{
 } < 1
 ```
 
-metricがない場合、このexpressionもseriesを返しません。別途`absent_over_time(...[5m])`またはscrape失敗を監視します。DeploymentのavailableはService selector、証明書、network pathの正常性を保証しません。EndpointSlice conditionとwebhook経路も確認してください。replicaをAZに分散しPDBを使うとnode障害には役立ちますが、全replica共通の設定誤りは防げません。
+メトリクスが存在しない場合、この式も時系列を返しません。`absent_over_time(...[5m])` または scrape 失敗の監視も別途追加してください。Deployment が利用可能であっても、Service のセレクター、証明書、ネットワーク経路が正しいとは限りません。EndpointSlice の条件と webhook への経路も確認してください。replica を AZ 間に分散し、PDB を設定すればノード障害には役立ちますが、すべての replica に共通する設定エラーには対処できません。
 
-元の[Pod Network Benchmark](../networking/06-pod-network-benchmark.md)ではClusterIP測定を除外しています。これは記録済みbenchmarkの制約のままです。このレビューではincidentを再現していません。
+元の[Pod ネットワークベンチマーク](../networking/06-pod-network-benchmark.md)では、ClusterIP の測定を除外したことが説明されています。これは記録されたベンチマークの制約として引き続き当てはまります。このレビューではインシデントを再現していません。
 
 ***
 
-<span id="kubectl-diagnostic-cheat-sheet"></span>
+## kubectl 診断チートシート
 
-## kubectl診断チートシート
-
-resourceの確認とdebug actionを分けてください。get/describe/logs/topはresourceを調べますが、kubectl debugとkubectl runはcontainerまたはPodを作成します。debug Podのlabelが誤ってService selectorに一致しないようにし、使用後はdebug Podを削除してください。ephemeral containerは元のPodに記録されたままです。
+リソースの確認とデバッグ操作は区別してください。get/describe/logs/top はリソースを調べるコマンドです。kubectl debug と kubectl run はコンテナまたは Pod を作成します。コピーされたデバッグ Pod のラベルが誤って Service セレクターに一致しないようにし、使用後はデバッグ Pod を削除してください。Ephemeral container は元の Pod に記録されたままになります。
 
 ```bash
 # ── Status scan ────────────────────────────────────────────────────────
@@ -664,54 +660,50 @@ kubectl rollout status deploy/<name> -n <ns>
 kubectl rollout history deploy/<name> -n <ns>
 ```
 
-`kubectl debug`で有効な`--profile`値は`legacy`、`general`、`baseline`、`restricted`、`netadmin`、`sysadmin`です（defaultはkubectl versionにより`legacy`または`general`。`kubectl debug --help`を確認）。restricted policy下では互換性のあるimage/security contextと`--profile=restricted`を使いますが、他のadmission policyで拒否される場合もあります。特権node debugには別途認可が必要です。
+`kubectl debug` の有効な `--profile` 値は `legacy`、`general`、`baseline`、`restricted`、`netadmin`、`sysadmin` です（デフォルトは kubectl のバージョンにより `legacy` または `general`。`kubectl debug --help` で確認してください）。制限付きポリシーでは、`--profile=restricted` と互換性のあるイメージ/セキュリティコンテキストを使用してください。それ以外の admission policy によって拒否される場合もあります。特権付きノードデバッグには別途認可が必要です。
 
 ***
 
-<span id="going-deeper-related-documents"></span>
+## さらに詳しく: 関連ドキュメント
 
-## さらに調べる: 関連ドキュメント
+このプレイブックは「次にどこを見るか」を判断する入口です。原因を絞り込んだら、以下のドキュメントに進んでください。
 
-このプレイブックは「次にどこへ進むか」を決める入口です。原因を絞り込んだら、以下のドキュメントへ進んでください。
-
-| 絞り込んだ領域 | 概念ドキュメント | 詳細なtroubleshooting |
+| 絞り込まれた領域 | 概念ドキュメント | 詳細なトラブルシューティング |
 |---|---|---|
-| Pod lifecycle、probe、restart policy | [Pods and Workloads](../core/02-pods-and-workloads.md#pod-lifecycle) | [EKS高度なデバッグ: Workload Debugging](../eks/11-eks-advanced-debugging.md#4-workload-debugging) |
-| Service、EndpointSlice、CoreDNS、NetworkPolicy | [Services and Networking](../core/03-services-networking.md)、[Network Policies](../security/04-network-policies.md) | [EKSトラブルシューティング: Networking Issues](../eks/09-eks-troubleshooting.md#networking-issues) |
-| PV/PVC/StorageClass、EBS CSI | [Storage](../core/04-storage.md) | [EKSトラブルシューティング: Storage Issues](../eks/09-eks-troubleshooting.md#storage-issues) |
-| Node参加、kubelet、resource pressure | [Cluster Architecture](../core/01-cluster-architecture.md) | [EKSトラブルシューティング: Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues) |
-| Karpenter NodePool/NodeClaim | [Karpenter](../autoscaling/02-karpenter.md) | [Scaling Strategies](06-scaling-strategies.md) |
-| VPC CNI IPAM、prefix delegation、custom networking | [VPC CNI](../networking/01-vpc-cni.md) | [EKS Networking Part 3: Troubleshooting](../eks/03-eks-networking-part3.md) |
-| IRSA、Pod Identity、RBAC | [EKS Security Best Practices](../security/06-eks-security-best-practices.md)、[Kubernetes Authentication and Authorization](../security/02-kubernetes-auth-authz.md) | [EKSトラブルシューティング: IAM and Authentication Issues](../eks/09-eks-troubleshooting.md#iam-and-authentication-issues) |
-| logの場所と調べ方 | [Logging Overview](../observability/logging/README.md) | [Observability Analysis](08-observability-analysis.md) |
-| requests/limits、OOM、JVM memory | [Resource Optimization](10-resource-optimization.md) | [EKSトラブルシューティング: Performance Issues](../eks/09-eks-troubleshooting.md#performance-issues) |
-| Incident responseの流れ、severity、最初の5分のchecklist | — | [EKS高度なデバッグ: Incident Response Framework](../eks/11-eks-advanced-debugging.md#1-incident-response-framework) |
+| Pod のライフサイクル、probe、restart policy | [Pod とワークロード](../core/02-pods-and-workloads.md#pod-lifecycle) | [EKS 高度なデバッグ: ワークロードのデバッグ](../eks/11-eks-advanced-debugging.md#4-workload-debugging) |
+| Service、EndpointSlice、CoreDNS、NetworkPolicy | [Service とネットワーキング](../core/03-services-networking.md)、[ネットワークポリシー](../security/04-network-policies.md) | [EKS トラブルシューティング: ネットワークの問題](../eks/09-eks-troubleshooting.md#networking-issues) |
+| PV/PVC/StorageClass、EBS CSI | [ストレージ](../core/04-storage.md) | [EKS トラブルシューティング: ストレージの問題](../eks/09-eks-troubleshooting.md#storage-issues) |
+| ノード参加、kubelet、リソースプレッシャー | [クラスターアーキテクチャ](../core/01-cluster-architecture.md) | [EKS トラブルシューティング: ノードと Pod の問題](../eks/09-eks-troubleshooting.md#node-and-pod-issues) |
+| Karpenter NodePool/NodeClaim | [Karpenter](../autoscaling/02-karpenter.md) | [スケーリング戦略](06-scaling-strategies.md) |
+| VPC CNI IPAM、プレフィックス委任、custom networking | [VPC CNI](../networking/01-vpc-cni.md) | [EKS ネットワーキング第3部: トラブルシューティング](../eks/03-eks-networking-part3.md) |
+| IRSA、Pod Identity、RBAC | [EKS セキュリティのベストプラクティス](../security/06-eks-security-best-practices.md)、[Kubernetes 認証と認可](../security/02-kubernetes-auth-authz.md) | [EKS トラブルシューティング: IAM と認証の問題](../eks/09-eks-troubleshooting.md#iam-and-authentication-issues) |
+| ログの場所と探し方 | [ロギングの概要](../observability/logging/README.md) | [オブザーバビリティ分析](08-observability-analysis.md) |
+| requests/limits、OOM、JVM メモリ | [リソース最適化](10-resource-optimization.md) | [EKS トラブルシューティング: パフォーマンスの問題](../eks/09-eks-troubleshooting.md#performance-issues) |
+| インシデント対応プロセス、重大度、最初の5分間のチェックリスト | - | [EKS 高度なデバッグ: インシデント対応フレームワーク](../eks/11-eks-advanced-debugging.md#1-incident-response-framework) |
 
 ***
-
-<span id="references"></span>
 
 ## 参考資料
 
-このページの引用文字列と経験則を裏付ける公式資料です。
+このページで引用した文字列と経験則の根拠となる公式ドキュメントです。
 
 **Kubernetes**
 
-- [Taints and Tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/): node controllerが自動追加する`node.kubernetes.io/*` taint（section 6）
-- [Debugging Kubernetes Nodes with kubectl](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/)と[`kubectl debug` reference](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_debug/): node debug Podと`--profile`値（sections 2、6、cheat sheet）
-- [Debug Running Pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/): ephemeral container、`--copy-to`、`--target`（cheat sheet）
-- [EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/): `v1 Endpoints`が1.33以降deprecatedである理由（section 4）
-- [Debug Services](https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/)と[Debugging DNS Resolution](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/): selector/port/DNSの確認と`ndots`（section 5）
+- [Taints と Tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/): node controller が自動的に追加する `node.kubernetes.io/*` taint（セクション6）
+- [kubectl を使用した Kubernetes ノードのデバッグ](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/)と[`kubectl debug` リファレンス](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_debug/): ノードの debug Pod と `--profile` の値（セクション2、6、チートシート）
+- [実行中の Pod のデバッグ](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/): Ephemeral container、`--copy-to`、`--target`（チートシート）
+- [EndpointSlice](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/): `v1 Endpoints` が1.33以降非推奨である理由（セクション4）
+- [Service のデバッグ](https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/)と[DNS 名前解決のデバッグ](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/): セレクター/ポート/DNS の確認と `ndots`（セクション5）
 
 **Amazon EKS / AWS**
 
-- [Amazon VPC CNI plugin README](https://github.com/aws/amazon-vpc-cni-k8s/blob/master/README.md): `WARM_ENI_TARGET`、`WARM_IP_TARGET`、`MINIMUM_IP_TARGET`、`ENABLE_PREFIX_DELEGATION`の意味と優先順位（section 9）
-- [Assign more IP addresses to Amazon EKS nodes with prefixes](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html): prefix delegationとmax-pods再計算（section 9）
-- [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)と[IAM roles for service accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html): trust policyの形式と注入される環境変数（section 8）
-- [Detect node health issues and enable automatic node repair](https://docs.aws.amazon.com/eks/latest/userguide/node-health.html): section 6に示すNode Monitoring Agent condition
-- [Troubleshoot problems with Amazon EKS clusters and nodes](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html): node参加失敗、`AccessDenied`、CNI error
-- [Karpenter: Troubleshooting](https://karpenter.sh/docs/troubleshooting/): NodePool limit、requirement不一致、NodeClaimの起動／登録失敗（section 10）
+- [Amazon VPC CNI plugin README](https://github.com/aws/amazon-vpc-cni-k8s/blob/master/README.md): `WARM_ENI_TARGET`、`WARM_IP_TARGET`、`MINIMUM_IP_TARGET`、`ENABLE_PREFIX_DELEGATION` の動作と優先順位（セクション9）
+- [プレフィックスを使用して Amazon EKS ノードにより多くの IP アドレスを割り当てる](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html): プレフィックス委任と max-pods の再計算（セクション9）
+- [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)と[サービスアカウントの IAM ロール](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html): 信頼ポリシーの形式と注入される環境変数（セクション8）
+- [ノードのヘルス問題を検出し、自動ノード修復を有効にする](https://docs.aws.amazon.com/eks/latest/userguide/node-health.html): セクション6で示す Node Monitoring Agent の条件
+- [Amazon EKS クラスターとノードの問題をトラブルシューティングする](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html): ノード参加失敗、`AccessDenied`、CNI エラー
+- [Karpenter: トラブルシューティング](https://karpenter.sh/docs/troubleshooting/): NodePool の上限、要件の不一致、NodeClaim の起動/登録失敗（セクション10）
 
 ***
 
-< [前へ: Zonal Cluster Operations](15-zonal-operations-guide.md) | [目次](./README.md) >
+< [前へ: ゾーンクラスターの運用](15-zonal-operations-guide.md) | [目次](./README.md) >
