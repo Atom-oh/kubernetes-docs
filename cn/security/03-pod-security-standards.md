@@ -22,7 +22,7 @@ PSS 定义策略；PSA 是应用这些策略的内置准入实现。除非另有
 
 ---
 
-## 从 PSP 到 PSS 的演进
+## 从 PSP 到 PSS 的演进 {#evolution-from-psp-to-pss}
 
 ### PodSecurityPolicy（PSP）的历史
 
@@ -65,7 +65,7 @@ Pod 安全标准（PSS）和 Pod Security Admission（PSA）在 Kubernetes 1.22 
 
 ---
 
-## Pod Security Admission（PSA）控制器
+## Pod Security Admission（PSA）控制器 {#pod-security-admission-psa-controller}
 
 ### PSA 架构
 
@@ -97,7 +97,7 @@ kubectl --context "$PSS_CONTEXT" get --raw /metrics
 
 ---
 
-## 安全级别
+## 安全级别 {#security-levels}
 
 PSS 定义了三个安全级别（配置文件）。每个级别都会逐步施加更严格的安全约束。
 
@@ -269,7 +269,7 @@ spec:
 
 ---
 
-## 强制执行模式
+## 强制执行模式 {#enforcement-modes}
 
 PSA 提供三种强制执行模式。这些模式可以单独使用，也可以组合使用。
 
@@ -421,7 +421,7 @@ metadata:
 
 ---
 
-## 命名空间级配置
+## 命名空间级配置 {#namespace-level-configuration}
 
 ### 基本标签配置
 
@@ -513,7 +513,7 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 ---
 
-## 从 PSP 迁移到 PSS
+## 从 PSP 迁移到 PSS {#migration-from-psp-to-pss}
 
 ### 迁移概述
 
@@ -701,7 +701,7 @@ subprocess.run(base + [
 
 ---
 
-## EKS 默认设置与配置
+## EKS 默认设置与配置 {#eks-defaults-and-configuration}
 
 ### EKS 中的 PSA 默认设置
 
@@ -782,7 +782,7 @@ resource "kubernetes_namespace_v1" "app" {
 
 ---
 
-## 安全配置文件详情
+## 安全配置文件详情 {#security-profile-details}
 
 ### Privileged 配置文件详情
 
@@ -1013,7 +1013,7 @@ data:
 
 ---
 
-## 例外配置
+## 例外配置 {#exemptions-configuration}
 
 ### 集群级例外配置
 
@@ -1080,7 +1080,7 @@ Kyverno 无法将 PSA 拒绝的请求转换为允许。如果主机代理需要�
 
 ---
 
-## 逐步采用的最佳实践
+## 逐步采用的最佳实践 {#best-practices-for-gradual-adoption}
 
 ### 步骤 1：分析当前状态
 

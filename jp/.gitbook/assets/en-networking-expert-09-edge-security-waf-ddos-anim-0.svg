@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-labelledby="t d" font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', 'Segoe UI', sans-serif">
+<title id="t">Edge security: Shield absorbs, WAF filters, the origin stays private</title><desc id="d">A botnet sends an L3/L4 flood (UDP reflection, SYN flood) at the CloudFront edge. Shield mitigations at the edge pass only traffic that is valid for web applications, so the flood is absorbed there and does not reach the origin. Next, a bot floods /login with well-formed HTTPS requests. They pass the L3/L4 layer, but a rate-based rule in the WAF web ACL (example name rate-login) matches, and the request is blocked with 403. Finally, a legitimate GET passes Shield; no WAF rule terminates its evaluation, so the web ACL default action (Allow) applies. CloudFront reaches the origin through a VPC origin: a service-managed ENI in a private subnet (for example 10.0.11.25) connects to an internal ALB (10.0.12.40) whose security group admits only CloudFront-VPCOrigins-Service-SG. The ALB, created from an Ingress with scheme internal, forwards to a Pod IP target (10.0.13.31); the Pod's NetworkPolicy admits only the ALB subnet, and the response is 200. There is no internet-facing load balancer and no inbound rule that admits a public CIDR.</desc>
+<style>
+  svg{--paper:#f7f1e3;--ink:#2b2724;--soft:#8a8177;--accent:#d9480f;--blue:#1864ab;--wash:#efe5cf}
+  @media (prefers-color-scheme:dark){svg{--paper:#1e2240;--ink:#ece6d6;--soft:#9aa0bd;--accent:#ff8b5e;--blue:#8cc8ff;--wash:#272c52}}
+  .paper{fill:var(--paper)} .wash{fill:var(--wash)}
+  .ink{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:var(--ink);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+  .cable{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-linecap:round}
+  .trunk{fill:none;stroke:var(--blue);stroke-width:1.5;stroke-linecap:round}
+  .fillink{fill:var(--ink)} .t{fill:var(--ink);font-size:15px} .s{fill:var(--soft);font-size:12.5px}
+  .h{fill:var(--ink);font-size:17px;font-weight:600} .acc{fill:var(--accent)} .bl{fill:var(--blue)}
+  .pk{fill:var(--paper);stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+  .pkl{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .tag{font-size:12px;font-weight:700} .cap{font-size:15px;fill:var(--ink)}
+  .row{fill:var(--ink);font-size:13.5px}
+  .halo{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+  .static{display:none}
+  @media (prefers-reduced-motion:reduce){.motion{display:none}.static{display:inline}}
+</style>
+<defs><filter id="pen" filterUnits="userSpaceOnUse" x="0" y="0" width="960" height="500">
+  <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="7"/>
+  <feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs>
+<rect class="paper" width="960" height="500"/>
+<text class="h" x="32" y="40">Edge security: Shield absorbs, WAF filters, the origin stays private</text>
+<g filter="url(#pen)">
+<path class="thin" stroke-dasharray="3 6" d="M166 72 q0 -6 6 -6 l278 1 q6 0 6 6 l-1 266 q0 6 -6 6 l-278 -1 q-6 0 -6 -6 z"/>
+<path class="thin" stroke-dasharray="3 6" d="M470 82 q0 -6 6 -6 l462 1 q6 0 6 6 l-1 256 q0 6 -6 6 l-462 -1 q-6 0 -6 -6 z"/>
+<path class="thin" stroke-dasharray="1 5" d="M486 100 l446 1 l-1 186 l-445 -1 z"/>
+<path class="cable" d="M136 135.5 C156 119.5 174 153.5 192 137.5"/>
+<path class="cable" d="M136 140.5 C156 124.5 174 158.5 192 142.5"/>
+<path class="cable" d="M264 137.5 C292 121.5 314 153.5 340 137.5"/>
+<path class="cable" d="M264 142.5 C292 126.5 314 158.5 340 142.5"/>
+<path class="cable" d="M400 137.5 C444 121.5 492 155.5 530 137.5"/>
+<path class="cable" d="M400 142.5 C444 126.5 492 160.5 530 142.5"/>
+<path class="cable" d="M566 137.5 C602 121.5 628 155.5 656 137.5"/>
+<path class="cable" d="M566 142.5 C602 126.5 628 160.5 656 142.5"/>
+<path class="cable" d="M724 137.5 C766 121.5 796 155.5 826 137.5"/>
+<path class="cable" d="M724 142.5 C766 126.5 796 160.5 826 142.5"/>
+<path class="cable" stroke-dasharray="6 7" d="M118 266 C150 270 190 262 228 258"/>
+<path class="cable" stroke-dasharray="6 7" d="M228 258 C276 254 330 232 360 184"/>
+<path class="cable" stroke-dasharray="6 7" d="M76 298 C130 304 170 290 204 276"/>
+<path class="ink" d="M36 100 q2 -3 6 -3 l76 1 q5 0 5 5 l-1 50 l-88 1 z"/>
+<path class="thin" d="M44 109 l70 1 l-1 34 l-69 0 z"/>
+<path class="ink" d="M26 153 l108 0 q4 0 2 4 l-6 7 l-100 0 l-6 -7 q-2 -4 2 -4"/>
+<path class="ink" d="M40 242 l28 1 l-1 18 l-27 -1 z"/>
+<path class="thin" d="M51 261 l0 5 M45 267 l18 0"/>
+<circle class="fillink" cx="62" cy="248" r="1.6"/>
+<path class="ink" d="M86 260 l28 1 l-1 18 l-27 -1 z"/>
+<path class="thin" d="M97 279 l0 5 M91 285 l18 0"/>
+<circle class="fillink" cx="108" cy="266" r="1.6"/>
+<path class="ink" d="M44 288 l28 1 l-1 18 l-27 -1 z"/>
+<path class="thin" d="M55 307 l0 5 M49 313 l18 0"/>
+<circle class="fillink" cx="66" cy="294" r="1.6"/>
+<path class="ink" d="M192 114 q36 -10 72 0 l-1 96 q-4 54 -35 92 q-31 -38 -35 -92 z"/>
+<path class="thin" d="M202 122 q26 -7 52 0 M254 212 q-3 40 -26 70 q-23 -30 -26 -70"/>
+<path class="ink" d="M340 102 q0 -4 4 -4 l52 1 q4 0 4 4 l-1 76 q0 4 -4 4 l-52 -1 q-4 0 -4 -4 z"/>
+<path class="thin" d="M350 114 l40 1"/>
+<path class="thin" d="M350 128 l40 1"/>
+<path class="thin" d="M350 154 l40 1"/>
+<path class="thin" d="M350 168 l40 1"/>
+<path class="ink" d="M530 126 l36 1 l-1 28 l-35 -1 z"/>
+<path class="thin" d="M540 136 l16 0 l0 8 l-16 0 z"/>
+<path class="ink" d="M668 124 q0 -4 4 -4 l26 0 q4 0 4 4 l0 32 q0 4 -4 4 l-26 0 q-4 0 -4 -4 z"/>
+<path class="thin" d="M678 140 l16 -9 M678 140 l16 0 M678 140 l16 9"/>
+<ellipse class="trunk" stroke-dasharray="4 5" cx="690" cy="140" rx="40" ry="34"/>
+<path class="ink" d="M841 125 l34 1 l-1 29 l-33 -1 z"/>
+<path class="thin" d="M850 134 l16 0 l0 12 l-16 0 z"/>
+<ellipse class="trunk" stroke-dasharray="2 4" cx="858" cy="140" rx="36" ry="32"/>
+</g>
+<text class="t" x="80" y="188" text-anchor="middle" font-weight="600">Client</text>
+<text class="s" x="80" y="206" text-anchor="middle">HTTPS</text>
+<text class="t" x="34" y="334" font-weight="600">Botnet</text>
+<text class="s" x="180" y="86" font-weight="700">CloudFront edge · DNS + anycast</text>
+<text class="t" x="228" y="184" text-anchor="middle" font-weight="600" font-size="14">Shield</text>
+<text class="s" x="228" y="200" text-anchor="middle">Standard</text>
+<text class="t" x="370" y="268" text-anchor="middle" font-weight="600" font-size="14">WAF web ACL</text>
+<text class="s" x="370" y="285" text-anchor="middle">global · us-east-1</text>
+<text class="t" x="548" y="180" text-anchor="middle" font-weight="600" font-size="14">VPC origin ENI</text>
+<text class="s" x="548" y="197" text-anchor="middle">10.0.11.25</text>
+<text class="t" x="690" y="194" text-anchor="middle" font-weight="600" font-size="14">Internal ALB</text>
+<text class="s" x="690" y="211" text-anchor="middle">Ingress · scheme: internal</text>
+<text class="t" x="858" y="194" text-anchor="middle" font-weight="600" font-size="14">Pod</text>
+<text class="s" x="858" y="211" text-anchor="middle">10.0.13.31</text>
+<text class="s" x="484" y="330" font-weight="700">VPC: private subnets only</text>
+<text class="s bl" x="924" y="256" text-anchor="end">ALB SG inbound: CloudFront-VPCOrigins-Service-SG only</text>
+<text class="s bl" x="924" y="274" text-anchor="end">NetworkPolicy ingress: ipBlock 10.0.12.0/24 (ALB subnet) only</text>
+<g class="motion">
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.3643;0.3786;0.4500;0.4643;1.0000" values="0;0;1;1;0;0"/><path class="pkl" stroke-width="3" d="M340 102 q0 -4 4 -4 l52 1 q4 0 4 4 l-1 76 q0 4 -4 4 l-52 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5714;0.5857;0.6357;0.6500;1.0000" values="0;0;1;1;0;0"/><path class="trunk" stroke-width="3" d="M340 102 q0 -4 4 -4 l52 1 q4 0 4 4 l-1 76 q0 4 -4 4 l-52 -1 q-4 0 -4 -4 z"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.7286;0.7429;0.7786;0.7929;1.0000" values="0;0;1;1;0;0"/><ellipse class="trunk" stroke-width="3" cx="690" cy="140" rx="40" ry="34"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.8214;0.8357;0.8786;0.8929;1.0000" values="0;0;1;1;0;0"/><ellipse class="trunk" stroke-width="3" cx="858" cy="140" rx="36" ry="32"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1036;0.1143;0.9143;0.9250;1.0000" values="0;0;1;1;0;0"/><path class="pkl" stroke-width="2" d="M209.0 276.0 L215.0 276.0 M207.5 279.5 L211.8 283.8 M204.0 281.0 L204.0 287.0 M200.5 279.5 L196.2 283.8 M199.0 276.0 L193.0 276.0 M200.5 272.5 L196.2 268.2 M204.0 271.0 L204.0 265.0 M207.5 272.5 L211.8 268.2"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.3679;0.3786;0.9143;0.9250;1.0000" values="0;0;1;1;0;0"/><path class="pkl" stroke-width="3" d="M351 175 L369 193 M369 175 L351 193"/></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0071;0.0214;0.1071;0.1214;1.0000" values="0;0;1;1;0;0"/><text class="tag halo acc" x="226" y="334">UDP reflection · SYN flood</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1071;0.1214;0.2286;0.2429;1.0000" values="0;0;1;1;0;0"/><text class="tag halo acc" x="226" y="334">absorbed at the edge</text></g>
+<g><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0071;0.0214;0.1179;0.1321;1.0000" values="0;0;1;1;0;0"/><animateMotion dur="14.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;1.0000;1.0000" keyTimes="0.0000;0.0357;0.1143;1.0000" path="M76 298 C130 304 170 290 204 276"/><path class="pk" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="pkl" d="M-17 -11 l17 12 l17 -12"/></g>
+<g><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0357;0.0500;0.1464;0.1607;1.0000" values="0;0;1;1;0;0"/><animateMotion dur="14.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;1.0000;1.0000" keyTimes="0.0000;0.0643;0.1429;1.0000" path="M76 298 C130 304 170 290 204 276"/><path class="pk" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="pkl" d="M-17 -11 l17 12 l17 -12"/></g>
+<g><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0643;0.0786;0.1750;0.1893;1.0000" values="0;0;1;1;0;0"/><animateMotion dur="14.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;1.0000;1.0000" keyTimes="0.0000;0.0929;0.1714;1.0000" path="M76 298 C130 304 170 290 204 276"/><path class="pk" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="pkl" d="M-17 -11 l17 12 l17 -12"/></g>
+<g><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1714;0.1857;0.4500;0.4643;1.0000" values="0;0;1;1;0;0"/><animateMotion dur="14.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.4134;0.4134;1.0000;1.0000" keyTimes="0.0000;0.2071;0.2786;0.3143;0.3786;1.0000" path="M118 266 C150 270 190 262 228 258 C276 254 330 232 360 184"/><path class="pk" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="pkl" d="M-17 -11 l17 12 l17 -12"/><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1714;0.1857;0.2714;0.2857;1.0000" values="0;0;1;1;0;0"/><text class="tag halo acc" x="-6" y="-22" text-anchor="start"><tspan x="-6" dy="0">GET /login · 2,400 in 5 min</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.2714;0.2857;0.3714;0.3857;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="-6" y="-22" text-anchor="start"><tspan x="-6" dy="0">valid TCP/TLS: passes Shield</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.3714;0.3857;0.4500;0.4643;1.0000" values="0;0;1;1;0;0"/><text class="tag halo acc" x="14" y="24" text-anchor="start"><tspan x="14" dy="0">rule rate-login: Block</tspan><tspan x="14" dy="14">→ 403 Forbidden</tspan></text></g></g>
+<g><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4500;0.4643;0.8786;0.8929;1.0000" values="0;0;1;1;0;0"/><animateMotion dur="14.0s" repeatCount="indefinite" calcMode="linear" keyPoints="0.0000;0.0000;0.1306;0.1306;0.3274;0.3274;0.5718;0.5718;0.7684;0.7684;1.0000;1.0000" keyTimes="0.0000;0.4786;0.5214;0.5500;0.5857;0.6357;0.6786;0.7071;0.7429;0.7786;0.8357;1.0000" path="M136 138 C156 122 174 156 192 140 L228 140 L264 140 C292 124 314 156 340 140 L370 140 L400 140 C444 124 492 158 530 140 L548 140 L566 140 C602 124 628 158 656 140 L690 140 L724 140 C766 124 796 158 826 140 L858 140"/><path class="pk" d="M-17 -11 l34 0 l0 22 l-34 0 z"/><path class="pkl" d="M-17 -11 l17 12 l17 -12"/><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4500;0.4643;0.5143;0.5286;1.0000" values="0;0;1;1;0;0"/><text class="tag halo acc" x="0" y="-24" text-anchor="middle"><tspan x="0" dy="0">HTTPS · GET /menu.json</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5143;0.5286;0.5786;0.5929;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="-24" text-anchor="middle"><tspan x="0" dy="0">valid TCP/TLS ✓</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.5786;0.5929;0.6714;0.6857;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="-24" text-anchor="middle"><tspan x="0" dy="0">no terminating rule → default Allow</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6714;0.6857;0.7357;0.7500;1.0000" values="0;0;1;1;0;0"/><text class="tag halo acc" x="0" y="-50" text-anchor="middle"><tspan x="0" dy="0">src 10.0.11.25 (ENI)</tspan><tspan x="0" dy="14">dst 10.0.12.40</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.7357;0.7500;0.7714;0.7857;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="0" y="-46" text-anchor="middle"><tspan x="0" dy="0">SG: src = VPC origin SG ✓</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.7714;0.7857;0.8286;0.8429;1.0000" values="0;0;1;1;0;0"/><text class="tag halo acc" x="0" y="-50" text-anchor="middle"><tspan x="0" dy="0">src 10.0.12.40 (ALB)</tspan><tspan x="0" dy="14">dst 10.0.13.31</tspan></text></g><g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.8286;0.8429;0.8786;0.8929;1.0000" values="0;0;1;1;0;0"/><text class="tag halo bl" x="-20" y="-46" text-anchor="end"><tspan x="-20" dy="0">NetworkPolicy ✓ · 200 OK</tspan></text></g></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0071;0.0214;0.1786;0.2000;0.9143;0.9429;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="378">① Botnet L3/L4 flood (UDP reflection, SYN flood): Shield absorbs it at the edge; it never reaches the origin</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.1714;0.1857;0.4500;0.4714;0.9143;0.9429;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="400">② L7 HTTP flood on /login: well-formed, so it passes L3/L4, but a WAF rate-based rule blocks it with 403</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.4500;0.4643;0.6571;0.6786;0.9143;0.9429;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="422">③ Legitimate GET: no WAF rule terminates it, so the web ACL default action (Allow) forwards it</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.6500;0.6643;0.7786;0.8000;0.9143;0.9429;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="444">④ VPC origin ENI → internal ALB: the ALB SG admits only the VPC origin SG (or the origin-facing prefix list)</text></g>
+<g opacity="0"><animate attributeName="opacity" dur="14.0s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.7643;0.7786;0.8786;0.9000;0.9143;0.9429;1.0000" values="0;0;1;1;0.42;0.42;0;0"/><text class="cap" x="40" y="466">⑤ ALB (Ingress, scheme: internal) → Pod IP: NetworkPolicy admits only the ALB subnet, and the Pod returns 200</text></g>
+<text class="s" x="928" y="486" text-anchor="end">Tag on the packet: the field or verdict that just changed</text>
+</g>
+<g class="static">
+<path class="pkl" stroke-width="2" d="M209.0 276.0 L215.0 276.0 M207.5 279.5 L211.8 283.8 M204.0 281.0 L204.0 287.0 M200.5 279.5 L196.2 283.8 M199.0 276.0 L193.0 276.0 M200.5 272.5 L196.2 268.2 M204.0 271.0 L204.0 265.0 M207.5 272.5 L211.8 268.2"/>
+<path class="pkl" stroke-width="3" d="M351 175 L369 193 M369 175 L351 193"/>
+<text class="tag halo acc" x="226" y="334">absorbed at the edge</text>
+<text class="cap" x="40" y="378">① Botnet L3/L4 flood (UDP reflection, SYN flood): Shield absorbs it at the edge; it never reaches the origin</text>
+<text class="cap" x="40" y="400">② L7 HTTP flood on /login: well-formed, so it passes L3/L4, but a WAF rate-based rule blocks it with 403</text>
+<text class="cap" x="40" y="422">③ Legitimate GET: no WAF rule terminates it, so the web ACL default action (Allow) forwards it</text>
+<text class="cap" x="40" y="444">④ VPC origin ENI → internal ALB: the ALB SG admits only the VPC origin SG (or the origin-facing prefix list)</text>
+<text class="cap" x="40" y="466">⑤ ALB (Ingress, scheme: internal) → Pod IP: NetworkPolicy admits only the ALB subnet, and the Pod returns 200</text>
+<text class="tag acc" x="140" y="326" font-size="16">①</text>
+<text class="tag acc" x="300" y="206" font-size="16">②</text>
+<text class="tag acc" x="72" y="92" font-size="16">③</text>
+<text class="tag acc" x="540" y="116" font-size="16">④</text>
+<text class="tag acc" x="850" y="98" font-size="16">⑤</text>
+</g>
+</svg>

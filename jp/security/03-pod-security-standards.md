@@ -22,7 +22,7 @@ PSS はポリシーを定義し、PSA はそれらを適用する組み込みの
 
 ---
 
-## PSP から PSS への移行
+## PSP から PSS への移行 {#evolution-from-psp-to-pss}
 
 ### PodSecurityPolicy (PSP) の歴史
 
@@ -65,7 +65,7 @@ Pod Security Standards (PSS) と Pod Security Admission (PSA) は、Kubernetes 1
 
 ---
 
-## Pod Security Admission (PSA) コントローラー
+## Pod Security Admission (PSA) コントローラー {#pod-security-admission-psa-controller}
 
 ### PSA のアーキテクチャ
 
@@ -97,7 +97,7 @@ kubectl --context "$PSS_CONTEXT" get --raw /metrics
 
 ---
 
-## セキュリティレベル
+## セキュリティレベル {#security-levels}
 
 PSS は 3 つのセキュリティレベル（プロファイル）を定義します。各レベルでは、段階的に厳しくなるセキュリティ制約が適用されます。
 
@@ -269,7 +269,7 @@ spec:
 
 ---
 
-## 適用モード
+## 適用モード {#enforcement-modes}
 
 PSA には 3 つの適用モードがあります。これらのモードは個別に、または組み合わせて使用できます。
 
@@ -421,7 +421,7 @@ metadata:
 
 ---
 
-## Namespace レベルの設定
+## Namespace レベルの設定 {#namespace-level-configuration}
 
 ### 基本的なラベル設定
 
@@ -513,7 +513,7 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 ---
 
-## PSP から PSS への移行
+## PSP から PSS への移行 {#migration-from-psp-to-pss}
 
 ### 移行の概要
 
@@ -701,7 +701,7 @@ subprocess.run(base + [
 
 ---
 
-## EKS のデフォルト設定と構成
+## EKS のデフォルト設定と構成 {#eks-defaults-and-configuration}
 
 ### EKS における PSA のデフォルト設定
 
@@ -782,7 +782,7 @@ resource "kubernetes_namespace_v1" "app" {
 
 ---
 
-## セキュリティプロファイルの詳細
+## セキュリティプロファイルの詳細 {#security-profile-details}
 
 ### Privileged プロファイルの詳細
 
@@ -1013,7 +1013,7 @@ data:
 
 ---
 
-## 例外の設定
+## 例外の設定 {#exemptions-configuration}
 
 ### クラスター レベルの例外設定
 
@@ -1080,7 +1080,7 @@ Kyverno は、PSA による拒否を許可に変えることはできません�
 
 ---
 
-## 段階的な導入のベストプラクティス
+## 段階的な導入のベストプラクティス {#best-practices-for-gradual-adoption}
 
 ### ステップ 1: 現状を分析する
 

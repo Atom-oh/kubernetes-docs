@@ -64,7 +64,7 @@ Service Mesh 是管理微服务之间通信的基础设施层。Istio 支持 Env
 
 这些 Bookinfo 图示展示了 sidecar 模式。对于选择加入的命名空间或工作负载，自动注入只会向新创建的 Pod 添加 Envoy；ambient 模式不会注入 sidecar。
 
-## 你真的需要 Service Mesh 吗？
+## 你真的需要 Service Mesh 吗？ {#do-you-really-need-a-service-mesh}
 
 下方的服务数量阈值和检查清单评分仅供讨论参考，并非 Istio 的要求。即使是小型网格，也可能因安全需求而具有合理性。决策图使用相同的示意性阈值。
 
