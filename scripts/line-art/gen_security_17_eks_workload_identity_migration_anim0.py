@@ -7,6 +7,8 @@ tokens, pen filter, stroke classes, font stack, caption layout, packet-tag
 style, ko/en COPY structure, anim()/win()/move() helpers and keyTimes
 self-check. SMIL drives motion on one shared clock; CSS only handles palette
 (light/dark) and the reduced-motion static view.
+A tracking camera on the same clock follows the request in the motion
+layer; the static view stays the unmoved overview (see the camera section).
 
 The house palette has only two accents (vermilion, blue). This chapter needs a
 third colour for returned credentials, so one --green token is added in the
@@ -193,6 +195,104 @@ def fits(s, size, room, bold=False):
     assert tw(s, size, bold) <= room, (s, round(tw(s, size, bold)), room)
 
 
+# ---------- camera ------------------------------------------------------------
+# The view follows the request. The motion layer holds its own copy of the
+# diagram inside a camera <g> that moves on the shared SMIL clock: translate +
+# scale (additive="sum"), calcMode="spline", eased in and out. Paper bands
+# outside VIEW mask the zoomed diagram (no clip-path: only url(#pen) is
+# allowed, and a nested <svg> would get its own SMIL clock); the title,
+# captions, hint and badges are drawn after them and never move. The static
+# (reduced-motion) layer keeps an unmoved copy, so no camera exists there.
+VIEW = (0, 46, 960, 320)             # camera viewport: x, y, w, h (title above, captions below)
+OV = (VIEW[0] + VIEW[2] / 2, VIEW[1] + VIEW[3] / 2, 1.0)  # overview = identity
+CAMS = []                            # every camera animation, validated before writing
+
+
+def shot(x0, y0, x1, y1, zmax=1.8, pad=8):
+    """Shot (cx, cy, zoom) framing the box plus pad, kept inside VIEW."""
+    vx, vy, vw, vh = VIEW
+    z = max(1.0, min(zmax, vw / (x1 - x0 + 2 * pad), vh / (y1 - y0 + 2 * pad)))
+    hw, hh = vw / z / 2, vh / z / 2
+    cx = min(max((x0 + x1) / 2, vx + hw), vx + vw - hw)
+    cy = min(max((y0 + y1) / 2, vy + hh), vy + vh - hh)
+    wx0, wy0, wx1, wy1 = cx - hw, cy - hh, cx + hw, cy + hh
+    assert wx0 <= x0 and wy0 <= y0 and x1 <= wx1 and y1 <= wy1, ("box not in shot", (x0, y0, x1, y1))
+    return (round(cx, 2), round(cy, 2), round(z, 4))
+
+
+def camera(keys):
+    """keys: [(seconds, shot[, "via"]), ...] from 0 to DUR. Equal neighbours hold; a move
+    eases in and out, except through a "via" key, which it passes without stopping."""
+    vx, vy, vw, vh = VIEW
+    mx, my = vx + vw / 2, vy + vh / 2
+    stop = [len(k) == 2 for k in keys]
+    keys = [k[:2] for k in keys]
+    ts = ";".join(kt(t) for t, _ in keys)
+    num = lambda v: f"{v:.2f}".replace("-0.00", "0.00")
+    tr = ";".join(f"{num(mx - z * cx)} {num(my - z * cy)}" for _, (cx, cy, z) in keys)
+    sc = ";".join(f"{z:.4f}" for _, (cx, cy, z) in keys)
+    ks = ";".join("0 0 1 1" if a == b else f"{0.42 if s0 else 0} 0 {0.58 if s1 else 1} 1"
+                  for (_, a), (_, b), s0, s1 in zip(keys, keys[1:], stop, stop[1:]))
+    CAMS.append((ts, tr, sc, ks, keys, stop))
+    common = (f'dur="{DUR}s" repeatCount="indefinite" calcMode="spline" '
+              f'keyTimes="{ts}" keySplines="{ks}"')
+    return (f'<animateTransform attributeName="transform" type="translate" {common} values="{tr}"/>'
+            f'<animateTransform attributeName="transform" type="scale" additive="sum" {common} values="{sc}"/>')
+
+
+def check_camera():
+    assert CAMS, "no camera"
+    for ts, tr, sc, ks, keys, stop in CAMS:
+        t = [float(x) for x in ts.split(";")]
+        assert t[0] == 0 and t[-1] == 1 and all(0 <= x <= 1 for x in t), ts
+        assert all(b > a for a, b in zip(t, t[1:])), ("camera keyTimes not monotonic", ts)
+        trs, scs = tr.split(";"), sc.split(";")
+        assert len(trs) == len(scs) == len(t) == len(ks.split(";")) + 1, ts
+        assert keys[0][1] == keys[-1][1] == OV, "camera must start and end on the overview"
+        assert trs[0] == trs[-1] == "0.00 0.00" and float(scs[0]) == float(scs[-1]) == 1.0, (trs[0], scs[0])
+        assert all(1.0 <= z <= 2.0 for _, (_, _, z) in keys), "zoom out of range"
+        assert stop[0] and stop[-1], "the loop starts and ends on a stop"
+        segs = list(zip(keys, keys[1:]))
+        move0 = None
+        for i, ((t0, a), (t1, b)) in enumerate(segs):
+            if a != b:  # a move runs from one stop to the next, maybe through "via" keys
+                move0 = t0 if stop[i] else move0
+                if stop[i + 1]:
+                    assert 0.8 - 1e-6 <= t1 - move0 <= 1.5 + 1e-6, ("camera move must take 0.8-1.5 s", move0, t1)
+            else:
+                assert stop[i] and stop[i + 1], ("a hold cannot touch a via key", t0)
+                if 0 < i < len(segs) - 1:
+                    assert t1 - t0 >= 0.6 - 1e-6, ("camera hold must last at least 0.6 s", t0, t1)
+        seam = (segs[0][1][0] - segs[0][0][0]) + (segs[-1][1][0] - segs[-1][0][0])
+        assert segs[0][0][1] == segs[0][1][1] == segs[-1][0][1] and seam >= 1.0, "overview beat across the seam"
+
+
+BANDS = (f'<rect class="paper" width="{W}" height="{VIEW[1]}"/>'
+         f'<rect class="paper" y="{VIEW[1] + VIEW[3]}" width="{W}" height="{H - VIEW[1] - VIEW[3]}"/>')
+
+
+# Camera script: follow each lane's request out and its credentials back, then
+# pull back so the overview shows all three Pods signing. Shots frame the left
+# half (Pod + node hop) or the right half (AWS hop + role) of the active lane.
+CAM_L1 = shot(30, 62, 410, 214, 1.9)     # lane 1, node side: Pod, IMDS
+CAM_R1 = shot(450, 62, 930, 214, 1.9)    # lane 1, AWS side: node role
+CAM_L2 = shot(30, 172, 410, 267)         # lane 2, node side: Pod (edges between text lines)
+CAM_R2 = shot(420, 172, 930, 267)        # lane 2, AWS side: STS, IRSA role
+CAM_L3 = shot(0, 200, 500, 366, 2.0, pad=0)  # lane 3, node side: Pod, Agent; lane 2 Pod above
+CAM_R3 = shot(420, 256, 930, 346)        # lane 3, AWS side: EKS Auth, role
+CAM_KEYS = [
+    (0, OV), (0.3, OV),
+    (1.3, CAM_L1), (2.0, CAM_L1),        # request reaches IMDS and dwells
+    (3.0, CAM_R1), (3.6, CAM_R1),        # pan with it to the node role
+    (4.6, CAM_L1), (5.2, CAM_L1),        # key travels back to the Pod
+    (6.0, CAM_L2), (7.0, CAM_R2),        # down to lane 2, then pan with the request
+    (8.6, CAM_R2),                       # STS and the IRSA role
+    (9.6, CAM_L3), (10.8, CAM_L3),     # key home; lane 3 reaches the Agent
+    (11.6, CAM_R3), (12.7, CAM_R3),      # EKS Auth and the Pod Identity role
+    (13.7, CAM_L3), (14.3, CAM_L3),    # key back through the Agent to the Pod
+    (15.3, OV), (DUR, OV),               # all three Pods sign; overview beat
+]
+
 # ---------- copy --------------------------------------------------------------
 COPY = {
     "ko": {
@@ -320,6 +420,7 @@ def card_text(o, cx, cy, lines, bold_size=13.5):
 
 def build(lang):
     ANIMS.clear()
+    CAMS.clear()
     k = COPY[lang]
     steps_t = [(T["l1_on"], T["l1_home"]), (T["l2_on"], T["l2_home"]),
                (T["l3_on"], T["l3_home"]), (T["sign"], T["sign_end"])]
@@ -363,21 +464,21 @@ def build(lang):
         bx, by = ROLE[0] - ROLE[1] // 2 + 4, y - CARD_H // 2 - 6
         g.append(f'<path class="thin" d="M{bx} {by} l14 0 l0 11 l-14 0 z M{bx+4} {by+4} l6 0 M{bx+4} {by+7} l4 0"/>')
     g.append('</g>')
-    o.extend(g)
+    dia = list(g)  # the diagram: drawn once in the camera, once in the static view
 
     # labels
     nx, ny, nw, nh = NODE_BOX
     ax, ay, aw, ah = AWS_BOX
-    o.append(f'<text class="s" x="{nx+nw-12}" y="{ny+20}" text-anchor="end" font-weight="700">{esc(k["node"])}</text>')
-    o.append(f'<text class="s" x="{ax+aw-12}" y="{ay+20}" text-anchor="end" font-weight="700">{esc(k["aws"])}</text>')
+    dia.append(f'<text class="s" x="{nx+nw-12}" y="{ny+20}" text-anchor="end" font-weight="700">{esc(k["node"])}</text>')
+    dia.append(f'<text class="s" x="{ax+aw-12}" y="{ay+20}" text-anchor="end" font-weight="700">{esc(k["aws"])}</text>')
     for i, y in enumerate(LY):
-        o.append(f'<text class="t" x="{nx+14}" y="{y-36}" font-weight="600" style="font-size:14px">{esc(k["lanes"][i])}</text>')
-        o.append(f'<text class="s" x="{POD_X}" y="{y+32}" text-anchor="middle">{esc(k["pod"])}</text>')
+        dia.append(f'<text class="t" x="{nx+14}" y="{y-36}" font-weight="600" style="font-size:14px">{esc(k["lanes"][i])}</text>')
+        dia.append(f'<text class="s" x="{POD_X}" y="{y+32}" text-anchor="middle">{esc(k["pod"])}</text>')
     for cx, cy, w, lines in cards:
-        card_text(o, cx, cy, lines)
+        card_text(dia, cx, cy, lines)
 
     # --- motion layer ---
-    m = ['<g class="motion">']
+    m = ['<g class="motion">', '<g>', camera(CAM_KEYS)] + dia
 
     def hl(cx, cy, w, start, end):
         return (f'<g opacity="0">{win(start, end, fade=0.2)}'
@@ -445,6 +546,10 @@ def build(lang):
                  f'<ellipse class="okl" cx="{START_X + 9}" cy="{y}" rx="21" ry="13"/>'
                  f'<text class="tag halo gr" x="{START_X + 2}" y="{y + 31}">{esc(k["signed"])}</text></g>')
 
+    m.append('</g>' + BANDS)  # end of camera; captions and hint stay fixed
+    # the bands cover the root title in this layer, so it is drawn again on top
+    m.append(f'<text class="h halo" x="32" y="40">{esc(k["title"])}</text>')
+
     # captions
     cy0 = 384
     for i, (txt, (s0, s1)) in enumerate(zip(k["steps"], steps_t)):
@@ -460,7 +565,7 @@ def build(lang):
     o.extend(m)
 
     # --- static (reduced motion) layer: end state ---
-    st = ['<g class="static">']
+    st = ['<g class="static">'] + dia
     for i, y in enumerate(LY):
         st.append(f'<g transform="translate({START_X} {y})">{KEY}</g>')
         st.append(f'<text class="tag halo gr" x="{START_X + 2}" y="{y + 31}">{esc(k["signed"])}</text>')
@@ -471,6 +576,7 @@ def build(lang):
     o.extend(st)
     o.append('</svg>')
     check_anims()
+    check_camera()
     return "\n".join(o)
 
 
