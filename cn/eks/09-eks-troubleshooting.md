@@ -1,42 +1,42 @@
 # Amazon EKS 故障排查
 
-> **最后更新**：2026 年 9 月 12 日
+> **最后更新**：2026年9月12日
 
-运行 Amazon EKS 集群时可能遇到各种问题。本文介绍 EKS 集群常见问题及处理方式。
+运行 Amazon EKS 集群时，可能会遇到各种问题。本文档介绍 EKS 集群中可能出现的常见问题及其解决方案。
 
 ## 目录
 
 1. [故障排查基础](#troubleshooting-basics)
-2. [集群创建与管理问题](#cluster-creation-and-management-issues)
+2. [集群创建和管理问题](#cluster-creation-and-management-issues)
 3. [网络问题](#networking-issues)
-4. [节点与 Pod 问题](#node-and-pod-issues)
-5. [IAM 与身份验证问题](#iam-and-authentication-issues)
+4. [节点和 Pod 问题](#node-and-pod-issues)
+5. [IAM 和身份验证问题](#iam-and-authentication-issues)
 6. [存储问题](#storage-issues)
-7. [日志与监控问题](#logging-and-monitoring-issues)
+7. [日志记录和监控问题](#logging-and-monitoring-issues)
 8. [性能问题](#performance-issues)
 9. [升级问题](#upgrade-issues)
-10. [常见错误消息与解决方案](#common-error-messages-and-solutions)
+10. [常见错误消息和解决方案](#common-error-messages-and-solutions)
 
-## 故障排查基础 {#troubleshooting-basics}
+## 故障排查基础
 
-![EKS 故障排查基础：识别症状、收集证据、验证假设、修复、确认并记录。](../.gitbook/assets/en-eks-09-eks-troubleshooting-0.png)
+![EKS 故障排查基础：识别症状、收集证据、检验假设、修复问题、验证并记录。](../.gitbook/assets/en-eks-09-eks-troubleshooting-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-0.html)
 
 ### 故障排查方法
 
-1. 确认症状、受影响用户/工作负载及事故时间范围。
-2. 更改资源前收集相关状态、日志、事件和指标。
-3. 用证据比较不同假设；不要把通用错误当成已证实的原因。
-4. 通过明确的所有者实施有针对性的修正，并了解其对数据/可用性的影响。
-5. 根据应用行为和指标确认恢复，不能只看命令退出状态。
-6. 记录原因、变更、结果、剩余不确定性和预防措施。
+1. 确定症状、受影响的用户/工作负载以及事件发生时间段。
+2. 在更改资源之前，收集相关状态、日志、事件和指标。
+3. 根据证据比较各种可能的假设；不要把通用错误当作已证实的原因。
+4. 实施有明确负责人的针对性修正，并了解其对数据/可用性的影响。
+5. 根据应用行为和指标验证是否恢复，而不只是看命令是否成功退出。
+6. 记录原因、变更、结果、仍未排除的不确定因素以及预防措施。
 
-本章命令是供经过审查的环境使用的模板，不是应从头到尾一次性执行的脚本。查询资源、创建调试工作负载、重启组件和删除基础设施的影响各不相同。本次审查未执行实时 AWS/Kubernetes 操作。
+本章中的命令是经过审核的环境所用的模板，并非从头到尾运行的单一脚本。查询资源、创建调试工作负载、重启组件和删除基础设施会产生不同影响。本次审核未执行任何实际 AWS/Kubernetes 操作。
 
-### 基本工具与命令
+### 必备工具和命令
 
-对于**现有**集群，应设置预期的账号、Region、集群及 kubectl context，并确认彼此一致。不要从任意 context alias 推导集群名称。如果创建失败导致没有可用集群，应改用集群创建章节中的账号/Region 和原始请求/堆栈证据。
+对于**现有**集群，请设置预期的账户、区域、集群和 kubectl 上下文，然后确认它们相互匹配。不要根据任意上下文别名推导集群名称。如果在创建过程中失败，尚未有可用集群，请改用创建部分中的账户/区域以及原始请求/堆栈证据。
 
 ```bash
 set -euo pipefail
@@ -68,7 +68,7 @@ aws eks list-addons --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
 eksctl get nodegroup --cluster "$CLUSTER_NAME" --region "$AWS_REGION"
 ```
 
-这些命令列出托管节点组和已安装的 EKS add-on，但不代表列出了所有自主管理的 controller 或计算资源。选择操作步骤前，先记录实际所有者及计算类型。
+这些命令列出托管节点组和已安装的 EKS 附加组件，并不会列出所有自管理控制器或计算资源。选择操作步骤之前，请记录资源的实际所有者和计算类型。
 
 #### kubectl
 
@@ -81,13 +81,13 @@ kubectl --context "$KUBE_CONTEXT" get events -A --sort-by='.metadata.creationTim
 kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" describe pod "$POD_NAME"
 ```
 
-明确指定受影响的命名空间、Pod、容器和节点。`describe` 输出和应用日志可能包含敏感运维信息。`kubectl auth can-i` 检查某项具体操作的授权；`aws sts get-caller-identity` 用来识别 AWS 凭证；二者都不能单独证明网络可达，也不能覆盖全部 Kubernetes 权限。
+请明确指定受影响的命名空间、Pod、容器和节点。`describe` 输出和应用日志可能包含敏感的运维信息。`kubectl auth can-i` 检查特定操作的授权情况；`aws sts get-caller-identity` 用于识别 AWS 凭证。两者单独使用都不能证明网络可访问，也不能证明拥有所有 Kubernetes 权限。
 
-### 日志收集与分析
+### 日志收集和分析
 
 #### EKS 控制平面日志
 
-检查现有日志配置和范围受限的事故时间窗口：
+检查现有日志配置，并指定范围有限的事件时间段：
 
 ```bash
 set -euo pipefail
@@ -102,18 +102,18 @@ aws logs filter-log-events --region "$AWS_REGION" \
   --max-items 200 --output json --no-cli-pager
 ```
 
-启用控制平面日志是单独的 `UpdateClusterConfig` 变更，有自己的 update ID、权限要求和 CloudWatch 费用。它不能恢复过去的日志，也不会启用应用/主机日志采集。日志组不存在、请求被拒绝或查询窗口为空，都属于可见性限制。应用/主机日志应查看 `/aws/containerinsights/<cluster>/...` 或实际采集器的目标位置。
+启用控制平面日志是一项独立的 `UpdateClusterConfig` 变更，有自己的更新 ID、权限和 CloudWatch 费用。它无法恢复更早的日志，也不会启用应用/主机日志收集。日志组不存在、请求被拒绝或时间段内没有日志，都说明可见性存在限制。应用/主机日志请使用 `/aws/containerinsights/<cluster>/...` 或实际的收集器目标位置。
 
 #### 节点日志
 
-在运维人员可访问的标准 Linux EC2 节点上，打开会话前核实节点的 `spec.providerID`、账号/Region 和 SSM 前提：
+在操作人员能够访问的标准 Linux EC2 节点上，启动会话之前，请核实节点的 `spec.providerID`、账户/区域以及 SSM 前提条件：
 
 ```bash
 : "${INSTANCE_ID:?Verify the node EC2 ProviderID and account/Region first}"
 aws ssm start-session --target "$INSTANCE_ID" --region "$AWS_REGION"
 ```
 
-以下命令应在**节点会话中**运行，而非本地终端。这些 systemd/containerd 示例假设节点镜像包含相应工具；Bottlerocket、Fargate 和 Auto Mode 必须使用各自受支持的诊断路径。
+请在该节点会话中运行以下命令，**而不是**在本地终端运行。这些 systemd/containerd 示例假定节点映像提供了相应工具；Bottlerocket、Fargate 和 Auto Mode 需要使用其支持的诊断途径。
 
 ```bash
 sudo journalctl -u kubelet --since "15 minutes ago" --no-pager
@@ -123,7 +123,7 @@ df -i
 free -m
 ```
 
-当前 EKS 优化版 Linux 节点使用 containerd。在这些节点上，Docker 守护进程日志不是 kubelet runtime 日志。清理镜像、清理 journal 或重启前，先保留日志和磁盘/inode 证据。不健康节点缺少 `kubectl top` 指标，本身不能证明 CPU/内存耗尽。
+当前 EKS 优化型 Linux 节点使用 containerd。在这些节点上，Docker 守护进程日志不是 kubelet 运行时日志。清理映像、清空日志或重启任何组件之前，请保留日志以及磁盘/索引节点证据。不健康节点上缺少 `kubectl top` 指标，本身不能证明 CPU/内存耗尽。
 
 #### Pod 日志
 
@@ -137,9 +137,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" logs "$POD_NAME" \
   -c "$CONTAINER_NAME" --previous --tail=200 --timestamps=true
 ```
 
-`--previous` 指同一个 **Pod** 中指定容器上一个已终止实例的日志。它不能取回已删除前身 Pod 的日志；需要保留历史记录时应查询日志后端。检查普通容器和 init 容器状态、就绪状态及退出原因。
+`--previous` 指同一个 **Pod** 中指定容器的上一个已终止实例。它不会获取已删除的前任 Pod 的日志；如需查看保留的历史记录，请使用日志后端。请检查常规容器和 init 容器的状态、就绪情况及退出原因。
 
-### 诊断信息收集
+### 收集诊断信息
 
 ```bash
 set -euo pipefail
@@ -155,17 +155,17 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
 printf 'Evidence saved to %s; assess the findings before remediation.\n' "$EVIDENCE_DIR"
 ```
 
-查询失败会使示例停止；已有文件只是部分证据。如果范围受限的清单已经足够，就不要执行不加筛选的 `cluster-info dump` 或收集所有 Pod 的描述信息。分享之前先检查并脱敏证据。
+如果查询失败，此示例会停止；已经生成的文件仅包含部分证据。如果有范围明确的资源清单就足够，不要无差别地运行 `cluster-info dump` 或获取所有 Pod 的详细信息；分享证据之前，请先审核并遮盖敏感信息。
 
-排查资源压力时，对比 requests/limits、节点可分配资源，以及 Metrics Server 可用时的 `kubectl top`。可访问节点上同时检查 `df -h` 和 `df -i`；字节数充足不能排除 inode 耗尽。节点 debug Pod 有自己的根文件系统，主机根目录挂载于 `/host`；不带预期路径运行 `df -h` 可能检查错文件系统。创建此类 Pod 前要审查命名空间、镜像、debug profile、权限和清理方案。
+要诊断资源压力，请比较 requests/limits、节点可分配资源，以及 Metrics Server 可用时的 `kubectl top` 输出。在可访问的节点上，同时检查 `df -h` 和 `df -i`；有可用字节数并不能排除索引节点耗尽。节点调试 Pod 有自己的根文件系统，主机根文件系统则挂载在 `/host`；如果 `df -h` 未指定预期路径，检查的可能是错误的文件系统。创建此类 Pod 需要审核其命名空间、映像、调试配置文件、权限和清理方式。
 
-排查网络时，确定源 Pod/命名空间/节点、目的地、协议和端口。先检查适用策略及源端 resolver。新建 debug Pod 的标签、身份、DNS 或路由可能与受影响工作负载不同。ICMP ping 不能证明应用 TCP/UDP 可达。应在实际允许路径上做范围受限测试；通过所有者准备工具和清理步骤，不要反复创建未固定版本且名称通用的 `dnsutils`/`netshoot` Pod。
+要诊断网络，请确定源 Pod/命名空间/节点、目标、协议和端口。先检查适用的策略和源端解析器。新建的调试 Pod 可能与受影响的工作负载使用不同的标签、身份、DNS 或路由。ICMP ping 不能证明 TCP/UDP 应用连接可达。请在实际允许的路径上进行范围受限的测试；通过资源所有者准备工具并安排清理，不要反复创建名称常见且映像未固定的 `dnsutils`/`netshoot` Pod。
 
-来源：[EKS 故障排查](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)、[Kubernetes 日志](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/)、[节点调试](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/)。
+资料来源：[EKS 故障排查](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)、[Kubernetes 日志](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/)、[节点调试](https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/)。
 
-## 集群创建与管理问题 {#cluster-creation-and-management-issues}
+## 集群创建和管理问题
 
-![集群创建、端点访问与删除问题，以及需要调查的假设。](../.gitbook/assets/en-eks-09-eks-troubleshooting-1.png)
+![集群创建、端点访问和删除问题的症状，以及需要调查的假设。](../.gitbook/assets/en-eks-09-eks-troubleshooting-1.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-1.html)
 
@@ -173,7 +173,7 @@ printf 'Evidence saved to %s; assess the findings before remediation.\n' "$EVIDE
 
 #### 常见原因
 
-根据准确的失败请求或 CloudFormation 事件，检查调用方权限、集群服务角色信任关系/策略、服务配额、受支持的子网/AZ、IP 容量、名称冲突或服务可用性。这些都是待验证的假设；可能性取决于实际错误。
+请检查确切的失败请求或 CloudFormation 事件，核实调用方权限、集群服务角色信任/策略、服务配额、受支持的子网/AZ 选择、IP 容量、名称冲突或服务可用性。这些只是待验证的假设；其可能性取决于实际错误。
 
 #### 故障排查步骤
 
@@ -193,23 +193,23 @@ aws cloudtrail lookup-events --region "$AWS_REGION" \
   --max-items 20 --output json
 ```
 
-只有附加策略不足以判断调用方的有效权限：还要考虑内联策略、权限边界、会话策略和 Organizations 控制。`AmazonEKSClusterPolicy` 属于 EKS 集群服务角色；附加给人工用户并不会授予所需的 `eks:CreateCluster`/`iam:PassRole` 权限或 Kubernetes 访问权。创建服务关联角色也有各自的权限和生命周期要求。
+仅查看附加策略无法得知调用方的有效权限；还需考虑内联策略、权限边界、会话策略和 Organizations 控制。`AmazonEKSClusterPolicy` 属于 EKS 集群服务角色；将其附加给人工用户，不会授予所需的 `eks:CreateCluster`/`iam:PassRole` 权限或 Kubernetes 访问权限。创建服务相关角色也有其独立的权限和生命周期。
 
-网络检查应使用选定的集群子网和准确的路由/安全组/NACL 配置。集群子网要求与节点/Pod/负载均衡器地址容量是不同的规划问题。私有集群可以通过所需服务端点访问，不需要 NAT gateway 或普通互联网访问。`kubernetes.io/cluster/...` 子网标签不是控制平面创建失败的通用修复。
+进行网络检查时，请使用所选集群子网以及准确的路由/安全组/NACL 配置。集群子网要求与节点/Pod/LB 地址容量是不同的规划事项。私有集群可以使用所需的服务端点，而无需 NAT 网关或通用互联网访问。`kubernetes.io/cluster/...` 子网标签并非解决控制平面创建问题的通用方法。
 
-遇到配额错误时，根据错误确定服务/配额，并在申请提高限额前查询当前已应用值。EKS 集群配额、EC2 vCPU/实例系列配额和 VPC 限制并不相同。历史消息中的 “limit is 5” 是示例，不是当前账号限额。
+对于配额错误，请根据错误识别服务/配额，并在申请提高配额之前查询当前已应用的值。EKS 集群配额、EC2 vCPU/实例系列配额和 VPC 限制各不相同。“限额为 5”之类的历史消息只是示例，并非当前账户限额。
 
 #### 常见解决方案
 
-通过基础设施所有者修正具体的权限、服务角色信任、子网选择、IP 分配或配额问题，再审查是否重试。`UnsupportedAvailabilityZoneException` 表示指定的集群子网位于该账号不支持 EKS 的 AZ；应使用异常中报告的受支持 AZ。仅检查 EC2 实例类型供给不足以诊断此错误。
+通过基础设施所有者修正具体的权限、服务角色信任关系、子网选择、IP 分配或配额问题，然后审核是否重试。`UnsupportedAvailabilityZoneException` 表示指定的集群子网位于该账户不支持 EKS 的 AZ 中；请使用错误消息报告的受支持 AZ。不能仅凭 EC2 实例类型的供应情况诊断此错误。
 
-检查 AWS Health 是否有服务事件。切换 Region 会形成另一套放置/数据/网络设计，也可能意味着新建集群；它不是默认的故障排查重试方案。`eksctl create cluster --verbose ...` 和 AWS CLI debug 标志仍会执行创建。提交新的配置请求前，应检查现有堆栈事件和 request ID。
+检查 AWS Health 是否有服务事件。切换区域会产生单独的部署位置/数据/网络设计，且可能需要另一个集群；这不是默认的故障排查重试方式。`eksctl create cluster --verbose ...` 和 AWS CLI 调试标志仍会执行创建操作。发起新的预置请求之前，请先查看现有堆栈事件和请求 ID。
 
 ### 集群端点访问问题
 
 #### 分别诊断 DNS、传输、TLS、身份验证和授权
 
-检查端点模式、允许的公有 CIDR 和集群安全组，然后使用集群 CA 和超时进行测试：
+检查端点模式、允许的公有 CIDR 和集群安全组，然后使用集群 CA 和超时设置进行测试：
 
 ```bash
 set -euo pipefail
@@ -228,13 +228,13 @@ curl --silent --show-error --connect-timeout 5 --max-time 10 \
   --write-out 'HTTP status: %{http_code}\n' "$ENDPOINT"
 ```
 
-此操作不会发送 Kubernetes bearer token。401/403 响应可能说明 DNS/TCP/TLS 已成功连通，但访问被拒；HTTP 请求成功也不能证明应用健康。`curl -k` 会隐藏证书验证失败。如果要查 DNS，应使用端点 URL 中的主机名，而不是把 `https://` URL 传给 `nslookup`。
+此操作不会发送 Kubernetes bearer token。401/403 响应可以证明 DNS/TCP/TLS 通信成功，但访问被拒绝；HTTP 响应成功并不能证明应用运行正常。`curl -k` 会掩盖证书验证失败。如果需要进行 DNS 查询，请使用端点 URL 中的主机名，而不要将 `https://` URL 传给 `nslookup`。
 
-对于公有端点，应将客户端实际的出口/NAT 地址与允许 CIDR 对照。私有端点则要检查 VPC/互联网络路径、DNS 解析和安全组访问。接口端点 `com.amazonaws.<region>.eks` 服务的是 **EKS 管理 API**，不是 Kubernetes API 服务器。单独启用它无法修复 kubectl 访问；集群 Kubernetes 私有端点是另一项配置。
+对于公有端点，请检查客户端实际的出站/NAT 地址是否属于允许的 CIDR。对于私有端点，请检查 VPC/互联网络路径、DNS 解析和安全组访问。接口端点 `com.amazonaws.<region>.eks` 提供的是 **EKS 管理 API**，而不是 Kubernetes API 服务器。仅启用该端点无法修复 kubectl 访问问题。集群的 Kubernetes 私有端点是独立的。
 
 #### kubeconfig 和权限
 
-检查 context 名称/server，但不要打印原始凭证。要创建单独的诊断 kubeconfig，应指定文件路径和 alias，并将 `NAMESPACE` 设置为预期授权范围：
+检查上下文名称/服务器，但不要输出原始凭证。要创建单独的诊断 kubeconfig，请指定明确的路径和别名；将 `NAMESPACE` 设为预期的授权范围：
 
 ```bash
 set -euo pipefail
@@ -249,7 +249,7 @@ export KUBECONFIG="$DIAGNOSTIC_KUBECONFIG"
 kubectl --context "$KUBE_CONTEXT" auth can-i get pods --namespace "$NAMESPACE"
 ```
 
-创建 kubeconfig 需要 `eks:DescribeCluster`；Kubernetes 身份验证/授权是另一项要求。假设角色时，使用经审查的 `--role-arn` 并具备相应信任/STS 权限。应通过实际凭证提供方（例如已配置的 SSO session）续期凭证，而不是打印 session token。
+创建 kubeconfig 需要 `eks:DescribeCluster`；Kubernetes 身份验证/授权是另一项要求。如果需要代入角色，请使用经过审核的 `--role-arn`，并确认其信任关系/STS 权限。请通过实际凭证提供方（例如已配置的 SSO 会话）续期凭证，不要输出会话令牌。
 
 ```bash
 set -euo pipefail
@@ -260,27 +260,27 @@ aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
 aws eks list-access-entries --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
 ```
 
-启用 access-entry 身份验证时，检查对应 entry 和关联策略范围。旧式 `CONFIG_MAP` 或混合模式集群也可能使用 `aws-auth`；应保留现有节点映射并计划迁移。不要授予 `system:masters`，也不要为了修复访问而一概覆盖整个 ConfigMap。IRSA 的 IAM OIDC provider 用于工作负载 AWS 凭证，不用于将人工 IAM 主体映射到 Kubernetes 授权。
+启用基于访问条目的身份验证时，请检查相关条目及关联策略的范围。传统 `CONFIG_MAP` 模式或混合模式的集群也可能使用 `aws-auth`；请保留现有节点映射，并按计划迁移。不要将 `system:masters` 作为通用访问修复方法，也不要覆盖整个 ConfigMap。IRSA 的 IAM OIDC 提供商用于工作负载 AWS 凭证，并不是授权人工 IAM 主体访问 Kubernetes 的身份映射。
 
 #### 修正访问路径
 
-根据端点模式，使用已连接的私有管理路径，或经过审查的公有 CIDR 允许列表。不要只为跑通诊断命令就开放 `0.0.0.0/0`。移除公有访问前先测试私有路径，保留无关的现有 VPC 设置，并跟踪配置更新 ID。计划变更时遵循[安全章节的端点步骤](./05-eks-security.md)。
+使用已连接的私有管理路径，或根据端点模式配置经过审核的公有 CIDR 允许列表。不要仅为使诊断命令运行而开放 `0.0.0.0/0`。移除公有访问之前，请先测试私有路径，保留当前不相关的 VPC 设置，并记录配置更新 ID。计划变更时，请遵循[安全章节中的端点操作流程](./05-eks-security.md)。
 
 #### 一键 CloudShell 访问
 
-2026 年 4 月 30 日的一键功能已受支持。在集群详情页选择 **Connect**，即可打开已配置 kubectl 的 CloudShell。它支持公有和私有 API 端点；私有端点会自动启动 CloudShell VPC 环境，并提示输入环境名称。该功能在 EKS Regions 内不另收功能费用。
+2026年4月30日推出的一键功能受支持。在集群详细信息页面选择 **连接**，即可打开已配置 kubectl 的 CloudShell。该功能同时支持公有和私有 API 端点；对于私有端点，会自动启动 CloudShell VPC 环境并提示输入其名称。此功能在 EKS 区域内不收取额外功能费用。
 
-控制台路径仍需要相关 IAM/CloudShell/VPC 环境权限、Kubernetes 访问权和可用网络配置。它省去本地设置，不会取消授权检查。运行命令前，检查适用的资源/数据传输费用和 session 身份。
+控制台访问仍需要相应的 IAM/CloudShell/VPC 环境权限、Kubernetes 访问权限以及正常工作的网络配置。此功能省去了本地设置步骤，但不会免除授权检查。运行命令之前，请检查适用的资源/数据传输费用以及会话身份。
 
-来源：[kubeconfig 与 CloudShell](https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html)、[一键功能公告](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-one-click-cluster-access/)、[EKS PrivateLink 区别](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)、[集群故障排查](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)。
+资料来源：[kubeconfig 和 CloudShell](https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html)、[一键功能公告](https://aws.amazon.com/about-aws/whats-new/2026/04/amazon-eks-one-click-cluster-access/)、[EKS PrivateLink 区别](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html)、[集群故障排查](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)。
 
 ### 集群删除问题
 
-#### 找出阻塞依赖
+#### 确定阻塞依赖项
 
-删除集群是有计划的拆除操作，不是通用故障排查手段。读取准确的 EKS/CloudFormation 错误、集群 ARN/账号/Region、更新状态和 deletion-protection 设置。除了托管节点组和 Fargate profile，deletion protection 与已安装的 EKS Capabilities 也会阻止删除。删除完成前应保留集群 IAM/服务角色。
+删除集群是有意执行的拆除操作，不是通用的故障排查补救措施。请查看准确的 EKS/CloudFormation 错误、集群 ARN/账户/区域、更新状态和删除保护设置。除了托管节点组和 Fargate 配置文件之外，删除保护和已安装的 EKS Capabilities 也可能阻止删除。集群删除完成之前，请保留其 IAM/服务角色。
 
-清点选定集群，并将其端点与明确指定的 kubectl context 对照。以下命令只读，不会自动选择待删除资源：
+清点所选集群，并将其端点与明确指定的 kubectl 上下文进行比较。以下命令为只读操作，不会自动选择要删除的资源：
 
 ```bash
 set -euo pipefail
@@ -308,17 +308,17 @@ aws eks list-capabilities --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
 aws eks list-addons --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION"
 ```
 
-仅凭 Service 的 `EXTERNAL-IP` 输出不能证明资源归属：应区分 controller 管理的 `LoadBalancer` Service、手动配置的外部 IP 和其他 Service 类型。记录 namespace/name/UID、controller 所有权、AWS 资源 ARN 和相关标签。若安装了相应 controller，还要检查 Ingress、Gateway/TargetGroupBinding 资源，并确认 target 或 load balancer 是否共享。
+Service 的 `EXTERNAL-IP` 输出本身不能证明资源归属：请区分由控制器管理的 `LoadBalancer` Service、手动配置的外部 IP 和其他 Service 类型。记录命名空间/名称/UID、控制器所有权、AWS 资源 ARN 和相关标签。还要包括已安装相应控制器时的 Ingress、Gateway/TargetGroupBinding 资源，并确定目标或负载均衡器是否为共享资源。
 
-#### 按所有者顺序退役资源
+#### 按资源所有者的顺序退役资源
 
-1. 迁移流量和工作负载，并确认应用一致性备份/恢复及数据保留要求。保存 PVC YAML 不等于备份数据。删除 claim 时，`Delete` reclaim policy 可能删除底层存储；`Retain` 则需另外处理数据/存储去向。
-2. 必需的负载均衡器 controller 仍运行时，只删除经过审查且拥有负载均衡器的 Kubernetes 资源。等待 finalizer 完成，并核实相应 AWS 资源已释放。删除节点前解决 controller IAM 或依赖失败。不要仅为隐藏清理失败而移除 finalizer。
-3. 根据文档中的所有权/资源删除语义移除 EKS Capabilities。经审查后按顺序删除托管节点组和 Fargate profile，并等待完成。自主管理节点/堆栈需单独拆除。删除 add-on 也可能移除 Kubernetes 组件；其依赖清理完成前，应保留网络/存储 controller。
-4. 仅在明确决定拆除时禁用 deletion protection，然后通过原始基础设施所有者删除集群。删除 Auto Mode 集群还会删除其托管节点和负载均衡器；应将这些范围及内置 TargetGroupBinding 的 target-group 生命周期纳入考虑。
-5. 按准确所有权检查剩余资源：专用堆栈/VPC、卷/快照、负载均衡器、IAM 资源、日志和 Prometheus scraper。共享资源和保留数据各有独立生命周期，可能继续产生费用。
+1. 迁移流量和工作负载，并验证应用一致性备份/恢复以及数据保留要求。保存 PVC YAML 并不是数据备份。删除 claim 时，`Delete` 回收策略可能会删除底层存储；`Retain` 则需要单独决定如何处置数据/存储。
+2. 所需的负载均衡器控制器仍在运行时，仅删除经过审核、且确实拥有负载均衡器的 Kubernetes 资源。等待 finalizer 完成，并确认相应 AWS 资源已释放。删除节点之前，先解决控制器 IAM 或依赖项故障。不要仅为掩盖清理失败而删除 finalizer。
+3. 按照 EKS Capabilities 的文档中规定的所有权/资源删除语义移除它们。按审核后的顺序删除托管节点组和 Fargate 配置文件，并等待操作完成。自管理节点/堆栈需要单独拆除。删除附加组件也可能移除 Kubernetes 组件；依赖资源清理完成之前，请保留网络/存储控制器。
+4. 只有在明确决定拆除时，才禁用删除保护；然后通过原始基础设施所有者删除集群。Auto Mode 集群删除操作也会删除其托管节点和负载均衡器；请考虑此操作范围以及内置 TargetGroupBinding 的目标组生命周期。
+5. 根据确切的所有权审核剩余资源：专用堆栈/VPC、卷/快照、负载均衡器、IAM 资源、日志和 Prometheus 抓取器。共享资源和保留的数据有各自独立的生命周期，也可能继续产生费用。
 
-例如，只有完成前述流量/数据审查后，才执行下面这**一项**明确指定的 Service 删除操作。它不是自动发现并批量删除的循环：
+例如，经过前述流量/数据审核后，以下命令会删除**一个**明确选定的 Service。这不是循环发现并删除资源的操作：
 
 ```bash
 set -euo pipefail
@@ -329,29 +329,29 @@ kubectl --context "$KUBE_CONTEXT" -n "$SERVICE_NAMESPACE" delete service "$SERVI
   --wait=true --timeout=10m
 ```
 
-超时不代表 AWS 负载均衡器一定保留或已删除；检查 finalizer、controller 事件及准确 AWS ARN。Kubernetes 与 AWS 资源清理可能在不同时间完成。
+超时并不能证明 AWS 负载均衡器已保留或已删除；请检查 finalizer、控制器事件和确切的 AWS ARN。Kubernetes 和 AWS 资源清理可能在不同时间完成。
 
 #### 删除错误和强制行为
 
-使用 EKS update 详情与 CloudFormation 堆栈事件识别依赖、授权和进行中操作造成的失败。在 eksctl 0.229 中，`delete cluster --force` 是有效选项，允许错误存在时继续删除；但它不能证明清理完整，也不能安全识别孤立资源归属。`--disable-nodegroup-eviction` 则通过删除绕过 PDB 检查。二者都不是默认事故响应。
+使用 EKS 更新详情和 CloudFormation 堆栈事件，识别依赖、授权和操作进行中等故障。在 eksctl 0.229 中，`delete cluster --force` 是有效选项，发生错误时允许继续删除。但这不能证明清理已完成，也不能安全地确定孤立资源的所有者。`--disable-nodegroup-eviction` 是通过删除绕过 PDB 检查的独立选项。这两者都不是默认的事件响应方式。
 
-不要将账号/Region 范围的 ELB/ELBv2 列表直接 pipe 给删除命令，也不要为了清除依赖错误而删除所有 Service、PVC 或命名空间。如果必须手动清理孤立资源，应先确认其具体集群/堆栈所有者及数据/流量影响，再采用相应服务经过审查的拆除步骤。
+不要将账户/区域范围的 ELB/ELBv2 列表通过管道传给删除命令，也不要为清除依赖错误而删除所有 Service、PVC 或命名空间。如果必须手动删除孤立资源，请先确定其确切的集群/堆栈所有者以及对数据/流量的影响，再按照相应服务经过审核的拆除流程操作。
 
-来源：[EKS 集群删除](https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html)、[删除故障排查](https://repost.aws/knowledge-center/eks-delete-cluster-issues)、[PV 生命周期](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)。
+资料来源：[删除 EKS 集群](https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html)、[删除故障排查](https://repost.aws/knowledge-center/eks-delete-cluster-issues)、[持久卷生命周期](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)。
 
-## 网络问题 {#networking-issues}
+## 网络问题
 
-![网络症状包括 Pod 通信、Service 访问、负载均衡、DNS 和 CNI/IP 分配。](../.gitbook/assets/en-eks-09-eks-troubleshooting-2.png)
+![按 Pod 通信、Service 访问、负载均衡、DNS 和 CNI/IP 分配分类的网络问题症状。](../.gitbook/assets/en-eks-09-eks-troubleshooting-2.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-2.html)
 
-首先识别实际计算/数据平面。使用开源 VPC CNI 的标准 EC2 节点、Fargate 和 Auto Mode 的 agent/配置并不相同。Auto Mode 应使用其 `NodeClass` 网络控制；修改 `aws-node` DaemonSet 或 `ENIConfig` 不会配置 Auto Mode 节点。
+首先确定实际的计算/数据平面。使用开源 VPC CNI 的标准 EC2 节点、Fargate 和 Auto Mode，其代理或配置并不完全相同。对于 Auto Mode，请使用其 `NodeClass` 网络控制项；更改 `aws-node` DaemonSet 或 `ENIConfig` 并不能配置 Auto Mode 节点。
 
 ### Pod 间通信问题
 
-#### 追踪失败路径
+#### 跟踪故障路径
 
-记录源/目的 Pod、命名空间、节点/AZ、IP family、协议和目标端口。经批准的测试如果能够隔离差异，可比较同节点与跨节点行为。针对实际路径检查策略、安全组、路由/NACL、CNI 状态、IP 分配和路径 MTU。
+记录源/目标 Pod、命名空间、节点/AZ、IP 地址族、协议和目标端口。在经批准的测试能够隔离差异时，比较同节点和跨节点的行为。根据该路径检查策略、安全组、路由/NACL、CNI 状态、IP 分配和路径 MTU。
 
 ```bash
 set -euo pipefail
@@ -365,15 +365,15 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
   --sort-by='.metadata.creationTimestamp'
 ```
 
-标准的 `networking.k8s.io/v1` NetworkPolicy 对允许流量采用累加语义；没有规则优先级，也没有“最后策略生效”。如果源端与目标端都处于隔离状态，源端 egress 和目标端 ingress 都必须允许该流量。Admin/集群范围策略 API 和厂商策略引擎有各自语义。检查命名空间标签，并确认 `namespaceSelector` 与 `podSelector` 位于同一个 peer（AND）还是不同 peer（OR）。
+标准 `networking.k8s.io/v1` NetworkPolicy 会累加允许的流量；它们没有规则优先级，也不存在“最后一个策略生效”的机制。如果两端都处于隔离状态，源端出站和目标端入站都必须允许该流量。管理员/集群范围的策略 API 和特定供应商的策略引擎有各自的语义。检查命名空间标签，并确认 `namespaceSelector` 和 `podSelector` 是同一个 peer 内的条件（AND），还是两个独立 peer（OR）。
 
-VPC CNI 支持原生 NetworkPolicy enforcement；不能只因没有第三方策略 Pod 就安装 Calico/Cilium。应验证受支持的 CNI/platform/kernel 和已启用的 policy-agent 配置。标准启动模式下，新 Pod 在策略配置完成前初始允许流量；严格模式则初始拒绝，必须配置所需 DNS/依赖策略。Host-network 行为及覆盖范围限制应查阅相应实现文档。
+VPC CNI 支持原生网络策略实施；不能仅因为没有第三方策略 Pod，就安装 Calico/Cilium。请核实受支持的 CNI/平台/内核以及已启用的策略代理配置。标准启动模式下，新 Pod 在配置好策略之前会暂时允许流量；严格模式则从拒绝流量开始，因此需要配置所需的 DNS/依赖策略。主机网络行为及其他覆盖范围限制，请参阅适用实现的文档。
 
-在标准 VPC CNI 安装中，如果实际 `aws-node` Pod 存在 `aws-network-policy-agent` 容器，应查看其日志。`kubectl get pods -l ...` 成功但结果为空，不能证明已安装插件。Auto Mode 使用内置策略控制。
+对于标准 VPC CNI 安装，请检查实际 `aws-node` Pod 中 `aws-network-policy-agent` 容器（如果存在）的日志。执行 `kubectl get pods -l ...` 成功但返回空列表，并不能证明已安装插件。Auto Mode 使用其内置策略控制。
 
-#### 仅修复目标流量
+#### 只修正预期的流量
 
-审查完整的允许流量矩阵，不要添加命名空间级 allow-all ingress/egress 或删除策略。下面示例选中后端 API Pod，只允许前端 web Pod 通过 TCP 8080 访问：
+请审核完整的允许流量矩阵，而不是添加命名空间范围的全允许入站/出站规则或删除策略。以下示例选择后端 API Pod，并且只允许前端 web Pod 通过 TCP 8080 访问：
 
 ```yaml
 # Example ingress policy only: review both peers and the complete allowed-flow matrix.
@@ -401,13 +401,13 @@ spec:
           port: 8080
 ```
 
-应用后，除非其他策略允许，所选后端 Pod 的其他入口也可能被隔离。它没有配置客户端 egress、DNS 或所有依赖项；需通过正向和负向测试分别验证。应使用实际工作负载命名空间/标签，不要照抄示例名称。
+应用此策略可能会隔离所选后端 Pod 的其他入站流量，除非其他策略允许这些流量。它不会配置客户端出站、DNS 或所有依赖项。请通过正向和负向测试分别验证这些配置。请使用实际工作负载的命名空间/标签，而不是照搬示例中的名称。
 
-安全组方面，应检查源和目标 ENI 的安全组；适用时还要检查 Pod 安全组/自定义 Pod 子网。通过资源所有者开放所需源/端口；不要把所有协议或宽泛 CIDR 当作通用修复。1500 或 9001 等 MTU 值取决于路径；改 CNI 配置或替换 Pod 前，先测量失败并考虑封装开销。
+对于安全组，请检查源和目标 ENI 的安全组，并在适用时包括 Pod 安全组/自定义 Pod 子网。通过资源所有者放行所需的源/端口；不要将所有协议或宽泛 CIDR 作为通用修复方法。1500 或 9001 等 MTU 值取决于路径；更改 CNI 配置或替换 Pod 之前，请先测量故障并考虑封装因素。
 
 ### Service 访问问题
 
-同时检查 Service selector、实际 Pod 就绪状态、endpoint condition 和端口映射：
+请同时检查 Service selector、实际 Pod 就绪状态、端点条件和端口映射：
 
 ```bash
 set -euo pipefail
@@ -426,19 +426,19 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get endpointslices \
   -l "kubernetes.io/service-name=$SERVICE_NAME" -o yaml
 ```
 
-使用 EndpointSlices，不要依赖已弃用的 Endpoints API。检查 `ready`、`serving`、`terminating` 状态以及 `publishNotReadyAddresses`、`externalTrafficPolicy` 和 `internalTrafficPolicy` 等 Service 选项。Pod 为 Running 不代表 Ready。
+请使用 EndpointSlices，不要依赖已弃用的 Endpoints API。检查 `ready`、`serving` 和 `terminating` 条件，以及 `publishNotReadyAddresses`、`externalTrafficPolicy` 和 `internalTrafficPolicy` 等 Service 选项。Pod 处于 Running 状态并不代表它已就绪。
 
-对于 `ExternalName` Service，应诊断 DNS 别名，而不是期待它选中 Pod。无头 Service 的 `clusterIP: None` 是有意配置。无 selector 的 Service 可能使用所有者管理的 EndpointSlices。Service 的 `port` 可以不同于 `targetPort`；声明 container port 不会让应用实际监听该端口。
+对于 `ExternalName` Service，请诊断 DNS 别名，而不是期待它选择 Pod。对于无头 Service，`clusterIP: None` 是有意设置的。无 selector 的 Service 可能使用由资源所有者管理的 EndpointSlices。Service 的 `port` 可能与 `targetPort` 不同；声明容器端口并不会让应用自动在该端口监听。
 
-标签或端口有误时，应通过其 release 配置更新所属 Service/Pod 模板。重新给一个由 controller 管理的 Pod 打标签不是持久修复。Patch 前审查完整端口列表和不可变字段。未诊断前不要删除/重建 Service、更改 ClusterIP 或重启所有 kube-proxy Pod。
+如果标签或端口有误，请通过其发布配置更新资源所有者管理的 Service/Pod 模板。更改某个由控制器管理的 Pod 标签并非持久修复。修补前请检查完整端口列表和不可变字段。不要在未诊断原因时删除并重新创建 Service、更改 ClusterIP 或重启所有 kube-proxy Pod。
 
-仅在策略允许的情况下，使用同一来源和协议比较直接 Pod 与 Service 连通性。确认实际数据平面是 kube-proxy、其他实现还是 Auto Mode，然后再检查 iptables/nftables/eBPF 行为。缺少 kube-proxy Pod 并不总是故障。
+仅在策略允许时，使用相同源和协议比较直接 Pod 连接与 Service 连接。检查数据平面究竟是 kube-proxy、替代实现还是 Auto Mode，然后再调查 iptables/nftables/eBPF 行为。kube-proxy Pod 缺失并不一定是故障。
 
 ### 负载均衡器问题
 
-根据 Service/Ingress class、annotation 和所有权识别 controller。标准 AWS Load Balancer Controller 与 EKS Auto Mode 使用不同 class/API 和生命周期规则。针对对应所有者检查 controller 事件、子网选择、IAM、安全组、target 注册和健康检查。
+根据 Service/Ingress class、注释和所有权确定控制器。标准 AWS Load Balancer Controller 和 EKS Auto Mode 使用不同的 class/API 和生命周期规则。请针对相应所有者检查控制器事件、子网选择、IAM、安全组、目标注册和运行状况检查。
 
-使用与工作负载关联的准确负载均衡器和 target group ARN：
+使用与工作负载关联的确切负载均衡器和目标组 ARN：
 
 ```bash
 set -euo pipefail
@@ -455,17 +455,17 @@ aws elbv2 describe-target-health --region "$AWS_REGION" \
   --target-group-arn "$TARGET_GROUP_ARN"
 ```
 
-`describe-load-balancer-attributes` 显示属性而非运行状态；`describe-load-balancers` 才包括状态。检查 target health 原因码、健康检查协议/端口/路径、listener/rule 路由和应用响应。Instance target 通常到达节点/NodePort；IP target 则到达 Pod target port。安全组规则必须匹配实际路径。
+`describe-load-balancer-attributes` 显示的是属性，而不是运行状态；`describe-load-balancers` 会包含状态。检查目标运行状况原因代码、运行状况检查协议/端口/路径、监听器/规则路由以及应用响应。实例目标通常到达节点/NodePort；IP 目标则到达 Pod 目标端口。安全组规则必须与实际路径相符。
 
-子网 role 标签会影响自动发现；检查 public/internal scheme、路由表、剩余 IP 和 AZ 覆盖。给同一子网同时加 public 和 private role 标签不是修复办法。显式子网选择与 controller 版本可能改变标签要求。不要为了绕过健康检查错误而将前端/后端安全组对 `0.0.0.0/0` 开放。
+子网角色标签会影响自动发现；请检查公有/内部方案、路由表、可用 IP 和 AZ 覆盖范围。在同一子网上同时添加公有和私有角色标签并不能解决问题。明确选择子网以及控制器版本可能会改变标签要求。不要为了绕过运行状况检查失败而将前端/后端安全组开放给 `0.0.0.0/0`。
 
-应采用所有者当前支持的 scheme/type 配置。旧式 `aws-load-balancer-internal` 或 `aws-load-balancer-type: nlb` 示例不能与当前 controller class 互换。变更 controller 所有权或 LB scheme 可能需要计划替换和迁移流量；改 annotation 不保证原地转换。Auto Mode 不会接管已由自主管理 controller 管理的负载均衡器。
+请使用资源所有者当前的方案/类型配置。旧版 `aws-load-balancer-internal` 或 `aws-load-balancer-type: nlb` 示例不能与当前控制器 class 互换。更改控制器所有权或 LB 方案可能需要计划替换并迁移流量；编辑注释并不能保证原位转换。Auto Mode 不会接管已由自管理控制器管理的负载均衡器。
 
-删除 Service 可能删除其负载均衡器；导出的 Service YAML 不是完整的流量/数据回滚方案。手工创建 ALB 不会自动连接到 Kubernetes Service。变更前应查阅所选所有者的[网络指南](./03-eks-networking-part2.md)。
+删除 Service 可能会删除其负载均衡器，而原样导出的 Service YAML 不是完整的流量/数据回滚方案。手动创建 ALB 不会自动将其连接到 Kubernetes Service。变更之前，请查阅针对所选所有者的[网络指南](./03-eks-networking-part2.md)。
 
 ### DNS 问题
 
-#### 检查受影响 Pod 实际使用的 resolver
+#### 检查受影响 Pod 使用的解析器
 
 ```bash
 set -euo pipefail
@@ -480,9 +480,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" exec "$POD_NAME" \
   -c "$CONTAINER_NAME" -- nslookup "$DNS_TEST_NAME"
 ```
 
-如果镜像没有 shell 或 DNS 工具，那是工具限制，并非 DNS 查询失败。准备经过审查且保留相关网络/身份上下文的 debug 方法；新建 debug Pod 可能采用不同 DNS/策略配置。
+如果映像不包含 shell 或 DNS 工具，这是工具限制，并不代表 DNS 查询失败。请准备经过审核的调试方法，以保留相关网络/身份上下文。新的调试 Pod 可能使用不同的 DNS/策略设置。
 
-标准非 Auto 节点上，检查已安装的 CoreDNS Deployment/Service、配置和 EndpointSlices：
+对于标准的非 Auto 节点，请检查已安装的 CoreDNS Deployment/Service、配置和 EndpointSlices：
 
 ```bash
 kubectl --context "$KUBE_CONTEXT" -n kube-system get deployment coredns
@@ -495,9 +495,9 @@ kubectl --context "$KUBE_CONTEXT" -n kube-system logs -l k8s-app=kube-dns \
   --all-containers=true --prefix=true --since=15m --tail=100
 ```
 
-在 **Auto Mode 节点上**，CoreDNS 以节点系统服务方式运行。纯 Auto Mode 集群可以没有传统 CoreDNS Deployment；混合 Auto/非 Auto 集群必须为非 Auto 节点保留 Deployment。不要把安装 NodeLocal DNSCache 或重启不存在的 Deployment 当作 Auto Mode 修复。
+对于 **Auto Mode 节点**，CoreDNS 作为节点系统服务运行。纯 Auto Mode 集群可以在没有传统 CoreDNS Deployment 的情况下运行。混合 Auto/非 Auto 集群必须为非 Auto 节点保留该 Deployment。不要把 NodeLocal DNSCache 安装到 Auto Mode 节点上，也不要将重启不存在的 Deployment 作为 Auto Mode 的补救措施。
 
-区分 Pod nameserver、CoreDNS/NodeLocal 上游和 VPC resolver。`169.254.20.10` 是常见的 NodeLocal DNSCache 地址，不是通用 VPC DNS 服务器。像 `8.8.8.8` 这样的公共 resolver 不能解析 Kubernetes Service zone 或私有 AWS DNS。
+区分 Pod 的 nameserver、CoreDNS/NodeLocal 上游和 VPC 解析器。`169.254.20.10` 是常见的 NodeLocal DNSCache 地址，并非通用的 VPC DNS 服务器。诸如 `8.8.8.8` 的公有解析器不能作为 Kubernetes Service 区域或私有 AWS DNS 的备用解析器。
 
 ```bash
 set -euo pipefail
@@ -510,17 +510,17 @@ aws ec2 describe-vpcs --region "$AWS_REGION" --vpc-ids "$VPC_ID" \
   --query 'Vpcs[].{VpcId:VpcId,DhcpOptionsId:DhcpOptionsId}'
 ```
 
-DNS 属性应使用 `describe-vpc-attribute` 查询；它们不是 `describe-vpcs` 返回的字段。通过返回的 ID 查询 DHCP options。更改共享 VPC 的 DHCP 设置前，先审查其他工作负载。
+DNS 属性应使用 `describe-vpc-attribute` 查询；这些属性不会作为字段由 `describe-vpcs` 返回。请根据返回的 ID 查询 DHCP 选项。更改共享 VPC 的 DHCP 设置之前，请先审核其他工作负载。
 
-#### 实施有针对性的 DNS 修复
+#### 应用有针对性的 DNS 修正
 
-按需检查 UDP 和 TCP 53、实际 CoreDNS 就绪/配置、上游可达性、DNS policy 和自定义搜索设置。若需要集群 DNS，使用 `hostNetwork` 的 Pod 通常应配置 `ClusterFirstWithHostNet`；`dnsPolicy: None` 则要求有意配置完整 resolver。只允许 DNS 的 egress policy 也会隔离所选 Pod 的其他 egress，除非另有策略放行。
+根据需要检查 UDP 和 TCP 53 端口、实际 CoreDNS 就绪状态/配置、上游可达性、DNS 策略和自定义搜索设置。若需要使用集群 DNS，`hostNetwork` Pod 通常需要 `ClusterFirstWithHostNet`；`dnsPolicy: None` 则需要完整且有意配置的解析器设置。仅允许 DNS 的出站策略也会隔离所选 Pod 的其他出站流量，除非其他策略允许这些流量。
 
-保留自有 Corefile 定制，并使用 add-on 支持的配置 schema。扩缩或重启 CoreDNS 前检查副本/资源/PDB/调度和自动扩缩所有者。保留 update ID 和功能性 DNS 检查；不要首先删除所有 DNS Pod 或安装猜测的 “latest” 镜像。
+保留资源所有者的 Corefile 自定义项，并使用附加组件支持的配置 Schema。扩缩容或重启 CoreDNS 之前，请审核副本/资源/PDB/调度设置以及任何自动扩缩容资源所有者。保留更新 ID 并执行功能性 DNS 检查；不要删除所有 DNS Pod，也不要将猜测的“latest”映像作为第一步。
 
 ### VPC CNI 问题
 
-以下检查适用于使用开源 VPC CNI 的**标准 EC2 节点**。应显式选择受影响节点上的 Pod；`kubectl exec` 不接受 label selector。
+以下检查适用于**使用开源 VPC CNI 的标准 EC2 节点**。请明确选择受影响节点上的 Pod；`kubectl exec` 不接受标签选择器。
 
 ```bash
 set -euo pipefail
@@ -538,7 +538,7 @@ kubectl --context "$KUBE_CONTEXT" -n kube-system logs "$AWS_NODE_POD" \
   -c aws-node --since=15m --tail=200
 ```
 
-检查 add-on 的 `configurationValues`、DaemonSet 环境变量和相关自定义资源。不要假设所有设置都存放在 `aws-node` ConfigMap 中。节点 `.spec.podCIDR` 不是 VPC CNI Pod 地址的可靠清单；应检查实际 Pod IP、EC2 ENI、prefix 和子网。
+请检查附加组件的 `configurationValues`、DaemonSet 环境变量和相关自定义资源。不要假定 `aws-node` ConfigMap 包含所有设置。节点的 `.spec.podCIDR` 不是可靠的 VPC CNI Pod 地址清单；请检查实际 Pod IP、EC2 ENI、前缀和子网。
 
 ```bash
 set -euo pipefail
@@ -553,33 +553,33 @@ aws ec2 describe-instance-types --region "$AWS_REGION" --instance-types "$INSTAN
   --query 'InstanceTypes[].{Type:InstanceType,Network:NetworkInfo}'
 ```
 
-若已启用 IPAMD introspection，它位于节点配置的 introspection endpoint（通常为 loopback 端口 61679）。使用允许的节点/agent 诊断方法，并确保所需工具可用；CNI 镜像缺少 curl 不代表 IPAM 故障。
+启用 IPAMD 内省时，可通过节点已配置的内省端点（通常为 loopback 端口 61679）进行访问。请使用允许的节点/代理诊断方法，并确保有必要的工具；CNI 映像中没有 curl 并不是 IPAM 故障。
 
-#### 区分地址分配约束
+#### 区分分配限制
 
-- **子网耗尽/碎片化**：对照剩余地址和 prefix。Prefix delegation 需要受支持的实例/配置及连续 prefix block；仅有剩余 IP 数量不能证明可以分配 /28。
-- **实例 ENI/IP 限制**：检查 `NetworkInfo` 和现有 ENI。调整节点组 desired/min/max 会改变节点数，不会改变实例类型或每实例限制。改实例配置应使用经审查的新节点组，或受支持的原始 launch-template 更新路径。
-- **自定义网络**：启用前准备匹配的 `ENIConfig`、Pod 子网/安全组和节点选择。它会改变 secondary ENI/Pod IP 的来源，并不会创造无限容量。
-- **预留目标：**`WARM_IP_TARGET` 控制空闲 IP 余量；`MINIMUM_IP_TARGET` 是已分配 IP 总数下限。按文档它们会覆盖 warm-ENI 行为，prefix 模式下 IP/minimum target 也影响 warm-prefix 行为。只有 minimum、没有正数 warm headroom 可能妨碍后续分配。根据工作负载/IP 预算计算，不要照抄 1/2/5 等任意值。
-- **身份/所有权**：检查实际 CNI IRSA/Pod Identity 或适用的节点角色，以及 IPv4/IPv6 policy。把 IPv4 CNI policy 附加到每个节点角色不是通用修复。
+- **子网耗尽/碎片化：** 比较可用地址和前缀。前缀委派需要受支持的实例/配置以及可用的连续前缀块；仅凭空闲 IP 数量无法证明可以分配 /28。
+- **实例 ENI/IP 限制：** 检查 `NetworkInfo` 和现有 ENI。调整节点组期望/最小/最大值会改变节点数，不会改变实例类型或单实例限制。请使用经过审核的新节点组，或通过受支持的原始启动模板更新路径更改实例配置。
+- **自定义网络：** 启用之前，请准备匹配的 `ENIConfig`、Pod 子网/安全组和节点选择设置。此项配置会改变辅助 ENI/Pod IP 的来源，但不会创造无限容量。
+- **预留目标：** `WARM_IP_TARGET` 控制空闲 IP 余量；`MINIMUM_IP_TARGET` 为已分配 IP 总数设定下限。根据文档，这些设置会覆盖预留 ENI 行为；在前缀模式下，IP/最小目标也会影响预留前缀行为。如果最小值设置为正数却没有正的预留余量，可能会阻止后续分配。请根据工作负载/IP 预算推导数值，而不是照搬任意的 1/2/5 设置。
+- **身份/所有权：** 检查实际 CNI IRSA/Pod Identity 或适用的节点角色，以及 IPv4/IPv6 策略。将 IPv4 CNI 策略附加到所有节点角色并非通用修复方法。
 
-Auto Mode 使用 `NodeClass` 子网/安全组/policy 控制，不接受这些 warm-IP/ENI 或 `ENIConfig` 设置。应保留它的托管网络模型。
+Auto Mode 使用 `NodeClass` 子网/安全组/策略控制，不接受这些预留 IP/ENI 或 `ENIConfig` 设置。请保留其托管网络模型。
 
-通过所有者应用经过审查的 CNI 版本/配置，按支持的中间版本和配置 schema 操作。参阅[升级指南](./08-eks-upgrades.md)，监控准确 add-on 更新，并在之后验证网络。不要只替换一个容器镜像、盲目覆盖配置或重启所有工作负载来掩盖地址分配故障。
+通过资源所有者应用经过审核的 CNI 版本/配置，并遵循受支持的中间版本及配置 Schema。使用[升级指南](./08-eks-upgrades.md)监控确切的附加组件更新，并在之后验证网络。不要只替换一个容器映像、盲目覆盖配置，或重启所有工作负载来掩盖分配故障。
 
-来源：[VPC CNI policy 配置](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)、[Auto Mode 网络](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)、[自定义网络](https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html)、[CNI 配置](https://github.com/aws/amazon-vpc-cni-k8s)、[Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)、[EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/)。
+资料来源：[VPC CNI 策略配置](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)、[Auto Mode 网络](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)、[自定义网络](https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html)、[CNI 配置](https://github.com/aws/amazon-vpc-cni-k8s)、[Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)、[EndpointSlices](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/)。
 
-## 节点与 Pod 问题 {#node-and-pod-issues}
+## 节点和 Pod 问题
 
-![节点和 Pod 症状以及需要调查的资源、kubelet、网络、工作负载和扩缩假设。](../.gitbook/assets/en-eks-09-eks-troubleshooting-3.png)
+![节点和 Pod 问题症状，以及需要调查的资源、kubelet、网络、工作负载和扩缩容假设。](../.gitbook/assets/en-eks-09-eks-troubleshooting-3.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-3.html)
 
 ### 节点 NotReady 问题
 
-#### 检查状态与实际节点
+#### 检查状态条件和实际节点
 
-`Ready=False` 和 `Ready=Unknown` 需要不同证据：不健康的 kubelet/runtime 可能报告失败，而心跳缺失可能来自连接丢失或节点停止。内存、磁盘和 PID 压力是不同条件，也不一定导致 `NotReady`。检查 condition 原因/时间以及 lease/event，不要从一个标签推断根因。
+`Ready=False` 和 `Ready=Unknown` 需要不同的证据：运行状况异常的 kubelet/运行时可能会报告故障，而心跳缺失可能与连接中断或节点已停止有关。内存、磁盘和 PID 压力是不同的状态条件，并不总是意味着节点为 `NotReady`。请检查状态条件原因/时间以及租约/事件，不要仅根据一个标签推断原因。
 
 ```bash
 set -euo pipefail
@@ -592,7 +592,7 @@ kubectl --context "$KUBE_CONTEXT" get events -A --field-selector "involvedObject
 kubectl --context "$KUBE_CONTEXT" get pods -A --field-selector "spec.nodeName=$NODE_NAME" -o wide
 ```
 
-EC2 检查应使用准确 ProviderID；用 `grep` 匹配节点 IP 可能会选错资源。托管节点组应检查健康状态、镜像/release 和修复配置：
+执行 EC2 检查时，请使用确切的 ProviderID；使用 `grep` 匹配节点 IP 可能会选错资源。对于托管节点组，请检查运行状况、映像/发行版本和修复配置：
 
 ```bash
 set -euo pipefail
@@ -602,13 +602,13 @@ aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name "$NOD
   --query 'nodegroup.{status:status,health:health,version:version,releaseVersion:releaseVersion,amiType:amiType,nodeRepairConfig:nodeRepairConfig,updateConfig:updateConfig,scalingConfig:scalingConfig}'
 ```
 
-支持节点访问时，使用基础章节的远程会话步骤检查 kubelet/containerd journal、网络、磁盘字节数/inode 和内存。检查实际配置的证书/kubeconfig 路径，但不要打印私钥。`kubeadm certs renew` 不是 EKS 托管控制平面修复方式，`eksctl replace nodegroup` 不是受支持的 eksctl 命令。AL2023 使用 nodeadm 配置；不能对所有镜像重新运行 AL2 `/etc/eks/bootstrap.sh` 配方。
+在支持节点访问的环境中，请按照基础部分的远程会话流程检查 kubelet/containerd 日志、网络、磁盘字节/索引节点以及内存。检查实际配置的证书/kubeconfig 路径，但不要输出私钥。`kubeadm certs renew` 并不是修复 EKS 托管控制平面的方式，`eksctl replace nodegroup` 也不是受支持的 eksctl 命令。AL2023 使用 nodeadm 配置；不要在所有映像上重新运行 AL2 的 `/etc/eks/bootstrap.sh` 配方。
 
-#### 恢复与自动修复
+#### 恢复和自动修复
 
-保留证据后再选择有明确所有者的恢复操作。重启 kubelet/containerd、重启或替换节点会影响工作负载，也可能无法修复持久的 IAM/网络/bootstrap 问题。重启 API 返回成功不代表实例或 kubelet 已就绪；取消 cordon 前要确认同一节点/实例和工作负载。
+保留证据后，根据资源所有者选择恢复操作。重启 kubelet/containerd、重启节点或替换节点会影响工作负载，而且可能无法解决持续存在的 IAM/网络/引导问题。重启 API 返回成功并不表示实例或 kubelet已就绪；解除节点隔离之前，请验证同一节点/实例及其工作负载。
 
-计划替换时先检查容量、有状态数据、PDB 和替换资源所有者，再对选定节点执行带超时的 drain：
+计划替换节点时，请检查容量、有状态数据、PDB 和替换操作的所有者，然后使用超时设置排空一个选定节点：
 
 ```bash
 set -euo pipefail
@@ -623,13 +623,13 @@ kubectl --context "$KUBE_CONTEXT" get pods --all-namespaces \
 kubectl --context "$KUBE_CONTEXT" drain "$NODE_NAME" --ignore-daemonsets --timeout=10m
 ```
 
-drain 失败后不要继续终止 EC2，也不要默认丢弃 `emptyDir` 数据。部分驱逐的节点可能仍处于 cordon 状态。PDB 保护 eviction 路径，不覆盖所有基础设施故障、终止或 controller scale-down。托管替换应遵循[节点升级步骤](./08-eks-upgrades.md)，不要原地更改软件包。
+如果排空失败，不要继续终止 EC2，也不要默认丢弃 `emptyDir` 数据。部分排空的节点可能仍处于隔离状态。PDB 保护的是驱逐路径，不涵盖所有基础设施故障、终止或控制器缩容情形。请遵循[节点升级流程](./08-eks-upgrades.md)执行托管替换，而不是原地更改软件包。
 
-EKS 自动节点修复是一项独立且真实存在的机制。Auto Mode 默认启用；托管节点组可启用 `nodeRepairConfig`；Karpenter 有自己的功能/配置要求。节点监控可报告额外状态，但检测问题并不等于启用修复。当前默认表会替换持续存在的 `Ready`、runtime、kernel、networking 和 storage 故障；`MemoryPressure` 与 `DiskPressure` **没有默认修复操作**。修复阈值/并行度及 unhealthy-fleet/ARC 控制可能停止新操作，而已开始操作仍会继续。不要承诺自定义 Lambda、ASG 标签或 `maxUnavailable` 会自动实现这些行为。
+EKS 自动节点修复是一项真实且独立的机制。Auto Mode 默认启用；托管节点组可以启用 `nodeRepairConfig`，Karpenter 则有其自己的功能/配置要求。节点监控可报告更多状态条件，但仅检测并不会启用修复。当前默认表格包括对持续存在的 `Ready`、运行时、内核、网络和存储故障执行替换；`MemoryPressure` 和 `DiskPressure` **没有默认修复操作**。修复阈值/并行度以及不健康实例群/ARC 控制可以停止新操作，但不会停止正在进行的操作。不要声称自定义 Lambda、ASG 标签或 `maxUnavailable` 会自动提供这种行为。
 
 ### Pod 未运行问题
 
-#### 读取状态、事件和所属 controller
+#### 读取状态、事件和所属控制器
 
 ```bash
 set -euo pipefail
@@ -650,23 +650,23 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
   --field-selector "involvedObject.uid=$POD_UID" --sort-by='.metadata.creationTimestamp'
 ```
 
-使用基础章节针对容器的日志步骤。`Pending`、`ContainerCreating`、等待拉取镜像、init-container 失败、就绪失败、`OOMKilled` 和 restart backoff 是不同问题。`CrashLoopBackOff` 表示容器反复失败后的退避，不是根因。
+请使用基础部分中针对特定容器的日志流程。`Pending`、`ContainerCreating`、映像拉取等待、init 容器失败、就绪检查失败、`OOMKilled` 和重启退避对应不同问题。`CrashLoopBackOff` 表示容器反复失败后进入退避状态；它不是根因。
 
 | 证据 | 后续检查 |
 | --- | --- |
-| 镜像拉取错误 | Registry/名称/tag/digest/架构、节点 DNS/TLS/路由、限流和实际拉取身份 |
-| FailedScheduling | requests 与可分配容量、Pod 数、taint/affinity/topology、配额及 PVC 消费者约束 |
-| FailedMount / attach | PVC/PV/StorageClass、CSI/身份、AZ 和当前 attachment；参见存储章节 |
-| OOMKilled / Evicted | 容器终止状态、限制、节点压力和用量历史；不要预设为内存泄漏 |
-| Forbidden / admission failure | 准确 API actor、RBAC 或 admission policy；增加列举 Pod 权限不能修复无关 registry/文件系统访问 |
+| 映像拉取错误 | 仓库/名称/标签/摘要/架构、节点侧 DNS/TLS/路由、速率限制以及实际拉取身份 |
+| FailedScheduling | requests 与可分配容量的比较、Pod 数量、污点/亲和性/拓扑、配额和 PVC 使用者约束 |
+| FailedMount / attach | PVC/PV/StorageClass、CSI/身份、AZ 和当前挂载情况；请参阅存储部分 |
+| OOMKilled / Evicted | 容器终止状态、限制、节点压力和使用历史；不要想当然地认为是内存泄漏 |
+| Forbidden / admission failure | 确切的 API 操作者、RBAC 或准入策略；添加 Pod 列表权限不能修复无关的仓库/文件系统访问问题 |
 
-将 `imagePullPolicy` 改为 `Always` 不能修复不存在的镜像或无效凭证。在笔记本用 Docker 拉取成功不能验证节点路径/身份，把镜像加载到 Docker 也不会自动装入 containerd runtime。
+将 `imagePullPolicy` 改为 `Always` 并不能修复映像不存在或凭证无效的问题。在笔记本电脑上使用 Docker 拉取映像，不能验证节点的网络路径/身份；将映像加载到 Docker 中也不会自动将其提供给 containerd 运行时。
 
-#### Registry 凭证和工作负载更改
+#### 仓库凭证和工作负载变更
 
-对于私有 ECR，检查实际 node/Fargate execution identity 及仓库策略。应用的 IRSA/Pod Identity 不是启动前拉取自身镜像所用身份。私有 ECR 网络可能需要 ECR API/DKR 和 S3 访问；ECR endpoint 不能提供对任意 private registry 的私有访问。
+对于私有 ECR，请检查实际的节点/Fargate 执行身份和仓库策略。应用的 IRSA/Pod Identity 并不是启动前拉取映像所用的身份。私有 ECR 网络访问可能需要 ECR API/DKR 和 S3 访问权限；ECR 端点无法提供对任意仓库的私有访问。
 
-需要 image-pull Secret 的 registry 应使用受保护、自包含且凭证正确的 Docker auth JSON 文件。不要把 `.dockerconfigjson` 或密码打印到日志/命令参数中；桌面 credential-helper 引用并不是 kubelet 可用凭证。
+对于需要映像拉取 Secret 的其他仓库，请使用受保护且独立完整的 Docker auth JSON 文件，并提供正确的仓库凭证。不要在日志/命令参数中输出 `.dockerconfigjson` 或密码；单独的桌面凭证助手引用并不是 kubelet 可用的凭证。
 
 ```bash
 set -euo pipefail
@@ -685,9 +685,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" rollout status \
   "deployment/$DEPLOYMENT_NAME" --timeout=5m
 ```
 
-Secret 必须位于 Pod 所在命名空间。strategic Pod-template patch 会按名称合并拉取 Secret 条目，并启动受控 Deployment rollout；应保留 release 所有权及其他设置。现有 Pod 的 `imagePullSecrets` 通常不是可编辑字段。ServiceAccount 默认值影响新准入的 Pod；更改整个命名空间的默认 ServiceAccount 可能影响无关工作负载。过期凭证应由所有者续期，不要定时删除/重建共享 Secret。
+Secret 必须与 Pod 位于同一命名空间。战略性 Pod 模板补丁会按名称合并拉取 Secret 条目，并启动受控的 Deployment 滚动更新；请保留发布资源所有权和其他设置。现有 Pod 的 `imagePullSecrets` 通常不是可编辑字段。ServiceAccount 默认设置会影响新获准创建的 Pod；更改整个命名空间的默认 ServiceAccount 可能影响无关工作负载。请通过资源所有者续期即将过期的凭证，不要定期删除并重新创建共享 Secret。
 
-其他配置应修改 controller 声明的模板，并观察 rollout/就绪状态。删除 Pod 仅在有相应 controller 时才会重建它，也可能丢失有用证据。debug `--copy-to` Pod 可能重复应用副作用；应使用经审查的诊断方法和镜像，并明确权限与清理方式，不要在运行中的应用内安装软件包。
+对于其他配置变更，请修正控制器声明的模板，并观察滚动更新/就绪状态。只有存在相应控制器时，删除 Pod 才会使其重新创建，而且还可能丢失有用证据。调试用的 `--copy-to` Pod 可能会复制应用的副作用；请使用经过审核的诊断方法和映像，并明确权限和清理方式，不要在运行中的应用中安装软件包。
 
 ### 资源约束问题
 
@@ -698,15 +698,15 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
 kubectl --context "$KUBE_CONTEXT" top nodes
 ```
 
-这些 metrics 命令依赖 Metrics Server 和可用的 kubelet 访问。调度依据资源 requests 和节点可分配容量，不是当前 `kubectl top` 利用率。按需计入 init container、Pod overhead、ephemeral storage、extended resources 和 Pod 数限制。Namespace quota 与 LimitRange 是其他独立约束。
+指标命令需要 Metrics Server 和正常工作的 kubelet 访问。调度使用资源 requests 和节点可分配容量，而不是当前 `kubectl top` 利用率。根据情况计入 init 容器、Pod 开销、临时存储、扩展资源和 Pod 数量限制。命名空间配额和 LimitRange 是不同的约束。
 
-只有测量工作负载需求后才能降低 requests；降低内存 request 不能修复 `Insufficient pods`，也不能保证容器能放入 limit。提高 limit 可能把压力转移到节点。删除日志/cache 前先解决磁盘/inode 和镜像/文件系统使用问题，并保留事故证据。
+只有测得的工作负载需求确实支持时才降低 requests；降低内存 request 不能修复 `Insufficient pods`，也不能保证容器满足其 limit。提高 limit 可能会将压力转移到节点。删除日志或缓存之前，请先解决磁盘/索引节点和映像/文件系统使用问题，并保留事件证据。
 
-增加节点数不会改变单实例容量。托管组的 desired/min/max 应与其 autoscaler 协调；缩小扩缩配置不遵守 PDB。改变实例类型应使用适当的新节点组或原有、受支持的 launch-template/version 路径。不要为了让 Pod 调度而随意删除 taint、affinity 或拓扑限制。
+增加节点数不会改变单实例容量。对于托管节点组，请与其自动扩缩容资源协调 desired/min/max；缩小扩缩配置不会遵循 PDB。要更改实例类型，请使用合适的新节点组，或采用原始启动模板/版本的受支持路径。不要仅为使 Pod 能够调度而移除污点、亲和性或拓扑限制。
 
-### 自动扩缩问题
+### 自动扩缩容问题
 
-区分副本扩缩（HPA）、资源建议/更新（VPA）、节点供给（CA、Karpenter 或 Auto Mode）和应用瓶颈。若容量由其他节点供给方负责，CA Pod 不存在也可能正常。
+区分副本扩缩容（HPA）、资源建议/更新（VPA）、节点预置（CA、Karpenter 或 Auto Mode）以及应用瓶颈。如果由其他节点预置器管理容量，那么没有 CA Pod 是正常现象。
 
 ```bash
 set -euo pipefail
@@ -719,13 +719,13 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get events \
   --sort-by='.metadata.creationTimestamp'
 ```
 
-检查 HPA 的 `AbleToScale`、`ScalingActive`、`ScalingLimited` 等 condition、当前指标和行为。期望/当前副本数暂时不同不一定是故障。CPU/内存利用率目标需要资源 requests；自定义/外部指标使用自己的 API adapter 或 KEDA integration。指标错误可能阻止缩容。
+检查 HPA 条件，例如 `AbleToScale`、`ScalingActive` 和 `ScalingLimited`，以及当前指标和行为。期望副本数与当前副本数短暂不一致，并不一定是故障。CPU/内存利用率目标需要设置资源 requests；自定义/外部指标使用各自的 API 适配器或 KEDA 集成。指标错误可能会阻止缩容。
 
-对于 CA，应检查已安装 release、支持的 Kubernetes 次版本、身份、发现标签、无法调度的 Pod 约束和节点组最大值/配额。CA 不会只因节点平均 CPU 高就添加节点。对于 Karpenter/Auto Mode，应检查相应 NodePool/NodeClaim/provider 限制与事件；不要把安装 CA 当作通用修复。
+对于 CA，请检查已安装的发行版本、受支持的 Kubernetes 次版本、身份、发现标签、不可调度 Pod 的约束以及节点组上限/配额。CA 不会仅因为节点平均 CPU 使用率较高就增加节点。对于 Karpenter/Auto Mode，请检查相应的 NodePool/NodeClaim/提供程序限制和事件；不要把安装 CA 当作通用修复方法。
 
-对于 VPA，应区分仅提供建议的 `Off`、创建时应用的 `Initial` 及有意设置的更新模式。`Auto` 已弃用，建议使用 `Recreate`；改模式可能中断工作负载，并与使用相同 CPU/内存指标的 HPA 冲突。API 查询失败不证明 VPA CRD 不存在。
+对于 VPA，请区分仅提供建议的 `Off`、创建时生效的 `Initial` 和有意启用的更新模式。`Auto` 已弃用，应使用 `Recreate` 替代；更改模式可能中断工作负载，并与使用相同 CPU/内存信号的 HPA 冲突。API 查询失败不能证明 VPA CRD 不存在。
 
-这是**资源指标** HPA 示例，不是自定义指标配置：
+这是**资源指标** HPA 示例，并非自定义指标配置：
 
 ```yaml
 # Resource metrics example, not a custom/external-metrics adapter configuration.
@@ -759,13 +759,13 @@ spec:
       stabilizationWindowSeconds: 300
 ```
 
-70%/80%、副本界限和稳定窗口都是示例设置，不是实测建议。目标 Deployment 必须存在并有适当 requests 和容量。HPA 选择各指标给出的最大副本建议；内存行为和 adapter 故障需针对工作负载测试。每个副本数只保留一个控制所有者，避免 Terraform/GitOps 不断重置 `.spec.replicas`。
+70%/80%、副本数量范围和稳定窗口均为示例设置，并非基于测量得出的建议。目标 Deployment 必须存在，并配置合适的 requests 和容量。HPA 会选择多个指标中建议的最大副本数；内存行为和适配器故障需要结合具体工作负载进行测试。保留单一副本扩缩容所有者，并避免 Terraform/GitOps 持续重置 `.spec.replicas`。
 
-使用[自动扩缩概念](../core/09-cluster-administration.md)以及已安装 controller 的配置文档。应验证实际 Helm values/身份及签名/固定版本的 release；不要应用未经审查的 `master` manifest，也不要给节点角色 `AutoScalingFullAccess`。
+请参阅[自动扩缩容概念](../core/09-cluster-administration.md)和已安装控制器的配置文档。验证实际 Helm values/身份以及经过签名/固定版本的发行版；不要应用未经审核的 `master` 清单，也不要向节点角色授予 `AutoScalingFullAccess`。
 
-来源：[EKS 节点修复](https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html)、[Pod 生命周期](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)、[私有镜像拉取](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)、[HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)、[VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)。
+资料来源：[EKS 节点修复](https://docs.aws.amazon.com/eks/latest/userguide/node-repair.html)、[Pod 生命周期](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)、[私有映像拉取](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/)、[HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)、[VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)。
 
-## IAM 与身份验证问题 {#iam-and-authentication-issues}
+## IAM 和身份验证问题
 
 <!-- Audit 2026-09-11: parent diagram repair pending; see core-audit/eks-troubleshooting/diagram-review.json.
 ![IAM and Kubernetes authorization symptoms; use the cluster authentication mode and actual caller to select the diagnostic path.](../.gitbook/assets/en-eks-09-eks-troubleshooting-4.png)
@@ -773,9 +773,9 @@ spec:
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-09-eks-troubleshooting-4.html)
 -->
 
-### 集群访问被拒
+### 集群访问被拒绝
 
-分别检查 AWS caller、EKS API 权限、kubeconfig/STS 身份验证、集群身份映射和 Kubernetes 授权。EKS 控制平面使用的 IAM role 不是人工操作员的 role。AWS `DescribeCluster` 成功并不等于有 Kubernetes 访问权。
+区分 AWS 调用方、EKS API 权限、kubeconfig/STS 身份验证、集群身份映射和 Kubernetes 授权。EKS 控制平面使用的 IAM 角色并不是人工操作者的角色。成功执行 AWS `DescribeCluster` 并不会授予 Kubernetes 访问权限。
 
 ```bash
 set -euo pipefail
@@ -788,9 +788,9 @@ kubectl config view --context "$KUBE_CONTEXT" --minify \
 kubectl --context "$KUBE_CONTEXT" auth can-i get pods -n "$NAMESPACE"
 ```
 
-传输错误应使用访问章节的 endpoint/CA 检查。凭证过期时，通过实际配置的 SSO/federated/assumed-role session 续期，并确认选定 profile/role。`sts get-session-token` 不是通用刷新命令；打印其输出可能暴露凭证。
+遇到传输错误时，请使用访问部分中的端点/CA 检查。凭证过期时，请续期已配置的 SSO/联合身份/代入角色会话，并确认所选配置文件/角色。`sts get-session-token` 并不是通用的凭证刷新命令，输出内容还可能泄露凭证。
 
-作出身份映射判断前，先检查集群认证模式：
+决定身份映射方式之前，请检查集群的身份验证模式：
 
 ```bash
 set -euo pipefail
@@ -803,13 +803,13 @@ aws eks list-associated-access-policies --cluster-name "$CLUSTER_NAME" --region 
   --principal-arn "$PRINCIPAL_ARN"
 ```
 
-对于 API-based 访问，应检查准确主体、entry 类型、Kubernetes group，以及关联 access policy 的命名空间/集群范围。`aws-auth` 只适用于 `CONFIG_MAP` 及混合模式的旧侧；它不存在不代表全部访问都失效。保留节点映射，改认证模式前遵循文档化迁移方向。
+对于基于 API 的访问，请检查确切的主体、条目类型、Kubernetes 组以及关联访问策略的命名空间/集群范围。`aws-auth` 适用于 `CONFIG_MAP` 模式以及混合模式中的传统部分；不要假定它不存在就意味着所有访问都已失效。保留节点映射，并在更改身份验证模式之前遵循文档中的迁移方向。
 
-不要用简化示例替换 `aws-auth`，也不要把授予 `system:masters` 当作通用修复。命名空间范围授权不会撤销其他 binding/access policy 已授予的更宽权限。通过访问所有者修复预期路径。
+不要用简短示例替换 `aws-auth`，也不要将 `system:masters` 作为通用修复方法。命名空间范围的授权不会撤销通过其他绑定/访问策略授予的更广泛权限。请通过访问资源所有者修正预期的访问路径。
 
 ### RBAC 问题
 
-身份验证失败、Kubernetes `Forbidden` 响应和 impersonation 请求失败是不同证据。检查准确的 API verb、resource/subresource、namespace 和 subject 类型。
+身份验证失败、Kubernetes `Forbidden` 响应和模拟请求失败是不同的证据。请检查确切的 API 动词、资源/子资源、命名空间和主体类型。
 
 ```bash
 set -euo pipefail
@@ -823,9 +823,9 @@ kubectl --context "$KUBE_CONTEXT" get clusterrolebindings -o json \
   | jq --arg name "$SUBJECT_NAME" '.items[] | select(any(.subjects[]?; .name == $name)) | {name:.metadata.name,roleRef,subjects}'
 ```
 
-这些查询用于查找候选 subject 名称；仍须检查 `kind`、ServiceAccount 命名空间和 `roleRef`，因为相同字符串可能代表不同主体。`kubectl auth can-i --as=...` 需要 impersonation 权限。模拟 RBAC 检查及 `--list` 输出不能重现 EKS access policy 的所有授权；还应使用预期的已认证主体进行测试。
+这些查询会找到可能的主体名称；请检查 `kind`、ServiceAccount 命名空间和 `roleRef`，因为同一个字符串可能表示不同主体。`kubectl auth can-i --as=...` 需要模拟权限。模拟 RBAC 检查和 `--list` 输出无法体现 EKS 访问策略授予的所有权限；还应使用预期的已身份验证主体进行测试。
 
-例如，在有意将标准 IAM access entry 映射到 `eks-troubleshoot-readers` 后，以下 Role 仅授予命名空间内读取 Pod/Service/event/EndpointSlice 及 Pod log 的权限：
+例如，在有意将标准 IAM 访问条目映射到 `eks-troubleshoot-readers` 后，以下 Role 仅授予对命名空间内 Pod/Service/事件/EndpointSlice 的读取权限，以及读取 Pod 日志的权限：
 
 ```yaml
 # Example for a deliberately mapped Kubernetes group in an existing namespace.
@@ -860,11 +860,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-该 namespace 必须预先存在，且 group 映射需单独审查。应用的 ServiceAccount 应使用不同 binding，准确指定 `kind: ServiceAccount`、名称和 namespace。节点/namespace 读取是集群范围权限，需单独审查 ClusterRole；不要授予所有诊断用户 cluster-admin。即使此 Role 不授予读取 Secret 的权限，日志仍可能泄露应用数据。
+命名空间必须已存在，且组映射必须单独审核。对于应用 ServiceAccount，请使用独立绑定，并将 `kind` 设为 `ServiceAccount`，且使用其确切名称和命名空间。读取节点/命名空间属于集群范围的权限，需要经过明确审核的 ClusterRole；不要向每个诊断用户授予 cluster-admin 权限。尽管此 Role 不授予读取 Secret 的权限，日志访问仍可能泄露应用数据。
 
-### IRSA 与 Pod Identity 问题
+### IRSA 和 Pod Identity 问题
 
-IRSA 提供**工作负载 AWS 凭证**；集群 IAM OIDC provider 不是人工 IAM 主体获得 Kubernetes RBAC 访问的方式。检查实际 Pod ServiceAccount、信任/权限策略、SDK 凭证链和服务 endpoint 可达性：
+IRSA 提供的是**工作负载 AWS 凭证**；集群 IAM OIDC 提供商并不是人工 IAM 主体获取 Kubernetes RBAC 访问权限的途径。请检查实际 Pod ServiceAccount、信任和权限策略、SDK 凭证链以及服务端点的可达性：
 
 ```bash
 set -euo pipefail
@@ -881,9 +881,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
   | jq '{serviceAccount:.spec.serviceAccountName,containers:[.spec.containers[] | {name,awsEnvironmentNames:[.env[]? | select(.name | startswith("AWS_")) | .name]}]}'
 ```
 
-这里只列出了 AWS 环境变量名称。不要为排查身份问题转储所有 Pod 环境变量或投影 token。使用 IRSA 时，应确认受支持的 SDK 使用投影的 web-identity token 和配置角色；更早的静态/默认凭证来源可能优先。
+此处只显示 AWS 环境变量名称。不要为了排查身份问题而转储所有 Pod 环境变量或投射的令牌。使用 IRSA 时，请确认受支持的 SDK 使用了投射的 web-identity 令牌和已配置的角色；较早的静态/默认凭证源可能具有更高优先级。
 
-以下示例信任语句绑定一个 ServiceAccount subject 和 STS audience。将账号、分区、Region、issuer ID 和 subject 替换为已核实的值；不要用它覆盖共享 role 的其他设置：
+以下示例信任声明仅绑定一个 ServiceAccount 主体和 STS audience。请将账户、分区、区域、发行者 ID 和主体替换为已核实的值；不要用此策略覆盖共享角色：
 
 ```json
 {
@@ -906,11 +906,11 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
 }
 ```
 
-更改自有 role 时保留其他合法信任语句。成功 assume role 后，IAM permission policy、resource policy、KMS grant 和组织控制仍可能拒绝 AWS 操作。更新 ServiceAccount annotation 不会追溯性地为现有 Pod 注入环境变量/卷；应与工作负载所有者协调 rollout。
+更改所管理的角色时，请保留其他合法的信任声明。成功代入角色后，IAM 权限策略、资源策略、KMS 授权和组织控制仍可能拒绝 AWS 操作。更新 ServiceAccount 注释不会追溯性地向现有 Pod 注入环境变量/卷配置；请与工作负载所有者协调滚动更新。
 
-当前 EKS 指南支持独立的 `com.amazonaws.<region>.oidc-eks` PrivateLink endpoint，用于 OIDC discovery/JWKS。它不同于 EKS management endpoint、Pod Identity 的 `eks-auth` 和 STS。私有 OIDC 访问本身既不会创建 IAM provider、授予 role trust，也不会确保 STS 可达。
+当前 EKS 指南支持单独的 `com.amazonaws.<region>.oidc-eks` PrivateLink 端点，用于 OIDC 发现/JWKS。它与 EKS 管理端点、Pod Identity 使用的 `eks-auth` 以及 STS 不同。私有 OIDC 访问本身不会创建 IAM 提供商、授予角色信任或确保 STS 可达。
 
-使用 EKS Pod Identity 时，检查准确 namespace/ServiceAccount 的关联：
+对于 EKS Pod Identity，请检查确切命名空间/ServiceAccount 的关联：
 
 ```bash
 set -euo pipefail
@@ -919,7 +919,7 @@ aws eks list-pod-identity-associations --cluster-name "$CLUSTER_NAME" --region "
   --namespace "$NAMESPACE" --service-account "$SERVICE_ACCOUNT"
 ```
 
-然后检查返回的 association ID、role trust/权限，以及受支持 agent/SDK/计算环境要求。缺少 IRSA annotation 不等于 Pod Identity 故障。关联更新、凭证缓存和更早的 SDK 凭证来源都会影响结果；在验证所有使用方前，不要切换身份机制或删除现有 IRSA trust。当前设置/迁移路径见[安全章节](./05-eks-security.md)。
+然后检查返回的关联 ID、角色信任/权限以及受支持的代理/SDK/计算要求。缺少 IRSA 注释并不意味着 Pod Identity 出现故障。关联更新、凭证缓存和更早执行的 SDK 凭证提供程序都会产生影响；验证所有使用方之前，不要切换身份机制或移除现有 IRSA 信任。有关当前设置，请参阅 [EKS Pod Identity](./05-eks-security-pod-identity.md)；有关迁移，请参阅 [IRSA 和 Pod Identity 迁移手册](../security/17-eks-workload-identity-migration.md)。
 
 ### 节点加入失败
 
@@ -933,23 +933,23 @@ aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query 'cluster.{endpoint:endpoint,access:accessConfig,vpc:resourcesVpcConfig}'
 ```
 
-对于托管节点组，检查 `health.issues`、launch-template/AMI/bootstrap 详情和实际 EC2 实例状态。自主管理/混合节点应检查其自身 bootstrap 和注册机制，不要假设托管节点 API 能描述它们。
+对于托管节点组，请查看 `health.issues`、启动模板/AMI/引导详情以及实际 EC2 实例状态。对于自管理/混合节点，请检查其自身的引导和注册机制，不要假定托管节点 API 能够说明这些节点的情况。
 
-确认 IAM **role ARN**，不是 instance-profile ARN，以及正确的节点身份验证映射/access entry。托管节点组和 Fargate 有 AWS 管理的身份行为；不要覆盖其映射。节点 access entry 与普通人工用户 entry 类型/语义不同。Role path 和旧式 `aws-auth` 限制也需遵循相应认证模式文档。
+请确认使用的是 IAM **角色 ARN**，而不是实例配置文件 ARN，并核实相应的节点身份验证映射/访问条目。托管节点组和 Fargate 具有由服务管理的身份行为；不要覆盖其映射。节点访问条目与标准人工用户条目具有不同类型/语义。还需参考相关身份验证模式指南，了解角色路径和传统 `aws-auth` 的限制。
 
-检查所需节点策略和 ECR 拉取权限，并在受支持时将 CNI/CSI/应用权限放到各自实际身份上。把 `AmazonEKSClusterPolicy` 或全部 CNI/存储权限附加到节点角色不是通用注册修复。
+请检查所需的节点策略和 ECR 拉取权限，并在支持的情况下将 CNI/CSI/应用程序权限保留在其实际使用的身份上。将 `AmazonEKSClusterPolicy` 或所有 CNI/存储权限添加到节点角色，并非通用的节点注册修复方法。
 
-检查节点到 API server 的 HTTPS、API server 到 kubelet 的 10250 端口及实际 webhook/依赖路径，包括 DNS、路由/NACL 和安全组方向。后端 webhook 的规则不代表每个节点都需要来自任意来源的入站 443。
+请检查节点到 API 服务器的 HTTPS、API 服务器到 kubelet 的端口 10250，以及所有实际的 webhook/依赖路径，包括 DNS、路由/NACL 和安全组方向。后端 webhook 的规则并不意味着每个节点都需要接受来自所有位置的入站 443 流量。
 
-根据 AMI 的 bootstrap 模型检查前提：AL2023/nodeadm、Bottlerocket 设置和自定义 AMI 各不相同。重跑 AL2 脚本或只替换 kubelet 无法修复所有镜像问题。保留证据，确认原因后遵循所有者的节点替换流程。
+使用 AMI 对应的引导模型：AL2023/nodeadm、Bottlerocket 设置和自定义 AMI 有不同的前提条件。重新运行 AL2 脚本或只替换 kubelet 无法修复所有映像问题。保留证据，并在处理已证实原因后遵循相应资源所有者的节点替换流程。
 
-来源：[EKS access entry](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)、[RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)、[IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)、[OIDC PrivateLink](https://docs.aws.amazon.com/eks/latest/userguide/irsa-fetch-keys.html)、[EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)。
+资料来源：[EKS 访问条目](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)、[RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)、[IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)、[OIDC PrivateLink](https://docs.aws.amazon.com/eks/latest/userguide/irsa-fetch-keys.html)、[EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)。
 
-## 存储问题 {#storage-issues}
+## 存储问题
 
-### PVC、PV 与消费者诊断
+### PVC、PV 和使用者诊断
 
-从准确的 namespace/claim/UID、provisioner 和消费者开始。`WaitForFirstConsumer` 下的 `Pending` 可能是正常状态，直到合适的消费者 Pod 被调度。除存储 controller 外，也检查该 Pod 的调度/AZ/容量约束。
+请从确切的命名空间/claim/UID、配置程序和使用者入手。对于 `WaitForFirstConsumer`，在合适的使用 Pod 已安排调度之前，`Pending` 可能是预期状态。除存储控制器外，也要检查该 Pod 的调度/区域/容量约束。
 
 ```bash
 set -euo pipefail
@@ -975,19 +975,19 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pods -o json \
   | jq --arg pvc "$PVC_NAME" '.items[] | select(any(.spec.volumes[]?; .persistentVolumeClaim.claimName == $pvc)) | {name:.metadata.name,node:.spec.nodeName,phase:.status.phase,conditions:.status.conditions}'
 ```
 
-Kubernetes 没有受支持的 `spec.volumes.persistentVolumeClaim.claimName` Pod 字段选择器；上面的 JSON 查询会选择消费者，避免使用无效 API filter。未设置 `storageClassName` 与显式设置空字符串表达不同的默认/静态绑定意图。不要查询字面值 `<default>` class。
+`spec.volumes.persistentVolumeClaim.claimName` 不存在受支持的 Pod 字段选择器；上面的 JSON 查询会在不使用无效 API 过滤器的情况下选出使用该卷的 Pod。未设置 `storageClassName` 和将其明确设为空字符串，具有不同的默认/静态绑定意图。不要查询字面值 `<default>` 的 StorageClass。
 
-PVC YAML 是对象配置，不是其中数据的备份。删除/重建 claim 在 `Delete` 策略下可能删除底层存储，或在 Retain 下留下需要有意重新绑定的 PV。不要把它作为修复 Pending/FailedMount 的通用操作。改变生命周期前检查 reclaim policy、快照/备份和工作负载/数据所有权。claim 为 Bound 也不能证明应用能挂载/读取。
+PVC YAML 是对象配置，并非卷内容备份。删除并重新创建 claim 时，`Delete` 回收策略可能会删除底层存储；`Retain` 则可能留下一个需要有意重新绑定的保留 PV。不要把这种操作当作解决 Pending/FailedMount 的通用方法。任何生命周期变更之前，请检查回收策略、快照/备份以及工作负载/数据所有权。Claim 处于 Bound 状态并不能证明应用能够挂载或读取它。
 
 ### EBS 卷问题
 
-#### 检查 driver 和实际卷
+#### 检查驱动程序和实际卷
 
-区分标准 `ebs.csi.aws.com`、Auto Mode `ebs.csi.eks.amazonaws.com`、旧版/已迁移卷及其所有者。标准 EBS CSI controller 权限通常来自其配置的 IAM 身份；只检查节点 IAM role 不够。还应检查实际密钥所需的 KMS 权限，以及 controller/node 组件健康。
+区分标准 `ebs.csi.aws.com`、Auto Mode 的 `ebs.csi.eks.amazonaws.com`、传统/已迁移卷以及它们的所有者。标准 EBS CSI 控制器权限通常来自其配置的 IAM 身份；仅检查节点 IAM 角色是不够的。还要考虑实际密钥所需的 KMS 权限以及控制器/节点组件运行状况。
 
-Auto Mode 节点根卷/数据卷的加密状态不能证明每个工作负载 PVC 都已加密。当前 [Auto Mode StorageClass 参考](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)列出 `encrypted`，默认值为 `false`；两种 EBS provisioner 都应显式请求 `encrypted: "true"`，并验证实际 EBS 卷/密钥。账号加密默认值和快照属性也可能影响结果。
+Auto Mode 节点根卷/数据卷的加密状态，不能证明每个工作负载 PVC 都已加密。当前 [Auto Mode StorageClass 参考](https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html)中，`encrypted` 的默认值为 `false`；对于任一 EBS 配置程序，请明确设置 `encrypted: "true"`，并验证实际 EBS 卷/密钥。账户加密默认值和快照属性也可能影响结果。
 
-Auto Mode 不需要另外安装标准 EBS CSI controller 来管理自己的卷。EBS 卷无法挂载进 Fargate Pod；EBS CSI driver/卷不支持 EKS Hybrid Nodes。在 Fargate 上运行 controller 也不会让 Fargate 工作负载可以挂载 EBS。
+Auto Mode 的自有卷不需要单独安装标准 EBS CSI 控制器。EBS 卷无法挂载到 Fargate Pod，且 EBS CSI 驱动程序/卷不支持 EKS Hybrid Nodes。在 Fargate 上运行控制器不会使 Fargate 工作负载能够挂载 EBS。
 
 ```bash
 set -euo pipefail
@@ -997,17 +997,17 @@ aws ec2 describe-volumes --region "$AWS_REGION" --volume-ids "$VOLUME_ID" \
 aws ec2 describe-volume-status --region "$AWS_REGION" --volume-ids "$VOLUME_ID"
 ```
 
-验证选定 Pod/节点和 EBS 卷位于同一 AZ，并检查 attachment 限制、CSI 错误及当前 VolumeAttachment/EC2 状态。不同命名空间的 PVC 名称可能相同，旧卷名也可能复用；应通过 PV 确定准确卷。
+请确认所选 Pod/节点与 EBS 卷位于可相互兼容的 AZ，并检查挂载限制、CSI 错误及当前 VolumeAttachment/EC2 状态。PVC 名称在不同命名空间或旧卷之间并不唯一；请通过 PV 确认确切的卷。
 
-#### Attachment 与挂载恢复
+#### 附加和挂载恢复
 
-对于 Multi-Attach，先查旧消费者是否仍运行/写入、其节点是否可访问/已 fencing，以及 rollout 是否把第二个消费者放到另一节点。`ReadWriteOnce` 是单节点访问模式，不是单 Pod 锁。应协调工作负载关闭及 CSI unmount/detach；仅删除 Pod 对象不能证明进程已停止。
+遇到 Multi-Attach 时，请确定旧使用者是否仍在运行或写入、其节点是否可达/已隔离，以及滚动更新是否在另一节点上放置了第二个使用者。`ReadWriteOnce` 表示单节点访问模式，并不是单 Pod 锁。请协调工作负载关闭和 CSI 卸载/分离；不要只删除 Pod 对象就以为其进程已经停止。
 
-手动 attach/detach 不能替代 CSI reconcile。若必须人工介入，先确认写入者已停止、保护数据并遵循 EBS 恢复流程；卸载中的卷可能因 detach 而损坏。不要反复重启节点或强制 detach 来绕过 attachment 错误。
+手动挂载/分离不能替代 CSI 协调。如果恢复需要手动介入，请先确认写入程序已停止、保护好数据，并遵循 EBS 恢复流程；分离已挂载的卷可能造成数据损坏。不要通过反复重启节点或强制分离来绕过挂载错误。
 
-#### StorageClass 与配置
+#### StorageClass 和预置
 
-新的标准 driver class 可采用如下显式加密、延迟绑定和保留配置：
+对于标准驱动程序的**新建** class，以下示例明确启用加密、延迟绑定和保留：
 
 ```yaml
 # New, explicitly selected StorageClass for standard EBS CSI, not an in-place edit.
@@ -1025,17 +1025,17 @@ allowVolumeExpansion: true
 reclaimPolicy: Retain
 ```
 
-这不会修改现有 PVC 的 class。现有 StorageClass 的 provisioner/参数/绑定模式不能随意修改；切换默认 class 会影响其他 claim。`Retain` 有意保留存储，需另行决定清理方式，并可能持续计费。扩容需要 driver/class/文件系统支持；修改请求值不能缩小 PVC。
+这不会更改现有 PVC 的 class。现有 StorageClass 的配置程序/参数/绑定模式不能随意更改；切换默认 class 也会影响其他 claim。`Retain` 会有意保留存储，需要另行决定如何清理，并可能持续产生费用。扩容需要驱动程序/class/文件系统支持；编辑请求大小并不能缩小 PVC。
 
-通过现有所有者选择并配置兼容 CSI add-on，包括实际 IRSA/Pod Identity 和完整配置。`eksctl create iamserviceaccount --role-only` 只创建 role，本身不会把它关联到 add-on。应检查 add-on 实际身份和更新步骤，不要用 `--force` 重装。
+请通过现有资源所有者选择并配置兼容的 CSI 附加组件，包括其实际 IRSA/Pod Identity 和完整配置。`eksctl create iamserviceaccount --role-only` 只会创建角色，并不会自动将该角色关联到附加组件。请检查附加组件的身份并使用其更新流程，不要使用 `--force` 重新安装。
 
-Auto Mode 迁移时，[EBS 指南](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)介绍快照迁移，[Auto Mode 迁移指南](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)也介绍先停止工作负载、再以 Retain/静态 PV 迁移的路径。选择路径前验证适用 driver、标签/IAM、claim/finalizer 生命周期和恢复计划。修改已绑定 claim 的 provisioner 字符串不等于完成迁移。快照还需要 CSI snapshot controller/CRD 及适当 class/权限。
+对于迁移到 Auto Mode，[EBS 指南](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)记录了快照迁移方式，而 [Auto Mode 迁移指南](https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html)还介绍了停止工作负载后使用 Retain/静态 PV 的路径。选择路径之前，请验证适用的驱动程序、标签/IAM、claim/finalizer 生命周期和恢复计划。更改已绑定 claim 的配置程序字符串并不构成迁移。使用快照还需要 CSI snapshot controller/CRD 以及相应的 class/权限。
 
 ### EFS 卷问题
 
-#### 分别追踪配置和挂载访问
+#### 分别跟踪预置和挂载访问
 
-从 PV 检查文件系统/access point、消费者节点/AZ、挂载目标可用性、DNS 和 NFS 路径。创建 access point 的 controller API 权限与客户端挂载/访问权限不同。检查文件系统 policy、TLS/IAM 要求、access point POSIX identity/root-directory 所有权及应用 UID/GID。
+根据 PV 检查文件系统/访问点、使用者节点/AZ、挂载目标可用性、DNS 和 NFS 路径。用于创建访问点的控制器 API 权限，与用于挂载/访问文件的客户端权限不同。请检查文件系统策略、TLS/IAM 要求、访问点 POSIX 身份/根目录所有权以及应用 UID/GID。
 
 ```bash
 set -euo pipefail
@@ -1048,13 +1048,13 @@ aws efs describe-mount-target-security-groups --region "$AWS_REGION" \
   --mount-target-id "$MOUNT_TARGET_ID"
 ```
 
-检查实际客户端网络身份到 mount target 之间的 NFS TCP 2049，以及路由/NACL/安全组。不要根据控制平面子网推断节点子网。应根据工作负载 AZ/拓扑使用适当 mount target；新建 mount target 是单独的基础设施变更。
+检查实际客户端网络身份与挂载目标之间的 NFS TCP 2049 通信，包括路由/NACL 和安全组。不要根据控制平面子网推断节点子网。请使用适合工作负载 AZ/拓扑的挂载目标；新建挂载目标是单独的基础设施变更。
 
-在受支持的 EC2 环境中，检查已安装的 EFS CSI controller/node plugin 及其当前兼容版本。Fargate 内置 EFS mount 使用文档化的静态配置路径；当前 EKS 指南不支持在 Fargate 节点上动态配置。EFS CSI driver 不支持 Windows 容器或 EKS Hybrid Nodes。不要盲目安装旧的 `release-1.5` manifest，也不要重复安装已由 add-on 管理的组件。
+在受支持的 EC2 环境中，请检查已安装的 EFS CSI 控制器/节点插件及其当前兼容版本。Fargate 内置 EFS 挂载，并支持文档规定的静态预置路径；当前 EKS 指南不支持在 Fargate 节点上动态预置。EFS CSI 驱动程序不支持 Windows 容器或 EKS Hybrid Nodes。不要盲目安装旧的 `release-1.5` 清单，也不要重复安装托管附加组件。
 
-#### 动态配置与静态配置二选一
+#### 动态和静态预置是两种不同选择
 
-动态配置会在**现有** EFS 文件系统中创建 access point；它不会创建文件系统或 mount target。替换示例 ID，并审查 access point 所有权/权限、配额和保留：
+动态预置会在**现有** EFS 文件系统中创建访问点；它不会创建该文件系统或其挂载目标。替换示例 ID，并审核访问点的所有权/权限、配额和保留策略：
 
 ```yaml
 # Dynamic EFS access-point provisioning example for a supported EC2-node setup.
@@ -1072,7 +1072,7 @@ mountOptions:
 reclaimPolicy: Retain
 ```
 
-另一种方式是引用有意准备好的现有 access point 创建静态 PV：
+或者，可以通过静态 PV 引用有意准备好的现有访问点：
 
 ```yaml
 # Alternative static provisioning: replace the filesystem/access-point IDs.
@@ -1095,17 +1095,17 @@ spec:
     volumeHandle: fs-0123456789abcdef0::fsap-0123456789abcdef0
 ```
 
-静态 PV 应配套经过审查的 claim，并设定 `storageClassName: ""` 和预期 `volumeName`；保留 binding/claimRef 语义。不要与动态 class 混用，否则新 claim 可能意外绑定到文件系统根目录。`5Gi` 容量字段只是 Kubernetes 绑定元数据，不是 EFS 目录或文件系统实际强制执行的大小配额。
+将静态 PV 与经过审核的 claim 配对，指定 `storageClassName: ""` 和预期的 `volumeName`；保留绑定/claimRef 语义。不要将此方式与动态 class 混用，以免新 claim 意外绑定到文件系统根目录。`5Gi` capacity 字段是 Kubernetes 绑定元数据，并非强制执行的 EFS 目录或文件系统大小配额。
 
-挂载诊断应先使用已有 Pod/CSI 事件和日志。诊断 Pod 必须位于 claim 的 namespace，并使用兼容节点/身份；为运行 `df` 而以读写方式挂载应用 PVC 可能引入另一个写入者。如需探测，应使用明确审查过的只读挂载、预备镜像、有限生命周期和考虑所有权的清理方式。不要创建无关 EBS 卷或手动 attach 设备来“测试”存储。
+挂载诊断应首先使用现有 Pod/CSI 事件和日志。诊断 Pod 必须与 claim 位于同一命名空间，并使用兼容的节点/身份；仅为运行 `df` 而以读写方式挂载应用 PVC，可能会引入另一个写入程序。如确实需要探测，请使用明确审核过的只读挂载、预先准备的映像、有限的运行时间以及充分考虑资源所有权的清理方式。不要创建无关 EBS 卷或手动挂载设备来进行存储“测试”。
 
-来源：[EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)、[EFS CSI](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html)、[Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)、[StorageClasses](https://kubernetes.io/docs/concepts/storage/storage-classes/)。
+资料来源：[EBS CSI](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)、[EFS CSI](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html)、[持久卷](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)、[StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/)。
 
-## 日志与监控问题 {#logging-and-monitoring-issues}
+## 日志记录和监控问题
 
-### CloudWatch Logs 与 Container Insights
+### CloudWatch Logs 和 Container Insights
 
-区分 EKS 控制平面日志投递、Fluent Bit 等采集器收集的应用/主机日志、CloudWatch agent 指标和应用 instrumentation。启用集群日志不会安装应用采集器；采集器正在运行，也不能证明数据已送达目标账号/Region/log group。
+区分 EKS 控制平面日志传送、Fluent Bit 或其他收集器收集的应用/主机日志、CloudWatch Agent 指标以及应用埋点。启用集群日志并不会安装应用日志收集器，而收集器正在运行也不能证明数据已到达预期账户/区域/日志组。
 
 ```bash
 set -euo pipefail
@@ -1122,9 +1122,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$COLLECTOR_NAMESPACE" logs "$COLLECTOR_POD
   -c "$COLLECTOR_CONTAINER" --since=15m --tail=200 --timestamps=true
 ```
 
-依据已安装采集器的命名空间、Pod、容器、配置和目标位置检查，不要假定标签/名称惯例。检查输入路径、parser、filter、缓冲/backpressure、文件系统容量、时间戳、输出错误、DNS/TLS/endpoint 和配额。日志组不存在可能表示没有投递、目的地不同或查询权限不足；盲目创建日志组修复不了 producer。
+请使用已安装收集器的命名空间、Pod、容器、配置和目标位置，不要假定标签/名称约定。检查输入路径、解析器、过滤器、缓冲/背压、文件系统容量、时间戳、输出错误、DNS/TLS/端点和配额。日志组不存在可能表示没有日志传送、目标位置不同或查询权限不足；盲目创建日志组并不能修复数据生产方。
 
-检查实际使用的 IRSA/Pod Identity 或其他受支持身份。节点策略或 ServiceAccount annotation 本身不能证明采集器实际使用了哪些凭证。如果安装了 CloudWatch Observability EKS add-on，应检查其自身身份/健康：
+检查实际 IRSA/Pod Identity 或其他受支持的身份。节点策略或 ServiceAccount 注释本身不能证明收集器使用了相应凭证。对于已安装的 CloudWatch Observability EKS 附加组件，请检查其自身身份/运行状况：
 
 ```bash
 set -euo pipefail
@@ -1135,11 +1135,11 @@ aws eks describe-addon --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query 'addon.{status:status,version:addonVersion,health:health,role:serviceAccountRoleArn,podIdentity:podIdentityAssociations}'
 ```
 
-API 错误不能证明 add-on 不存在；检查错误及实际 Helm/add-on 所有者。更新时保留现有所有者和自定义配置。不要应用未渲染的旧 Fluentd/Fluent Bit quickstart，也不要把覆盖现有 ServiceAccount 当作通用恢复方法。Windows、Fargate、Auto Mode 和 EC2 的采集路径不同。
+API 错误不能证明附加组件不存在；请检查错误以及实际的 Helm/附加组件所有者。更新时请保留该所有者及其自定义配置。不要将旧版 Fluentd/Fluent Bit 快速入门直接应用到未渲染的配置上，也不要把覆盖现有 ServiceAccount 作为通用恢复步骤。Windows、Fargate、Auto Mode 和 EC2 的收集路径各不相同。
 
-Container Insights 查询应使用实际指标 namespace、维度和时间窗口。指标列表是元数据，不是当前 datapoint，也不证明 alarm/通知正常。使用范围受限的数据查询，并与采集器日志对照。保护配置和日志证据；通过 log group 所有者管理保留期/KMS 更改。
+对于 Container Insights，请查询实际指标命名空间、维度和时间范围。指标列表是元数据，不是当前数据点，也不能证明警报/通知正常工作。请使用范围明确的数据查询，并与收集器日志比较。保护好配置和日志证据；只有通过日志组所有者才能应用保留/KMS 变更。
 
-### Metrics Server 与资源指标
+### Metrics Server 和资源指标
 
 ```bash
 set -euo pipefail
@@ -1150,13 +1150,13 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" top pods --containers
 kubectl --context "$KUBE_CONTEXT" top nodes
 ```
 
-Resource Metrics API、kube-state-metrics 对象指标以及 Prometheus/cAdvisor 样本是不同数据源。检查 APIService condition、aggregator/RBAC 访问、Metrics Server 日志及其到每个 kubelet 的连接。
+资源 Metrics API、kube-state-metrics 对象指标以及 Prometheus/cAdvisor 样本是不同的数据源。请检查 APIService 条件、聚合器/RBAC 访问权限、Metrics Server 日志以及它到各 kubelet 的连接。
 
-遇到 `Unauthorized` 时，确定哪个调用方/endpoint 拒绝了凭证。遇到 `Forbidden` 时，检查准确 RBAC verb/resource。抓取失败可能来自路由、kubelet 地址/端口、证书验证、身份验证或 kubelet 不健康。不要启用旧的未认证端口 10255，也不要一概使用 `--kubelet-insecure-tls`。
+如果出现 `Unauthorized`，请确定哪个调用方和端点拒绝了凭证。如果出现 `Forbidden`，请检查确切的 RBAC 动词/资源。抓取失败可能由路由、kubelet 地址/端口、证书验证、身份验证或 kubelet 不健康造成。不要启用旧版未身份验证的端口 10255，也不要将 `--kubelet-insecure-tls` 作为通用修复方法。
 
-`v1.Pod` resource-not-found 错误本身不能证明 EKS API server 配置缺陷。确认 kubeconfig/URL、API discovery、客户端兼容性和 proxy 响应。未收集证据前重装最新版 Metrics Server 或重启其所有 Pod，可能掩盖问题。
+`v1.Pod` 资源不存在错误本身并不能证明 EKS API 服务器配置有问题。请确认 kubeconfig/URL、API 发现信息、客户端兼容性和代理响应。收集证据之前重装最新 Metrics Server 或重启其所有 Pod，可能会掩盖问题。
 
-### Prometheus 与 Grafana
+### Prometheus 和 Grafana
 
 ```bash
 set -euo pipefail
@@ -1168,9 +1168,9 @@ kubectl --context "$KUBE_CONTEXT" -n "$MONITORING_NAMESPACE" get events \
   --sort-by='.metadata.creationTimestamp'
 ```
 
-识别实际 chart/operator、release 命名空间、Service 端口、存储和 selector。`prometheus-community/prometheus` 是独立 chart；安装它不会提供 Prometheus Operator 对 ServiceMonitor 的 reconcile。Operator 栈还依赖 CRD、Prometheus 自定义资源和 selector/RBAC 要求。
+确定实际的 Chart/Operator、发布命名空间、服务端口、存储和选择器。`prometheus-community/prometheus` 是独立 Chart；安装它不会提供对 ServiceMonitor 资源进行协调的 Prometheus Operator。基于 Operator 的堆栈还需要 CRD、Prometheus 自定义资源以及选择器/RBAC 设置。
 
-检查现有 Prometheus endpoint 时，在一个终端保持仅 loopback 可用的 port-forward：
+要检查现有 Prometheus 端点，请在一个终端中保持此仅绑定 loopback 的端口转发处于运行状态：
 
 ```bash
 : "${KUBE_CONTEXT:?}"; : "${MONITORING_NAMESPACE:?}"
@@ -1180,7 +1180,7 @@ kubectl --context "$KUBE_CONTEXT" -n "$MONITORING_NAMESPACE" port-forward \
   --address 127.0.0.1 "service/$PROMETHEUS_SERVICE" "9090:$PROMETHEUS_SERVICE_PORT"
 ```
 
-在第二个本地终端，对允许此类访问的 endpoint 执行：
+在第二个本地终端中，对于允许此类访问的端点：
 
 ```bash
 set -euo pipefail
@@ -1189,11 +1189,11 @@ curl --fail --silent --show-error --max-time 10 \
   | jq '.data.activeTargets[] | {scrapePool,health,lastError,lastScrape}'
 ```
 
-根据实际 endpoint 调整 scheme 和身份验证；不要绕过访问控制。检查 scrape 错误、relabel、target discovery、查询窗口和保留期。查询结果为空可能表示标签/数据缺失，不代表用量健康为零。
+请根据实际端点调整方案和身份验证方式；不要绕过访问控制。检查抓取错误、重标记、目标发现、查询时间范围和保留期。查询结果为空可能表示标签/数据缺失，而非资源使用量正常为零。
 
 #### ServiceMonitor 选择
 
-以下示例把现有应用的命名 metrics 端口连接到 Operator ServiceMonitor：
+此示例将现有应用的命名 metrics 端口与 Operator ServiceMonitor 关联：
 
 ```yaml
 # Requires an existing application exporting metrics on a named container port "metrics".
@@ -1233,7 +1233,7 @@ spec:
       interval: 30s
 ```
 
-将 namespace、标签和 release selector 替换成实际安装值。涉及三个选择步骤：Prometheus 选择 ServiceMonitor 命名空间；其 `serviceMonitorSelector` 选择 monitor 标签；monitor 的 `namespaceSelector` 和 `selector` 再选择 Service。`endpoints.port` 指 **Service 端口**，不是任意容器端口。应用必须实际监听并公开预期 metrics path。Prometheus 还需要 discovery 权限和网络/TLS/auth 访问。
+请根据实际安装替换命名空间、标签和发布选择器。需要关注三处选择关系：Prometheus 选择 ServiceMonitor 所在命名空间；其 `serviceMonitorSelector` 选择监控器标签；监控器的 `namespaceSelector` 和 `selector` 选择 Service。`endpoints.port` 指定的是 **Service 端口**，不是任意容器端口。应用必须确实在预期的 metrics 路径上监听并提供指标。Prometheus 还需要发现权限以及网络/TLS/身份验证访问权限。
 
 #### 保留配置并验证变更
 
@@ -1248,19 +1248,19 @@ helm get values "$MONITORING_RELEASE" --namespace "$MONITORING_NAMESPACE" \
 printf 'Protected configuration snapshot: %s\n' "$MONITORING_EVIDENCE"
 ```
 
-即使写入受保护文件，values 也可能含有敏感数据；分享前应脱敏。审查目标 chart/version 默认值、CRD 迁移、自定义值、工作负载资源和 PVC 容量。通过现有所有者应用更新，之后验证 scrape/alert 行为。再安装一套栈或盲目 patch resource limit 都不是诊断。
+即使写入受保护文件，values 也可能包含敏感数据；分享之前请先遮盖。请审核目标 Chart/版本默认值、CRD 迁移、自定义 values、工作负载资源和 PVC 容量。通过现有所有者应用更新，并在之后验证抓取/警报行为。安装第二套堆栈或盲目修补资源限制并不能构成诊断。
 
-Grafana 应检查 datasource UID/URL/authentication、网络访问、查询标签/时间范围及 dashboard provisioning/sidecar 选择。ConfigMap 缺少预期 sidecar 标签/namespace 时不会自动成为 dashboard。使用现有 login/SSO 流程；不要把管理员密码打印到故障排查日志中。
+对于 Grafana，请验证数据源 UID/URL/身份验证、网络访问、查询标签/时间范围以及仪表板预置/sidecar 选择器。缺少预期 sidecar 标签/命名空间的 ConfigMap 不会自动成为仪表板。请使用现有登录/SSO 流程；避免在故障排查日志中输出管理员密码。
 
-安装、查询和告警步骤见[EKS 监控与日志](./06-eks-monitoring-logging.md)。以上为诊断/配置模板，不代表日志实时投递、监控覆盖完整或已测试生产就绪。
+有关经过审核的安装、查询和警报流程，请参阅 [EKS 监控和日志记录](./06-eks-monitoring-logging.md)。以上示例是诊断/配置模板；它们并未声称实际日志已传送、监控覆盖范围完整或已通过生产就绪性测试。
 
-来源：[CloudWatch EKS add-on](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-addon.html)、[Metrics Server](https://github.com/kubernetes-sigs/metrics-server)、[Prometheus Operator 故障排查](https://prometheus-operator.dev/docs/platform/troubleshooting/)。
+资料来源：[CloudWatch EKS 附加组件](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-addon.html)、[Metrics Server](https://github.com/kubernetes-sigs/metrics-server)、[Prometheus Operator 故障排查](https://prometheus-operator.dev/docs/platform/troubleshooting/)。
 
-## 性能问题 {#performance-issues}
+## 性能问题
 
-### 建立可比较的基线
+### 建立可比基准
 
-记录受影响工作负载、请求速率、延迟/错误分布、资源 requests/limits、节点/AMI/runtime、放置位置和时间窗口。当前用量不等同于预留容量或饱和；内存上升本身不能证明泄漏。分别调查节点、Pod、存储、网络和应用瓶颈。
+记录受影响的工作负载、请求速率、延迟/错误分布、资源 requests/limits、节点/AMI/运行时、部署位置和时间范围。当前使用量不同于预留容量或饱和度，仅凭内存上升不能证明存在泄漏。请分别确定节点、Pod、存储、网络和应用瓶颈。
 
 ```bash
 set -euo pipefail
@@ -1273,11 +1273,11 @@ kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" get pod "$POD_NAME" -o json \
   | jq '{containers:[.spec.containers[] | {name,resources}],status:.status}'
 ```
 
-指标是否有效取决于其采集路径。按需检查 CPU throttling、working set/RSS/heap 行为、OOM 终止状态、磁盘延迟/排队及网络丢包。结合应用负载分析；不要对无关工作负载统一规定 100m/128Mi 资源值。
+指标需要其收集路径正常工作。根据情况纳入 CPU 限流、工作集/RSS/堆行为、OOM 终止状态、磁盘延迟/队列和网络丢包等信息。请结合应用负载进行关联分析；不要为无关工作负载一律建议相同的 100m/128Mi 资源值。
 
 ### 节点性能问题
 
-在经核实的远程 Linux 节点会话中，使用可用工具收集范围受限的观测：
+在已验证的远程 Linux 节点会话中，使用相关工具收集有范围限制的观测数据：
 
 ```bash
 top -b -n 1
@@ -1289,26 +1289,26 @@ ip -s link
 ss -s
 ```
 
-不要为了运行这些命令而往生产应用容器中装工具。应使用预备好的诊断镜像或受支持节点访问方式，并在更改主机前保留证据。
+不要仅为运行这些命令而在生产应用容器中安装工具。请使用预先准备的诊断映像或受支持的节点访问方式，并在更改主机之前保留证据。
 
-增加节点有助于可调度容量，但不会改变单节点网络/ENI/EBS 限制。更改实例类型应使用节点组支持的替换/launch-template 路径；`update-nodegroup-config --launch-template` 不是有效命令。应与自动扩缩和工作负载放置协调，而不是绕过所有者直接调整。
+增加节点有助于提高可调度容量，但不会改变每个节点的网络/ENI/EBS 限制。更改实例类型需要使用节点组支持的替换/启动模板路径；`update-nodegroup-config --launch-template` 不是有效命令。请与自动扩缩容和工作负载部署位置协调，而不是绕过资源所有者调整大小。
 
-#### Kernel 设置
+#### 内核设置
 
-考虑调优前，在预期 host 或 Pod namespace 中检查相关设置：
+考虑调优之前，请在预期的主机或 Pod 命名空间中检查相关设置：
 
 ```bash
 sysctl net.ipv4.ip_local_port_range net.ipv4.tcp_fin_timeout
 sysctl net.core.somaxconn net.ipv4.tcp_max_syn_backlog fs.file-max
 ```
 
-很多网络 sysctl 是 namespace 范围。单独设置 `hostPID: true` 不会让容器进入 host 网络 namespace；因此特权 DaemonSet 可能修改了另一个网络 namespace，同时也更改节点级设置。允许的 namespace 级设置应通过受支持的 Pod `securityContext.sysctls` 配置；节点级设置则通过所属节点配置管理。更改前应检查 kernel/Kubernetes policy 支持、隔离和影响。任意的集群级特权 sysctl 调优不是性能诊断。
+许多网络 sysctl 都属于命名空间。仅设置 `hostPID: true` 不会使容器进入主机网络命名空间；因此，特权 DaemonSet 可能更改的是另一个网络命名空间，同时也会更改节点全局设置。允许的命名空间设置应使用受支持的 Pod `securityContext.sysctls`，节点级设置则应通过资源所有者管理的节点配置进行。更改前请检查内核/Kubernetes 策略支持、隔离和影响。任意地在整个集群范围调优特权 sysctl 并不构成性能诊断。
 
 #### EBS 性能变更
 
-变更前检查实际卷类型/IOPS/throughput 和实例 EBS bandwidth。EC2 `modify-instance-attribute` block-device mapping 不能作为更改 EBS 卷类型/IOPS/throughput 的接口；EBS 操作应使用 `ModifyVolume`。CSI 管理的存储应使用受支持的所有者流程并 reconcile 配置，避免产生漂移。
+更改之前，请检查实际卷的类型/IOPS/吞吐量以及实例的 EBS 带宽。EC2 `modify-instance-attribute` 块设备映射不接受卷类型/IOPS/吞吐量作为 EBS 调优接口；EBS 操作是 `ModifyVolume`。对于 CSI 管理的存储，请通过受支持的存储所有者流程操作并协调配置，而不要造成配置漂移。
 
-以下可选**变更操作**要求卷所有者已审查支持限值/比例、实例能力、成本、当前修改状态以及应用/数据影响：
+以下可选的**变更操作**假设卷所有者已审核受支持的限制/比率、实例能力、费用、当前修改状态以及应用/数据影响：
 
 ```bash
 set -euo pipefail
@@ -1328,21 +1328,21 @@ aws ec2 describe-volumes-modifications --region "$AWS_REGION" --volume-ids "$VOL
   --output json
 ```
 
-请求是异步的。跟踪 `modifying`、`optimizing`、`completed` 或 `failed`；首次响应不表示完成。注意适用修改频率限制，等待先前修改结束后再提交新请求。若增加容量，还需单独考虑文件系统扩容。旧的 16000 IOPS/1000 MiB/s 只是配置示例，并非通用实测最优值；本次审查未执行 EBS 更改。
+此请求为异步操作。请跟踪 `modifying`、`optimizing`、`completed` 或 `failed` 状态；第一个响应并不表示操作完成。请遵守适用的修改频率限制，并在上一次修改完成后再提交新请求。如果增加容量，还需单独考虑文件系统扩容。旧版示例中的 16000 IOPS/1000 MiB/s 只是配置示例，并非根据测量得出的通用最佳值；本次审核没有执行 EBS 变更。
 
-### Pod 性能与内存问题
+### Pod 性能和内存问题
 
-将容器级用量/限制、重启/终止原因与请求负载关联分析。`OOMKilled` 可在容器状态中找到，可能不会作为 Event 原因的原文出现。即使节点仍有空闲内存，cgroup 限制也可能导致 OOM。缓存增长、allocator 行为、工作负载突发以及仍可达的保留对象需要不同调查；周期性垃圾回收或重启节点不是通用的泄漏修复。
+请将每个容器的使用量/限制以及重启/终止原因与请求负载关联起来。`OOMKilled` 出现在容器状态中，可能不会以字面上的 Event 原因显示。即使节点仍有空闲内存，cgroup 限制也可能导致 OOM。缓存增长、分配器行为、工作负载突发以及仍可访问的保留对象需要采用不同的调查方式；定期垃圾回收或重启节点并非通用的内存泄漏修复方法。
 
-应针对实际 runtime/version 选择 profiler，并通过经审查的流程连接目标进程。启动 `node --inspect` 会启动新进程，不会自动附加现有应用。JVM/Python/Go profiler 也有各自的工具、符号、代码或 endpoint 前提。Heap dump 可能暂停工作负载、耗尽磁盘并包含 Secret；采集需限范围且安全保护文件。本章未执行 profile 或 benchmark。
+请根据实际运行时/版本选择分析器，并通过经过审核的流程连接到预期进程。启动 `node --inspect` 会启动新进程，并不会自动连接到现有应用。JVM/Python/Go 分析器各自有工具、符号、代码或端点前提条件。堆转储可能暂停工作负载、耗尽磁盘并包含机密信息；请限制其收集范围并妥善保护文件。本章未执行任何性能分析或基准测试。
 
-根据测量需求调整 requests/limits，并计入 runtime 开销。检查资源 quota、rollout 和 HPA/VPA 所有权。Preferred anti-affinity 和 `ScheduleAnyway` topology spread 是偏好，不是保证；严格规则可能因合格节点不足使 Pod Pending。副本扩缩也不一定能修复单线程、存储或下游服务瓶颈。
+请根据测得的需求调整 requests/limits，并考虑运行时开销。检查资源配额、滚动更新以及 HPA/VPA 所有权。优选的反亲和性和 `ScheduleAnyway` 拓扑分布约束只是偏好，并不能保证调度成功；如果符合条件的节点不足，严格规则可能导致 Pod 处于 Pending。副本扩缩容未必能解决单线程、存储或下游服务瓶颈。
 
 ### 网络性能问题
 
-检查实际 CNI/policy/SG 路径、实例 bandwidth/PPS/连接限制、MTU、DNS 行为和源/目标放置。把 MTU 改为 9001、启用 ENA 或替换 launch-template version 都不是通用在线修复；应遵循平台/状态前提并通过所属者 rollout。Auto Mode 已提供节点 DNS 和自己的网络配置。
+检查实际 CNI/策略/安全组路径、实例带宽/PPS/连接限制、MTU、DNS 行为以及源/目标部署位置。将 MTU 更改为 9001、启用 ENA 或替换启动模板版本并非通用的在线修复方法；请遵循平台/状态前提条件，并通过相应资源所有者执行滚动更新。Auto Mode 已提供节点 DNS 和自身的网络配置。
 
-计划测试时，在隔离范围准备兼容的 client/server 镜像、资源、节点/AZ 放置及允许的 TCP 5201 访问。记录镜像/version、方向和拓扑。下面有范围限制的示例保留原有 30 秒时长，并限制单条 stream 的目标 bitrate：
+计划测试时，请准备兼容的客户端/服务器映像、资源、节点/AZ 部署位置，并在隔离测试范围内允许 TCP 5201 访问。记录映像/版本、方向和拓扑。以下范围受限的示例保留原有的 30 秒时长，并限制单个流的目标比特率：
 
 ```bash
 set -euo pipefail
@@ -1354,15 +1354,15 @@ kubectl --context "$KUBE_CONTEXT" -n "$TEST_NAMESPACE" exec "$CLIENT_POD" \
   -c "$CLIENT_CONTAINER" -- iperf3 -c "$SERVER_IP" -P 1 -t 30 -b 10M -J
 ```
 
-10 Mbit/s 是测试节流目标，不代表预期性能或网络上限。多条 stream 会各自获得这一 bitrate 限制。命令执行前等待 server/client 就绪，之后只清理准备好的测试资源。DNS 计时应区分缓存命中、上游查询和命令/exec 开销。没有实际证据时，不要声称生产吞吐、延迟或 benchmark 成功。
+10 Mbit/s 是测试速率控制值，不是预期性能，也不能证明网络上限。多个流各自都会受到该比特率限制。运行命令之前，请等待服务器/客户端就绪；之后只清理预先准备的测试资源。DNS 计时应区分缓存命中、上游查询和命令/exec 开销。没有实际证据时，不要声称生产吞吐量、延迟或基准测试成功。
 
-来源：[Kubernetes sysctl](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/)、[EBS ModifyVolume](https://docs.aws.amazon.com/botocore/latest/reference/services/ec2/client/modify_volume.html)、[iperf 手册](https://software.es.net/iperf/invoking.html)。
+资料来源：[Kubernetes sysctl](https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/)、[EBS ModifyVolume](https://docs.aws.amazon.com/botocore/latest/reference/services/ec2/client/modify_volume.html)、[iperf 手册](https://software.es.net/iperf/invoking.html)。
 
-## 升级问题 {#upgrade-issues}
+## 升级问题
 
-### 确认准确的操作
+### 确认确切操作
 
-集群/节点组处于 `ACTIVE` 不能替代某个请求的执行结果。记录 update ID、操作范围、预期版本/配置、最后成功阶段及错误：
+集群/节点组处于 `ACTIVE` 状态，并不能代替特定请求的结果。请记录更新 ID、操作范围、预期版本/配置、上次成功阶段和错误：
 
 ```bash
 set -euo pipefail
@@ -1378,9 +1378,9 @@ esac
 aws eks describe-update "${args[@]}" --output json --no-cli-pager
 ```
 
-进行中的操作应使用 [EKS 升级](./08-eks-upgrades.md)中的范围受限、按准确 ID 查询的 poller。只有 `Successful` 才表示成功；失败/取消/未知状态或查询错误都要调查。本地等待超时不会取消 AWS 操作。
+对于进行中的操作，请使用 [EKS 升级](./08-eks-upgrades.md)中的范围明确的精确 ID 轮询器。只有 `Successful` 才表示成功；失败/取消/未知状态或查询错误都需要调查。本地超时不会取消 AWS 操作。
 
-### 控制平面与 API 兼容性
+### 控制平面和 API 兼容性
 
 ```bash
 set -euo pipefail
@@ -1393,59 +1393,59 @@ aws eks describe-addon-versions --kubernetes-version "$TARGET_VERSION" --region 
   --output json
 ```
 
-Add-on 目录不是集群版本目录。应从集群目录以及实际当前版本选择下一个受支持的 EKS 次版本；不能根据上游 release 推断 EKS 支持情况。保守准备方式是先让节点与当前控制平面版本对齐，并将这与受支持的版本偏差界限区分开。有些 add-on 要求在控制平面变更前使用中间版本。
+附加组件目录并不是集群版本目录。请根据集群目录和实际当前版本选择下一个受支持的 EKS 次版本；不要根据上游发行版本推断 EKS 支持情况。作为保守的准备措施，请使节点与当前控制平面版本一致，并将此措施与受支持的版本偏差范围区分开。有些附加组件需要在更改控制平面之前先升级到过渡版本。
 
-检查原始 manifest/Helm 元数据、runtime API 调用方、upgrade insight 及 admission/conversion webhook。容器镜像清单或当前返回对象的 `.apiVersion` 表示形式，不能证明客户端已不再使用已删除 API。应使用迁移指南和源升级章节中已核实的 Pluto 命令；`kubectl convert` 是独立 plugin，不是通用内置迁移/测试工具。
+请检查原始清单/Helm 元数据、运行时 API 调用方、升级洞察以及准入/转换 webhook。容器映像列表或当前返回对象的 `.apiVersion` 表示形式，无法证明客户端不再使用已移除的 API。请使用迁移指南以及源升级章节中已验证的 Pluto 命令；`kubectl convert` 是单独的插件，并非通用内置迁移/测试命令。
 
-当前 EKS 指南已暂时回退普通 upgrade insight 的 `--force` enforcement；这与 `ROLLBACK_READINESS` 阻断条件不同。不要仅因先前命令超时就重新提交升级；也不要假定普通控制平面升级一旦开始就可以取消。
+当前 EKS 指南已暂时回退普通升级洞察的 `--force` 强制执行机制；这与 `ROLLBACK_READINESS` 阻塞条件不同。不要仅因之前的命令超时就重新提交升级，也不要假定已开始的普通控制平面升级可以取消。
 
-### 节点组与 add-on 恢复
+### 节点组和附加组件恢复
 
-检查 PDB allowed disruptions、副本/就绪状态、替换 EC2/IP 容量、AMI/bootstrap 和实际托管节点更新错误。`kubectl drain --force` 允许移除非托管 Pod；它**不会**绕过 PDB eviction 检查。`--disable-eviction` 与托管节点 force update 的中断语义不同。不要为清除错误而把 `minAvailable: 0`，也不要丢弃 `emptyDir` 数据。
+请检查 PDB 允许的中断数、副本/就绪状态、替换 EC2/IP 容量、AMI/引导设置以及实际托管节点更新错误。`kubectl drain --force` 允许移除不受管理的 Pod；它**不会**绕过 PDB 驱逐检查。`--disable-eviction` 和托管节点强制更新具有不同的中断语义。不要仅为清除错误而将 `minAvailable: 0`，或丢弃 `emptyDir` 数据。
 
-对于 EKS 优化 AMI，同时审查 Kubernetes 版本和 AMI release。自定义 AMI 节点组应使用原始 launch template 的经审查新版本，并配置正确 API/选项。更新失败不保证自动回滚机群。应使用当前节点/Pod 章节和分阶段升级步骤，不要立刻新建再删除节点组。
+对于 EKS 优化型 AMI，请同时检查 Kubernetes 版本和 AMI 发行版本。使用自定义 AMI 的节点组应基于其原始启动模板，采用经过审核的新版本，并配置正确的 API/选项。更新失败并不保证自动回滚整个实例群。请使用当前节点/Pod 部分和分阶段升级流程，不要立即创建并删除节点组。
 
-对于 add-on，应保留其版本/配置/schema、IAM/Pod Identity 和所有者。`PRESERVE` 不是完整配置合并，也不保证功能正常；`OVERWRITE` 可能丢弃自定义设置。删除/重建网络或存储 add-on 会中断依赖清理和工作负载访问。通用 `{"key":"value"}` payload，或把 VPC CNI manifest 误当成 CoreDNS，都不是有效修复。
+对于附加组件，请保留版本/配置/Schema、IAM/Pod Identity 和资源所有者。`PRESERVE` 并不意味着完整配置合并或功能正常；`OVERWRITE` 可能会丢弃自定义配置。删除并重新创建网络/存储附加组件可能会中断依赖项清理和工作负载访问。通用的 `{"key":"value"}` 负载，或将 VPC CNI 清单误标为 CoreDNS，都不是有效的修复方法。
 
-### 回滚是单独的决定
+### 回滚是单独的决策
 
-当前 EKS 支持在就地升级完成后 7 天内，有条件地回滚到紧邻的上一个次版本。仍须满足资格、支持策略、功能前提、计算类型顺序和 `ROLLBACK_READINESS`。托管节点的回滚先于控制平面；Auto Mode 先协调节点。超时/取消/中断规则与普通升级不同。
+当前 EKS 支持在原位升级完成后七天内，有条件地回滚到紧邻的前一个次版本。仍需满足资格、支持策略、功能前提条件、计算类型顺序和 `ROLLBACK_READINESS` 要求。托管节点回滚先于控制平面；Auto Mode 会先协调节点。其超时/取消/中断规则与普通升级不同。
 
-`--force` 会绕过 rollback insight，不会绕过前提验证或 Auto Mode 中断控制。版本回滚保留工作负载/数据状态，不等于恢复备份，也不会自动回退 add-on。Fargate、混合/自定义节点、支持策略和恢复条件请使用[完整回滚步骤](./08-eks-upgrades.md)；Git/CloudFormation rollback 不是 EKS 服务回滚操作。
+`--force` 会绕过回滚洞察，但不会绕过前提条件验证或 Auto Mode 中断控制。版本回滚会保留工作负载/数据状态，而不是恢复备份，也不会自动回滚附加组件。对于 Fargate、混合/自定义节点、支持策略和恢复条件，请使用[完整回滚流程](./08-eks-upgrades.md)；Git/CloudFormation 回滚并不是该服务操作。
 
-来源：[EKS updates](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)、[托管节点更新](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html)、[EKS 回滚](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)、[Auto Mode 回滚](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)。
+资料来源：[EKS 更新](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)、[托管节点更新](https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html)、[EKS 回滚](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)、[Auto Mode 回滚](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)。
 
-## 常见错误消息与解决方案 {#common-error-messages-and-solutions}
+## 常见错误消息和解决方案
 
-以下是示例消息或模式，不表示每个当前 controller 都会返回完全相同的字符串。使用实际 error code、resource UID、request ID 和 condition。证据支持前，拟议原因仍是待验证假设。
+以下均为示例消息或模式，并不表示所有当前控制器都会发出完全相同的字符串。请使用实际错误代码、资源 UID、请求 ID 和状态条件。提出的原因在得到证据支持之前都只是待验证的假设。
 
-| 消息/模式 | 证据与适当的下一步 |
+| 消息 / 模式 | 证据和适当的后续步骤 |
 | --- | --- |
-| `UnsupportedAvailabilityZoneException` | 选定的集群子网/AZ 对该账号的 EKS 不受支持；查看错误中报告的支持 AZ，不要只看 EC2 实例供给 |
-| `ResourceLimitExceeded` / 配额错误 | 找出具体服务/配额和当前已应用限额；历史 “limit 5” 不是当前限额 |
-| `InvalidParameterException: Error in role params` | 检查 role 存在性/trust、调用方 `iam:PassRole`、所需权限及准确请求；不要盲目新建共享 role |
-| `ClusterUnreachable` | 检查端点 DNS、路由、安全组/NACL 和 TLS；重新生成 kubeconfig 不会修复传输 |
-| `You must be logged in ... (Unauthorized)` / `the server has asked for the client to provide credentials` | 检查 credential provider、role/profile、exec 身份验证和集群认证模式/access entry 或旧式映射 |
-| `Forbidden` | 检查已认证主体、verb/resource/subresource/namespace 和所有相关授权；区分 impersonation 失败 |
-| `error loading ... .kube/config ... permission denied` | 检查所选文件、所有者和父目录权限；仅当所有权/路径正确时 mode 600 才有帮助 |
-| `dial tcp: lookup ... no such host` | 解析 endpoint 主机名并检查实际 resolver/私有路径；不要把完整 HTTPS URL 传给 DNS 查询工具 |
-| `FailedScheduling ... Insufficient memory` | 对比 requests/overhead、合格节点的可分配容量、放置和配额；当前剩余内存/top 数据不是 scheduler 的计算依据 |
-| `Insufficient pods` | 检查节点可分配 Pod slot 和已分配数量；降低内存 request 不会增加 Pod slot |
-| `CrashLoopBackOff` | 检查容器/init-container 当前及上次终止状态、前一实例日志、配置和 probe |
-| `ImagePullBackOff` | 根据拉取错误检查 image/digest/platform、节点 registry 路由/TLS/限流及实际拉取身份；排查时不要暴露凭证 |
-| `Evicted` | 读取 Pod reason/message 和节点压力/时间；按相关数据/可用性恢复路径处理 |
-| `FailedCreateServiceEndpoints` / EndpointSlice 更新错误 | 检查 Service selector/type、Pod Ready/endpoint 条件、命名端口和 controller 事件 |
-| `EniLimitExceeded` / IPAM 分配错误 | 检查实际 ENI/IP/子网/prefix 约束和配额/错误上下文；prefix/custom networking 并不会消除所有限制 |
-| `FailedLoadBalancerCreation` / controller 配置错误 | 检查准确 controller 所有权、子网选择、IAM、target 健康及安全组路径；不要给子网批量打标签或开放所有流量 |
-| `FailedAttachVolume: Multi-Attach ...` | 确认实际消费者和 attachment/fencing 状态；协调 CSI unmount/detach 及数据安全，不要强制 detach |
-| `FailedMount ... timeout ...` | 检查 CSI controller/node plugin、身份/KMS、拓扑、文件系统和 attachment 事件；重启节点不是自动修复 |
-| `PersistentVolumeClaim is not bound` | 区分预期延迟绑定与 class/provisioner/身份/消费者调度问题；不要删除 claim |
-| `Failed to list *v1.Pod: Unauthorized` | 确认拒绝请求的 endpoint/caller 及 token/身份；重启 Metrics Server 不会恢复缺失凭证 |
-| `Failed to scrape node` | 检查已认证的 kubelet scrape 路径、证书、地址/端口、网络和节点健康 |
-| `Failed to list *v1.Pod: the server could not find the requested resource` | 在认定为 EKS 控制平面配置问题前，先核实 API URL/context/discovery 和 client/proxy 响应 |
+| `UnsupportedAvailabilityZoneException` | 所选集群子网/AZ 不受该账户的 EKS 支持；请检查错误中列出的受支持 AZ，而不只是查看 EC2 实例供应情况 |
+| `ResourceLimitExceeded` / 配额错误 | 确认具体服务/配额及当前已应用的限额；历史消息中的“限额 5”不是当前限额 |
+| `InvalidParameterException: Error in role params` | 检查角色是否存在/信任关系、调用方的 `iam:PassRole`、所需权限和确切请求；不要盲目创建新的共享角色 |
+| `ClusterUnreachable` | 检查端点 DNS、路由、安全组/NACL 和 TLS；仅重新生成 kubeconfig 无法修复传输问题 |
+| `You must be logged in ... (Unauthorized)` / `the server has asked for the client to provide credentials` | 检查凭证提供程序、角色/配置文件、exec 身份验证以及集群身份验证模式/访问条目或传统映射 |
+| `Forbidden` | 检查已身份验证主体、动词/资源/子资源/命名空间以及所有适用授权；并区分模拟失败 |
+| `error loading ... .kube/config ... permission denied` | 检查所选文件、所有者和父目录权限；只有所有权/路径正确时，模式 600 才有帮助 |
+| `dial tcp: lookup ... no such host` | 解析端点主机名并检查实际解析器/私有路径；不要将完整 HTTPS URL 传给 DNS 查询工具 |
+| `FailedScheduling ... Insufficient memory` | 比较 requests/开销与符合条件节点的可分配容量、部署位置和配额；当前空闲内存/top 数据本身并不是调度器的计算依据 |
+| `Insufficient pods` | 检查节点可分配 Pod 槽位和当前分配情况；降低内存 requests 不会增加 Pod 槽位 |
+| `CrashLoopBackOff` | 检查容器/init 容器当前和上次终止状态、前一实例日志、配置及探针 |
+| `ImagePullBackOff` | 根据拉取错误检查映像/摘要/平台、节点侧仓库路由/TLS/速率限制和实际拉取身份；切勿为调试而暴露凭证 |
+| `Evicted` | 读取 Pod 原因/消息以及节点压力/发生时间；使用相关的数据/可用性恢复路径 |
+| `FailedCreateServiceEndpoints` / EndpointSlice 更新错误 | 检查 Service selector/类型、Pod Ready/端点条件、命名端口和控制器事件 |
+| `EniLimitExceeded` / IPAM 分配错误 | 检查实际 ENI/IP/子网/前缀约束以及配额/错误上下文；前缀/自定义网络并不能消除所有限制 |
+| `FailedLoadBalancerCreation` / 控制器预置错误 | 检查确切控制器所有权、子网选择、IAM、目标运行状况和安全组路径；不要对所有子网添加标签或开放所有流量 |
+| `FailedAttachVolume: Multi-Attach ...` | 确认实际使用者和挂载/隔离状态；协调 CSI 卸载/分离及数据安全，而不是强制分离 |
+| `FailedMount ... timeout ...` | 检查 CSI 控制器/节点插件、身份/KMS、拓扑、文件系统和挂载事件；重启节点并非自动修复方法 |
+| `PersistentVolumeClaim is not bound` | 区分预期的延迟绑定与 class/配置程序/身份/使用者调度问题；不要删除 claim |
+| `Failed to list *v1.Pod: Unauthorized` | 确认拒绝请求的端点/调用方以及令牌/身份；重启 Metrics Server 无法恢复缺失的凭证 |
+| `Failed to scrape node` | 检查已身份验证的 kubelet 抓取路径、证书、地址/端口、网络和节点运行状况 |
+| `Failed to list *v1.Pod: the server could not find the requested resource` | 在将问题归因于 EKS 控制平面配置之前，请验证 API URL/上下文/发现信息以及客户端/代理响应 |
 
-使用上方相关章节收集有范围的证据，并选择有明确所有者的修正方案。保留结果和未解决假设；这些示例消息都不能单独证明诊断或恢复成功。
+请使用上述相关部分收集范围明确的证据，并选择由明确资源所有者负责的修正方式。请保留结果和未解决的假设；这些示例消息都不能证明诊断正确或恢复措施已经过测试。
 
 ## 测验
 
-请完成[本主题测验](../quizzes/eks/09-eks-troubleshooting-quiz.md)。
+请通过[主题测验](../quizzes/eks/09-eks-troubleshooting-quiz.md)检验你的理解。
