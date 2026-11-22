@@ -1,7 +1,7 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: November 19, 2026
+> **Last Updated**: November 21, 2026
 
 The version header refers to upstream Kubernetes. The project maintains release branches for the three most recent minor releases (1.35–1.37). Upstream 1.34 is in maintenance mode and still receives patch releases until its end of life on **October 27, 2026**, separately from its AWS support end date on EKS.
 
@@ -1563,6 +1563,10 @@ Between September 14 and 16, 2026, the Kubernetes blog published a series of dee
 - **[Memory QoS graduates to Beta](https://kubernetes.io/blog/2026/09/14/kubernetes-v1-37-memory-qos-graduates-to-beta/)**: the `MemoryQoS` feature gate is now Beta and enabled by default on v1.37 kubelets. On Linux nodes running cgroup v2, it uses the memory controller to give the kernel better guidance on how to treat container memory. The default kubelet configuration writes no `memory.high`/`memory.min`/`memory.low` values, so nothing changes until you explicitly set fields such as `memoryThrottlingFactor`.
 - **[Pod-Level Resource Managers graduate to Beta](https://kubernetes.io/blog/2026/09/15/kubernetes-v1-37-pod-level-resource-managers-beta/)** (disabled by default): the kubelet's Topology Manager, CPU Manager, and Memory Manager can now use pod-level resource declarations (`.spec.resources`) directly for NUMA-aligned placement. This enables hybrid allocation: exclusive cores for primary containers while lightweight sidecars share a pod-isolated pool.
 - **[Hardening container storage](https://kubernetes.io/blog/2026/09/16/kubernetes-v1-37-hardening-container-storage/)**: new `emptyDir` permission modes and bind mount options (`noexec`, `nosuid`, `nodev`) let you enforce security policies, such as prohibiting execution of arbitrary binaries from writable volumes, directly in Kubernetes without workarounds.
+
+### October 2026 Update: v1.37.2 and Other Routine Patch Releases
+
+On October 28, 2026, patch releases shipped for every supported minor version: [v1.37.2](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.2), v1.36.6, v1.35.10 and v1.34.13. v1.37.2 moves the build to Go 1.26.10, which no longer trusts the compromised eMudhra intermediate CA certificates, and fixes, among others, `NoExecute` device taints (DeviceTaintRule) failing to evict pods that use DRA-backed extended resources, a Job recreated with the same name as a recently deleted Job possibly staying unreconciled, and a 1.36 regression where kube-proxy tried to lower an `nf_conntrack_max` sysctl that was already high enough; kube-apiserver now also accepts up to 16384 request header values, preventing HTTP 431 rejections for impersonated or proxied users with roughly 500 or more groups. v1.34.13 is the final patch for the 1.34 line, which reached end of life (EOL) on October 27, 2026.
 
 ### November 2026 Update: v1.38.0-beta.0 Published
 
