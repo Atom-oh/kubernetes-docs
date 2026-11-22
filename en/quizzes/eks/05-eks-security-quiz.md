@@ -1,159 +1,21 @@
 # Amazon EKS Security Quiz
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: November 21, 2026
 
 This quiz tests your understanding of Amazon EKS security features, best practices, and configurations.
 
 ## Quiz Overview
-- EKS Authentication and Authorization
 - Network Security
 - Container Security
 - Data Security
 - Compliance and Auditing
 - Security Best Practices
 
+Questions on cluster access authentication, IRSA/OIDC and Pod Identity are in each detail page's quiz: [EKS Cluster Access Authentication Quiz](./05-eks-security-cluster-access-quiz.md), [IRSA and the OIDC Provider Quiz](./05-eks-security-irsa-oidc-quiz.md), [EKS Pod Identity Quiz](./05-eks-security-pod-identity-quiz.md).
+
 ## Multiple Choice Questions
 
-### 1. For an IAM user or role, which EKS setup correctly combines identity authentication and Kubernetes authorization?
-
-- A) Use only IAM management permissions
-- B) Create RBAC rules without configuring the identity’s authentication path
-- C) Configure IAM cluster access plus appropriate RBAC and/or EKS access policies
-- D) Use only API endpoint network restrictions
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: C) Configure IAM cluster access plus appropriate RBAC and/or EKS access policies**
-
-**Explanation:**
-
-IAM authenticates the intended human/automation identity through the configured EKS access path. Kubernetes RBAC and EKS access policies authorize Kubernetes operations; their grants are additive. Network restrictions are another layer and do not replace authorization. Pod-to-Kubernetes authentication normally uses its ServiceAccount token; IRSA/Pod Identity instead supplies workload AWS credentials.
-
-An EKS cluster service role and a human developer role have different purposes. Attaching AmazonEKSClusterPolicy to the developer does not grant Kubernetes access, and DescribeCluster/ListClusters permissions or a kubeconfig file do not grant workload permissions.
-
-**Scoped implementation:** an authorized platform operator prepares the namespace and RBAC below for an existing approved developer IAM role. The cluster must already support access entries. Preserve existing administrator/node mappings and review authentication-mode migration; do not overwrite aws-auth with a sample ConfigMap.
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: security-demo
-  labels:
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: v1.36
-```
-
-
-
-```bash
-set -euo pipefail
-: "${CLUSTER_NAME:?Set the verified cluster name}"
-: "${AWS_REGION:?Set its Region}"
-: "${DEVELOPER_ROLE_ARN:?Set a prepared IAM role ARN, not an STS session ARN}"
-MODE=$(aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
-  --query cluster.accessConfig.authenticationMode --output text)
-case "$MODE" in
-  API|API_AND_CONFIG_MAP) ;;
-  *) echo "Access entries are not enabled; review the migration first"; exit 1 ;;
-esac
-aws eks list-access-entries --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
-  --output json > security-access-entries.json
-python3 - "$DEVELOPER_ROLE_ARN" <<'PY'
-import json, sys
-with open("security-access-entries.json") as stream:
-    existing = json.load(stream)["accessEntries"]
-if sys.argv[1] in existing:
-    raise SystemExit("Entry already exists; inspect its groups/policies instead of overwriting")
-PY
-aws eks create-access-entry --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
-  --principal-arn "$DEVELOPER_ROLE_ARN" --type STANDARD \
-  --kubernetes-groups security-demo-developers
-```
-
-
-
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: developer
-  namespace: security-demo
-rules:
-- apiGroups:
-  - ''
-  resources:
-  - pods
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-- apiGroups:
-  - batch
-  resources:
-  - jobs
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: developer
-  namespace: security-demo
-subjects:
-- kind: Group
-  name: security-demo-developers
-  apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: Role
-  name: developer
-  apiGroup: rbac.authorization.k8s.io
-```
-
-The group name in the access entry must match the RoleBinding subject. This role permits the listed operations only in security-demo; other existing grants can broaden access. Creating Deployments/Jobs can indirectly use Secrets, PVCs and ServiceAccounts in that namespace, so the absence of a direct Secret-read rule is not a tenant security boundary. Separate tenants and constrain workload identity/resource use through admission and ownership controls.
-
-A separately reviewed viewer can instead use a namespace-scoped AmazonEKSViewPolicy association. Inspect existing access policies before adding it; it does not revoke broader RBAC or other access-policy grants. `eks:namespaces` filters access-policy association requests, not general kubectl requests.
-
-**Validate the actual login:** the caller must be able to discover the cluster and assume the approved role. This creates a temporary kubeconfig rather than replacing the default context:
-
-```bash
-set -euo pipefail
-umask 077
-: "${CLUSTER_NAME:?Set the reviewed cluster name}"
-: "${AWS_REGION:?Set the cluster Region}"
-: "${DEVELOPER_ROLE_ARN:?Set the intended IAM role ARN}"
-review_dir=$(mktemp -d "${TMPDIR:-/tmp}/eks-login-check.XXXXXXXX")
-trap 'rm -rf -- "$review_dir"' EXIT
-aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION" \
-  --role-arn "$DEVELOPER_ROLE_ARN" --kubeconfig "$review_dir/config"
-kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n security-demo
-kubectl --kubeconfig "$review_dir/config" auth can-i create jobs -n security-demo
-kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n another-team
-```
-
-Inspect the results against the intended grants and investigate unexpected cross-namespace permission. `--as` tests impersonation/RBAC and does not establish that the IAM access-policy path works. No live IAM login or Kubernetes authorization test was executed for this quiz; schema/shell checks and mocked access-entry flows are the local evidence.
-
-References: [EKS access entries](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html), [EKS access policies](https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html), [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
-
-</details>
-
-### 2. Which Kubernetes mechanism expresses label-based Pod traffic rules on an EKS network that supports policy enforcement?
+### 1. Which Kubernetes mechanism expresses label-based Pod traffic rules on an EKS network that supports policy enforcement?
 
 - A) Only instance security groups
 - B) NetworkPolicy resources with an enforcing network implementation
@@ -383,7 +245,7 @@ The paired source’s 18 synthetic selector/port cases were checked locally; no 
 
 </details>
 
-### 3. Which approach combines complementary controls for container image security on EKS?
+### 2. Which approach combines complementary controls for container image security on EKS?
 
 - A) Rely only on manual image inspection
 - B) Assume every official image is free of vulnerabilities
@@ -553,7 +415,7 @@ References: [Signer signing](https://docs.aws.amazon.com/signer/latest/developer
 
 </details>
 
-### 4. Which approach applies a coherent, current Pod security baseline on EKS?
+### 3. Which approach applies a coherent, current Pod security baseline on EKS?
 
 - A) Only disable privileged mode
 - B) Use versioned PSS profiles through PSA, with reviewed admission policies where needed
@@ -672,7 +534,7 @@ References: [Pod Security Admission](https://kubernetes.io/docs/concepts/securit
 
 </details>
 
-### 5. Which approach gives complementary security evidence for an EKS workload?
+### 4. Which approach gives complementary security evidence for an EKS workload?
 
 - A) Use only occasional manual reviews
 - B) Use only AWS Config checks
@@ -799,7 +661,7 @@ References: [CSPM standards](https://docs.aws.amazon.com/securityhub/latest/user
 
 </details>
 
-### 6. For application credentials requiring centrally governed AWS access and lifecycle management, which approach fits?
+### 5. For application credentials requiring centrally governed AWS access and lifecycle management, which approach fits?
 
 - A) Store values without an access, rotation or reload plan
 - B) Treat environment variables as an encryption mechanism
